@@ -1,1 +1,15 @@
--r backend/requirements.txt
+Flask
+gunicorn
+psycopg2-binary
+flask-cors
+python-dotenv
+requests
+bcrypt
+PyJWT
+Pillow
+numpy
+opencv-python-headless
+flask-jwt-extended
+flask-socketio
+eventlet
+pyotp
