@@ -1,0 +1,24 @@
+# Backend (stays on Railway, not deployed to Vercel)
+backend/
+gunicorn.conf.py
+Procfile
+requirements.txt
+DEPLOYMENT.md
+
+# Python artifacts
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment files
+.env
+.env.production
+
+# Dev scripts
+start.bat
+fix_admin.ps1
+master_sync.py
+super_seed.py
+sync_db.py
+smoke_runtime/
