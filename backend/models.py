@@ -67,17 +67,6 @@ CREATE TABLE IF NOT EXISTS face_embeddings (
     UNIQUE(user_id)
 );
 
-CREATE TABLE IF NOT EXISTS exam_face_verifications (
-    id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    exam_id         INTEGER NOT NULL REFERENCES exams(id),
-    user_id         INTEGER NOT NULL REFERENCES users(id),
-    status          TEXT DEFAULT 'approved',
-    score           REAL,
-    threshold       REAL,
-    engine          TEXT DEFAULT 'privacy_signature_v1',
-    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE TABLE IF NOT EXISTS trainings (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     title       TEXT NOT NULL,
@@ -341,6 +330,17 @@ CREATE TABLE IF NOT EXISTS exams (
     is_active   INTEGER DEFAULT 0,
     created_by  INTEGER REFERENCES users(id),
     created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS exam_face_verifications (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    exam_id         INTEGER NOT NULL REFERENCES exams(id),
+    user_id         INTEGER NOT NULL REFERENCES users(id),
+    status          TEXT DEFAULT 'approved',
+    score           REAL,
+    threshold       REAL,
+    engine          TEXT DEFAULT 'privacy_signature_v1',
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS exam_questions (

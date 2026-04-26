@@ -490,5 +490,6 @@ def on_message(data):
 
 if __name__ == '__main__':
     ensure_local_storage_folders()
+    port = int(os.environ.get('PORT') or os.environ.get('EPSA_LOCAL_BACKEND_PORT') or 5000)
     print(f"EPSA Backend starting in {settings.env} mode")
-    sock.run(app, host='0.0.0.0', port=5000, debug=settings.debug)
+    sock.run(app, host='0.0.0.0', port=port, debug=settings.debug)
