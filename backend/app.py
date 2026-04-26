@@ -570,7 +570,7 @@ def get_document(doc_type, filename):
 @app.route('/')
 def serve_home():
     if IS_PRODUCTION_RUNTIME:
-        print("ROOT HIT")
+        logger.info("ROOT HIT")
         return jsonify({'status': 'ok', 'service': 'EPSA Platform API'}), 200
     try:
         return send_from_directory(PROJECT_ROOT, 'index.html')
@@ -595,11 +595,11 @@ if settings.is_local and sock is not None:
     @sock.on('connect')
     def on_connect():
         ensure_runtime_ready()
-        print('[WS] Client connected')
+        logger.info('[WS] Client connected')
 
     @sock.on('disconnect')
     def on_disconnect():
-        print('[WS] Client disconnected')
+        logger.info('[WS] Client disconnected')
 
     @sock.on('join_room')
     def on_join(data):
@@ -624,7 +624,7 @@ if settings.is_local and sock is not None:
             room = f"chat_{min(from_id, to_id)}_{max(from_id, to_id)}"
             emit('new_message', {'from_id': from_id, 'text': text, 'time': 'Now'}, room=room)
         except Exception as e:
-            print('[WS Error]', e)
+            logger.warning('[WS Error] %s', e)
 
 logger.info("WORKER FULLY READY")
 
