@@ -456,7 +456,7 @@ def _resolve_face_login_match(db, live_capture, angle_samples=None):
 
 
 @auth_bp.route("/verify-registration-face", methods=["POST"])
-@rate_limit("verify-registration-face", limit=20, window_seconds=300)
+@rate_limit("verify-registration-face", limit=20, window_seconds=60)
 def verify_registration_face():
     payload = _request_json()
     profile_photo = request.files.get("profile_photo")
@@ -490,7 +490,7 @@ def verify_registration_face():
 
 
 @auth_bp.route("/analyze-registration-face", methods=["POST"])
-@rate_limit("analyze-registration-face", limit=30, window_seconds=300)
+@rate_limit("analyze-registration-face", limit=200, window_seconds=300)
 def analyze_registration_face():
     payload = _request_json()
     live_capture = (request.form or {}).get("live_capture") or payload.get("live_capture")

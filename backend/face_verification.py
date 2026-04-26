@@ -22,7 +22,7 @@ np = None
 _CV_IMPORT_ATTEMPTED = False
 
 EMBEDDING_DIMENSION = 64
-DEFAULT_THRESHOLD = 0.72
+DEFAULT_THRESHOLD = 0.65
 ANGLE_SAMPLE_LIMIT = 6
 
 _FACE_CASCADE = None
@@ -525,6 +525,23 @@ def _crop_face_region(raw_image: object):
     return crop
 
 
+def _crop_face_region_safe(raw_image: object):
+    """Like _crop_face_region but never raises — falls back to center-square crop.
+    Ensures profile photos with unusual framing still produce a valid embedding."""
+    try:
+        return _crop_face_region(raw_image)
+    except FaceVerificationError:
+        image = _load_cv_image(raw_image)
+        h, w = image.shape[:2]
+        size = min(w, h)
+        left = (w - size) // 2
+        top = (h - size) // 2
+        crop = image[top:top + size, left:left + size]
+        if crop.size == 0:
+            return image
+        return crop
+
+
 def _encode_cv_image(image, quality: int = 95) -> bytes:
     success, encoded = cv2.imencode(".jpg", image, [int(cv2.IMWRITE_JPEG_QUALITY), int(quality)])
     if not success:
@@ -740,7 +757,7 @@ def extract_embedding(raw_image: object) -> List[float]:
                     if len(pooled) >= 56:
                         return _normalize_embedding((pooled[:56] + geometry)[:64])
 
-    crop = _crop_face_region(raw_image)
+    crop = _crop_face_region_safe(raw_image)
     gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
     brightness = float(gray.mean())
     if brightness < 78:

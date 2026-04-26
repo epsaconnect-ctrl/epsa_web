@@ -113,10 +113,17 @@ const API = {
 
     if (!resp.ok) {
       if (resp.status === 401 || resp.status === 422) {
+        const hadToken = !!this.getToken();
         this.clearToken();
-        const cur = window.location.pathname;
-        if (!cur.includes('login.html') && !cur.endsWith('register.html')) {
-          window.location.href = cur.includes('admin') ? 'login.html' : 'login.html';
+        // Only redirect to login if we had a live session that expired/was invalidated.
+        // Do NOT redirect when the 401 comes from the login endpoint itself (wrong password).
+        if (hadToken) {
+          const cur = window.location.pathname;
+          // Handle both /login.html and Vercel cleanUrl /login paths
+          const onAuthPage = cur.includes('login') || cur.includes('register') || cur === '/';
+          if (!onAuthPage) {
+            window.location.href = 'login.html';
+          }
         }
       }
       throw new Error(data.error || data.message || 'Request failed');
