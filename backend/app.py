@@ -2,11 +2,16 @@
 EPSA Platform — Flask Backend Entry Point
 """
 import os
+import sys
 from flask import Flask, jsonify, request, send_from_directory, abort
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 from flask_socketio import SocketIO
 from werkzeug.middleware.proxy_fix import ProxyFix
+
+BACKEND_DIR = os.path.dirname(__file__)
+if BACKEND_DIR not in sys.path:
+    sys.path.insert(0, BACKEND_DIR)
 
 from config import get_settings
 from models import ensure_bootstrap_admin, init_db, migrate_db
@@ -32,7 +37,6 @@ from teacher import teacher_bp
 from mock_exams import mock_exams_bp
 from analytics import analytics_bp
 
-BACKEND_DIR = os.path.dirname(__file__)
 PROJECT_ROOT = os.path.abspath(os.path.join(BACKEND_DIR, '..'))
 settings = get_settings()
 
