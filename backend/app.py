@@ -68,6 +68,7 @@ except ImportError:
     from analytics import analytics_bp
 
 PROJECT_ROOT = os.path.abspath(os.path.join(BACKEND_DIR, '..'))
+FRONTEND_DIR = os.path.join(PROJECT_ROOT, 'frontend')
 settings = get_settings()
 IS_PRODUCTION_RUNTIME = settings.is_production
 
@@ -573,7 +574,7 @@ def serve_home():
         logger.info("ROOT HIT")
         return jsonify({'status': 'ok', 'service': 'EPSA Platform API'}), 200
     try:
-        return send_from_directory(PROJECT_ROOT, 'index.html')
+        return send_from_directory(FRONTEND_DIR, 'index.html')
     except Exception:
         return jsonify({'status': 'ok'}), 200
 
@@ -586,7 +587,7 @@ def serve_frontend(path):
         # Never attempt file serving in production — no static files on Railway
         abort(404)
     try:
-        return send_from_directory(PROJECT_ROOT, path)
+        return send_from_directory(FRONTEND_DIR, path)
     except Exception:
         abort(404)
 
