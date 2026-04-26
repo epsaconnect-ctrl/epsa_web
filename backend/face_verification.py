@@ -17,16 +17,12 @@ from typing import Iterable, List, Sequence
 
 from PIL import Image, ImageEnhance, ImageFilter, ImageOps, ImageStat
 
-try:
-    import cv2
-    import numpy as np
-except Exception:  # pragma: no cover
-    cv2 = None
-    np = None
+cv2 = None
+np = None
+_CV_IMPORT_ATTEMPTED = False
 
 EMBEDDING_DIMENSION = 64
 DEFAULT_THRESHOLD = 0.72
-ENGINE_NAME = "opencv_faceprint_v4" if cv2 is not None and np is not None else "privacy_signature_v1"
 ANGLE_SAMPLE_LIMIT = 6
 
 _FACE_CASCADE = None
@@ -50,7 +46,28 @@ class VerificationResult:
     score: float
     threshold: float
     verified: bool
-    engine: str = ENGINE_NAME
+    engine: str = "privacy_signature_v1"
+
+
+def _load_cv_stack():
+    global cv2, np, _CV_IMPORT_ATTEMPTED
+    if _CV_IMPORT_ATTEMPTED:
+        return cv2, np
+    _CV_IMPORT_ATTEMPTED = True
+    try:
+        import cv2 as _cv2
+        import numpy as _np
+    except Exception:  # pragma: no cover
+        _cv2 = None
+        _np = None
+    cv2 = _cv2
+    np = _np
+    return cv2, np
+
+
+def _engine_name():
+    _load_cv_stack()
+    return "opencv_faceprint_v4" if cv2 is not None and np is not None else "privacy_signature_v1"
 
 
 def _coerce_bytes(raw_image: object) -> bytes:
@@ -94,6 +111,7 @@ def _image_to_bytes(image: Image.Image, format_name: str = "JPEG") -> bytes:
 
 
 def _load_cv_image(raw_image: object):
+    _load_cv_stack()
     if cv2 is None or np is None:
         return None
     payload = _coerce_bytes(raw_image)
@@ -105,6 +123,7 @@ def _load_cv_image(raw_image: object):
 
 def _get_cascades():
     global _FACE_CASCADE, _PROFILE_CASCADE, _EYE_CASCADE, _SMILE_CASCADE
+    _load_cv_stack()
     if cv2 is None:
         return None
     if _FACE_CASCADE is None:
@@ -118,6 +137,7 @@ def _get_cascades():
 
 def _get_dnn_models():
     global _YUNET_DETECTOR, _SFACE_RECOGNIZER
+    _load_cv_stack()
     if cv2 is None:
         return None, None
     if not (os.path.exists(_YUNET_MODEL) and os.path.exists(_SFACE_MODEL)):
@@ -362,6 +382,7 @@ def _prepare_gray(raw_image: object):
 
 
 def analyze_face(raw_image: object) -> dict:
+    _load_cv_stack()
     if cv2 is None or np is None:
         image = _load_image(raw_image)
         width, height = image.size
@@ -386,7 +407,7 @@ def analyze_face(raw_image: object) -> dict:
                 "teeth_visible_likely": None,
                 "mouth_open_estimate": None,
             },
-            "engine": ENGINE_NAME,
+            "engine": _engine_name(),
         }
 
     image, gray = _prepare_gray(raw_image)
@@ -482,7 +503,7 @@ def analyze_face(raw_image: object) -> dict:
         },
         "landmarks": landmarks,
         "facial_features": facial_features,
-        "engine": ENGINE_NAME,
+        "engine": _engine_name(),
     }
 
 
@@ -644,6 +665,7 @@ def _geometry_features(face_gray):
 def extract_embedding_set(raw_image: object, limit: int = 4) -> List[List[float]]:
     embeddings = []
     variants = [raw_image]
+    _load_cv_stack()
     if cv2 is not None and np is not None:
         base = _load_cv_image(raw_image)
         variants.extend(
@@ -682,6 +704,7 @@ def extract_embedding_set(raw_image: object, limit: int = 4) -> List[List[float]
 
 
 def extract_embedding(raw_image: object) -> List[float]:
+    _load_cv_stack()
     if cv2 is None or np is None:
         image = _load_image(raw_image)
         side = min(image.size)
@@ -794,7 +817,7 @@ def compare_embeddings(reference: Sequence[float], candidate: Sequence[float], t
         raise FaceVerificationError("Facial signatures are incompatible.")
     dot_product = sum(float(a) * float(b) for a, b in zip(reference, candidate))
     score = round((dot_product + 1) / 2, 4)
-    return VerificationResult(score=score, threshold=float(threshold), verified=score >= float(threshold), engine=ENGINE_NAME)
+    return VerificationResult(score=score, threshold=float(threshold), verified=score >= float(threshold), engine=_engine_name())
 
 
 def verify_live_capture(reference_embedding: Sequence[float], live_capture: object, threshold: float = DEFAULT_THRESHOLD) -> VerificationResult:

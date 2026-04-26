@@ -6,7 +6,6 @@ import threading
 from flask import Flask, jsonify, request, send_from_directory, abort
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
-from flask_socketio import SocketIO
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 BACKEND_DIR = os.path.dirname(__file__)
@@ -86,15 +85,15 @@ app.config['EPSA_APP_URL'] = settings.app_public_url
 cors_origins = settings.cors_origins if settings.cors_origins else ([] if settings.is_production else "*")
 CORS(app, origins=cors_origins, supports_credentials=True)
 jwt  = JWTManager(app)
-sock = SocketIO(cors_allowed_origins=cors_origins, async_mode='threading' if settings.is_production else 'eventlet')
+sock = None
 _runtime_lock = threading.Lock()
 _runtime_initialized = False
 _runtime_init_error = None
-_socketio_initialized = False
 
 if settings.is_local:
-    sock.init_app(app)
-    _socketio_initialized = True
+    from flask_socketio import SocketIO
+
+    sock = SocketIO(app, cors_allowed_origins=cors_origins, async_mode='eventlet')
 
 # Register blueprints
 app.register_blueprint(auth_bp,       url_prefix='/api/auth')
@@ -123,7 +122,6 @@ def ensure_runtime_ready():
             return
         try:
             print("LAZY INIT STARTED")
-            ensure_socketio_ready()
             init_db()
             migrate_db()
             ensure_bootstrap_admin()
@@ -136,15 +134,6 @@ def ensure_runtime_ready():
             _runtime_init_error = exc
             print(f"[Startup] Runtime initialization failed: {exc}")
             raise
-
-
-def ensure_socketio_ready():
-    global _socketio_initialized
-    if _socketio_initialized:
-        return
-    sock.init_app(app)
-    _socketio_initialized = True
-    print("[Startup] SocketIO initialized lazily.")
 
 
 def _is_fast_health_path():
@@ -183,6 +172,12 @@ def health():
 def platform_health():
     print("HEALTH ROUTE HIT:", request.path)
     return {'status': 'ok'}, 200
+
+
+@app.route('/ping')
+def ping():
+    print("PING HIT")
+    return "pong", 200
 
 @app.route('/api/leadership/public')
 def public_leadership():
@@ -553,42 +548,48 @@ def serve_frontend(path):
     return send_from_directory(PROJECT_ROOT, path)
 
 # WebSocket events
-@sock.on('connect')
-def on_connect():
-    ensure_runtime_ready()
-    print('[WS] Client connected')
+if settings.is_local and sock is not None:
+    @sock.on('connect')
+    def on_connect():
+        ensure_runtime_ready()
+        print('[WS] Client connected')
 
-@sock.on('disconnect')
-def on_disconnect():
-    print('[WS] Client disconnected')
+    @sock.on('disconnect')
+    def on_disconnect():
+        print('[WS] Client disconnected')
 
-@sock.on('join_room')
-def on_join(data):
-    from flask_socketio import join_room
-    room = f"chat_{min(data['user_id'], data['partner_id'])}_{max(data['user_id'], data['partner_id'])}"
-    join_room(room)
+    @sock.on('join_room')
+    def on_join(data):
+        from flask_socketio import join_room
+        room = f"chat_{min(data['user_id'], data['partner_id'])}_{max(data['user_id'], data['partner_id'])}"
+        join_room(room)
 
-@sock.on('send_message')
-def on_message(data):
-    from flask_socketio import emit
-    from flask_jwt_extended import decode_token
-    try:
-        token   = data.get('token', '')
-        decoded = decode_token(token)
-        from_id = decoded['sub']
-        to_id   = data['to_id']
-        text    = data['text']
-        db = get_db()
-        db.execute("INSERT INTO messages (from_user_id, to_user_id, text) VALUES (?,?,?)", (from_id, to_id, text))
-        db.commit()
-        db.close()
-        room = f"chat_{min(from_id, to_id)}_{max(from_id, to_id)}"
-        emit('new_message', {'from_id': from_id, 'text': text, 'time': 'Now'}, room=room)
-    except Exception as e:
-        print('[WS Error]', e)
+    @sock.on('send_message')
+    def on_message(data):
+        from flask_socketio import emit
+        from flask_jwt_extended import decode_token
+        try:
+            token   = data.get('token', '')
+            decoded = decode_token(token)
+            from_id = decoded['sub']
+            to_id   = data['to_id']
+            text    = data['text']
+            db = get_db()
+            db.execute("INSERT INTO messages (from_user_id, to_user_id, text) VALUES (?,?,?)", (from_id, to_id, text))
+            db.commit()
+            db.close()
+            room = f"chat_{min(from_id, to_id)}_{max(from_id, to_id)}"
+            emit('new_message', {'from_id': from_id, 'text': text, 'time': 'Now'}, room=room)
+        except Exception as e:
+            print('[WS Error]', e)
+
+print("WORKER FULLY READY")
 
 if __name__ == '__main__':
     ensure_runtime_ready()
     port = int(os.environ.get('PORT') or os.environ.get('EPSA_LOCAL_BACKEND_PORT') or 5000)
     print(f"EPSA Backend starting in {settings.env} mode")
-    sock.run(app, host='0.0.0.0', port=port, debug=settings.debug)
+    if settings.is_local and sock is not None:
+        sock.run(app, host='0.0.0.0', port=port, debug=settings.debug)
+    else:
+        app.run(host='0.0.0.0', port=port, debug=settings.debug)
