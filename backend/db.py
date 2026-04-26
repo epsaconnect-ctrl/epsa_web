@@ -8,6 +8,9 @@ except ImportError:
     from config import get_settings
 
 
+_FIRST_DB_ACCESS_LOGGED = False
+
+
 class HybridRow(dict):
     def __init__(self, columns, values):
         super().__init__(zip(columns, values))
@@ -167,7 +170,11 @@ class DatabaseConnection:
 
 
 def connect():
+    global _FIRST_DB_ACCESS_LOGGED
     settings = get_settings()
+    if not _FIRST_DB_ACCESS_LOGGED:
+        print("DB FIRST ACCESS:", settings.db_engine)
+        _FIRST_DB_ACCESS_LOGGED = True
     if settings.db_engine == "postgres":
         import psycopg
 

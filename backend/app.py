@@ -86,10 +86,15 @@ app.config['EPSA_APP_URL'] = settings.app_public_url
 cors_origins = settings.cors_origins if settings.cors_origins else ([] if settings.is_production else "*")
 CORS(app, origins=cors_origins, supports_credentials=True)
 jwt  = JWTManager(app)
-sock = SocketIO(app, cors_allowed_origins=cors_origins, async_mode='threading' if settings.is_production else 'eventlet')
+sock = SocketIO(cors_allowed_origins=cors_origins, async_mode='threading' if settings.is_production else 'eventlet')
 _runtime_lock = threading.Lock()
 _runtime_initialized = False
 _runtime_init_error = None
+_socketio_initialized = False
+
+if settings.is_local:
+    sock.init_app(app)
+    _socketio_initialized = True
 
 # Register blueprints
 app.register_blueprint(auth_bp,       url_prefix='/api/auth')
@@ -117,6 +122,8 @@ def ensure_runtime_ready():
         if _runtime_initialized:
             return
         try:
+            print("LAZY INIT STARTED")
+            ensure_socketio_ready()
             init_db()
             migrate_db()
             ensure_bootstrap_admin()
@@ -129,6 +136,15 @@ def ensure_runtime_ready():
             _runtime_init_error = exc
             print(f"[Startup] Runtime initialization failed: {exc}")
             raise
+
+
+def ensure_socketio_ready():
+    global _socketio_initialized
+    if _socketio_initialized:
+        return
+    sock.init_app(app)
+    _socketio_initialized = True
+    print("[Startup] SocketIO initialized lazily.")
 
 
 def _is_fast_health_path():
@@ -160,13 +176,13 @@ def initialize_runtime():
 @app.route('/api/health')
 def health():
     print("HEALTH ROUTE HIT:", request.path)
-    return "OK", 200
+    return {'status': 'ok'}, 200
 
 
 @app.route('/health')
 def platform_health():
     print("HEALTH ROUTE HIT:", request.path)
-    return "OK", 200
+    return {'status': 'ok'}, 200
 
 @app.route('/api/leadership/public')
 def public_leadership():
@@ -525,8 +541,8 @@ def get_document(doc_type, filename):
 @app.route('/')
 def serve_home():
     if IS_PRODUCTION_RUNTIME:
-        print("HEALTH ROUTE HIT:", request.path)
-        return "OK", 200
+        print("ROOT HIT")
+        return {'status': 'ok'}, 200
     return send_from_directory(PROJECT_ROOT, 'index.html')
 
 
