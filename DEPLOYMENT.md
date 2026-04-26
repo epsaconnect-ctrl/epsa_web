@@ -57,8 +57,8 @@
    - `EPSA_BOOTSTRAP_ADMIN_PASSWORD`
    - optional: `EPSA_BOOTSTRAP_ADMIN_EMAIL`, `EPSA_BOOTSTRAP_ADMIN_TOTP_SECRET`
 9. Run with Gunicorn:
-   - `cd backend`
-   - `gunicorn -c gunicorn.conf.py wsgi:application`
+   - from the repo root: `gunicorn backend.app:app --bind 0.0.0.0:$PORT --workers 1 --threads 2`
+   - if Railway uses a custom Start Command, set it to exactly the same command
 
 ## SQLite to PostgreSQL migration notes
 
@@ -77,5 +77,6 @@
 ## Operational notes
 
 - Debug mode is controlled by `EPSA_ENV` and `EPSA_DEBUG`, and should stay off in production.
+- The production root route `/` returns a fast health response for Railway without depending on the database.
 - OTP verification, password reset, admin TOTP, and rate-limited routes are enforced server-side.
 - Biometric analysis is dispatched through a thread pool so heavy face-processing work does not block the main request path as aggressively as before.

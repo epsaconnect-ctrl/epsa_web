@@ -17,26 +17,48 @@ from werkzeug.security import check_password_hash as wz_check_password_hash
 from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
 
-from config import get_settings
-from face_verification import (
-    DEFAULT_THRESHOLD,
-    FaceVerificationError,
-    analyze_face,
-    compare_embeddings,
-    deserialize_embedding,
-    deserialize_embedding_set,
-    extract_embedding,
-    extract_embedding_set,
-    hash_image,
-    serialize_embedding,
-    serialize_embedding_set,
-    verify_live_capture_against_set,
-)
-from models import get_db
-from email_service import send_email
-from security import consume_one_time_token, issue_one_time_token, plus_interval, rate_limit, utcnow, verify_totp_code
-from storage import read_upload_bytes, save_bytes
-from tasks import run_biometric_task
+try:
+    from .config import get_settings
+    from .face_verification import (
+        DEFAULT_THRESHOLD,
+        FaceVerificationError,
+        analyze_face,
+        compare_embeddings,
+        deserialize_embedding,
+        deserialize_embedding_set,
+        extract_embedding,
+        extract_embedding_set,
+        hash_image,
+        serialize_embedding,
+        serialize_embedding_set,
+        verify_live_capture_against_set,
+    )
+    from .models import get_db
+    from .email_service import send_email
+    from .security import consume_one_time_token, issue_one_time_token, plus_interval, rate_limit, utcnow, verify_totp_code
+    from .storage import read_upload_bytes, save_bytes
+    from .tasks import run_biometric_task
+except ImportError:
+    from config import get_settings
+    from face_verification import (
+        DEFAULT_THRESHOLD,
+        FaceVerificationError,
+        analyze_face,
+        compare_embeddings,
+        deserialize_embedding,
+        deserialize_embedding_set,
+        extract_embedding,
+        extract_embedding_set,
+        hash_image,
+        serialize_embedding,
+        serialize_embedding_set,
+        verify_live_capture_against_set,
+    )
+    from models import get_db
+    from email_service import send_email
+    from security import consume_one_time_token, issue_one_time_token, plus_interval, rate_limit, utcnow, verify_totp_code
+    from storage import read_upload_bytes, save_bytes
+    from tasks import run_biometric_task
 
 auth_bp = Blueprint("auth", __name__)
 

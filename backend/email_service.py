@@ -4,7 +4,10 @@ from email.mime.multipart import MIMEMultipart
 
 import requests
 
-from config import get_settings
+try:
+    from .config import get_settings
+except ImportError:
+    from config import get_settings
 
 
 def _send_via_resend(settings, to_email, subject, body_html):

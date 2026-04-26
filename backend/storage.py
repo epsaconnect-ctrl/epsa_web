@@ -8,7 +8,10 @@ import requests
 from flask import current_app, redirect, send_file, send_from_directory
 from werkzeug.utils import secure_filename
 
-from config import get_settings
+try:
+    from .config import get_settings
+except ImportError:
+    from config import get_settings
 
 
 def _guess_content_type(filename):
@@ -226,7 +229,11 @@ class SupabaseStorageProvider:
 
 
 def get_storage():
-    return current_app.extensions["storage"]
+    storage = current_app.extensions.get("storage")
+    if storage is None:
+        storage = build_storage()
+        current_app.extensions["storage"] = storage
+    return storage
 
 
 def build_storage():

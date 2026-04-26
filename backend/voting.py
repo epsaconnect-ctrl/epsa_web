@@ -1,8 +1,12 @@
 """EPSA Voting Routes"""
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import get_db
-from storage import save_upload
+try:
+    from .models import get_db
+    from .storage import save_upload
+except ImportError:
+    from models import get_db
+    from storage import save_upload
 
 voting_bp = Blueprint('voting', __name__)
 

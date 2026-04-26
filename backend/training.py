@@ -3,8 +3,12 @@ import secrets
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
-from models import get_db
-from storage import save_upload
+try:
+    from .models import get_db
+    from .storage import save_upload
+except ImportError:
+    from models import get_db
+    from storage import save_upload
 
 training_bp = Blueprint('trainings', __name__)
 

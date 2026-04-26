@@ -7,7 +7,10 @@ from functools import wraps
 
 from flask import current_app, jsonify, request
 
-from config import get_settings
+try:
+    from .config import get_settings
+except ImportError:
+    from config import get_settings
 
 
 def utcnow():

@@ -2,7 +2,10 @@ import re
 import sqlite3
 from pathlib import Path
 
-from config import get_settings
+try:
+    from .config import get_settings
+except ImportError:
+    from config import get_settings
 
 
 class HybridRow(dict):

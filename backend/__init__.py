@@ -1,1 +1,1 @@
-# Enables `backend.wsgi:app` style imports in production.
+# Marks `backend` as a package for `backend.app:app` imports.

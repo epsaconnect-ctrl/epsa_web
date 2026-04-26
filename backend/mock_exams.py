@@ -8,7 +8,10 @@ from datetime import datetime, timezone
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
-from models import get_db
+try:
+    from .models import get_db
+except ImportError:
+    from models import get_db
 
 mock_exams_bp = Blueprint("mock_exams", __name__)
 

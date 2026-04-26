@@ -1,8 +1,12 @@
 ﻿"""
 EPSA Platform â€” Database Models & Schema
 """
-from config import get_settings
-from db import connect
+try:
+    from .config import get_settings
+    from .db import connect
+except ImportError:
+    from config import get_settings
+    from db import connect
 from werkzeug.security import generate_password_hash
 
 SCHEMA = """

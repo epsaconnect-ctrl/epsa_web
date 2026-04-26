@@ -6,8 +6,12 @@ from datetime import datetime, timedelta
 
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import get_db
-from storage import save_upload, upload_url
+try:
+    from .models import get_db
+    from .storage import save_upload, upload_url
+except ImportError:
+    from models import get_db
+    from storage import save_upload, upload_url
 
 admin_bp = Blueprint('admin', __name__)
 

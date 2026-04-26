@@ -3,14 +3,24 @@ import json
 from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from face_verification import (
-    DEFAULT_THRESHOLD,
-    FaceVerificationError,
-    deserialize_embedding,
-    deserialize_embedding_set,
-    verify_live_capture_against_set,
-)
-from models import get_db
+try:
+    from .face_verification import (
+        DEFAULT_THRESHOLD,
+        FaceVerificationError,
+        deserialize_embedding,
+        deserialize_embedding_set,
+        verify_live_capture_against_set,
+    )
+    from .models import get_db
+except ImportError:
+    from face_verification import (
+        DEFAULT_THRESHOLD,
+        FaceVerificationError,
+        deserialize_embedding,
+        deserialize_embedding_set,
+        verify_live_capture_against_set,
+    )
+    from models import get_db
 
 exams_bp = Blueprint('exams', __name__)
 EXAM_FACE_VERIFY_WINDOW_MINUTES = 10

@@ -1,10 +1,14 @@
 """EPSA Social Network Feed Routes"""
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import get_db
 import uuid
 
-from storage import save_upload, upload_url
+try:
+    from .models import get_db
+    from .storage import save_upload, upload_url
+except ImportError:
+    from models import get_db
+    from storage import save_upload, upload_url
 
 network_bp = Blueprint('network', __name__)
 

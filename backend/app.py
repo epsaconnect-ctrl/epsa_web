@@ -2,7 +2,7 @@
 EPSA Platform — Flask Backend Entry Point
 """
 import os
-import sys
+import threading
 from flask import Flask, jsonify, request, send_from_directory, abort
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
@@ -10,35 +10,58 @@ from flask_socketio import SocketIO
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 BACKEND_DIR = os.path.dirname(__file__)
-if BACKEND_DIR not in sys.path:
-    sys.path.insert(0, BACKEND_DIR)
-
-from config import get_settings
-from models import ensure_bootstrap_admin, init_db, migrate_db
-from storage import (
-    build_storage,
-    ensure_local_storage_folders,
-    is_public_folder,
-    private_upload_response,
-    public_upload_response,
-    upload_url,
-)
-from auth import auth_bp
-from students import students_bp
-from training import training_bp
-from voting import voting_bp
-from exams import exams_bp
-from messaging import messaging_bp
-from admin import admin_bp
-from clubs import clubs_bp
-from partners import partners_bp
-from network import network_bp
-from teacher import teacher_bp
-from mock_exams import mock_exams_bp
-from analytics import analytics_bp
+try:
+    from .config import get_settings
+    from .models import ensure_bootstrap_admin, get_db, init_db, migrate_db
+    from .storage import (
+        ensure_local_storage_folders,
+        is_public_folder,
+        private_upload_response,
+        public_upload_response,
+        upload_url,
+    )
+    from .auth import auth_bp
+    from .students import students_bp
+    from .training import training_bp
+    from .voting import voting_bp
+    from .exams import exams_bp
+    from .messaging import messaging_bp
+    from .admin import admin_bp
+    from .clubs import clubs_bp
+    from .partners import partners_bp
+    from .network import network_bp
+    from .teacher import teacher_bp
+    from .mock_exams import mock_exams_bp
+    from .analytics import analytics_bp
+except ImportError:
+    from config import get_settings
+    from models import ensure_bootstrap_admin, get_db, init_db, migrate_db
+    from storage import (
+        ensure_local_storage_folders,
+        is_public_folder,
+        private_upload_response,
+        public_upload_response,
+        upload_url,
+    )
+    from auth import auth_bp
+    from students import students_bp
+    from training import training_bp
+    from voting import voting_bp
+    from exams import exams_bp
+    from messaging import messaging_bp
+    from admin import admin_bp
+    from clubs import clubs_bp
+    from partners import partners_bp
+    from network import network_bp
+    from teacher import teacher_bp
+    from mock_exams import mock_exams_bp
+    from analytics import analytics_bp
 
 PROJECT_ROOT = os.path.abspath(os.path.join(BACKEND_DIR, '..'))
 settings = get_settings()
+
+print("EPSA backend starting...")
+print(f"[Startup] env={settings.env} db={settings.db_engine} storage={settings.storage_mode}")
 
 app = Flask(__name__, static_folder=None)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
@@ -57,12 +80,14 @@ app.config['EPSA_ENV'] = settings.env
 app.config['EPSA_AUTH_TOKEN_MODE'] = settings.auth_token_mode
 app.config['EPSA_API_BASE_URL'] = settings.api_base_url
 app.config['EPSA_APP_URL'] = settings.app_public_url
-app.extensions['storage'] = build_storage()
 
 cors_origins = settings.cors_origins if settings.cors_origins else ([] if settings.is_production else "*")
 CORS(app, origins=cors_origins, supports_credentials=True)
 jwt  = JWTManager(app)
-sock = SocketIO(app, cors_allowed_origins=cors_origins, async_mode='eventlet')
+sock = SocketIO(app, cors_allowed_origins=cors_origins, async_mode='threading' if settings.is_production else 'eventlet')
+_runtime_lock = threading.Lock()
+_runtime_initialized = False
+_runtime_init_error = None
 
 # Register blueprints
 app.register_blueprint(auth_bp,       url_prefix='/api/auth')
@@ -78,18 +103,63 @@ app.register_blueprint(network_bp,    url_prefix='/api/network')
 app.register_blueprint(teacher_bp,    url_prefix='/api/teacher')
 app.register_blueprint(mock_exams_bp, url_prefix='/api/mock-exams')
 app.register_blueprint(analytics_bp,  url_prefix='/api/analytics')
-init_db()
-migrate_db()
-ensure_bootstrap_admin()
-ensure_local_storage_folders()
+
+
+def ensure_runtime_ready():
+    global _runtime_initialized, _runtime_init_error
+
+    if _runtime_initialized:
+        return
+
+    with _runtime_lock:
+        if _runtime_initialized:
+            return
+        try:
+            init_db()
+            migrate_db()
+            ensure_bootstrap_admin()
+            if settings.is_local:
+                ensure_local_storage_folders()
+            _runtime_initialized = True
+            _runtime_init_error = None
+            print("[Startup] Runtime initialization complete.")
+        except Exception as exc:
+            _runtime_init_error = exc
+            print(f"[Startup] Runtime initialization failed: {exc}")
+            raise
+
+
+@app.before_request
+def initialize_runtime():
+    if (
+        request.method == 'OPTIONS'
+        or request.endpoint == 'health'
+        or not request.path.startswith(('/api/', '/uploads/'))
+    ):
+        return None
+    try:
+        ensure_runtime_ready()
+    except Exception as exc:
+        return jsonify({
+            'status': 'error',
+            'message': 'Backend startup initialization failed.',
+            'detail': str(exc),
+        }), 503
 
 @app.route('/api/health')
 def health():
-    return {'status': 'ok', 'message': 'EPSA API is running'}
+    return {
+        'status': 'ok',
+        'message': 'EPSA API is running',
+        'environment': settings.env,
+        'database_mode': settings.db_engine,
+        'storage_mode': settings.storage_mode,
+        'initialized': _runtime_initialized,
+        'startup_error': str(_runtime_init_error) if _runtime_init_error else None,
+    }
 
 @app.route('/api/leadership/public')
 def public_leadership():
-    from models import get_db
     db = get_db()
     executives = db.execute('''
         SELECT e.id, e.vote_rank, e.vote_count, e.assigned_role as position, e.status, e.term_start, e.term_end,
@@ -166,8 +236,6 @@ def public_leadership():
 
 @app.route('/api/history/public')
 def public_history():
-    from models import get_db
-
     db = get_db()
     founders = [
         {
@@ -409,7 +477,6 @@ def public_history():
 
 @app.route('/api/news')
 def public_news():
-    from models import get_db
     db = get_db()
     rows = db.execute("SELECT * FROM news_events ORDER BY is_featured DESC, created_at DESC LIMIT 5").fetchall()
     db.close()
@@ -435,7 +502,6 @@ def get_document(doc_type, filename):
         abort(400)
         
     user_id = get_jwt_identity()
-    from models import get_db
     db = get_db()
     user = db.execute("SELECT role FROM users WHERE id = ?", (user_id,)).fetchone()
     db.close()
@@ -448,6 +514,8 @@ def get_document(doc_type, filename):
 
 @app.route('/')
 def serve_home():
+    if settings.is_production:
+        return {'status': 'ok'}, 200
     return send_from_directory(PROJECT_ROOT, 'index.html')
 
 
@@ -460,6 +528,7 @@ def serve_frontend(path):
 # WebSocket events
 @sock.on('connect')
 def on_connect():
+    ensure_runtime_ready()
     print('[WS] Client connected')
 
 @sock.on('disconnect')
@@ -476,7 +545,6 @@ def on_join(data):
 def on_message(data):
     from flask_socketio import emit
     from flask_jwt_extended import decode_token
-    from models import get_db
     try:
         token   = data.get('token', '')
         decoded = decode_token(token)
@@ -493,7 +561,7 @@ def on_message(data):
         print('[WS Error]', e)
 
 if __name__ == '__main__':
-    ensure_local_storage_folders()
+    ensure_runtime_ready()
     port = int(os.environ.get('PORT') or os.environ.get('EPSA_LOCAL_BACKEND_PORT') or 5000)
     print(f"EPSA Backend starting in {settings.env} mode")
     sock.run(app, host='0.0.0.0', port=port, debug=settings.debug)

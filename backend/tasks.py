@@ -1,7 +1,10 @@
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 
-from config import get_settings
+try:
+    from .config import get_settings
+except ImportError:
+    from config import get_settings
 
 
 @lru_cache(maxsize=1)

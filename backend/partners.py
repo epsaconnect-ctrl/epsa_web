@@ -1,7 +1,11 @@
 """EPSA Partners Routes"""
 from flask import Blueprint, request, jsonify
-from models import get_db
-from storage import upload_url
+try:
+    from .models import get_db
+    from .storage import upload_url
+except ImportError:
+    from models import get_db
+    from storage import upload_url
 
 partners_bp = Blueprint('partners', __name__)
 

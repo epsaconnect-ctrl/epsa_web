@@ -10,7 +10,10 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from werkzeug.security import generate_password_hash
 
-from models import get_db
+try:
+    from .models import get_db
+except ImportError:
+    from models import get_db
 
 teacher_bp = Blueprint("teacher", __name__)
 
