@@ -14,11 +14,34 @@ BACKEND_PRODUCTION_ENV = BASE_DIR / ".env.production"
 PROJECT_PRODUCTION_ENV = PROJECT_ROOT / ".env.production"
 ORIGINAL_ENV = dict(os.environ)
 
+
+def _is_railway_runtime():
+    return bool(
+        os.getenv("PORT")
+        or os.getenv("RAILWAY_ENVIRONMENT")
+        or os.getenv("RAILWAY_SERVICE_ID")
+    )
+
+
+def _resolve_env_name():
+    env = (
+        os.getenv("EPSA_ENV")
+        or os.getenv("APP_ENV")
+        or os.getenv("FLASK_ENV")
+        or "local"
+    )
+    env = str(env).strip().lower()
+    if _is_railway_runtime():
+        env = "production"
+    if env not in {"local", "production", "staging", "development", "test"}:
+        env = "local"
+    return env
+
 for candidate in (BACKEND_ENV, PROJECT_ENV):
     if candidate.exists():
         load_dotenv(candidate, override=False)
 
-active_env = (os.getenv("EPSA_ENV") or os.getenv("FLASK_ENV") or "local").strip().lower()
+active_env = _resolve_env_name()
 if active_env == "production":
     merged_values = {}
     for candidate in (BACKEND_ENV, PROJECT_ENV, BACKEND_PRODUCTION_ENV, PROJECT_PRODUCTION_ENV):
@@ -139,11 +162,11 @@ class AppSettings:
 
 @lru_cache(maxsize=1)
 def get_settings():
-    env = os.getenv("EPSA_ENV") or os.getenv("FLASK_ENV") or "local"
-    env = env.strip().lower()
-    if env not in {"local", "production", "staging", "development", "test"}:
-        env = "local"
+    env = _resolve_env_name()
     normalized_env = "production" if env == "production" else "local"
+    os.environ["APP_ENV"] = normalized_env
+    if _is_railway_runtime():
+        os.environ["EPSA_ENV"] = "production"
 
     debug = _env_bool("EPSA_DEBUG", default=normalized_env != "production")
     local_backend_host = (os.getenv("EPSA_LOCAL_BACKEND_HOST") or "127.0.0.1").strip() or "127.0.0.1"

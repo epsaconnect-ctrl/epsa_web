@@ -59,9 +59,11 @@ except ImportError:
 
 PROJECT_ROOT = os.path.abspath(os.path.join(BACKEND_DIR, '..'))
 settings = get_settings()
+IS_PRODUCTION_RUNTIME = settings.is_production
 
 print("EPSA backend starting...")
 print(f"[Startup] env={settings.env} db={settings.db_engine} storage={settings.storage_mode}")
+print("ENV RESOLVED:", os.getenv("APP_ENV"), IS_PRODUCTION_RUNTIME)
 
 app = Flask(__name__, static_folder=None)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
@@ -157,6 +159,11 @@ def health():
         'initialized': _runtime_initialized,
         'startup_error': str(_runtime_init_error) if _runtime_init_error else None,
     }
+
+
+@app.route('/health')
+def platform_health():
+    return {'status': 'ok'}, 200
 
 @app.route('/api/leadership/public')
 def public_leadership():
@@ -514,7 +521,7 @@ def get_document(doc_type, filename):
 
 @app.route('/')
 def serve_home():
-    if settings.is_production:
+    if IS_PRODUCTION_RUNTIME:
         return {'status': 'ok'}, 200
     return send_from_directory(PROJECT_ROOT, 'index.html')
 
