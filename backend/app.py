@@ -131,11 +131,20 @@ def ensure_runtime_ready():
             raise
 
 
+def _is_fast_health_path():
+    return request.path in {'/', '/health', '/api/health'}
+
+
+@app.before_request
+def log_request_hit():
+    print("REQUEST HIT:", request.path)
+
+
 @app.before_request
 def initialize_runtime():
     if (
         request.method == 'OPTIONS'
-        or request.endpoint == 'health'
+        or _is_fast_health_path()
         or not request.path.startswith(('/api/', '/uploads/'))
     ):
         return None
@@ -150,20 +159,14 @@ def initialize_runtime():
 
 @app.route('/api/health')
 def health():
-    return {
-        'status': 'ok',
-        'message': 'EPSA API is running',
-        'environment': settings.env,
-        'database_mode': settings.db_engine,
-        'storage_mode': settings.storage_mode,
-        'initialized': _runtime_initialized,
-        'startup_error': str(_runtime_init_error) if _runtime_init_error else None,
-    }
+    print("HEALTH ROUTE HIT:", request.path)
+    return "OK", 200
 
 
 @app.route('/health')
 def platform_health():
-    return {'status': 'ok'}, 200
+    print("HEALTH ROUTE HIT:", request.path)
+    return "OK", 200
 
 @app.route('/api/leadership/public')
 def public_leadership():
@@ -522,7 +525,8 @@ def get_document(doc_type, filename):
 @app.route('/')
 def serve_home():
     if IS_PRODUCTION_RUNTIME:
-        return {'status': 'ok'}, 200
+        print("HEALTH ROUTE HIT:", request.path)
+        return "OK", 200
     return send_from_directory(PROJECT_ROOT, 'index.html')
 
 
