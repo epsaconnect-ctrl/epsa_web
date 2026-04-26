@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Explore the full history of the Ethiopian Psychology Students' Association, from its founding to its current national governance structure.">
+  <title>EPSA History Archive</title>
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="stylesheet" href="css/globals.css">
+  <link rel="stylesheet" href="css/ecosystem-enhancements.css">
+  <link rel="stylesheet" href="css/history.css">
+</head>
+<body class="history-page">
+  <nav class="navbar" id="navbar" role="navigation" aria-label="Main navigation">
+    <div class="container">
+      <div class="nav-inner">
+        <a href="index.html" class="nav-logo">
+          <img src="assets/logo.png" alt="EPSA Logo">
+          <div class="nav-logo-text">
+            <span class="nav-logo-main">EPSA</span>
+            <span class="nav-logo-sub">History Archive</span>
+          </div>
+        </a>
+        <ul class="nav-menu" role="list">
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="#timeline" class="nav-link">Timeline</a></li>
+          <li><a href="#founders" class="nav-link">Founders</a></li>
+          <li><a href="#history-archive" class="nav-link">Archive</a></li>
+          <li><a href="ecosystem.html" class="nav-link">Ecosystem</a></li>
+        </ul>
+        <div class="nav-actions">
+          <button class="nav-btn-login" onclick="window.location.href='login.html'">Login</button>
+          <button class="nav-btn-register" onclick="window.location.href='register.html'">Register</button>
+          <div class="nav-hamburger" id="nav-hamburger" role="button" aria-label="Toggle menu" tabindex="0">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="mobile-menu" style="display:none; background:rgba(5,14,7,0.97); backdrop-filter:blur(20px); border-top:1px solid rgba(255,255,255,0.07); padding:20px 0;">
+      <div class="container">
+        <ul style="display:flex; flex-direction:column; gap:4px;">
+          <li><a href="index.html" class="nav-link" style="display:block;">Home</a></li>
+          <li><a href="#timeline" class="nav-link" style="display:block;">Timeline</a></li>
+          <li><a href="#founders" class="nav-link" style="display:block;">Founders</a></li>
+          <li><a href="#history-archive" class="nav-link" style="display:block;">Archive</a></li>
+          <li><a href="ecosystem.html" class="nav-link" style="display:block;">Ecosystem</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <header class="history-hero">
+    <div class="container history-hero-grid">
+      <div class="history-hero-copy history-reveal">
+        <div class="section-label" style="color:var(--epsa-gold);">
+          <span style="width:24px;height:3px;background:linear-gradient(90deg,var(--epsa-gold),var(--epsa-green));border-radius:2px;display:block;"></span>
+          Digital Legacy Archive
+        </div>
+        <h1 id="historyHeroTitle">History of EPSA</h1>
+        <p id="historyHeroSummary">
+          Tracing the origin, growth, and governance evolution of the Ethiopian Psychology Students’ Association.
+        </p>
+        <div class="history-hero-actions">
+          <a href="#timeline" class="btn btn-gold btn-lg">Explore Timeline</a>
+          <a href="#history-archive" class="btn btn-secondary btn-lg">Browse Leadership Archive</a>
+        </div>
+        <div class="history-stat-grid">
+          <div class="history-stat-card">
+            <strong id="historyStatFounders">2</strong>
+            <span>Founding Coordinators</span>
+          </div>
+          <div class="history-stat-card">
+            <strong id="historyStatNeb">0</strong>
+            <span>Current NEB Members</span>
+          </div>
+          <div class="history-stat-card">
+            <strong id="historyStatNec">0</strong>
+            <span>Active NEC Members</span>
+          </div>
+          <div class="history-stat-card">
+            <strong id="historyStatNrc">0</strong>
+            <span>Active NRC Representatives</span>
+          </div>
+        </div>
+      </div>
+      <div class="history-hero-panel history-reveal">
+        <div class="history-panel-label">Official Milestones</div>
+        <div class="history-date-card">
+          <span>November 17, 2025</span>
+          <strong>Official Launch of EPSA</strong>
+          <p>Student-led national initiative launched to unify psychology students across Ethiopia.</p>
+        </div>
+        <div class="history-date-card">
+          <span>December 13, 2025</span>
+          <strong>Recognition Under EPA</strong>
+          <p>EPSA became a semi-autonomous division under the Ethiopian Psychologists’ Association.</p>
+        </div>
+        <blockquote class="history-announcement" id="historyAnnouncement">
+          EPSA was officially launched on November 17, 2025, and later recognized under EPA on December 13, 2025.
+        </blockquote>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="history-section" id="timeline">
+      <div class="container">
+        <div class="history-section-head history-reveal">
+          <div class="section-label">Institutional Timeline</div>
+          <h2>From proposal to national structure</h2>
+          <p>The key milestones that shaped EPSA into a nationally recognized student institution.</p>
+        </div>
+        <div class="history-timeline" id="historyTimeline"></div>
+      </div>
+    </section>
+
+    <section class="history-section alt" id="founders">
+      <div class="container">
+        <div class="history-section-head history-reveal">
+          <div class="section-label">Founding Coordinators</div>
+          <h2>The people who started the movement</h2>
+          <p>EPSA’s origin story is rooted in student leadership, institutional initiative, and strategic coordination.</p>
+        </div>
+        <div class="history-founders-grid" id="historyFoundersGrid"></div>
+      </div>
+    </section>
+
+    <section class="history-section" id="history-archive">
+      <div class="container">
+        <div class="history-section-head history-reveal">
+          <div class="section-label">Leadership Archive</div>
+          <h2>NEB, NEC, and NRC records</h2>
+          <p>Search people, review terms, and trace the evolution of EPSA’s governance bodies over time.</p>
+        </div>
+        <div class="history-toolbar history-reveal">
+          <input type="search" id="historySearch" class="history-input" placeholder="Search by name, role, or university">
+          <select id="historyUniversityFilter" class="history-input">
+            <option value="">All Universities</option>
+          </select>
+        </div>
+
+        <div class="history-archive-grid">
+          <section class="history-archive-block history-reveal">
+            <div class="history-block-head">
+              <div>
+                <div class="history-block-eyebrow">National Executive Board</div>
+                <h3>NEB</h3>
+              </div>
+              <span class="history-count-pill" id="nebCountPill">0 current</span>
+            </div>
+            <div class="history-dual-group">
+              <div>
+                <h4>Current</h4>
+                <div class="history-member-grid" id="nebCurrentGrid"></div>
+              </div>
+              <div>
+                <h4>Past</h4>
+                <div class="history-member-grid compact" id="nebPastGrid"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="history-archive-block history-reveal">
+            <div class="history-block-head">
+              <div>
+                <div class="history-block-eyebrow">National Executive Committee</div>
+                <h3>NEC</h3>
+              </div>
+              <span class="history-count-pill" id="necCountPill">0 current</span>
+            </div>
+            <div class="history-dual-group">
+              <div>
+                <h4>Current</h4>
+                <div class="history-member-grid" id="necCurrentGrid"></div>
+              </div>
+              <div>
+                <h4>Past</h4>
+                <div class="history-member-grid compact" id="necPastGrid"></div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="history-section alt" id="nrc-archive">
+      <div class="container">
+        <div class="history-section-head history-reveal">
+          <div class="section-label">National Representatives Council</div>
+          <h2>University representation across Ethiopia</h2>
+          <p>Browse current and past representatives by university and see the spread of national student representation.</p>
+        </div>
+        <div class="history-nrc-layout">
+          <div class="history-university-panel history-reveal">
+            <div class="history-panel-mini-title">University Distribution</div>
+            <div id="historyUniversityMap" class="history-university-map"></div>
+          </div>
+          <div class="history-nrc-panel history-reveal">
+            <div class="history-dual-group">
+              <div>
+                <h4>Current Representatives</h4>
+                <div class="history-member-grid" id="nrcCurrentGrid"></div>
+              </div>
+              <div>
+                <h4>Past Representatives</h4>
+                <div class="history-member-grid compact" id="nrcPastGrid"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="history-section" id="history-media">
+      <div class="container">
+        <div class="history-media-grid">
+          <div class="history-media-column history-reveal">
+            <div class="history-section-head left">
+              <div class="section-label">Gallery</div>
+              <h2>Early moments and institutional growth</h2>
+              <p>Visual highlights from programs, events, and public milestones connected to EPSA’s early development.</p>
+            </div>
+            <div class="history-gallery-grid" id="historyGallery"></div>
+          </div>
+          <div class="history-side-column history-reveal">
+            <div class="history-resource-card">
+              <div class="history-panel-mini-title">Documents & Records</div>
+              <div class="history-resource-list" id="historyDocuments"></div>
+            </div>
+            <div class="history-resource-card">
+              <div class="history-panel-mini-title">Official Links</div>
+              <div class="history-resource-list" id="historyLinks"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="history-footer">
+    <div class="container history-footer-inner">
+      <div>
+        <div class="footer-logo">
+          <img src="assets/logo.png" alt="EPSA Logo">
+          <span class="footer-logo-text">EPSA</span>
+        </div>
+        <p>A living institutional archive for psychology students across Ethiopia.</p>
+      </div>
+      <div class="history-footer-links">
+        <a href="index.html">Home</a>
+        <a href="ecosystem.html">Ecosystem Hub</a>
+        <a href="clubs.html">Clubs</a>
+        <a href="partners.html">Partners</a>
+        <a href="get-involved.html">Get Involved</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/history.js"></script>
+  <script src="js/public-ecosystem.js"></script>
+</body>
+</html>

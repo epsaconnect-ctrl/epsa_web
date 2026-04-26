@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Statutes &amp; Governing Bodies — EPSA</title>
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="stylesheet" href="css/globals.css">
+  <link rel="stylesheet" href="css/home.css">
+  <style>
+    .statutes-page { padding-top: 100px; padding-bottom: 80px; background: linear-gradient(180deg, #f8faf8 0%, #fff 40%); min-height: 100vh; }
+    .statutes-wrap { max-width: 920px; margin: 0 auto; padding: 0 20px; }
+    .statutes-kicker { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--epsa-green); font-weight: 700; margin-bottom: 12px; }
+    .statutes-title { font-family: var(--font-display, Georgia, serif); font-size: clamp(1.75rem, 4vw, 2.35rem); font-weight: 800; color: #0f2918; line-height: 1.2; margin-bottom: 16px; }
+    .statutes-lead { color: var(--text-secondary, #4a5568); font-size: 1.02rem; line-height: 1.75; margin-bottom: 40px; border-left: 4px solid var(--epsa-gold, #c8a340); padding-left: 18px; }
+    article.statute-art { margin-bottom: 36px; padding: 28px 26px; background: #fff; border: 1px solid rgba(26,107,60,0.12); border-radius: 16px; box-shadow: 0 8px 32px rgba(15,41,24,0.06); }
+    .statute-art h2 { font-family: var(--font-display, Georgia, serif); font-size: 1.15rem; font-weight: 800; color: #1a6b3c; margin-bottom: 14px; }
+    .statute-art h3 { font-size: 0.88rem; font-weight: 700; color: #334155; margin: 18px 0 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .statute-art p, .statute-art li { font-size: 0.94rem; line-height: 1.75; color: #374151; }
+    .statute-art ul { margin: 8px 0 0 1.1rem; }
+    .statute-art li { margin-bottom: 6px; }
+    .statutes-toc { margin-bottom: 32px; padding: 20px; background: rgba(26,107,60,0.06); border-radius: 12px; font-size: 0.88rem; }
+    .statutes-toc a { color: #1a6b3c; font-weight: 600; text-decoration: none; }
+    .statutes-toc a:hover { text-decoration: underline; }
+    .code-ref {
+      font-family: ui-monospace, monospace;
+      font-size: 0.78rem;
+      background: rgba(15, 41, 24, 0.06);
+      border: 1px solid rgba(26, 107, 60, 0.15);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 12px 0;
+      line-height: 1.55;
+      color: #1e3a2f;
+      overflow-x: auto;
+    }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    .pill-row span {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(26, 107, 60, 0.1);
+      color: #14532d;
+    }
+    .flow-step {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 14px 18px;
+      margin: 16px 0;
+      align-items: start;
+    }
+    .flow-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1a6b3c, #0f2918);
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+<nav class="navbar" style="position:fixed;top:0;left:0;right:0;z-index:100;">
+  <div class="container">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo"><img src="assets/logo.png" alt="EPSA"><div class="nav-logo-text"><span class="nav-logo-main">EPSA</span></div></a>
+      <ul class="nav-menu">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="structure.html" class="nav-link active">Statutes &amp; Bodies</a></li>
+        <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="nav-btn-login" onclick="location.href='login.html'">Login</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="statutes-page">
+  <div class="statutes-wrap">
+    <p class="statutes-kicker">Constitutional framework (reference)</p>
+    <h1 class="statutes-title">Structure, Statutes, and Governing Bodies of EPSA</h1>
+    <p class="statutes-lead">
+      This page explains how leadership, representation, and elections are organised in the Ethiopian Psychology Students&apos; Association (EPSA), and how those rules are reflected in the EPSA web platform. It links formal roles (NEB, NEC, NRC) to the actual Python modules and API routes that enforce eligibility, voting, exams, and messaging. Where this page and the registered constitution or bylaws differ, the registered instruments prevail.
+    </p>
+
+    <nav class="statutes-toc" aria-label="Table of contents">
+      <strong>Contents:</strong>
+      <a href="#art1">Art. I</a> ·
+      <a href="#art2">Art. II NEB</a> ·
+      <a href="#art3">Art. III NEC</a> ·
+      <a href="#art4">Art. IV NRC</a> ·
+      <a href="#art5">Art. V Elections</a> ·
+      <a href="#art6">Art. VI Platform</a> ·
+      <a href="#art7">Art. VII Interpretation</a>
+    </nav>
+
+    <article class="statute-art" id="art1">
+      <h2>Article I — Definitions and supremacy of instruments</h2>
+      <p><strong>1.1</strong> &quot;EPSA&quot; means the Ethiopian Psychology Students&apos; Association.</p>
+      <p><strong>1.2</strong> &quot;Member&quot; means a student admitted to the national platform in accordance with EPSA registration rules. In code, approved members typically have <code>users.status = 'approved'</code> (see applicant approval flows in <code>backend/admin.py</code>).</p>
+      <p><strong>1.3</strong> The <em>Constitution</em> and duly adopted <em>bylaws</em> are the supreme internal instruments. The digital platform (Flask blueprints under <code>backend/</code>) operationalises membership, voting, exams, clubs, and messaging; it does not replace those instruments.</p>
+    </article>
+
+    <article class="statute-art" id="art2">
+      <h2>Article II — National Executive Board (NEB)</h2>
+      <h3>Composition and mandate</h3>
+      <p><strong>2.1</strong> The NEB is the highest continuous executive authority between general assemblies: strategy, policy execution, and oversight of national programmes (trainings, certification exams, partnerships).</p>
+      <h3>How the platform supports NEB work</h3>
+      <p>Administrators use the secured admin dashboard (<code>admin/dashboard.html</code>, <code>js/admin.js</code>) which calls REST endpoints under <code>/api/admin/...</code> defined in <code>backend/admin.py</code>: approving students, scheduling trainings, publishing exams, configuring voting phases, and managing clubs and grants.</p>
+      <div class="code-ref">Key module: backend/admin.py — applicants, trainings, exams (create / publish via is_active), voting phase configuration, executive and NRC tooling.</div>
+      <h3>Responsibilities (operational view)</h3>
+      <ul>
+        <li>Approve membership and maintain an accurate national roll (admin applicant routes).</li>
+        <li>Publish national exams when ready: exams are created as drafts then toggled active so students see them via <code>GET /api/exams</code> in <code>backend/exams.py</code>.</li>
+        <li>Supervise elections: activate phases, approve nominations, and finalise results so the student portal and NRC workflows stay aligned with policy.</li>
+      </ul>
+    </article>
+
+    <article class="statute-art" id="art3">
+      <h2>Article III — National Executive Committee (NEC)</h2>
+      <h3>Role</h3>
+      <p><strong>3.1</strong> The NEC operationalises NEB decisions: portfolios (programmes, communications, discipline), day-to-day coordination, and execution of assembly resolutions.</p>
+      <h3>Phase 2 executive elections in software</h3>
+      <p>After Phase 1 establishes university-level representation, Phase 2 in <code>backend/voting.py</code> opens national executive nominations. Only students who appear as <strong>active, eligible NRC members</strong> in the <code>nrc_members</code> table may submit nominations for Phase 2 positions—the server enforces this in <code>nominate()</code> before inserting into <code>nominations</code>.</p>
+      <div class="code-ref">backend/voting.py → nominate(): Phase 2 requires nrc_members.status='active' AND eligibility_status='eligible'.</div>
+      <h3>Accountability</h3>
+      <p>The NEC remains accountable to the NEB and to the membership; admin tooling in <code>backend/admin.py</code> (executive governance panels in <code>js/admin.js</code>) is used to record decisions, vacancies, and handovers in line with your internal procedures.</p>
+    </article>
+
+    <article class="statute-art" id="art4">
+      <h2>Article IV — National Representative Council (NRC)</h2>
+      <h3>Representative function</h3>
+      <p><strong>4.1</strong> The NRC channels institutional and geographic perspectives into national deliberation. On the platform, NRC membership is backed by database rows synced from Phase 1 outcomes (see NRC management tooling exposed alongside voting in the admin UI).</p>
+      <h3>Selection (Phase 1 — university-scoped)</h3>
+      <p>Phase 1 candidates are nominations tied to the voter&apos;s university. The API filters the ballot in <code>get_candidates()</code> so each student only sees approved nominees from <code>users.university</code> matching their own row.</p>
+      <div class="code-ref">backend/voting.py → get_candidates(): if phase_number == 1, nominations are restricted with WHERE u.university = voter.university.</div>
+      <h3>Powers (as reflected in code)</h3>
+      <ul>
+        <li>Phase 1 winners feed representative structures used later for Phase 2 eligibility.</li>
+        <li>Student-facing NRC-related data and documents may be served through <code>backend/students.py</code> (e.g. governance document paths and portal copy)—check that module for the exact endpoints your deployment exposes.</li>
+      </ul>
+    </article>
+
+    <article class="statute-art" id="art5">
+      <h2>Article V — Elections, voting process, and integrity</h2>
+      <div class="pill-row">
+        <span>Phase 1</span><span>University ballot</span><span>Phase 2</span><span>Executive ballot</span><span>One vote / phase</span>
+      </div>
+      <p>The live voting engine is implemented in <code>backend/voting.py</code> and consumed by the student dashboard (<code>js/dashboard.js</code>) via <code>API.getActiveCandidates</code>, <code>API.nominateSelf</code>, and <code>API.castVote</code> (<code>js/api.js</code>).</p>
+
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div>
+          <strong>Active phase</strong>
+          <p style="margin:6px 0 0;">The server selects the current phase with <code>_active_phase()</code>: a row in <code>voting_phases</code> where <code>is_active = 1</code> and <code>status = 'active'</code>. If none exists, the API returns <code>active: false</code> and an empty candidate list.</p>
+          <div class="code-ref">voting_bp routes: /voting/candidates, /voting/nominate, /voting/vote, /voting/results</div>
+        </div>
+        <div class="flow-num">2</div>
+        <div>
+          <strong>Nomination</strong>
+          <p style="margin:6px 0 0;"><code>POST /voting/nominate</code> requires an approved, non-graduated member. Phase 2 additionally requires eligible NRC membership. Files such as manifestos are stored under the uploads folder configured in the Flask app.</p>
+        </div>
+        <div class="flow-num">3</div>
+        <div>
+          <strong>Casting a vote</strong>
+          <p style="margin:6px 0 0;"><code>POST /voting/vote</code> rejects duplicate ballots (<code>votes</code> uniqueness per voter and phase) and validates that the candidate has an approved nomination in the active phase. In Phase 1, the voter and candidate must share the same <code>university</code> string.</p>
+        </div>
+        <div class="flow-num">4</div>
+        <div>
+          <strong>Results</strong>
+          <p style="margin:6px 0 0;"><code>GET /voting/results</code> aggregates vote totals for reporting in the portal. Admins finalise phases and sync structures through <code>backend/admin.py</code> (election lifecycle and governance cycle helpers).</p>
+        </div>
+      </div>
+
+      <h3>Integrity measures encoded today</h3>
+      <ul>
+        <li><strong>Eligibility:</strong> membership status, graduation status, and NRC flags are checked server-side before nominations or votes are accepted.</li>
+        <li><strong>Ballot secrecy:</strong> handled by your organisational policy; the database stores an anonymous link between <code>voter_id</code>, <code>candidate_id</code>, and <code>phase_id</code> for auditability.</li>
+        <li><strong>Disputes:</strong> procedural resolution remains a human process; the platform preserves machine-readable records for investigation.</li>
+      </ul>
+    </article>
+
+    <article class="statute-art" id="art6">
+      <h2>Article VI — Platform services (exams, identity, messaging)</h2>
+      <h3>Examinations</h3>
+      <p>Admins create exams and questions via <code>backend/admin.py</code>. Publishing sets <code>exams.is_active</code> so <code>backend/exams.py</code> includes them in <code>GET /api/exams</code>. Students must hold a verified face profile (<code>face_embeddings.registration_verified = 1</code>) and pass a recent exam face check before starting a timed attempt.</p>
+      <div class="code-ref">backend/exams.py — list_exams, verify_exam_face, start_exam (JWT user id normalised to int for reliable joins).</div>
+      <h3>Facial verification</h3>
+      <p>Registration and exam flows use <code>backend/face_verification.py</code> (OpenCV-based detection and embeddings). Face <strong>login</strong> in <code>backend/auth.py</code> requires both a strong embedding match <em>and</em> a live-vs-enrolled-photo check so behaviour stays consistent with registration. Analysis responses can include a <code>facial_features</code> object (eyes, nose, mouth geometry, teeth-visible heuristic) for UI feedback.</p>
+      <h3>Messaging and student support</h3>
+      <p>Direct messages use <code>backend/messaging.py</code>. Students can reach the primary admin account via <code>GET /messages/support-contact</code>; conversations and replies use <code>/messages/conversations</code>, <code>/messages/&lt;partner_id&gt;</code>, and <code>POST /messages</code>. Admins see the same threads in the &quot;Student Messages&quot; section of the admin dashboard.</p>
+    </article>
+
+    <article class="statute-art" id="art7">
+      <h2>Article VII — Interpretation</h2>
+      <p><strong>7.1</strong> This page describes how EPSA&apos;s digital services map to governing concepts. It is not legal advice and may lag behind repository changes; always verify behaviour against the current source tree.</p>
+      <p><strong>7.2</strong> The NEB may issue interpretive guidance that does not contradict the Constitution. Technical interpretation of the codebase is the responsibility of the development maintainers.</p>
+    </article>
+
+    <p style="font-size:0.85rem;color:#64748b;margin-top:32px;line-height:1.6;">
+      For questions regarding these provisions, contact <a href="mailto:epsaconnect@gmail.com">epsaconnect@gmail.com</a>.
+    </p>
+  </div>
+</main>
+</body>
+</html>

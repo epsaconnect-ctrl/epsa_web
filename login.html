@@ -1,0 +1,326 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Login to your EPSA student account - Ethiopian Psychology Students' Association">
+  <title>Login - EPSA</title>
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="stylesheet" href="css/globals.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="auth-page">
+  <div class="auth-panel-left">
+    <div class="auth-panel-left-bg">
+      <img src="assets/hero.jpg" alt="EPSA students">
+      <div class="auth-panel-left-overlay"></div>
+    </div>
+
+    <div class="auth-left-content">
+      <a href="index.html" class="auth-logo">
+        <img src="assets/logo.png" alt="EPSA Logo">
+        <div class="auth-logo-text">
+          <span class="auth-logo-main">EPSA</span>
+          <span class="auth-logo-sub">Ethiopian Psychology Students' Association</span>
+        </div>
+      </a>
+
+      <h2 class="auth-panel-headline">
+        Welcome<br>Back to<br><span>EPSA</span>
+      </h2>
+      <p class="auth-panel-desc">
+        Your digital home for psychology education, governance, training, and professional growth across Ethiopia.
+      </p>
+
+      <div class="auth-panel-features">
+        <div class="auth-feature">
+          <div class="auth-feature-icon">ðŸŽ“</div>
+          <span>Access exclusive training programs and certifications</span>
+        </div>
+        <div class="auth-feature">
+          <div class="auth-feature-icon">ðŸ—³ï¸</div>
+          <span>Participate in democratic student elections</span>
+        </div>
+        <div class="auth-feature">
+          <div class="auth-feature-icon">ðŸ¤</div>
+          <span>Connect with 1,200+ psychology students nationwide</span>
+        </div>
+        <div class="auth-feature">
+          <div class="auth-feature-icon">ðŸ“</div>
+          <span>Take secure, certified national examinations</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-left-bottom">
+      <p class="auth-bottom-quote">"Empowering Minds, Transforming Lives - together, across every Ethiopian university."</p>
+    </div>
+  </div>
+
+  <div class="auth-panel-right">
+    <div class="auth-form-container">
+      <div class="auth-form-header">
+        <h1 class="auth-form-title">Sign In</h1>
+        <p class="auth-form-subtitle">
+          New to EPSA? <a href="register.html" id="go-register">Register as a Student</a> &nbsp;Â·&nbsp; <a href="teacher-register.html" style="color:#f59e0b;font-weight:600">Join as a Teacher</a>
+        </p>
+      </div>
+
+      <div class="auth-card">
+        <form id="loginForm" novalidate autocomplete="off">
+          <div class="form-group">
+            <label class="form-label" for="login-username">Email / Phone / Username / Student ID</label>
+            <input
+              type="text"
+              id="login-username"
+              class="form-input"
+              placeholder="e.g. EPSA-AAU-2024-001 or +2519XXXXXXXX"
+              autocomplete="username"
+              required>
+            <div class="form-error" id="username-error" style="display:none;">
+              âš  Please enter your email, phone number, username, or student ID
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="login-password">Password</label>
+            <div style="position:relative;">
+              <input
+                type="password"
+                id="login-password"
+                class="form-input"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                required
+                style="padding-right: 48px;">
+              <button
+                type="button"
+                id="togglePassword"
+                style="position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:1rem; color:var(--text-muted);"
+                aria-label="Toggle password visibility">
+                ðŸ‘ï¸
+              </button>
+            </div>
+            <div class="form-error" id="password-error" style="display:none;">
+              âš  Please enter your password
+            </div>
+          </div>
+
+          <div class="remember-forgot">
+            <label class="checkbox-group">
+              <input type="checkbox" id="rememberMe">
+              <span class="checkbox-label">Remember me</span>
+            </label>
+            <a href="#" class="forgot-link" id="forgotPasswordLink">Forgot Password?</a>
+          </div>
+
+          <button type="submit" id="loginBtn" class="btn btn-primary w-full" style="margin-bottom:var(--space-4);">
+            <span id="loginBtnText">Sign In to EPSA</span>
+            <span class="spinner" id="loginSpinner" style="display:none;"></span>
+          </button>
+
+          <button type="button" id="openFaceLoginBtn" class="btn btn-ghost w-full face-login-entry">
+            <span class="face-login-entry-icon">Face ID</span>
+            <span class="face-login-entry-copy">
+              <strong>Sign in with your face</strong>
+              <small>Open the identity camera and let EPSA verify you automatically.</small>
+            </span>
+          </button>
+
+          <div style="text-align:center;">
+            <a href="admin/login.html" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none; transition:var(--transition-fast);"
+               onmouseover="this.style.color='var(--epsa-green)'"
+               onmouseout="this.style.color='var(--text-muted)'">
+              ðŸ” Admin / Staff Login
+            </a>
+          </div>
+        </form>
+      </div>
+</div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="forgotModal">
+  <div class="modal">
+    <h3 style="font-family:var(--font-display); font-weight:800; margin-bottom:var(--space-2);">Reset Password</h3>
+    <p style="color:var(--text-muted); font-size:0.875rem; margin-bottom:var(--space-6);">Enter your registered email address and we'll send a reset link.</p>
+    <div class="form-group">
+      <label class="form-label" for="reset-email">Email Address</label>
+      <input type="email" id="reset-email" class="form-input" placeholder="your@email.com">
+    </div>
+    <div style="display:flex; gap:var(--space-3); justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeForgotModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitForgotPassword()">Send Reset Link</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="resetModal">
+  <div class="modal">
+    <h3 style="font-family:var(--font-display); font-weight:800; margin-bottom:var(--space-2);">Choose a New Password</h3>
+    <p style="color:var(--text-muted); font-size:0.875rem; margin-bottom:var(--space-6);">Set a strong new password for your EPSA account.</p>
+    <input type="hidden" id="reset-token">
+    <div class="form-group">
+      <label class="form-label" for="new-reset-password">New Password</label>
+      <input type="password" id="new-reset-password" class="form-input" placeholder="Enter a new password">
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="confirm-reset-password">Confirm Password</label>
+      <input type="password" id="confirm-reset-password" class="form-input" placeholder="Confirm your new password">
+    </div>
+    <div style="display:flex; gap:var(--space-3); justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeResetModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitResetPassword()">Update Password</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay face-login-modal" id="faceLoginModal">
+  <div class="face-login-shell">
+    <div class="face-login-header">
+      <div>
+        <div class="face-login-kicker">Secure Identity Access</div>
+        <h2 class="face-login-title">Face Sign-In</h2>
+        <p class="face-login-subtitle">Complete the guided liveness scan (same steps as registration). EPSA then compares your live capture to your <strong>enrolled profile photo</strong> firstâ€”only the account that photo belongs to can open.</p>
+        <div class="face-login-trust-banner" role="status">
+          <div class="face-login-trust-icon" aria-hidden="true">ðŸ›¡ï¸</div>
+          <div class="face-login-trust-copy">
+            <strong>Photo-first identity</strong>
+            <span>Wrong faces are rejected before any account is chosenâ€”just like the registration face-verify step.</span>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="face-login-close" id="closeFaceLoginBtn" aria-label="Close face login">Ã—</button>
+    </div>
+
+    <div class="face-login-layout">
+      <div class="face-studio-card face-login-studio">
+        <div class="face-studio-topbar">
+          <div>
+            <div class="face-studio-title">Identity Camera</div>
+            <div class="face-studio-copy">Fast live verification that finds your face, compares it to your registered EPSA profile, and signs you in automatically.</div>
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm" id="restartFaceCameraBtn">Restart Camera</button>
+        </div>
+
+        <div class="face-stage face-login-stage">
+          <div class="face-camera-stack">
+            <div class="face-stage-orb face-stage-orb-left"></div>
+            <div class="face-stage-orb face-stage-orb-right"></div>
+            <video id="faceVerifyVideo" autoplay playsinline muted class="face-stage-video"></video>
+            <canvas id="faceVerifyCanvas" width="640" height="480" style="display:none;"></canvas>
+            <div class="face-stage-grid"></div>
+            <div class="face-stage-loader" id="faceStageLoader" style="display:none;">
+              <div class="face-stage-loader-ring"></div>
+              <div class="face-stage-loader-text" id="faceStageLoaderText">Preparing face sign-in...</div>
+            </div>
+            <svg class="face-landmark-overlay" id="faceLandmarkOverlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+            <div class="face-guide-frame" id="faceGuideFrame">
+              <div class="face-guide-corner top-left"></div>
+              <div class="face-guide-corner top-right"></div>
+              <div class="face-guide-corner bottom-left"></div>
+              <div class="face-guide-corner bottom-right"></div>
+              <div class="face-guide-ring"></div>
+            </div>
+            <div class="face-focus-hint" id="faceFocusHint">Camera ready. Look naturally into the guide for automatic sign-in.</div>
+            <div id="faceCameraFallback" class="face-camera-fallback">
+              Camera access is required for face sign-in.
+            </div>
+          </div>
+          <div class="face-stage-hud face-login-hud-panel">
+            <div class="face-stage-badge" id="faceStageTaskBadge">Identity camera live</div>
+            <div class="face-stage-sidepanel face-login-inline-status">
+              <div class="face-stage-sidepanel-kicker">Identity status</div>
+              <div class="face-stage-sidepanel-title" id="faceStageInstructionTitle">Align your face</div>
+              <div class="face-stage-sidepanel-copy" id="faceStageInstructionCopy">Center your face naturally. EPSA will identify you automatically.</div>
+              <div class="face-stage-sidepanel-reason" id="faceStageInstructionReason">Live eye, nose, mouth, and facial contour tracking is used for the match.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="face-stage-actions face-login-actions">
+          <button type="button" class="btn btn-gold" id="startSmartScanBtn" style="display:none;">Start Identity Camera</button>
+          <button type="button" class="btn btn-primary" id="captureFaceBtn" disabled>Use Current Face</button>
+          <button type="button" class="btn btn-ghost" id="retakeFaceBtn" style="display:none;">Retry Scan</button>
+        </div>
+
+        <div class="face-login-mini-card face-login-profile-card" id="faceLoginProfileCard">
+          <div class="face-card-kicker">Recognized Profile</div>
+          <div class="face-login-profile-empty" id="faceLoginProfileEmpty">The matched student profile will appear here as soon as EPSA confirms your identity.</div>
+          <div class="face-login-profile-content" id="faceLoginProfileContent" style="display:none;">
+            <img id="faceLoginProfileImage" class="face-login-profile-image" alt="Verified EPSA profile">
+            <div class="face-login-profile-copy">
+              <div class="face-login-profile-name" id="faceLoginProfileName">Student Name</div>
+              <div class="face-login-profile-meta" id="faceLoginProfileMeta">University â€¢ Academic year</div>
+              <div class="face-login-profile-details" id="faceLoginProfileDetails">Student details</div>
+              <div class="face-login-profile-pill" id="faceLoginSuccessNote">Verified identity. Redirecting to your portal...</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="faceVerificationStatus" class="face-status-box face-login-status">
+          <div class="face-card-kicker">Identity Status</div>
+          <div class="face-scan-prompt face-login-prompt" id="faceScanPrompt">Center your face inside the guide. EPSA will identify you automatically.</div>
+          <div class="face-login-status-copy" id="faceLoginStatusCopy">Face sign-in is ready. EPSA will identify you automatically once the camera has a clean face lock.</div>
+        </div>
+
+        <div class="face-login-hidden-metrics" aria-hidden="true">
+          <strong id="faceMetricLighting">Analyzing</strong>
+          <strong id="faceMetricAlignment">Waiting</strong>
+          <strong id="faceMetricExpression">Waiting</strong>
+          <strong id="faceMetricMovement">Waiting</strong>
+          <strong id="faceTrackerStatus">Searching</strong>
+          <strong id="faceMetricYaw">0 deg</strong>
+          <strong id="faceHoldTitle">Light check</strong>
+          <strong id="faceHoldCountdown">1.0s</strong>
+          <div id="faceHoldBarFill"></div>
+          <div id="faceHoldCaption">Move into the requested pose, then hold it steadily for one second before capture.</div>
+          <div id="faceChallengeList"></div>
+          <div id="faceAngleGallery"></div>
+        </div>
+
+        <div class="face-login-success-overlay" id="faceLoginSuccessOverlay" style="display:none;">
+          <div class="face-login-success-card">
+            <div class="face-card-kicker">Verified Identity</div>
+            <img id="faceLoginSuccessImage" class="face-login-success-image" alt="Verified EPSA profile">
+            <div class="face-login-success-name" id="faceLoginSuccessName">Student Name</div>
+            <div class="face-login-success-meta" id="faceLoginSuccessMeta">University â€¢ Academic year</div>
+            <div class="face-login-success-details" id="faceLoginSuccessDetails">Student details</div>
+            <div class="face-login-success-countdown" id="faceLoginSuccessCountdown">Entering portal in 5s...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script>
+  document.getElementById('loginForm').addEventListener('submit', handleLogin);
+  document.getElementById('togglePassword').addEventListener('click', () => {
+    const pw = document.getElementById('login-password');
+    const btn = document.getElementById('togglePassword');
+    if (pw.type === 'password') { pw.type = 'text'; btn.textContent = 'ðŸ™ˆ'; }
+    else { pw.type = 'password'; btn.textContent = 'ðŸ‘ï¸'; }
+  });
+  document.getElementById('forgotPasswordLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('forgotModal').classList.add('active');
+  });
+  function closeForgotModal() {
+    document.getElementById('forgotModal').classList.remove('active');
+  }
+  function submitForgotPassword() {
+    const email = document.getElementById('reset-email').value;
+    if (!email) { showToast('Please enter your email address', 'error'); return; }
+    showToast('If this email is registered, a reset link has been sent.', 'success');
+    closeForgotModal();
+  }
+</script>
+</body>
+</html>
+
+

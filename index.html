@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Ethiopian Psychology Students' Association (EPSA) — Empowering minds, transforming lives. The unified digital platform for psychology students across Ethiopia.">
+  <meta name="keywords" content="EPSA, Ethiopian Psychology Students Association, psychology Ethiopia, student association">
+  <meta property="og:title" content="EPSA — Ethiopian Psychology Students' Association">
+  <meta property="og:description" content="Empowering minds, transforming lives. Building a united community of psychology students in Ethiopia.">
+  <title>EPSA — Ethiopian Psychology Students' Association</title>
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="stylesheet" href="css/globals.css">
+  <link rel="stylesheet" href="css/home.css">
+  <link rel="stylesheet" href="css/ecosystem-enhancements.css">
+</head>
+<body>
+
+<!-- ── TOAST CONTAINER ── -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ══════════════════════════════════════════════
+     NAVIGATION
+══════════════════════════════════════════════ -->
+<nav class="navbar" id="navbar" role="navigation" aria-label="Main navigation">
+  <div class="container">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo" id="nav-logo">
+        <img src="assets/logo.png" alt="EPSA Logo">
+        <div class="nav-logo-text">
+          <span class="nav-logo-main">EPSA</span>
+          <span class="nav-logo-sub">Ethiopian Psychology Students' Association</span>
+        </div>
+      </a>
+
+      <ul class="nav-menu" role="list">
+        <li><a href="#about" class="nav-link">About</a></li>
+        <li><a href="history.html" class="nav-link">History</a></li>
+        <li><a href="ecosystem.html" class="nav-link">Ecosystem</a></li>
+        <li><a href="#programs" class="nav-link">Programs</a></li>
+        <li><a href="structure.html" class="nav-link">Statutes &amp; Bodies</a></li>
+        <li><a href="#news" class="nav-link">News &amp; Events</a></li>
+        <li><a href="#contact" class="nav-link">Contact</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <button id="nav-login-btn" class="nav-btn-login" onclick="window.location.href='login.html'" aria-label="Login to your account">Login</button>
+        <button id="nav-register-btn" class="nav-btn-register" onclick="window.location.href='register.html'" aria-label="Register as a student">Register as Student</button>
+        <div class="nav-hamburger" id="nav-hamburger" role="button" aria-label="Toggle menu" tabindex="0">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" style="display:none; background:rgba(5,14,7,0.97); backdrop-filter:blur(20px); border-top:1px solid rgba(255,255,255,0.07); padding:20px 0;">
+    <div class="container">
+      <ul style="display:flex; flex-direction:column; gap:4px;">
+        <li><a href="#about" class="nav-link" style="display:block;">About</a></li>
+        <li><a href="history.html" class="nav-link" style="display:block;">History</a></li>
+        <li><a href="ecosystem.html" class="nav-link" style="display:block;">Ecosystem</a></li>
+        <li><a href="#programs" class="nav-link" style="display:block;">Programs</a></li>
+        <li><a href="structure.html" class="nav-link" style="display:block;">Statutes &amp; Bodies</a></li>
+        <li><a href="#news" class="nav-link" style="display:block;">News &amp; Events</a></li>
+        <li><a href="#contact" class="nav-link" style="display:block;">Contact</a></li>
+      </ul>
+      <div style="margin-top:16px; display:flex; gap:12px; flex-wrap:wrap;">
+        <button class="nav-btn-login" onclick="window.location.href='login.html'" style="flex:1;">Login</button>
+        <button class="nav-btn-register" onclick="window.location.href='register.html'" style="flex:1;">Register as Student</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════
+     HERO SECTION
+══════════════════════════════════════════════ -->
+<section class="hero" id="hero" aria-label="Hero section">
+  <div class="hero-bg">
+    <img src="assets/hero.jpg" alt="EPSA student members — a diverse group of Ethiopian psychology students" loading="eager">
+    <div class="hero-overlay"></div>
+  </div>
+  <div class="hero-particles" id="heroParticles" aria-hidden="true"></div>
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-eyebrow">
+        <div class="hero-eyebrow-line"></div>
+        <span class="hero-eyebrow-text">Ethiopian Psychology Students' Association</span>
+      </div>
+      <h1 class="hero-motto">Empowering<br><span>Minds,</span><br>Transforming<br>Lives.</h1>
+      <p class="hero-vision">Building a united, skilled, and impactful community of psychology students across Ethiopia — fostering academic excellence, professional development, and meaningful change.</p>
+      <div class="hero-actions">
+        <button id="hero-join-btn" class="btn btn-gold btn-lg" onclick="window.location.href='register.html'" aria-label="Join EPSA today">🎓 Join EPSA Today</button>
+        <button id="hero-learn-btn" class="btn btn-secondary btn-lg" onclick="document.getElementById('about').scrollIntoView({behavior:'smooth'})" aria-label="Learn more about EPSA">Learn More ↓</button>
+      </div>
+    </div>
+  </div>
+  <div class="hero-badges" aria-hidden="true">
+    <div class="hero-badge-card"><div class="hero-badge-num" id="hb-students">1,200+</div><div class="hero-badge-label">Registered Students</div></div>
+    <div class="hero-badge-card"><div class="hero-badge-num" id="hb-unis">45+</div><div class="hero-badge-label">Universities</div></div>
+    <div class="hero-badge-card"><div class="hero-badge-num" id="hb-trainings">80+</div><div class="hero-badge-label">Trainings Conducted</div></div>
+  </div>
+  <div class="hero-scroll-hint" onclick="document.getElementById('history-preview').scrollIntoView({behavior:'smooth'})" aria-hidden="true">
+    <div class="scroll-mouse"><div class="scroll-wheel"></div></div>
+    <span>Scroll</span>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     LEADERSHIP SECTION
+══════════════════════════════════════════════ -->
+<section class="history-preview-section" id="history-preview" aria-label="History of EPSA">
+  <div class="container">
+    <div class="history-preview-shell reveal">
+      <div class="history-preview-copy">
+        <div class="section-label" style="color:var(--epsa-gold);">
+          <span style="width:24px;height:3px;background:linear-gradient(90deg,var(--epsa-gold),var(--epsa-green));border-radius:2px;display:block;"></span>
+          The EPSA Story
+        </div>
+        <h2 class="history-preview-title">A student-led movement that became a national institution.</h2>
+        <p class="history-preview-text">
+          EPSA was officially launched on <strong>November 17, 2025</strong> as a student-led national initiative aimed at unifying psychology students across Ethiopia. On <strong>December 13, 2025</strong>, EPSA became a semi-autonomous division under the Ethiopian Psychologists’ Association (EPA), marking its formal recognition and integration into the national professional structure.
+        </p>
+        <div class="history-preview-quote">
+          <div class="history-preview-quote-label">Institutional Milestone</div>
+          <p>From an idea shaped by psychology students into a nationally recognized body under EPA, EPSA’s history reflects vision, coordination, and collective commitment.</p>
+        </div>
+        <div class="history-preview-metrics">
+          <div class="history-preview-metric">
+            <span id="historyFoundersCount">2</span>
+            <small>Founding Coordinators</small>
+          </div>
+          <div class="history-preview-metric">
+            <span id="historyNecCount">0</span>
+            <small>Active NEC Members</small>
+          </div>
+          <div class="history-preview-metric">
+            <span id="historyNrcCount">0</span>
+            <small>Active NRC Representatives</small>
+          </div>
+        </div>
+        <div class="history-preview-actions">
+          <a href="history.html" class="btn btn-gold btn-lg">Explore Full History</a>
+          <a href="history.html#history-archive" class="btn btn-secondary btn-lg">Leadership Archive</a>
+        </div>
+      </div>
+      <div class="history-preview-founders">
+        <article class="history-founder-card">
+          <div class="history-founder-media">
+            <img src="dawit.jpg" alt="Dawit Aynalem">
+          </div>
+          <div class="history-founder-body">
+            <div class="history-founder-role">Founding Coordinator</div>
+            <h3>Dawit Aynalem</h3>
+            <p>Primary initiator and main coordinator who conceptualized EPSA, prepared and presented the proposal to EPA, and led the official launch.</p>
+            <div class="history-founder-tag">4th-year psychology student at establishment</div>
+          </div>
+        </article>
+        <article class="history-founder-card">
+          <div class="history-founder-media">
+            <img src="kidist.png" alt="Kidist Debebe">
+          </div>
+          <div class="history-founder-body">
+            <div class="history-founder-role">Co-Coordinator</div>
+            <h3>Kidist Debebe</h3>
+            <p>Strategic contributor who coordinated training efforts, supported stakeholder communication, and advised the development of EPSA.</p>
+            <div class="history-founder-tag">4th-year psychology student at establishment</div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="leadership-section" id="leadership" aria-label="EPSA Leadership">
+  <div class="leadership-bg-pattern" aria-hidden="true"></div>
+  <div class="container">
+    <div class="leadership-header reveal">
+      <div class="section-label" style="color:var(--epsa-gold); justify-content:center;">
+        <span style="width:24px;height:3px;background:linear-gradient(90deg,var(--epsa-gold),var(--epsa-green));border-radius:2px;display:block;"></span>
+        Our Leadership
+      </div>
+      <h2 class="leadership-title">Meet the Executive Board</h2>
+      <p class="leadership-subtitle">Our elected leaders drive EPSA's mission forward — advocates for every psychology student in Ethiopia.</p>
+    </div>
+    <!-- Layer 1: NEB -->
+    <div class="hierarchy-layer" id="layer-neb">
+      <h3 class="layer-title">National Executive Board (NEB) — Supreme Authority</h3>
+      <div class="leadership-grid neb-grid" id="publicNebGrid">
+        <div style="grid-column:1/-1;text-align:center;padding:var(--space-8);color:var(--text-muted);">Loading NEB Advisory Board...</div>
+      </div>
+    </div>
+    <div class="hierarchy-connector"><div class="connector-line pulse-down"></div></div>
+    <!-- Layer 2: NEC -->
+    <div class="hierarchy-layer" id="layer-nec">
+      <h3 class="layer-title">National Executive Committee (NEC) — Executive Authority</h3>
+      <div class="leadership-grid nec-grid" id="publicNecGrid">
+        <div style="grid-column:1/-1;text-align:center;padding:var(--space-8);color:var(--text-muted);">Loading National Executive Committee...</div>
+      </div>
+    </div>
+    <div class="hierarchy-connector"><div class="connector-line pulse-down"></div></div>
+    <!-- Layer 3: NRC -->
+    <div class="hierarchy-layer" id="layer-nrc">
+      <h3 class="layer-title">National Representatives Council (NRC) — Representative Body</h3>
+      <div class="nrc-container reveal" id="publicNrcGrid">
+        <div style="text-align:center;padding:var(--space-8);color:var(--text-muted);">Loading University Representatives...</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     ABOUT SECTION
+══════════════════════════════════════════════ -->
+<section class="about-section" id="about" aria-label="About EPSA">
+  <div class="container">
+    <div class="about-grid">
+      <div class="about-visual reveal">
+        <div class="about-img-frame">
+          <img src="assets/hero.jpg" alt="EPSA members collaborating">
+          <div class="about-img-overlay"></div>
+        </div>
+        <div class="about-img-badge">
+          <div class="about-img-badge-num">2015</div>
+          <div class="about-img-badge-text">Est. Ethiopian Calendar</div>
+        </div>
+      </div>
+      <div class="about-content reveal reveal-delay-2">
+        <div class="section-label">About EPSA</div>
+        <h2 class="about-title">Uniting Ethiopia's<br><span class="gradient-text">Psychology Students</span></h2>
+        <p class="about-description">The Ethiopian Psychology Students' Association (EPSA) is the national body representing psychology students across all Ethiopian universities. We bridge the gap between academic study and professional practice through training, research, advocacy, and community.</p>
+        <div class="about-values">
+          <div class="about-value-item">
+            <div class="about-value-icon green">🧠</div>
+            <div class="about-value-text"><h4>Our Mission</h4><p>To empower Ethiopian psychology students through education, professional development, and a strong national network.</p></div>
+          </div>
+          <div class="about-value-item">
+            <div class="about-value-icon gold">🌍</div>
+            <div class="about-value-text"><h4>Our Vision</h4><p>A unified, skilled, and impactful community of psychology students driving mental health advocacy across Ethiopia.</p></div>
+          </div>
+          <div class="about-value-item">
+            <div class="about-value-icon blue">⚖️</div>
+            <div class="about-value-text"><h4>Our Values</h4><p>Integrity, inclusion, excellence, collaboration, and service to community guide every initiative we undertake.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     PROGRAMS & IMPACT
+══════════════════════════════════════════════ -->
+<section class="programs-section" id="programs" aria-label="Programs and Impact">
+  <div class="container">
+    <div class="programs-header">
+      <div class="section-label" style="justify-content:center;">Programs & Impact</div>
+      <h2 class="programs-title">What We Do</h2>
+      <p style="color:var(--text-secondary); max-width:500px; margin:0 auto;">Comprehensive programs designed to shape the next generation of Ethiopian mental health professionals.</p>
+    </div>
+    <div class="programs-grid">
+      <div class="program-card reveal reveal-delay-1">
+        <div class="program-card-top">
+          <div class="program-icon">🎓</div>
+          <h3 class="program-name">Professional Training</h3>
+          <p class="program-desc">Hands-on workshops, seminars, and certification programs covering clinical psychology, counseling, mental health first aid, and research methodology.</p>
+        </div>
+        <div class="program-card-bottom"><div class="program-tags"><span class="program-tag">Online</span><span class="program-tag">In-Person</span><span class="program-tag">Certified</span></div></div>
+      </div>
+      <div class="program-card reveal reveal-delay-2">
+        <div class="program-card-top">
+          <div class="program-icon">🔬</div>
+          <h3 class="program-name">Research Opportunities</h3>
+          <p class="program-desc">Connecting psychology students with research projects, faculty mentors, and publication opportunities to advance mental health knowledge in Ethiopia.</p>
+        </div>
+        <div class="program-card-bottom"><div class="program-tags"><span class="program-tag" style="background:rgba(200,163,64,0.1); color:var(--epsa-gold-dark);">Mentorship</span><span class="program-tag" style="background:rgba(200,163,64,0.1); color:var(--epsa-gold-dark);">Publishing</span></div></div>
+      </div>
+      <div class="program-card reveal reveal-delay-3">
+        <div class="program-card-top">
+          <div class="program-icon">🤝</div>
+          <h3 class="program-name">Community Outreach</h3>
+          <p class="program-desc">Mental health awareness campaigns, free counseling clinics, and school outreach programs that break stigma and bring psychology to communities.</p>
+        </div>
+        <div class="program-card-bottom"><div class="program-tags"><span class="program-tag" style="background:rgba(37,99,235,0.08); color:#2563eb;">Awareness</span><span class="program-tag" style="background:rgba(37,99,235,0.08); color:#2563eb;">Free Service</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     CLUBS & ASSOCIATIONS NETWORK
+══════════════════════════════════════════════ -->
+<section class="hp-clubs-section" id="clubs-network" aria-label="Psychology Clubs Network">
+  <div class="container">
+    <div class="hp-section-header reveal">
+      <div>
+        <div class="section-label" style="color:var(--epsa-green);">
+          <span style="width:24px;height:3px;background:var(--epsa-green);border-radius:2px;display:block;"></span>
+          University Chapters
+        </div>
+        <h2 class="hp-section-title">EPSA <span class="gradient-text">Clubs Network</span></h2>
+        <p class="hp-section-subtitle">Verified campus chapters at universities nationwide, united under one national association.</p>
+      </div>
+      <div class="hp-section-actions">
+        <a href="get-involved.html#clubs" class="btn btn-gold" style="font-size:0.9rem;">🏛️ Register Your Club</a>
+        <a href="clubs.html" class="btn btn-outline-green btn-sm">View All Clubs →</a>
+      </div>
+    </div>
+
+    <div class="hp-clubs-grid" id="homeClubsSlider">
+      <div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-muted);">Loading clubs…</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     PARTNERS & COLLABORATIONS
+══════════════════════════════════════════════ -->
+<section class="hp-partners-section" id="partners-home" aria-label="Partners & Collaborations">
+  <div class="container">
+    <div class="hp-section-header reveal" style="text-align:center;">
+      <div style="width:100%;">
+        <div class="section-label" style="justify-content:center;">Collaborative Ecosystem</div>
+        <h2 class="hp-section-title" style="text-align:center;">Our <span class="gradient-text">Partner Network</span></h2>
+        <p class="hp-section-subtitle" style="text-align:center;max-width:520px;margin:8px auto 0;">Clinics, NGOs, and research institutions working with EPSA to drive mental health impact across Ethiopia.</p>
+      </div>
+    </div>
+
+    <div class="hp-partners-grid" id="homePartnersGrid">
+      <div style="color:var(--text-muted);font-size:0.85rem;padding:48px;text-align:center;">Loading partners…</div>
+    </div>
+
+    <div style="text-align:center;margin-top:var(--space-6);">
+      <a href="partners.html" class="btn btn-outline-green" style="padding:12px 28px;">View Partner Portfolio →</a>
+      <a href="get-involved.html#partners" class="btn btn-ghost" style="padding:12px 28px;margin-left:8px;">Become a Partner</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     FUNDING & GRANTS TRANSPARENCY
+══════════════════════════════════════════════ -->
+<section class="hp-funding-section" id="funding" aria-label="Funding Transparency">
+  <div class="container reveal">
+    <div style="text-align:center;margin-bottom:var(--space-8);">
+      <div class="section-label" style="justify-content:center;">Financial Transparency</div>
+      <h2 class="hp-section-title" style="text-align:center;">National Grant <span class="gradient-text">Fund</span></h2>
+      <p style="color:var(--text-secondary);max-width:500px;margin:8px auto 0;font-size:0.95rem;">Empowering university clubs with direct funding for impactful mental health projects across Ethiopia.</p>
+    </div>
+
+    <div class="hp-funding-stats">
+      <div class="hp-funding-stat-card hp-funding-main">
+        <div class="hp-funding-label">Total Grant Pool</div>
+        <div class="hp-funding-value" id="hf-pool" style="color:var(--epsa-green);">ETB —</div>
+      </div>
+      <div class="hp-funding-stat-card">
+        <div class="hp-funding-label">Funds Awarded</div>
+        <div class="hp-funding-value" id="hf-awarded" style="color:var(--epsa-gold);">ETB —</div>
+      </div>
+      <div class="hp-funding-stat-card">
+        <div class="hp-funding-label">Verified Spend</div>
+        <div class="hp-funding-value" id="hf-spent">ETB —</div>
+      </div>
+    </div>
+
+    <div class="hp-grants-list">
+      <h3 class="hp-grants-title">Recently Funded Projects</h3>
+      <div id="homeRecentGrants" class="hp-grants-items">
+        <div style="text-align:center;padding:32px;color:var(--text-muted);font-size:0.85rem;">Loading recently funded projects…</div>
+      </div>
+      <div style="margin-top:var(--space-5);text-align:center;">
+        <a href="get-involved.html#grants" style="color:var(--epsa-green);font-weight:700;text-decoration:none;font-size:0.9rem;">Learn how to apply for a grant →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     STATISTICS
+══════════════════════════════════════════════ -->
+<section class="stats-section" aria-label="EPSA Statistics">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-item reveal"><div class="stat-num"><span class="counter" data-target="1200" data-suffix="+">0</span></div><div class="stat-label">Registered Students</div></div>
+      <div class="stat-item reveal reveal-delay-2"><div class="stat-num"><span class="counter" data-target="45" data-suffix="+">0</span></div><div class="stat-label">Universities Represented</div></div>
+      <div class="stat-item reveal reveal-delay-3"><div class="stat-num"><span class="counter" data-target="80" data-suffix="+">0</span></div><div class="stat-label">Trainings Conducted</div></div>
+      <div class="stat-item reveal reveal-delay-4"><div class="stat-num"><span class="counter" data-target="12" data-suffix="">0</span></div><div class="stat-label">Years of Impact</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     NEWS & EVENTS
+══════════════════════════════════════════════ -->
+<section class="news-section" id="news" aria-label="News and Events">
+  <div class="container">
+    <div class="news-header">
+      <div>
+        <div class="section-label">Latest Updates</div>
+        <h2 class="news-title">News & Events</h2>
+      </div>
+      <button class="btn btn-outline-green btn-sm" onclick="showToast('Full news portal launching soon!', 'gold')">View All →</button>
+    </div>
+    <div class="news-grid" id="homeNewsWrapper">
+      <div style="grid-column:1/-1;text-align:center;padding:var(--space-8);color:var(--text-muted);">Loading latest news and events...</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     TESTIMONIALS
+══════════════════════════════════════════════ -->
+<section class="testimonials-section" aria-label="Student Testimonials">
+  <div class="container" style="margin-bottom: var(--space-12);">
+    <div class="testimonials-header">
+      <div class="section-label" style="color:var(--epsa-gold); justify-content:center;">
+        <span style="width:24px;height:3px;background:linear-gradient(90deg,var(--epsa-gold),var(--epsa-green));border-radius:2px;display:block;"></span>
+        Student Voices
+      </div>
+      <h2 class="testimonials-title">What Our Members Say</h2>
+    </div>
+  </div>
+  <div class="testimonials-track">
+    <div class="testimonials-slider" id="testimonialSlider">
+      <div class="testimonial-card">
+        <div class="star-rating">★★★★★</div><div class="testimonial-quote">"</div>
+        <p class="testimonial-text">EPSA transformed my academic journey. The trainings and networking opportunities helped me secure my first internship at a mental health clinic. I'm proud to be part of this community.</p>
+        <div class="testimonial-author"><div class="testimonial-avatar-placeholder">AT</div><div><div class="testimonial-name">Abeba Tadesse</div><div class="testimonial-role">Psychology Student · Addis Ababa University</div></div></div>
+      </div>
+      <div class="testimonial-card">
+        <div class="star-rating">★★★★★</div><div class="testimonial-quote">"</div>
+        <p class="testimonial-text">The Mental Health First Aid training I got through EPSA was life-changing. I've now trained over 200 students in my university. This platform truly multiplies impact.</p>
+        <div class="testimonial-author"><div class="testimonial-avatar-placeholder">YH</div><div><div class="testimonial-name">Yonas Haile</div><div class="testimonial-role">3rd Year Student · Jimma University</div></div></div>
+      </div>
+      <div class="testimonial-card">
+        <div class="star-rating">★★★★★</div><div class="testimonial-quote">"</div>
+        <p class="testimonial-text">As a master's student, EPSA gave me a platform to mentor undergrads and contribute to national mental health policy discussions. The networking is unparalleled in Ethiopia.</p>
+        <div class="testimonial-author"><div class="testimonial-avatar-placeholder">SK</div><div><div class="testimonial-name">Sara Kebede</div><div class="testimonial-role">Master's Student · Hawassa University</div></div></div>
+      </div>
+      <div class="testimonial-card">
+        <div class="star-rating">★★★★★</div><div class="testimonial-quote">"</div>
+        <p class="testimonial-text">Being elected as university representative through EPSA's voting system gave me real governance experience. The platform is transparent and the elections truly democratic.</p>
+        <div class="testimonial-author"><div class="testimonial-avatar-placeholder">DM</div><div><div class="testimonial-name">Dawit Mulugeta</div><div class="testimonial-role">University Rep · Bahir Dar University</div></div></div>
+      </div>
+      <div class="testimonial-card">
+        <div class="star-rating">★★★★★</div><div class="testimonial-quote">"</div>
+        <p class="testimonial-text">The exam and assessment system is incredibly secure and fair. It helped us benchmark our knowledge against peers nationwide. EPSA is building the future of Ethiopian psychology.</p>
+        <div class="testimonial-author"><div class="testimonial-avatar-placeholder">HG</div><div><div class="testimonial-name">Hanan Girma</div><div class="testimonial-role">Final Year · Mekelle University</div></div></div>
+      </div>
+      <!-- Duplicate for seamless loop -->
+      <div class="testimonial-card">
+        <div class="star-rating">★★★★★</div><div class="testimonial-quote">"</div>
+        <p class="testimonial-text">EPSA transformed my academic journey. The trainings and networking opportunities helped me secure my first internship at a mental health clinic. I'm proud to be part of this community.</p>
+        <div class="testimonial-author"><div class="testimonial-avatar-placeholder">AT</div><div><div class="testimonial-name">Abeba Tadesse</div><div class="testimonial-role">Psychology Student · Addis Ababa University</div></div></div>
+      </div>
+      <div class="testimonial-card">
+        <div class="star-rating">★★★★★</div><div class="testimonial-quote">"</div>
+        <p class="testimonial-text">The Mental Health First Aid training I got through EPSA was life-changing. I've now trained over 200 students in my university. This platform truly multiplies impact.</p>
+        <div class="testimonial-author"><div class="testimonial-avatar-placeholder">YH</div><div><div class="testimonial-name">Yonas Haile</div><div class="testimonial-role">3rd Year Student · Jimma University</div></div></div>
+      </div>
+      <div class="testimonial-card">
+        <div class="star-rating">★★★★★</div><div class="testimonial-quote">"</div>
+        <p class="testimonial-text">As a master's student, EPSA gave me a platform to mentor undergrads and contribute to national mental health policy discussions. The networking is unparalleled in Ethiopia.</p>
+        <div class="testimonial-author"><div class="testimonial-avatar-placeholder">SK</div><div><div class="testimonial-name">Sara Kebede</div><div class="testimonial-role">Master's Student · Hawassa University</div></div></div>
+      </div>
+      <div class="testimonial-card">
+        <div class="star-rating">★★★★★</div><div class="testimonial-quote">"</div>
+        <p class="testimonial-text">Being elected as university representative through EPSA's voting system gave me real governance experience. The platform is transparent and the elections truly democratic.</p>
+        <div class="testimonial-author"><div class="testimonial-avatar-placeholder">DM</div><div><div class="testimonial-name">Dawit Mulugeta</div><div class="testimonial-role">University Rep · Bahir Dar University</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     CTA SECTION
+══════════════════════════════════════════════ -->
+<section class="cta-section" aria-label="Join EPSA">
+  <div class="container">
+    <div class="cta-card reveal">
+      <div class="cta-label">Ready to Make a Difference?</div>
+      <h2 class="cta-title">Join EPSA Today</h2>
+      <p class="cta-subtitle">Become part of Ethiopia's largest network of psychology students. Access exclusive trainings, vote in national elections, connect with peers, and build your professional future.</p>
+      <div class="cta-actions">
+        <button id="cta-register-btn" class="btn btn-gold btn-lg" onclick="window.location.href='register.html'">🎓 Register as Student</button>
+        <button id="cta-login-btn" class="btn btn-secondary btn-lg" onclick="window.location.href='login.html'">Already a Member? Login</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════════ -->
+<footer class="footer" id="contact" role="contentinfo">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <img src="assets/logo.png" alt="EPSA Logo">
+          <span class="footer-logo-text">EPSA</span>
+        </div>
+        <p class="footer-tagline">The Ethiopian Psychology Students' Association — empowering the next generation of mental health professionals across Ethiopia.</p>
+        <div class="footer-socials">
+          <a href="#" class="footer-social-btn" aria-label="Facebook" title="EPSA Facebook">📘</a>
+          <a href="#" class="footer-social-btn" aria-label="Telegram" title="EPSA Telegram">✈️</a>
+          <a href="#" class="footer-social-btn" aria-label="Instagram" title="EPSA Instagram">📷</a>
+          <a href="#" class="footer-social-btn" aria-label="YouTube" title="EPSA YouTube">▶️</a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">Platform</div>
+        <div class="footer-links">
+          <a href="login.html" class="footer-link">Member Login</a>
+          <a href="register.html" class="footer-link">Register</a>
+          <a href="history.html" class="footer-link">EPSA History</a>
+          <a href="clubs.html" class="footer-link">Clubs Network</a>
+          <a href="partners.html" class="footer-link">Partners</a>
+          <a href="get-involved.html" class="footer-link">Get Involved</a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">Association</div>
+        <div class="footer-links">
+          <a href="#about" class="footer-link">About EPSA</a>
+          <a href="#leadership" class="footer-link">Leadership</a>
+          <a href="#programs" class="footer-link">Programs</a>
+          <a href="#news" class="footer-link">News & Events</a>
+          <a href="#" class="footer-link">Research</a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">Contact</div>
+        <div class="footer-links">
+          <span class="footer-link" style="cursor:default;">📍 Addis Ababa, Ethiopia</span>
+          <a href="mailto:epsaconnect@gmail.com" class="footer-link">✉️ epsaconnect@gmail.com</a>
+          <span class="footer-link" style="cursor:default;">📞 Telephone: not yet established — use email for all inquiries</span>
+          <span class="footer-link" style="cursor:default;">🕐 Mon–Fri, 9AM–5PM</span>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copyright">© 2026 Ethiopian Psychology Students' Association. All rights reserved.</p>
+      <div class="footer-bottom-links">
+        <span class="footer-bottom-link">Privacy Policy</span>
+        <span class="footer-bottom-link">Terms of Service</span>
+        <span class="footer-bottom-link">Cookie Policy</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Club Detail Modal (Homepage) -->
+<div class="hp-modal-overlay" id="homeClubModal">
+  <div class="hp-modal">
+    <div class="hp-modal-header">
+      <div style="display:flex;gap:16px;align-items:flex-start;">
+        <div id="hcmLogo" style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--epsa-green-dark),var(--epsa-green));display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0;">🏛️</div>
+        <div>
+          <h3 id="hcmName" style="font-family:var(--font-display);font-weight:800;font-size:1.3rem;">Club Name</h3>
+          <div id="hcmUni" style="color:var(--epsa-green);font-size:0.85rem;font-weight:600;">University</div>
+        </div>
+      </div>
+      <button onclick="document.getElementById('homeClubModal').classList.remove('active')" style="background:var(--light-100);border:1px solid var(--light-200);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:0.8rem;">✕</button>
+    </div>
+    <div class="hp-modal-body">
+      <p id="hcmDesc" style="color:var(--text-secondary);font-size:0.9rem;line-height:1.7;margin-bottom:20px;">Description</p>
+      <div id="hcmStats" style="display:flex;gap:16px;margin-bottom:20px;"></div>
+      <div style="margin-bottom:20px;">
+        <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;">Leadership</div>
+        <div id="hcmLeadership" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <a href="clubs.html" class="btn btn-primary" style="flex:1;text-align:center;">View Full Profile →</a>
+        <a href="login.html" class="btn btn-outline-green" style="flex:1;text-align:center;">🎓 Join Club</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/home.js"></script>
+<script src="js/public-ecosystem.js"></script>
+</body>
+</html>

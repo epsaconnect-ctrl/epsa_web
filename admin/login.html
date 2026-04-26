@@ -1,0 +1,127 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login â€” EPSA</title>
+  <link rel="icon" type="image/png" href="../assets/logo.png">
+  <link rel="stylesheet" href="../css/globals.css">
+  <link rel="stylesheet" href="../css/auth.css">
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="auth-page">
+  <div class="auth-panel-left">
+    <div class="auth-panel-left-bg">
+      <img src="../assets/hero.jpg" alt="EPSA">
+      <div class="auth-panel-left-overlay"></div>
+    </div>
+    <div class="auth-left-content">
+      <a href="../index.html" class="auth-logo">
+        <img src="../assets/logo.png" alt="EPSA Logo">
+        <div class="auth-logo-text">
+          <span class="auth-logo-main">EPSA</span>
+          <span class="auth-logo-sub">Administration Portal</span>
+        </div>
+      </a>
+      <h2 class="auth-panel-headline">Admin<br><span>Control</span><br>Panel</h2>
+      <p class="auth-panel-desc">Secure administrative access for EPSA management. Unauthorized access is strictly prohibited and monitored.</p>
+      <div class="auth-panel-features">
+        <div class="auth-feature"><div class="auth-feature-icon">ðŸ‘¥</div><span>Manage student applications</span></div>
+        <div class="auth-feature"><div class="auth-feature-icon">ðŸŽ“</div><span>Create and manage training programs</span></div>
+        <div class="auth-feature"><div class="auth-feature-icon">ðŸ—³ï¸</div><span>Oversee democratic elections</span></div>
+        <div class="auth-feature"><div class="auth-feature-icon">ðŸ“Š</div><span>View platform analytics</span></div>
+      </div>
+    </div>
+    <div class="auth-left-bottom">
+      <p class="auth-bottom-quote">ðŸ” This portal is restricted to authorized EPSA administrators only.</p>
+    </div>
+  </div>
+
+  <div class="auth-panel-right">
+    <div class="auth-form-container">
+      <div class="auth-form-header">
+        <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(192,57,43,0.08);border:1px solid rgba(192,57,43,0.2);border-radius:var(--radius-full);padding:6px 14px;margin-bottom:var(--space-4);">
+          <span>ðŸ”</span><span style="font-size:0.75rem;font-weight:700;color:var(--epsa-red);">RESTRICTED ACCESS</span>
+        </div>
+        <h1 class="auth-form-title">Admin Sign In</h1>
+        <p class="auth-form-subtitle">Two-factor authentication required</p>
+      </div>
+
+      <div class="auth-card">
+        <form id="adminLoginForm" novalidate autocomplete="off">
+          <div class="form-group">
+            <label class="form-label" for="admin-username">Admin Username</label>
+            <input type="text" id="admin-username" class="form-input" placeholder="admin" autocomplete="off" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="admin-password">Password</label>
+            <div style="position:relative;">
+              <input type="password" id="admin-password" class="form-input" placeholder="Admin password" style="padding-right:48px;" required>
+              <button type="button" onclick="togglePw()" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;">ðŸ‘ï¸</button>
+            </div>
+          </div>
+
+          <!-- 2FA TOTP -->
+          <div class="form-group" id="totpGroup">
+            <label class="form-label" for="admin-totp">2FA Code (Authenticator App)</label>
+            <input type="text" id="admin-totp" class="form-input" placeholder="6-digit code" maxlength="6" pattern="\d{6}">
+            <div class="form-hint">Enter the 6-digit authenticator code configured for your admin account.</div>
+          </div>
+
+          <div style="margin-bottom:var(--space-5);">
+            <label class="checkbox-group">
+              <input type="checkbox" id="adminRemember" style="accent-color:var(--epsa-green);">
+              <span class="checkbox-label">Trust this device for 30 days</span>
+            </label>
+          </div>
+
+          <button type="submit" id="adminLoginBtn" class="btn btn-primary w-full" style="margin-bottom:var(--space-3);">
+            <span id="adminBtnText">ðŸ” Sign In to Admin Panel</span>
+            <span class="spinner" id="adminSpinner" style="display:none;"></span>
+          </button>
+
+          <div style="text-align:center;">
+            <a href="../login.html" style="font-size:0.8rem;color:var(--text-muted);">â† Back to Student Login</a>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script>
+  function togglePw() {
+    const pw = document.getElementById('admin-password');
+    pw.type = pw.type === 'password' ? 'text' : 'password';
+  }
+
+  document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('admin-username').value.trim();
+    const password = document.getElementById('admin-password').value;
+    const totp     = document.getElementById('admin-totp').value.trim();
+
+    if (!username || !password) { showToast('Please fill in all fields','error'); return; }
+
+    const btn     = document.getElementById('adminLoginBtn');
+    const btnText = document.getElementById('adminBtnText');
+    const spinner = document.getElementById('adminSpinner');
+    btn.disabled = true; btnText.textContent = 'Authenticatingâ€¦'; spinner.style.display = 'block';
+
+    try {
+
+      await API.adminLogin(username, password, totp);
+      window.location.href = 'dashboard.html';
+    } catch(err) {
+      showToast('âŒ ' + (err.message || 'Invalid credentials'),'error');
+      btn.disabled = false; btnText.textContent = 'ðŸ” Sign In to Admin Panel'; spinner.style.display = 'none';
+    }
+  });
+</script>
+</body>
+</html>
+

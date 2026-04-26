@@ -1,0 +1,11 @@
+.venv/
+backend/epsa.db
+backend/uploads/
+__pycache__/
+*.pyc
+*.pyo
+*.log
+.env
+backend/.env
+.env.production
+backend/.env.production

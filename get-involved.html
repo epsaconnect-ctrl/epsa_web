@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Get Involved with EPSA — Join as a student, register your university club, become a national partner, or apply for grant funding.">
+  <title>Get Involved — EPSA</title>
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="stylesheet" href="css/globals.css">
+  <link rel="stylesheet" href="css/ecosystem-enhancements.css">
+  <link rel="stylesheet" href="css/public-pages-polish.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--dark-950); color: white; font-family: var(--font-body); }
+    .navbar-dark { background: rgba(5,14,7,0.92); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.07); position: fixed; top: 0; left: 0; right: 0; z-index: 100; }
+    .navbar-dark-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; height: 70px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo-wrap { display: flex; align-items: center; gap: 12px; text-decoration: none; color: white; }
+    .nav-logo-wrap img { height: 36px; }
+    .nav-logo-name { font-family: var(--font-display); font-weight: 800; font-size: 1.1rem; }
+    .nav-links { display: flex; gap: 8px; align-items: center; }
+    .nav-link-item { color: rgba(255,255,255,0.6); font-size: 0.88rem; padding: 6px 14px; border-radius: 8px; text-decoration: none; transition: all 0.2s; font-weight: 500; }
+    .nav-link-item:hover, .nav-link-item.active { color: white; background: rgba(255,255,255,0.08); }
+
+    .gi-hero { padding: 130px 0 80px; text-align: center; position: relative; overflow: hidden; }
+    .gi-hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(200,163,64,0.1) 0%, transparent 70%); }
+    .gi-hero-inner { max-width: 860px; margin: 0 auto; padding: 0 24px; position: relative; }
+    .gi-hero h1 { font-family: var(--font-display); font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 900; line-height: 1.1; margin-bottom: 20px; }
+    .gi-hero h1 span { background: linear-gradient(135deg, var(--epsa-gold), var(--epsa-green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .gi-hero p { font-size: 1.1rem; color: rgba(255,255,255,0.55); line-height: 1.7; max-width: 560px; margin: 0 auto 40px; }
+
+    /* Path Cards */
+    .paths-section { max-width: 1200px; margin: 0 auto; padding: 20px 24px 80px; }
+    .paths-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+    .path-card { border-radius: 28px; padding: 36px; position: relative; overflow: hidden; transition: transform 0.3s, box-shadow 0.3s; }
+    .path-card:hover { transform: translateY(-6px); box-shadow: 0 24px 60px rgba(0,0,0,0.4); }
+    .path-card.green { background: linear-gradient(135deg, rgba(26,107,60,0.3), rgba(26,107,60,0.08)); border: 1px solid rgba(26,107,60,0.4); }
+    .path-card.gold  { background: linear-gradient(135deg, rgba(200,163,64,0.25), rgba(200,163,64,0.06)); border: 1px solid rgba(200,163,64,0.35); }
+    .path-card.blue  { background: linear-gradient(135deg, rgba(37,99,235,0.25), rgba(37,99,235,0.06)); border: 1px solid rgba(37,99,235,0.35); }
+    .path-card.purple { background: linear-gradient(135deg, rgba(139,92,246,0.25), rgba(139,92,246,0.06)); border: 1px solid rgba(139,92,246,0.35); }
+    .path-num { font-family: var(--font-display); font-size: 4rem; font-weight: 900; opacity: 0.08; position: absolute; top: 16px; right: 24px; line-height: 1; }
+    .path-icon { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 20px; }
+    .path-card.green .path-icon { background: rgba(26,107,60,0.3); }
+    .path-card.gold  .path-icon { background: rgba(200,163,64,0.2); }
+    .path-card.blue  .path-icon { background: rgba(37,99,235,0.2); }
+    .path-card.purple .path-icon { background: rgba(139,92,246,0.2); }
+    .path-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px; }
+    .path-card.green .path-label { color: #4ade80; }
+    .path-card.gold  .path-label { color: var(--epsa-gold); }
+    .path-card.blue  .path-label { color: #60a5fa; }
+    .path-card.purple .path-label { color: #a78bfa; }
+    .path-title { font-family: var(--font-display); font-size: 1.4rem; font-weight: 800; margin-bottom: 12px; }
+    .path-desc { font-size: 0.86rem; color: rgba(255,255,255,0.55); line-height: 1.65; margin-bottom: 24px; }
+    .path-steps { list-style: none; margin-bottom: 28px; display: flex; flex-direction: column; gap: 10px; }
+    .path-steps li { display: flex; align-items: flex-start; gap: 10px; font-size: 0.82rem; color: rgba(255,255,255,0.6); }
+    .step-dot { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+    .path-card.green .step-dot { background: rgba(26,107,60,0.4); color: #4ade80; }
+    .path-card.gold  .step-dot { background: rgba(200,163,64,0.3); color: var(--epsa-gold); }
+    .path-card.blue  .step-dot { background: rgba(37,99,235,0.3); color: #60a5fa; }
+    .path-card.purple .step-dot { background: rgba(139,92,246,0.3); color: #a78bfa; }
+
+    /* Impact Stats */
+    .impact-section { background: rgba(255,255,255,0.03); border-top: 1px solid rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .impact-inner { max-width: 1200px; margin: 0 auto; padding: 40px 24px; display: flex; justify-content: center; gap: 48px; flex-wrap: wrap; text-align: center; }
+    .impact-stat-num { font-family: var(--font-display); font-size: 2.2rem; font-weight: 900; color: var(--epsa-gold); }
+    .impact-stat-label { font-size: 0.75rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px; }
+
+    /* FAQ */
+    .faq-section { max-width: 760px; margin: 0 auto; padding: 60px 24px 100px; }
+    .faq-title { font-family: var(--font-display); font-size: 2rem; font-weight: 800; text-align: center; margin-bottom: 40px; }
+    .faq-item { border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; margin-bottom: 12px; overflow: hidden; }
+    .faq-q { padding: 20px 24px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 0.9rem; transition: background 0.2s; }
+    .faq-q:hover { background: rgba(255,255,255,0.03); }
+    .faq-q .arrow { transition: transform 0.3s; font-size: 0.8rem; color: rgba(255,255,255,0.4); }
+    .faq-item.open .faq-q .arrow { transform: rotate(180deg); }
+    .faq-a { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+    .faq-item.open .faq-a { max-height: 300px; }
+    .faq-a-inner { padding: 0 24px 20px; font-size: 0.85rem; color: rgba(255,255,255,0.5); line-height: 1.7; }
+    @media (max-width: 768px) { .paths-grid { grid-template-columns: 1fr; } .nav-links { display: none; } }
+  </style>
+  <style>
+    .gi-hero {
+      padding: 124px 0 44px;
+      background:
+        radial-gradient(circle at 12% 10%, rgba(200,163,64,0.12), transparent 24%),
+        radial-gradient(circle at 84% 14%, rgba(26,107,60,0.16), transparent 28%);
+    }
+    .gi-hero-inner {
+      max-width: 1200px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.16fr) minmax(320px, 0.84fr);
+      gap: 30px;
+      align-items: center;
+      text-align: left;
+    }
+    .gi-hero p {
+      color: rgba(241,246,242,0.84);
+      max-width: 640px;
+      line-height: 1.82;
+      margin: 0 0 30px;
+    }
+    .gi-hero-panel,
+    .gi-strip-card {
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04));
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 24px 70px rgba(0,0,0,0.3);
+      backdrop-filter: blur(18px);
+    }
+    .gi-hero-panel {
+      padding: 28px;
+    }
+    .gi-hero-panel h3 {
+      font-family: var(--font-display);
+      font-size: 1.28rem;
+      margin-bottom: 12px;
+    }
+    .gi-hero-panel p {
+      color: rgba(240,245,241,0.78);
+      font-size: 0.93rem;
+      line-height: 1.7;
+      margin-bottom: 18px;
+    }
+    .gi-hero-points {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .gi-hero-point {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .gi-hero-point strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.77rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--epsa-gold);
+    }
+    .gi-hero-point span {
+      display: block;
+      color: rgba(240,245,241,0.82);
+      font-size: 0.88rem;
+      line-height: 1.58;
+    }
+    .gi-intro-strip {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px 24px 0;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+    .gi-strip-card {
+      padding: 22px;
+    }
+    .gi-strip-card strong {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--epsa-gold);
+    }
+    .gi-strip-card p {
+      color: rgba(240,245,241,0.82);
+      line-height: 1.64;
+      font-size: 0.9rem;
+      margin: 0;
+    }
+    .path-desc,
+    .path-steps li,
+    .faq-a-inner {
+      color: rgba(241,246,242,0.8);
+    }
+    .faq-item {
+      background: rgba(255,255,255,0.04);
+      border-radius: 18px;
+    }
+    @media (max-width: 980px) {
+      .gi-hero-inner,
+      .gi-intro-strip {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <style>
+    html,
+    body {
+      background:
+        radial-gradient(circle at top left, rgba(200,163,64,0.08), transparent 18%),
+        radial-gradient(circle at 88% 12%, rgba(26,107,60,0.14), transparent 24%),
+        linear-gradient(180deg, #041009 0%, #08130d 44%, #050907 100%) !important;
+      color: rgba(245,248,246,0.96) !important;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 16% 0%, rgba(255,255,255,0.02), transparent 20%),
+        linear-gradient(180deg, rgba(255,255,255,0.015), transparent 14%);
+      z-index: 0;
+    }
+    body > * {
+      position: relative;
+      z-index: 1;
+    }
+    .gi-hero,
+    .gi-intro-strip,
+    .impact-section,
+    .paths-section,
+    .faq-section {
+      background-color: transparent !important;
+    }
+    .gi-hero {
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .gi-intro-strip,
+    .impact-section,
+    .paths-section,
+    .faq-section {
+      background:
+        linear-gradient(180deg, rgba(8,18,12,0.94), rgba(5,10,7,0.98)) !important;
+    }
+    .impact-section {
+      border-top: 1px solid rgba(255,255,255,0.06) !important;
+      border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+    }
+    .paths-section,
+    .faq-section {
+      border-top: 1px solid rgba(255,255,255,0.04);
+    }
+    .paths-section {
+      border-radius: 32px 32px 0 0;
+      padding-top: 36px;
+    }
+    .paths-section::before,
+    .faq-section::before {
+      background:
+        radial-gradient(circle at top right, rgba(200,163,64,0.08), transparent 20%),
+        radial-gradient(circle at top left, rgba(26,107,60,0.1), transparent 24%) !important;
+    }
+    .path-card,
+    .gi-hero-panel,
+    .gi-strip-card,
+    .faq-item {
+      box-shadow: 0 24px 60px rgba(0,0,0,0.28) !important;
+    }
+    .faq-item {
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)) !important;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar-dark">
+  <div class="navbar-dark-inner">
+    <a href="index.html" class="nav-logo-wrap">
+      <img src="assets/logo.png" alt="EPSA">
+      <span class="nav-logo-name">EPSA</span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link-item">Home</a>
+      <a href="ecosystem.html" class="nav-link-item">Ecosystem</a>
+      <a href="clubs.html" class="nav-link-item">Clubs</a>
+      <a href="partners.html" class="nav-link-item">Partners</a>
+      <a href="get-involved.html" class="nav-link-item active">Get Involved</a>
+      <a href="login.html" class="btn btn-primary" style="font-size:0.85rem;padding:8px 18px;">Sign In</a>
+    </div>
+  </div>
+</nav>
+
+<section class="gi-hero">
+  <div class="gi-hero-inner">
+    <div>
+      <div style="display:inline-flex;align-items:center;gap:10px;background:rgba(200,163,64,0.12);border:1px solid rgba(200,163,64,0.25);border-radius:20px;padding:6px 18px;font-size:0.8rem;color:var(--epsa-gold);font-weight:600;margin-bottom:28px;">Join the Movement</div>
+      <h1>Four Ways to <span>Get Involved</span></h1>
+      <p>Whether you are an individual student, a club leader, or an institution ready to support psychology students nationally, this page should make the entry path feel clear, credible, and welcoming.</p>
+    </div>
+    <div class="gi-hero-panel">
+      <h3>Designed as a pathway page</h3>
+      <p>Each route into EPSA now reads like a real program pathway instead of a short utility card. That means clearer expectations, better presentation, and a stronger sense of momentum.</p>
+      <div class="gi-hero-points">
+        <div class="gi-hero-point">
+          <strong>Students</strong>
+          <span>Register, get verified, network nationally, and join the right campus chapter.</span>
+        </div>
+        <div class="gi-hero-point">
+          <strong>Club leaders</strong>
+          <span>Launch a chapter, recruit members from the same university, and apply for support transparently.</span>
+        </div>
+        <div class="gi-hero-point">
+          <strong>Partners and funders</strong>
+          <span>Support the movement through collaborations, sponsorships, training, and grant backing.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="gi-intro-strip">
+  <div class="gi-strip-card">
+    <strong>Clear entry points</strong>
+    <p>Each audience has its own path with expectations, process, and next action presented more clearly.</p>
+  </div>
+  <div class="gi-strip-card">
+    <strong>National visibility</strong>
+    <p>Public pages and authenticated portals now work together so participation feels part of one connected platform.</p>
+  </div>
+  <div class="gi-strip-card">
+    <strong>Transparent funding</strong>
+    <p>Grant applications, allocations, and verification connect directly to the public funding story on the home page.</p>
+  </div>
+</section>
+
+<!-- IMPACT STATS -->
+<div class="impact-section">
+  <div class="impact-inner">
+    <div><div class="impact-stat-num">50+</div><div class="impact-stat-label">Universities</div></div>
+    <div><div class="impact-stat-num">5,000+</div><div class="impact-stat-label">Members</div></div>
+    <div><div class="impact-stat-num">30+</div><div class="impact-stat-label">Clubs</div></div>
+    <div><div class="impact-stat-num">ETB 500K+</div><div class="impact-stat-label">Grants Funded</div></div>
+  </div>
+</div>
+
+<div class="paths-section">
+  <div class="paths-grid">
+
+    <!-- PATH 1: Student -->
+    <div class="path-card green" id="students">
+      <div class="path-num">01</div>
+      <div class="path-icon">🎓</div>
+      <div class="path-label">Individual</div>
+      <h2 class="path-title">Join as a Student</h2>
+      <p class="path-desc">Register your EPSA membership, get a verified student ID, and unlock access to trainings, voting, networking, and national events.</p>
+      <ul class="path-steps">
+        <li><div class="step-dot">1</div>Fill out the online registration form with your details</li>
+        <li><div class="step-dot">2</div>Upload your university registration slip & photo</li>
+        <li><div class="step-dot">3</div>Admin reviews and approves (usually within 48h)</li>
+        <li><div class="step-dot">4</div>Receive your EPSA Student ID and gain full access</li>
+      </ul>
+      <a href="register.html" class="btn btn-primary" style="display:block;text-align:center;width:100%;">🎓 Register Now →</a>
+    </div>
+
+    <!-- PATH 2: Club -->
+    <div class="path-card gold" id="clubs">
+      <div class="path-num">02</div>
+      <div class="path-icon">🏛️</div>
+      <div class="path-label">Campus Group</div>
+      <h2 class="path-title">Register a Club</h2>
+      <p class="path-desc">Already have a group of psychology students at your university? Formalize it as a verified EPSA chapter and unlock club management, grant funding, and national visibility.</p>
+      <ul class="path-steps">
+        <li><div class="step-dot">1</div>Must be an approved EPSA member first</li>
+        <li><div class="step-dot">2</div>Log in and go to "My Clubs → Register Club"</li>
+        <li><div class="step-dot">3</div>Provide club name, university, and description</li>
+        <li><div class="step-dot">4</div>Enter the EPSA Student IDs for your VP and Secretary</li>
+        <li><div class="step-dot">5</div>Admin approves and your club is listed publicly</li>
+      </ul>
+      <a href="login.html" class="btn btn-gold" style="display:block;text-align:center;width:100%;background:var(--epsa-gold);border:none;">🏫 Start Your Chapter →</a>
+    </div>
+
+    <!-- PATH 3: Partner -->
+    <div class="path-card blue" id="partners">
+      <div class="path-num">03</div>
+      <div class="path-icon">🤝</div>
+      <div class="path-label">Institution</div>
+      <h2 class="path-title">Become a Partner</h2>
+      <p class="path-desc">Clinics, NGOs, research centers, and government bodies — partner with Ethiopia's largest psychology student network for joint programs, research, and outreach.</p>
+      <ul class="path-steps">
+        <li><div class="step-dot">1</div>Send a partnership inquiry to partnership@epsa.et</li>
+        <li><div class="step-dot">2</div>EPSA team reviews your organization's mission</li>
+        <li><div class="step-dot">3</div>Sign a Memorandum of Understanding (MoU)</li>
+        <li><div class="step-dot">4</div>Get featured on the EPSA public partners page</li>
+      </ul>
+      <a href="mailto:partnership@epsa.et" class="btn" style="display:block;text-align:center;width:100%;background:rgba(37,99,235,0.2);border:1px solid rgba(37,99,235,0.4);color:white;">📧 partnership@epsa.et</a>
+    </div>
+
+    <!-- PATH 4: Grant Funding -->
+    <div class="path-card purple" id="grants">
+      <div class="path-num">04</div>
+      <div class="path-icon">💰</div>
+      <div class="path-label">Club Leaders</div>
+      <h2 class="path-title">Apply for a Grant</h2>
+      <p class="path-desc">Verified EPSA clubs can submit project proposals for grant funding. Through transparent proposals and financial reporting, clubs turn ideas into campus-level impact.</p>
+      <ul class="path-steps">
+        <li><div class="step-dot">1</div>Your club must be approved and verified by EPSA admin</li>
+        <li><div class="step-dot">2</div>Club president submits a proposal through the dashboard</li>
+        <li><div class="step-dot">3</div>Include a project title, objectives, budget, and timeline</li>
+        <li><div class="step-dot">4</div>Admin reviews, approves, and disburses funding</li>
+        <li><div class="step-dot">5</div>After spending, submit a financial report with receipts</li>
+      </ul>
+      <a href="login.html" class="btn" style="display:block;text-align:center;width:100%;background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.4);color:white;">📝 Submit a Proposal →</a>
+    </div>
+
+  </div>
+</div>
+
+<!-- FAQ -->
+<div class="faq-section">
+  <h2 class="faq-title">Frequently Asked Questions</h2>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">Who is eligible to join EPSA? <span class="arrow">▼</span></div>
+    <div class="faq-a"><div class="faq-a-inner">Any student currently enrolled in a psychology program (undergraduate or postgraduate) at an accredited Ethiopian university is eligible. Alumni who graduated within the last 3 years may also apply.</div></div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">How long does membership approval take? <span class="arrow">▼</span></div>
+    <div class="faq-a"><div class="faq-a-inner">The admin team reviews applications within 24–72 hours. You will receive an email notification with your EPSA Student ID upon approval.</div></div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">How many students are needed to register a club? <span class="arrow">▼</span></div>
+    <div class="faq-a"><div class="faq-a-inner">There is no minimum requirement at registration — a single approved EPSA member can register a club and then add others via their EPSA Student IDs. However, admin may request proof of activity for clubs with fewer than 3 members.</div></div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">What are the benefits of club membership? <span class="arrow">▼</span></div>
+    <div class="faq-a"><div class="faq-a-inner">Verified clubs gain access to the EPSA Grant Funding system, can publish posts to the national networking feed, receive invitations to national events, and get featured on the public clubs directory.</div></div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">Is EPSA membership free? <span class="arrow">▼</span></div>
+    <div class="faq-a"><div class="faq-a-inner">Individual membership registration is completely free. Some paid training programs are offered through the platform, but basic membership and access to voting are always free of charge.</div></div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">How does the grant funding process work? <span class="arrow">▼</span></div>
+    <div class="faq-a"><div class="faq-a-inner">Approved EPSA clubs submit project proposals through their club dashboard. The proposal includes a title, objective, budget breakdown, and timeline. The EPSA admin team reviews proposals and, once approved, funds are disbursed. After the project completes, the club president submits a financial report with receipts. The admin verifies spending and marks the project as completed — ensuring full transparency.</div></div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">Can I join a club from a different university? <span class="arrow">▼</span></div>
+    <div class="faq-a"><div class="faq-a-inner">Currently, clubs are university-specific — you can only join or follow clubs at your own university. However, you can view public activities and follow clubs from other universities to stay updated on their work.</div></div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">How is financial transparency ensured? <span class="arrow">▼</span></div>
+    <div class="faq-a"><div class="faq-a-inner">Every grant-funded project requires a post-completion financial report with receipts. Reports are reviewed by the EPSA admin team. Additionally, overall budget pool usage and funded vs. spent amounts are displayed publicly on the homepage's Funding Transparency dashboard.</div></div>
+  </div>
+</div>
+
+<script>
+  function toggleFaq(el) {
+    const item = el.parentElement;
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  }
+  // Scroll to anchor on load
+  window.addEventListener('load', () => {
+    const hash = window.location.hash;
+    if (hash) {
+      const el = document.querySelector(hash);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+</script>
+<script src="js/public-ecosystem.js"></script>
+</body>
+</html>

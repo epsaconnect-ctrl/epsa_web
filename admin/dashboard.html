@@ -1,0 +1,2252 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard â€” EPSA</title>
+  <link rel="icon" type="image/png" href="../assets/logo.png">
+  <link rel="stylesheet" href="../css/globals.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/ecosystem-enhancements.css">
+  <style>
+    #asec-applications,
+    #admin-section-question-bank,
+    #admin-section-teachers,
+    #admin-section-mock-exams{
+      position:relative;
+    }
+    #asec-applications::before,
+    #admin-section-question-bank::before,
+    #admin-section-teachers::before,
+    #admin-section-mock-exams::before,
+    #asec-analytics::before{
+      content:"";
+      position:absolute;
+      inset:0 0 auto 0;
+      height:160px;
+      background:
+        radial-gradient(circle at top left, rgba(26,107,60,0.07), transparent 52%),
+        radial-gradient(circle at top right, rgba(200,163,64,0.05), transparent 44%);
+      pointer-events:none;
+      border-radius:28px;
+      z-index:0;
+    }
+    .intel-stat-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+      gap:14px;
+      margin-bottom:22px;
+      position:relative;
+      z-index:1;
+    }
+    .intel-stat-card{
+      background:linear-gradient(180deg,rgba(255,255,255,0.97),rgba(246,251,248,0.98));
+      border:1px solid rgba(26,107,60,0.10);
+      border-radius:20px;
+      padding:18px 20px;
+      box-shadow:0 18px 38px rgba(15,23,42,0.08);
+    }
+    .intel-stat-value{
+      font-size:1.65rem;
+      font-weight:800;
+      line-height:1;
+      margin-bottom:8px;
+    }
+    .intel-stat-label{
+      font-size:0.76rem;
+      text-transform:uppercase;
+      letter-spacing:0.08em;
+      color:var(--text-muted);
+      font-weight:700;
+    }
+    .intel-empty-state{
+      text-align:center;
+      padding:44px 24px;
+      border:1px dashed rgba(26,107,60,0.18);
+      border-radius:20px;
+      color:var(--text-muted);
+      background:rgba(255,255,255,0.76);
+    }
+    .teacher-app-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+      gap:16px;
+    }
+    .teacher-app-card{
+      background:linear-gradient(180deg,#ffffff,#f7fbf8);
+      border:1px solid rgba(26,107,60,0.10);
+      border-radius:22px;
+      padding:20px;
+      box-shadow:0 18px 38px rgba(15,23,42,0.08);
+    }
+    .teacher-app-card-top{
+      display:flex;
+      align-items:flex-start;
+      gap:14px;
+      margin-bottom:14px;
+    }
+    .teacher-app-avatar{
+      width:52px;
+      height:52px;
+      border-radius:18px;
+      background:linear-gradient(135deg,var(--epsa-green),#0f4d29);
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:800;
+      box-shadow:0 14px 24px rgba(26,107,60,0.24);
+      flex-shrink:0;
+    }
+    .teacher-app-name{font-weight:800;font-size:1rem;color:var(--text-primary)}
+    .teacher-app-email{font-size:0.8rem;color:var(--text-muted);margin-top:4px}
+    .teacher-app-status{
+      padding:6px 11px;
+      border-radius:999px;
+      border:1px solid rgba(0,0,0,0.08);
+      font-size:0.72rem;
+      font-weight:800;
+      text-transform:capitalize;
+      white-space:nowrap;
+    }
+    .teacher-app-meta{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+    }
+    .teacher-app-meta span{
+      padding:5px 10px;
+      border-radius:999px;
+      background:rgba(26,107,60,0.07);
+      color:#185c35;
+      font-size:0.72rem;
+      font-weight:700;
+    }
+    .teacher-app-summary{
+      font-size:0.84rem;
+      color:var(--text-secondary);
+      line-height:1.65;
+      min-height:58px;
+    }
+    .teacher-app-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:18px;
+    }
+    #asec-applications .data-table-card,
+    #admin-section-question-bank > div:not(#questionReviewModal):not(#teacherReviewModal):not(#createExamModal):not(#examReportModal),
+    #admin-section-teachers > div,
+    #admin-section-mock-exams > div:not(#createExamModal):not(#examReportModal){
+      position:relative;
+      z-index:1;
+    }
+    #admin-section-question-bank table,
+    #asec-applications table{
+      border-radius:18px;
+      overflow:hidden;
+    }
+    #admin-section-question-bank tbody tr:hover td{
+      background:rgba(26,107,60,0.06);
+    }
+    #admin-section-mock-exams #adminExamList > div,
+    #admin-section-teachers #teacherCardsGrid > div{
+      backdrop-filter:blur(8px);
+    }
+  </style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="admin-page">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="admin-sidebar-logo">
+      <img src="../assets/logo.png" alt="EPSA">
+      <div>
+        <div class="admin-logo-text">EPSA Admin</div>
+        <span class="admin-logo-badge">SECURED</span>
+      </div>
+    </div>
+
+    <nav class="admin-nav">
+      <div class="admin-nav-label">Overview</div>
+      <button class="admin-nav-link active" data-sec="overview"     onclick="switchAdminSection('overview')"><span class="admin-nav-icon">ðŸ“Š</span> Dashboard</button>
+
+      <div class="admin-nav-label">Students</div>
+      <button class="admin-nav-link" data-sec="applications"        onclick="switchAdminSection('applications')"><span class="admin-nav-icon">ðŸ“‹</span> Applications <span class="admin-nav-badge" id="pendingBadge">0</span></button>
+      <button class="admin-nav-link" data-sec="students"            onclick="switchAdminSection('students')"><span class="admin-nav-icon">ðŸ‘¥</span> All Students</button>
+      <button class="admin-nav-link" data-sec="student-messages"    onclick="switchAdminSection('student-messages')"><span class="admin-nav-icon">ðŸ’¬</span> Student Messages</button>
+
+      <div class="admin-nav-label">Programs</div>
+      <button class="admin-nav-link" data-sec="trainings"           onclick="switchAdminSection('trainings')"><span class="admin-nav-icon">ðŸŽ“</span> Trainings</button>
+      <button class="admin-nav-link" data-sec="receipts"            onclick="switchAdminSection('receipts')"><span class="admin-nav-icon">ðŸ§¾</span> Payment Receipts</button>
+      <button class="admin-nav-link" data-sec="news"                onclick="switchAdminSection('news')"><span class="admin-nav-icon">ðŸ“¢</span> News & Events</button>
+
+      <div class="admin-nav-label">Intelligence</div>
+      <button class="admin-nav-link" data-sec="question-bank" onclick="switchAdminSection('question-bank')"><span class="admin-nav-icon">ðŸ“š</span> Question Bank</button>
+      <button class="admin-nav-link" data-sec="teachers"      onclick="switchAdminSection('teachers')"><span class="admin-nav-icon">ðŸŽ“</span> Teachers <span class="admin-nav-badge" id="teacherBadge" style="display:none"></span></button>
+      <button class="admin-nav-link" data-sec="mock-exams"   onclick="switchAdminSection('mock-exams')"><span class="admin-nav-icon">ðŸŽ¯</span> Mock Exams</button>
+      <button class="admin-nav-link" data-sec="analytics"    onclick="switchAdminSection('analytics')"><span class="admin-nav-icon">ðŸ§ </span> Analytics Engine</button>
+
+      <div class="admin-nav-label">Governance</div>
+      <button class="admin-nav-link" data-sec="voting"              onclick="switchAdminSection('voting')"><span class="admin-nav-icon">ðŸ—³ï¸</span> Voting System</button>
+      <button class="admin-nav-link" data-sec="exams"               onclick="switchAdminSection('exams')"><span class="admin-nav-icon">ðŸ“</span> Exam Center</button>
+
+      <div class="admin-nav-label">Ecosystem</div>
+      <button class="admin-nav-link" data-sec="clubs-admin"         onclick="switchAdminSection('clubs-admin')"><span class="admin-nav-icon">ðŸ›ï¸</span> Clubs &amp; Oversight <span class="admin-nav-badge" id="clubsBadge" style="display:none;">0</span></button>
+      <button class="admin-nav-link" data-sec="grants-admin"        onclick="switchAdminSection('grants-admin')"><span class="admin-nav-icon">ðŸ’°</span> Grants &amp; Financials <span class="admin-nav-badge" id="grantsBadge" style="display:none;">0</span></button>
+      <button class="admin-nav-link" data-sec="partners-admin"      onclick="switchAdminSection('partners-admin')"><span class="admin-nav-icon">ðŸ¤</span> Partner Control</button>
+    </nav>
+
+    <div class="admin-footer">
+      <div class="admin-user-info">
+        <div class="admin-avatar-sm" id="adminAvatarSm">A</div>
+        <div>
+          <div class="admin-user-name" id="adminName">Administrator</div>
+          <div class="admin-user-role">Super Admin</div>
+        </div>
+      </div>
+      <button style="width:100%;padding:8px;background:rgba(192,57,43,0.1);color:#f87171;border:none;border-radius:var(--radius-md);font-weight:600;cursor:pointer;font-size:0.8rem;" onclick="adminLogout()">
+        ðŸšª Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- â•â•â•â• MAIN â•â•â•â• -->
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div style="display:flex;align-items:center;gap:var(--space-4);">
+        <button style="display:none;background:var(--light-100);border:1px solid var(--light-200);border-radius:var(--radius-md);padding:8px;cursor:pointer;" id="adminHamburger" onclick="toggleAdminSidebar()">â˜°</button>
+        <h1 class="admin-topbar-title" id="adminPageTitle">Dashboard</h1>
+      </div>
+      <div style="display:flex;align-items:center;gap:var(--space-3);">
+        <span style="font-size:0.8rem;color:var(--text-muted);" id="adminDateTime"></span>
+        <button class="topbar-icon-btn" title="Refresh" onclick="refreshCurrentSection()">ðŸ”„</button>
+      </div>
+    </header>
+
+    <div class="admin-content">
+
+      <!-- â•â•â• OVERVIEW â•â•â• -->
+      <section id="asec-overview" class="admin-section">
+        <div class="kpi-grid">
+          <div class="kpi-card green"><div class="kpi-icon">ðŸ‘¥</div><div class="kpi-label">Total Students</div><div class="kpi-value" id="kpi-total">â€”</div><div class="kpi-change up">â†‘ Growing</div></div>
+          <div class="kpi-card gold"><div class="kpi-icon">â³</div><div class="kpi-label">Pending Applications</div><div class="kpi-value" id="kpi-pending">â€”</div><div class="kpi-change" style="color:#d97706;">Needs Review</div></div>
+          <div class="kpi-card blue"><div class="kpi-icon">ðŸŽ“</div><div class="kpi-label">Active Trainings</div><div class="kpi-value" id="kpi-trainings">â€”</div><div class="kpi-change up">â†‘ Active</div></div>
+          <div class="kpi-card red"><div class="kpi-icon">ðŸ§¾</div><div class="kpi-label">Pending Receipts</div><div class="kpi-value" id="kpi-receipts">â€”</div><div class="kpi-change" style="color:#dc2626;">Verify Now</div></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-6);">
+          <div class="chart-card">
+            <h3 style="font-family:var(--font-display);font-weight:700;margin-bottom:var(--space-4);">Registration Trend</h3>
+            <div class="chart-placeholder">ðŸ“ˆ Analytics chart â€” backend integration required</div>
+          </div>
+          <div class="chart-card">
+            <h3 style="font-family:var(--font-display);font-weight:700;margin-bottom:var(--space-4);">University Distribution</h3>
+            <div class="chart-placeholder">ðŸ© Donut chart â€” backend integration required</div>
+          </div>
+        </div>
+
+        <!-- Recent Applications Quick View -->
+        <div class="data-table-card" style="margin-top:var(--space-6);">
+          <div class="table-header">
+            <div class="table-title">Recent Applications</div>
+            <button class="btn btn-outline-green btn-sm" onclick="switchAdminSection('applications')">View All â†’</button>
+          </div>
+          <table class="data-table" id="recentAppsTable">
+            <thead><tr><th>Applicant</th><th>University</th><th>Program</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="recentAppsTbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+          </table>
+        </div>
+        <div class="data-table-card" style="margin-top:var(--space-5);">
+          <div class="table-header">
+            <div>
+              <div class="table-title">Teacher Applications</div>
+              <div style="font-size:0.8rem;color:var(--text-muted);margin-top:4px;">Approve teacher portal registrations here or open the full record in the Teachers section.</div>
+            </div>
+            <div id="teacherApplicationsCount" style="font-size:0.8rem;color:var(--text-muted);">0 teacher application(s)</div>
+          </div>
+          <div id="teacherApplicationsGrid" class="teacher-app-grid">
+            <div class="intel-empty-state">Loading teacher applications...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- â•â•â• APPLICATIONS â•â•â• -->
+      <section id="asec-applications" class="admin-section" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-5);">
+          <div class="pill-tabs" id="appFilterTabs">
+            <span class="pill-tab active" onclick="loadApplicants('pending',this)">â³ Pending</span>
+            <span class="pill-tab" onclick="loadApplicants('approved',this)">âœ… Approved</span>
+            <span class="pill-tab" onclick="loadApplicants('rejected',this)">âŒ Rejected</span>
+            <span class="pill-tab" onclick="loadApplicants('all',this)">All</span>
+          </div>
+          <input type="text" class="table-search-input" placeholder="ðŸ” Searchâ€¦" oninput="filterApplicantTable(this.value)">
+        </div>
+        <div class="intel-stat-grid" id="applicationsSummaryCards"></div>
+        <div class="data-table-card">
+          <div class="table-header">
+            <div class="table-title">Student Membership Applications</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);">Teacher registrations are now surfaced below in the same approval workspace.</div>
+          </div>
+          <table class="data-table" id="applicantsTable">
+            <thead><tr><th>Applicant</th><th>University</th><th>Program</th><th>Year</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="applicantsTbody"><tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- â•â•â• ALL STUDENTS â•â•â• -->
+      <section id="asec-students" class="admin-section" style="display:none;">
+        <div class="data-table-card">
+          <div class="table-header">
+            <div class="table-title">All Registered Students</div>
+            <input type="text" class="table-search-input" placeholder="ðŸ” Search studentsâ€¦" oninput="filterStudentTable(this.value)">
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Student</th><th>Student ID</th><th>University</th><th>Program</th><th>Year</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+            <tbody id="studentsTbody"><tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- â•â•â• STUDENT MESSAGES (same /api/messages as portal) â•â•â• -->
+      <section id="asec-student-messages" class="admin-section" style="display:none;">
+        <div class="data-table-card" style="margin-bottom:var(--space-5);">
+          <div class="table-header" style="flex-direction:column;align-items:flex-start;gap:8px;">
+            <div class="table-title">Student messages</div>
+            <p style="font-size:0.82rem;color:var(--text-muted);max-width:640px;line-height:1.55;margin:0;">
+              Conversations between your admin account and approved students. This uses the same messaging routes as the student dashboard (<code>GET /api/messages/conversations</code>, <code>GET /api/messages/&lt;id&gt;</code>, <code>POST /api/messages</code>).
+            </p>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(260px,34%) 1fr;gap:var(--space-5);min-height:440px;">
+          <div id="adminMsgThreadList" class="data-table-card" style="padding:0;overflow:auto;max-height:560px;"></div>
+          <div class="data-table-card" style="display:flex;flex-direction:column;min-height:440px;padding:0;">
+            <div id="adminMsgHeader" style="padding:var(--space-4);border-bottom:1px solid var(--light-200);font-weight:700;font-size:0.95rem;">Select a conversation</div>
+            <div id="adminMsgBody" style="flex:1;overflow:auto;padding:var(--space-4);font-size:0.875rem;line-height:1.5;background:var(--light-50);"></div>
+            <div style="padding:var(--space-4);border-top:1px solid var(--light-200);display:flex;gap:10px;align-items:center;">
+              <input type="text" id="adminMsgInput" class="table-search-input" style="flex:1;" placeholder="Type a replyâ€¦" onkeydown="if(event.key==='Enter')sendAdminThreadMessage()">
+              <button type="button" class="btn btn-primary" onclick="sendAdminThreadMessage()">Send</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- â•â•â• TRAININGS â•â•â• -->
+      <section id="asec-trainings" class="admin-section" style="display:none;">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:var(--space-5);">
+          <button class="btn btn-primary" onclick="openCreateTrainingModal()">+ Create Training</button>
+        </div>
+        <div class="data-table-card">
+          <div class="table-header"><div class="table-title">Training Programs</div></div>
+          <table class="data-table">
+            <thead><tr><th>Title</th><th>Format</th><th>Price</th><th>Applicants</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="trainingsTbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- â•â•â• RECEIPTS â•â•â• -->
+      <section id="asec-receipts" class="admin-section" style="display:none;">
+        <div class="data-table-card">
+          <div class="table-header"><div class="table-title">Payment Receipts â€” Pending Verification</div></div>
+          <table class="data-table">
+            <thead><tr><th>Student</th><th>Training</th><th>Amount</th><th>Submitted</th><th>Receipt</th><th>Actions</th></tr></thead>
+            <tbody id="receiptsTbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- â•â•â• VOTING â•â•â• -->
+      <section id="asec-voting" class="admin-section" style="display:none;">
+        
+        <!-- Voting KPI Stat Row -->
+        <div id="votingStatsRow" style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-4);margin-bottom:var(--space-6);">
+          <div class="kpi-card green">
+            <div class="kpi-icon">ðŸ—³ï¸</div>
+            <div class="kpi-label">Total Votes</div>
+            <div class="kpi-value" id="vkpi-votes">â€”</div>
+            <div class="kpi-change up">Live Count</div>
+          </div>
+          <div class="kpi-card gold">
+            <div class="kpi-icon">ðŸ“‹</div>
+            <div class="kpi-label">Nominations</div>
+            <div class="kpi-value" id="vkpi-noms">â€”</div>
+            <div class="kpi-change" style="color:#d97706;">Pending Review</div>
+          </div>
+          <div class="kpi-card blue">
+            <div class="kpi-icon">ðŸ«</div>
+            <div class="kpi-label">Universities Voting</div>
+            <div class="kpi-value" id="vkpi-unis">â€”</div>
+            <div class="kpi-change up">Active</div>
+          </div>
+          <div class="kpi-card red">
+            <div class="kpi-icon">ðŸ“Š</div>
+            <div class="kpi-label">Turnout</div>
+            <div class="kpi-value" id="vkpi-turnout">â€”%</div>
+            <div class="kpi-change">Overall</div>
+          </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div style="display:flex;gap:0;background:white;border-radius:var(--radius-xl);padding:var(--space-2);border:1px solid var(--light-200);margin-bottom:var(--space-6);width:fit-content;">
+          <button class="voting-admin-tab active" id="vtab-control" onclick="switchVotingTab('control')">ðŸŽ›ï¸ Election Control</button>
+          <button class="voting-admin-tab" id="vtab-nominations" onclick="switchVotingTab('nominations')">ðŸ“‹ Nominations</button>
+          <button class="voting-admin-tab" id="vtab-analytics" onclick="switchVotingTab('analytics')">ðŸ“Š Live Analytics</button>
+          <button class="voting-admin-tab" id="vtab-neb" onclick="switchVotingTab('neb')">ðŸ›ï¸ NEB Assignment</button>
+        </div>
+
+        <!-- â”€â”€â”€ TAB: ELECTION CONTROL â”€â”€â”€ -->
+        <div id="vpanel-control" class="voting-admin-panel">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-6);">
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-5);">
+                <div>
+                  <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.1rem;">Phase Configuration</h3>
+                  <p style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;">Set start/end dates, activate phases</p>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="saveVotingConfig()">ðŸ’¾ Save Changes</button>
+              </div>
+              <div id="votingConfigForm" style="display:flex;flex-direction:column;gap:var(--space-4);">
+                <div style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading phasesâ€¦</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:var(--space-4);">
+              <div style="background:linear-gradient(135deg,rgba(15,23,42,0.94),rgba(26,107,60,0.9));border-radius:var(--radius-xl);padding:var(--space-6);color:white;border:1px solid rgba(255,255,255,0.08);">
+                <div style="font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.52);margin-bottom:10px;">Lifecycle Rules</div>
+                <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.15rem;margin-bottom:10px;">Election phases now follow a strict launch and finalize sequence.</h3>
+                <div style="font-size:0.82rem;color:rgba(255,255,255,0.74);line-height:1.8;">
+                  <div>1. Save the phase schedule.</div>
+                  <div>2. Start Phase 1 and monitor nominations and turnout.</div>
+                  <div>3. Finalize Phase 1 before Phase 2 becomes available.</div>
+                  <div>4. Start and finalize Phase 2 to lock governance results.</div>
+                </div>
+              </div>
+              <div style="background:white;border:1.5px solid var(--light-200);border-radius:var(--radius-xl);padding:var(--space-5);">
+                <div style="font-weight:800;margin-bottom:8px;">Action Workspace</div>
+                <div style="font-size:0.8rem;color:var(--text-secondary);line-height:1.75;">
+                  Use the lifecycle board above to start or finalize each phase. This panel stays here for schedule editing and safety actions only.
+                </div>
+              </div>
+              <div style="background:rgba(220,38,38,0.06);border:1.5px solid rgba(220,38,38,0.25);border-radius:var(--radius-xl);padding:var(--space-5);margin-top:var(--space-2);">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-3);">
+                  <div>
+                    <div style="font-weight:700;color:#dc2626;display:flex;align-items:center;gap:6px;">âš ï¸ Danger Zone</div>
+                    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">Completely wipe all votes, nominations, and results.</div>
+                  </div>
+                </div>
+                <button class="btn" style="width:100%;background:rgba(220,38,38,0.1);color:#dc2626;border:1px solid rgba(220,38,38,0.2);" onclick="resetElectionCycle()">ðŸ›‘ End Semester &amp; Reset Election</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- â”€â”€â”€ TAB: NOMINATIONS â”€â”€â”€ -->
+        <div id="vpanel-nominations" class="voting-admin-panel" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-5);">
+            <div>
+              <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.1rem;">Nomination Review</h3>
+              <p style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;">Approve or reject candidate nominations</p>
+            </div>
+            <div style="display:flex;align-items:center;gap:var(--space-3);">
+              <div class="pill-tabs" id="nomFilterTabs">
+                <span class="pill-tab active" onclick="filterNominations('all',this)">All</span>
+                <span class="pill-tab" onclick="filterNominations('pending',this)">â³ Pending</span>
+                <span class="pill-tab" onclick="filterNominations('approved',this)">âœ… Approved</span>
+                <span class="pill-tab" onclick="filterNominations('rejected',this)">âŒ Rejected</span>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="loadNominationsAdmin()">ðŸ”„</button>
+            </div>
+          </div>
+          <!-- Nomination Cards Grid -->
+          <div id="nominationCardsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:var(--space-4);">
+            <div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:var(--space-8);">Loading nominationsâ€¦</div>
+          </div>
+          <!-- Also keep the table for fallback -->
+          <div class="data-table-card" style="margin-top:var(--space-5);display:none;" id="nominationsTableWrapper">
+            <table class="data-table">
+              <thead><tr><th>Candidate</th><th>Phase</th><th>Files/Video</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="nominationsTbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- â”€â”€â”€ TAB: ANALYTICS â”€â”€â”€ -->
+        <div id="vpanel-analytics" class="voting-admin-panel" style="display:none;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-6);margin-bottom:var(--space-6);">
+            <!-- Turnout Gauge -->
+            <div style="background:linear-gradient(135deg,var(--dark-800),var(--epsa-green-dark));border-radius:var(--radius-xl);padding:var(--space-8);color:white;text-align:center;">
+              <div style="font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:var(--space-4);">Overall Election Turnout</div>
+              <div id="analyticsGaugePct" style="font-family:var(--font-display);font-size:4rem;font-weight:900;color:var(--epsa-gold-light);">--%</div>
+              <div style="margin-top:var(--space-4);background:rgba(255,255,255,0.1);border-radius:var(--radius-full);height:12px;overflow:hidden;">
+                <div id="analyticsGaugeBar" style="height:100%;background:linear-gradient(90deg,var(--epsa-gold),var(--epsa-green));border-radius:var(--radius-full);width:0%;transition:width 1s ease;"></div>
+              </div>
+              <div style="margin-top:var(--space-4);display:flex;justify-content:space-around;">
+                <div><div style="font-family:var(--font-display);font-size:1.5rem;font-weight:800;" id="analyticsVotes">--</div><div style="font-size:0.7rem;color:rgba(255,255,255,0.5);">VOTES CAST</div></div>
+                <div><div style="font-family:var(--font-display);font-size:1.5rem;font-weight:800;" id="analyticsEligible">--</div><div style="font-size:0.7rem;color:rgba(255,255,255,0.5);">ELIGIBLE</div></div>
+              </div>
+            </div>
+            <!-- Top Candidates Leaderboard -->
+            <div style="background:white;border-radius:var(--radius-xl);padding:var(--space-6);border:1px solid var(--light-200);">
+              <h4 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-5);">ðŸ† Top Candidates</h4>
+              <div id="analyticsLeaderboard" style="display:flex;flex-direction:column;gap:var(--space-3);">
+                <div style="text-align:center;color:var(--text-muted);padding:var(--space-4);">No votes cast yet</div>
+              </div>
+            </div>
+          </div>
+          <!-- University Breakdown -->
+          <div style="background:white;border-radius:var(--radius-xl);padding:var(--space-6);border:1px solid var(--light-200);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-5);">
+              <h4 style="font-family:var(--font-display);font-weight:800;">University Breakdown</h4>
+              <button class="btn btn-ghost btn-sm" onclick="loadVotingAnalytics()">ðŸ”„ Refresh</button>
+            </div>
+            <div id="analyticsUniBreakdown" style="display:flex;flex-direction:column;gap:var(--space-3);">
+              <div style="text-align:center;color:var(--text-muted);padding:var(--space-4);">Loadingâ€¦</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- â”€â”€â”€ TAB: LEADERSHIP MANAGEMENT (NEB & NEC) â”€â”€â”€ -->
+        <div id="vpanel-neb" class="voting-admin-panel" style="display:none;">
+          <div style="background:linear-gradient(135deg,rgba(200,163,64,0.08),rgba(200,163,64,0.03));border:1.5px dashed var(--epsa-gold);border-radius:var(--radius-xl);padding:var(--space-8);margin-bottom:var(--space-6);">
+            <div style="display:flex;align-items:center;gap:var(--space-4);margin-bottom:var(--space-6);">
+              <div style="width:56px;height:56px;background:var(--epsa-gold);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0;">ðŸ›ï¸</div>
+              <div>
+                <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.3rem;color:var(--epsa-gold-dark);">Elected Director Assignment</h3>
+                <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:2px;">Manually assign top Phase II candidates to Director portfolios.</p>
+              </div>
+              <button class="btn btn-sm" style="margin-left:auto;background:var(--epsa-gold);color:white;border:none;" onclick="loadNEBCandidates()">ðŸ”„ Load Phase 2 Candidates</button>
+            </div>
+            <div id="nebCandidatesList" style="display:flex;flex-direction:column;gap:var(--space-4);">
+              <div style="text-align:center;color:var(--text-muted);background:rgba(255,255,255,0.6);border-radius:var(--radius-lg);padding:var(--space-8);">
+                Click "Load Phase 2 Candidates" to begin assignments.
+              </div>
+            </div>
+          </div>
+          
+          <div style="background:white;border-radius:var(--radius-xl);border:1px solid var(--light-200);padding:var(--space-6);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-5);">
+              <div>
+                <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.2rem;">Appointed Leadership (NEB Advisors, Liaisons)</h3>
+                <p style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;">Manage non-elected members synced to the public homepage.</p>
+              </div>
+              <button class="btn btn-primary" onclick="document.getElementById('addLeadershipModal').classList.add('active')">+ Add Member</button>
+            </div>
+            <table class="data-table">
+              <thead><tr><th>Name</th><th>Position</th><th>Hierarchy</th><th>Actions</th></tr></thead>
+              <tbody id="appointedLeadershipTbody">
+                <tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Legacy turnout ids for backward compat -->
+        <span id="analyticsTurnout" style="display:none;"></span>
+      </section>
+
+      <!-- â•â•â• EXAMS â•â•â• -->
+      <section id="asec-exams" class="admin-section" style="display:none;">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:var(--space-5);">
+          <button class="btn btn-primary" onclick="document.getElementById('createExamModalLegacy').classList.add('active')">+ Create Exam</button>
+        </div>
+        <div class="data-table-card">
+          <div class="table-header"><div class="table-title">Examinations</div></div>
+          <table class="data-table">
+            <thead><tr><th>Title</th><th>Duration</th><th>Questions</th><th>Scheduled</th><th>Status</th><th>Submissions</th><th>Actions</th></tr></thead>
+            <tbody id="examsTbody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- â•â•â• NEWS & EVENTS â•â•â• -->
+      <section id="asec-news" class="admin-section" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-5);">
+          <div>
+            <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.4rem;">News &amp; Events Management</h3>
+            <p style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;">Publish updates directly to the public homepage.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openCreateNewsModal()">+ Post New Update</button>
+        </div>
+        <div class="data-table-card">
+          <table class="data-table">
+            <thead><tr><th>Image</th><th>Category</th><th>Title</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="newsTbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- â•â•â• CLUBS & OVERSIGHT â•â•â• -->
+      <section id="asec-clubs-admin" class="admin-section" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-5);">
+          <div>
+            <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.4rem;">Clubs &amp; Oversight</h3>
+            <p style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;">Approve, monitor, and manage EPSA university chapters.</p>
+          </div>
+          <div class="pill-tabs" id="clubStatusTabs">
+            <span class="pill-tab active" onclick="loadAdminClubs('all',this)">All</span>
+            <span class="pill-tab" onclick="loadAdminClubs('pending',this)">â³ Pending</span>
+            <span class="pill-tab" onclick="loadAdminClubs('approved',this)">âœ… Approved</span>
+            <span class="pill-tab" onclick="loadAdminClubs('rejected',this)">âŒ Rejected</span>
+          </div>
+        </div>
+        <div class="data-table-card">
+          <table class="data-table">
+            <thead><tr><th>Club</th><th>University</th><th>President</th><th>Members</th><th>Status</th><th>Submitted</th><th>Actions</th></tr></thead>
+            <tbody id="clubsAdminTbody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- â•â•â• GRANTS & FINANCIALS â•â•â• -->
+      <section id="asec-grants-admin" class="admin-section" style="display:none;">
+        <div style="margin-bottom:var(--space-5);">
+          <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.4rem;">Grants &amp; Financial Auditor</h3>
+          <p style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;">Review club proposals, assign funding, verify financial accountability reports.</p>
+        </div>
+        <!-- Sub-tabs -->
+        <div style="display:flex;gap:0;background:white;border-radius:var(--radius-xl);padding:var(--space-2);border:1px solid var(--light-200);margin-bottom:var(--space-6);width:fit-content;">
+          <button class="voting-admin-tab active" id="gtab-proposals" onclick="switchGrantsTab('proposals')">ðŸ“‹ Proposals</button>
+          <button class="voting-admin-tab" id="gtab-reports" onclick="switchGrantsTab('reports')">ðŸ“Š Financial Reports</button>
+        </div>
+        <div id="gpanel-proposals">
+          <div style="display:flex;gap:8px;margin-bottom:var(--space-4);">
+            <span class="pill-tab active" onclick="loadAdminProposals('all',this)">All</span>
+            <span class="pill-tab" onclick="loadAdminProposals('pending',this)">â³ Pending</span>
+            <span class="pill-tab" onclick="loadAdminProposals('approved',this)">âœ… Approved</span>
+            <span class="pill-tab" onclick="loadAdminProposals('funded',this)">ðŸ’° Funded</span>
+            <span class="pill-tab" onclick="loadAdminProposals('awaiting_verification',this)">ðŸ” Awaiting Report</span>
+            <span class="pill-tab" onclick="loadAdminProposals('completed',this)">ðŸ Completed</span>
+          </div>
+          <div class="data-table-card">
+            <table class="data-table">
+              <thead><tr><th>Club</th><th>Project</th><th>Budget (ETB)</th><th>Timeline</th><th>Status</th><th>Submitted</th><th>Actions</th></tr></thead>
+              <tbody id="proposalsTbody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="gpanel-reports" style="display:none;">
+          <div class="data-table-card">
+            <table class="data-table">
+              <thead><tr><th>Club</th><th>Project</th><th>Spent (ETB)</th><th>Receipt</th><th>Status</th><th>Submitted</th><th>Actions</th></tr></thead>
+              <tbody id="finReportsTbody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- â•â•â• PARTNERS CONTROL â•â•â• -->
+      <section id="asec-partners-admin" class="admin-section" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-5);">
+          <div>
+            <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.4rem;">Partner Control Panel</h3>
+            <p style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;">Manage external partners synced to the public partners page.</p>
+          </div>
+          <button class="btn btn-primary" onclick="document.getElementById('createPartnerModal').classList.add('active')">+ Add Partner</button>
+        </div>
+        <div class="data-table-card">
+          <table class="data-table">
+            <thead><tr><th>Logo</th><th>Name</th><th>Category</th><th>Website</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="partnersAdminTbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- â•â•â• ANALYTICS ENGINE â•â•â• -->
+      <section id="asec-analytics" class="admin-section" style="display:none;position:relative">
+        <!-- Header -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:22px">
+          <div>
+            <h2 style="font-family:var(--font-display);font-weight:800;font-size:1.5rem">ðŸ§  Intelligent Analytics Engine</h2>
+            <p style="font-size:0.85rem;color:var(--text-muted);margin-top:4px">In-depth cohort, question, and student performance insights</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <select id="analyticsExamFilter" onchange="onAnalyticsExamChange(this)" class="form-select" style="width:auto;font-size:0.85rem">
+              <option value="">All Exams (Combined)</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="loadAnalyticsDashboard()">ðŸ”„ Refresh</button>
+          </div>
+        </div>
+
+        <!-- Sub-tabs -->
+        <div style="display:flex;gap:0;background:white;border-radius:var(--radius-xl);padding:var(--space-2);border:1px solid var(--light-200);margin-bottom:22px;width:fit-content;flex-wrap:wrap">
+          <button class="ata-tab voting-admin-tab active" data-tab="cohort"    onclick="switchAnalyticsTab('cohort')">ðŸ“Š Cohort Insights</button>
+          <button class="ata-tab voting-admin-tab"         data-tab="bloom"    onclick="switchAnalyticsTab('bloom')">ðŸŽ¯ Bloom's Taxonomy</button>
+          <button class="ata-tab voting-admin-tab"         data-tab="atrisk"   onclick="switchAnalyticsTab('atrisk')">âš ï¸ At-Risk Students</button>
+          <button class="ata-tab voting-admin-tab"         data-tab="questions" onclick="switchAnalyticsTab('questions')">ðŸ“‹ Question Quality</button>
+        </div>
+
+        <!-- Cohort Panel -->
+        <div class="ata-panel" id="ata-panel-cohort">
+          <div id="analyticsCohortPanel"><div style="text-align:center;padding:40px;color:var(--text-muted)">Click Refresh to load cohort data.</div></div>
+        </div>
+
+        <!-- Bloom Panel -->
+        <div class="ata-panel" id="ata-panel-bloom" style="display:none">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+            <div style="background:white;border:1px solid var(--light-200);border-radius:18px;padding:22px;box-shadow:0 4px 12px rgba(0,0,0,0.04)">
+              <div style="font-weight:800;margin-bottom:14px;font-size:0.95rem">ðŸŽ¯ Bloom's Taxonomy Coverage</div>
+              <div id="analyticsBloomPanel"><div style="color:var(--text-muted);text-align:center;padding:24px">Loadingâ€¦</div></div>
+            </div>
+            <div style="background:linear-gradient(135deg,#0f172a,#1a3a2e);border-radius:18px;padding:22px;color:white">
+              <div style="font-size:0.75rem;letter-spacing:0.1em;color:rgba(255,255,255,0.5);text-transform:uppercase;margin-bottom:12px">Cognitive Depth Legend</div>
+              <div style="display:flex;flex-direction:column;gap:10px;font-size:0.85rem">
+                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#dbeafe"></div><span>Remembering â€” Recall facts</span></div>
+                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#bfdbfe"></div><span>Understanding â€” Interpret meaning</span></div>
+                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#93c5fd"></div><span>Applying â€” Use knowledge</span></div>
+                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#60a5fa"></div><span>Analyzing â€” Break down components</span></div>
+                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#3b82f6"></div><span>Evaluating â€” Judge and assess</span></div>
+                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#1d4ed8"></div><span>Creating â€” Produce new ideas</span></div>
+              </div>
+              <div style="margin-top:20px;background:rgba(255,255,255,0.06);border-radius:12px;padding:14px">
+                <div style="font-size:0.8rem;color:rgba(255,255,255,0.7);line-height:1.7">
+                  Aim for <strong>20â€“40% high-order</strong> questions (Analyzing, Evaluating, Creating) for a psychologically rigorous exam aligned with clinical training standards.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- At-Risk Panel -->
+        <div class="ata-panel" id="ata-panel-atrisk" style="display:none">
+          <div style="background:white;border:1px solid var(--light-200);border-radius:18px;padding:22px;box-shadow:0 4px 12px rgba(0,0,0,0.04)">
+            <div id="analyticsAtRiskPanel"><div style="color:var(--text-muted);text-align:center;padding:24px">Loadingâ€¦</div></div>
+          </div>
+        </div>
+
+        <!-- Questions Panel -->
+        <div class="ata-panel" id="ata-panel-questions" style="display:none">
+          <div style="background:white;border:1px solid var(--light-200);border-radius:18px;padding:22px;box-shadow:0 4px 12px rgba(0,0,0,0.04)">
+            <div style="font-weight:800;margin-bottom:16px">ðŸ“‹ Question Performance (Bottom 50 by Correctness)</div>
+            <div id="analyticsQuestionsPanel"><div style="color:var(--text-muted);text-align:center;padding:24px">Loadingâ€¦</div></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€ APPLICANT DETAIL MODAL â”€â”€ -->
+<div class="modal-overlay" id="applicantModal">
+  <div class="modal applicant-detail" style="max-width:660px;">
+    <div class="applicant-detail-header" id="applicantDetailHeader">
+      <!-- Populated by JS -->
+    </div>
+    <div id="applicantDetailBody" style="display:flex;flex-direction:column;gap:var(--space-3);"></div>
+    <div style="display:flex;gap:var(--space-3);justify-content:flex-end;margin-top:var(--space-6);padding-top:var(--space-5);border-top:1px solid var(--light-200);">
+      <button class="btn btn-ghost" onclick="closeApplicantModal()">Close</button>
+      <button class="btn btn-primary action-btn-reject" id="modalRejectBtn" onclick="rejectCurrentApplicant()">âŒ Reject</button>
+      <button class="btn btn-primary" id="modalApproveBtn" onclick="approveCurrentApplicant()">âœ… Approve</button>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€ CREATE TRAINING MODAL â”€â”€ -->
+<div class="modal-overlay" id="createTrainingModal">
+  <div class="modal" style="max-width:600px;">
+    <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">Create Training Program</h3>
+    <div class="admin-form-grid">
+      <div class="form-group"><label class="form-label">Title *</label><input id="ct-title" class="form-input" placeholder="e.g. Mental Health First Aid"></div>
+      <div class="form-group"><label class="form-label">Format *</label><select id="ct-format" class="form-select"><option value="online">ðŸ’» Online</option><option value="in-person">ðŸ“ In-Person</option></select></div>
+      <div class="form-group"><label class="form-label">Price (ETB, 0 = free)</label><input id="ct-price" type="number" class="form-input" value="0" min="0"></div>
+      <div class="form-group"><label class="form-label">Icon Emoji</label><input id="ct-icon" class="form-input" value="ðŸŽ“" maxlength="2"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Description *</label><textarea id="ct-desc" class="form-input" rows="3" placeholder="Describe the training programâ€¦"></textarea></div>
+    <div class="form-group"><label class="form-label">Certificate Title</label><input id="ct-cert" class="form-input" placeholder="e.g. Certificate of Mental Health First Aid"></div>
+    <div class="form-group"><label class="form-label">Content URL (optional)</label><input id="ct-url" class="form-input" type="url" placeholder="https://â€¦"></div>
+    <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Graphic design (optional)</label><input id="ct-graphic" class="form-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></div>
+    <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Graphic caption</label><input id="ct-graphic-caption" class="form-input" placeholder="Short caption shown under the image"></div>
+    <div style="display:flex;gap:var(--space-3);justify-content:flex-end;margin-top:var(--space-4);">
+      <button class="btn btn-ghost" onclick="document.getElementById('createTrainingModal').classList.remove('active')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitCreateTraining()">ðŸš€ Create Training</button>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€ EDIT TRAINING MODAL â”€â”€ -->
+<div class="modal-overlay" id="editTrainingModal">
+  <div class="modal" style="max-width:600px;">
+    <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">Edit Training Program</h3>
+    <div class="admin-form-grid">
+      <input type="hidden" id="et-id">
+      <div class="form-group"><label class="form-label">Title *</label><input id="et-title" class="form-input"></div>
+      <div class="form-group"><label class="form-label">Format *</label><select id="et-format" class="form-select"><option value="online">ðŸ’» Online</option><option value="in-person">ðŸ“ In-Person</option></select></div>
+      <div class="form-group"><label class="form-label">Price (ETB)</label><input id="et-price" type="number" class="form-input" min="0"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Description *</label><textarea id="et-desc" class="form-input" rows="3"></textarea></div>
+    <div style="display:flex;gap:var(--space-3);justify-content:flex-end;margin-top:var(--space-4);">
+      <button class="btn btn-ghost" onclick="document.getElementById('editTrainingModal').classList.remove('active')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitEditTraining()">ðŸ’¾ Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€ CREATE EXAM MODAL â”€â”€ -->
+<div class="modal-overlay" id="createExamModalLegacy">
+  <div class="modal" style="max-width:600px;">
+    <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">Create Examination</h3>
+    <div class="admin-form-grid">
+      <div class="form-group" style="grid-column: 1 / -1;"><label class="form-label">Title *</label><input id="ce-title" class="form-input" placeholder="e.g. Midterm Assessment"></div>
+      <div class="form-group"><label class="form-label">Duration (mins) *</label><input id="ce-duration" type="number" class="form-input" value="60"></div>
+      <div class="form-group"><label class="form-label">Passing mark (%)</label><input id="ce-passing" type="number" class="form-input" value="60" min="0" max="100" step="0.5"></div>
+      <div class="form-group"><label class="form-label">Scheduled For</label><input id="ce-scheduled" type="datetime-local" class="form-input"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Description *</label><textarea id="ce-desc" class="form-input" rows="2" placeholder="Exam descriptionâ€¦"></textarea></div>
+    <div style="display:flex;gap:var(--space-3);justify-content:flex-end;margin-top:var(--space-4);">
+      <button class="btn btn-ghost" onclick="document.getElementById('createExamModalLegacy').classList.remove('active')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitCreateExam()">ðŸš€ Build Exam</button>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€ EDIT EXAM MODAL â”€â”€ -->
+<div class="modal-overlay" id="editExamModal">
+  <div class="modal" style="max-width:600px;">
+    <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">Edit Examination</h3>
+    <div class="admin-form-grid">
+      <input type="hidden" id="ee-id">
+      <div class="form-group" style="grid-column: 1 / -1;"><label class="form-label">Title *</label><input id="ee-title" class="form-input"></div>
+      <div class="form-group"><label class="form-label">Duration (mins) *</label><input id="ee-duration" type="number" class="form-input"></div>
+      <div class="form-group"><label class="form-label">Passing mark (%)</label><input id="ee-passing" type="number" class="form-input" min="0" max="100" step="0.5"></div>
+      <div class="form-group"><label class="form-label">Scheduled For</label><input id="ee-scheduled" type="datetime-local" class="form-input"></div>
+    </div>
+    <div style="display:flex;gap:var(--space-3);justify-content:flex-end;margin-top:var(--space-4);">
+      <button class="btn btn-ghost" onclick="document.getElementById('editExamModal').classList.remove('active')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitEditExam()">ðŸ’¾ Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€ CREATE NEWS MODAL â”€â”€ -->
+<div class="modal-overlay" id="createNewsModal">
+  <div class="modal" style="max-width:650px;">
+    <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">Post News &amp; Updates</h3>
+    <form id="newsForm" onsubmit="submitCreateNews(event)">
+      <div class="admin-form-grid">
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Headline / Title *</label>
+          <input type="text" id="cn-title" class="form-input" required placeholder="e.g. Call for Participants">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category *</label>
+          <select id="cn-category" class="form-select">
+            <option value="News">News</option>
+            <option value="Event">Event</option>
+            <option value="Announcement">Announcement</option>
+            <option value="Research">Research</option>
+            <option value="Election">Election</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cover Image</label>
+          <input type="file" id="cn-image" class="form-input" accept="image/*">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Short Excerpt *</label>
+        <textarea id="cn-excerpt" class="form-input" rows="2" required placeholder="Brief summary appearing on homepage"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Full Content</label>
+        <textarea id="cn-content" class="form-input" rows="4" placeholder="Detailed content..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label" style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="cn-featured" value="1"> Featured (Hero Layout)
+        </label>
+      </div>
+      <div style="display:flex;gap:var(--space-3);justify-content:flex-end;">
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('createNewsModal').classList.remove('active')">Cancel</button>
+        <button type="submit" class="btn btn-primary">ðŸš€ Publish</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- â”€â”€ ADD LEADERSHIP MODAL â”€â”€ -->
+<div class="modal-overlay" id="addLeadershipModal">
+  <div class="modal" style="max-width:600px;">
+    <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">Appoint Leadership Profile</h3>
+    <form id="leadershipForm" onsubmit="submitAddLeadership(event)">
+      <div class="admin-form-grid">
+        <div class="form-group"><label class="form-label">Full Name *</label><input type="text" id="cl-name" class="form-input" required></div>
+        <div class="form-group"><label class="form-label">Position Title *</label><input type="text" id="cl-position" class="form-input" required placeholder="e.g. EPA Liaison"></div>
+        <div class="form-group"><label class="form-label">Hierarchy Level</label><select id="cl-hierarchy" class="form-select"><option value="NEB">National Executive Board</option><option value="NEC">National Executive Committee</option></select></div>
+        <div class="form-group"><label class="form-label">Sort Order</label><input type="number" id="cl-order" class="form-input" value="10"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Profile Photo</label><input type="file" id="cl-photo" class="form-input" accept="image/*"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Short Bio</label><textarea id="cl-bio" class="form-input" rows="2"></textarea></div>
+      </div>
+      <div style="display:flex;gap:var(--space-3);justify-content:flex-end;">
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('addLeadershipModal').classList.remove('active')">Cancel</button>
+        <button type="submit" class="btn btn-primary">ðŸ’¾ Add Profile</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- â”€â”€ REJECT REASON MODAL â”€â”€ -->
+<div class="modal-overlay" id="rejectModal">
+  <div class="modal" style="max-width:480px;">
+    <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-4);">Reject Application</h3>
+    <div class="form-group">
+      <label class="form-label">Reason for Rejection *</label>
+      <select id="rejectReason" class="form-select" style="margin-bottom:var(--space-3);">
+        <option value="Registration slip is outdated or invalid">Registration slip is outdated or invalid</option>
+        <option value="Student is not enrolled in a psychology program">Not enrolled in a psychology program</option>
+        <option value="Graduation exceeds 3-year limit for alumni">Graduation exceeds 3-year limit</option>
+        <option value="Incomplete or unclear documents submitted">Incomplete or unclear documents</option>
+        <option value="Profile photo does not meet requirements">Profile photo does not meet requirements</option>
+        <option value="other">Other (specify below)</option>
+      </select>
+      <textarea id="rejectReasonCustom" class="form-input" rows="2" placeholder="Additional notes (optional)â€¦"></textarea>
+    </div>
+    <div style="display:flex;gap:var(--space-3);justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="document.getElementById('rejectModal').classList.remove('active')">Cancel</button>
+      <button class="btn btn-primary" style="background:var(--epsa-red);" onclick="confirmReject()">Confirm Rejection</button>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€ QUESTION BUILDER MODAL â”€â”€ -->
+<div class="modal-overlay" id="questionBuilderModal">
+  <div class="modal" style="max-width:860px;width:95vw;max-height:88vh;display:flex;flex-direction:column;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-5);flex-shrink:0;">
+      <div>
+        <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:2px;">&#128221; Question Builder</h3>
+        <div style="font-size:0.8rem;color:var(--text-muted);" id="qb-exam-title"></div>
+      </div>
+      <button class="btn btn-ghost" onclick="closeQuestionBuilder()">&#x2715; Close</button>
+    </div>
+
+    <!-- Existing questions -->
+    <div style="flex:1;overflow-y:auto;margin-bottom:var(--space-5);">
+      <div style="font-weight:700;font-size:0.85rem;color:var(--text-muted);margin-bottom:var(--space-3);text-transform:uppercase;letter-spacing:0.05em;">Existing Questions</div>
+      <div id="qb-question-list"><div style="text-align:center;color:var(--text-muted);padding:var(--space-6);">No questions yet. Add one below.</div></div>
+    </div>
+
+    <!-- Add question form -->
+    <div style="background:var(--light-50);border:1.5px dashed var(--light-300);border-radius:var(--radius-lg);padding:var(--space-5);flex-shrink:0;">
+      <div style="font-weight:700;margin-bottom:var(--space-4);">&#10133; Add New Question</div>
+      <input type="hidden" id="qb-exam-id">
+      <div class="form-group">
+        <label class="form-label">Question Text *</label>
+        <textarea id="qb-question" class="form-input" rows="2" placeholder="Type the question here..."></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);margin-bottom:var(--space-4);">
+        <div class="form-group">
+          <label class="form-label" style="display:flex;align-items:center;gap:8px;"><input type="radio" name="qb-correct" value="0" checked> <span style="color:var(--epsa-green);font-weight:700;">A</span> (mark correct)</label>
+          <input id="qb-opt-a" class="form-input" placeholder="Option A">
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="display:flex;align-items:center;gap:8px;"><input type="radio" name="qb-correct" value="1"> <span style="font-weight:700;">B</span></label>
+          <input id="qb-opt-b" class="form-input" placeholder="Option B">
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="display:flex;align-items:center;gap:8px;"><input type="radio" name="qb-correct" value="2"> <span style="font-weight:700;">C</span></label>
+          <input id="qb-opt-c" class="form-input" placeholder="Option C">
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="display:flex;align-items:center;gap:8px;"><input type="radio" name="qb-correct" value="3"> <span style="font-weight:700;">D</span> <span style="font-size:0.75rem;color:var(--text-muted);">(optional)</span></label>
+          <input id="qb-opt-d" class="form-input" placeholder="Option D (optional)">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveNewQuestion()">&#10133; Add Question</button>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€ SUBMISSIONS & RESULTS MODAL â”€â”€ -->
+<div class="modal-overlay" id="submissionsModal">
+  <div class="modal" style="max-width:780px;width:95vw;max-height:88vh;display:flex;flex-direction:column;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-5);flex-shrink:0;">
+      <div>
+        <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:2px;">&#128202; Exam Results</h3>
+        <div style="font-size:0.8rem;color:var(--text-muted);" id="sub-exam-title"></div>
+      </div>
+      <button class="btn btn-ghost" onclick="document.getElementById('submissionsModal').classList.remove('active')">&#x2715;</button>
+    </div>
+    <!-- Release bar -->
+    <div id="sub-release-bar" style="display:flex;align-items:center;justify-content:space-between;padding:var(--space-4);border-radius:var(--radius-lg);margin-bottom:var(--space-5);flex-shrink:0;"></div>
+    <!-- Submissions table -->
+    <div style="flex:1;overflow-y:auto;">
+      <table class="data-table">
+        <thead><tr><th>#</th><th>Student</th><th>Student ID</th><th>University</th><th>Score</th><th>Passed</th><th>Submitted</th></tr></thead>
+        <tbody id="sub-tbody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€ CREATE PARTNER MODAL â”€â”€ -->
+<div class="modal-overlay" id="createPartnerModal">
+  <div class="modal" style="max-width:600px;">
+    <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">Add Partner</h3>
+    <form id="partnerForm" onsubmit="submitCreatePartner(event)">
+      <div class="admin-form-grid">
+        <div class="form-group"><label class="form-label">Partner Name *</label><input type="text" id="cp-name" class="form-input" required placeholder="e.g. WHO Ethiopia"></div>
+        <div class="form-group"><label class="form-label">Category *</label>
+          <select id="cp-cat" class="form-select">
+            <option>NGO</option><option>Hospital</option><option>University</option>
+            <option>Government</option><option>Clinic</option><option>Research</option>
+          </select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Logo</label><input type="file" id="cp-logo" class="form-input" accept="image/*"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Website URL</label><input type="url" id="cp-website" class="form-input" placeholder="https://â€¦"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Description</label><textarea id="cp-desc" class="form-input" rows="3" placeholder="Brief description of the partnershipâ€¦"></textarea></div>
+      </div>
+      <div style="display:flex;gap:var(--space-3);justify-content:flex-end;margin-top:var(--space-4);">
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('createPartnerModal').classList.remove('active')">Cancel</button>
+        <button type="submit" class="btn btn-primary">ðŸ¤ Add Partner</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="questionReviewModal" onclick="if(event.target===this)closeQuestionReview()">
+  <div class="modal" style="max-width:920px;width:95vw;background:linear-gradient(180deg,#0b2c1b,#071f10);color:#f0fdf4;border:1px solid rgba(34,197,94,.18);">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;">
+      <div>
+        <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:4px;">Question Review Workspace</h3>
+        <div style="font-size:.82rem;color:#86efac;">Inspect the full question, answer options, rationale, and teacher context before deciding.</div>
+      </div>
+      <button class="btn btn-ghost" onclick="closeQuestionReview()">Close</button>
+    </div>
+    <div id="questionReviewBody"></div>
+    <div id="questionReviewFooter" style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="teacherReviewModal" onclick="if(event.target===this)closeTeacherReview()">
+  <div class="modal" style="max-width:900px;width:95vw;background:linear-gradient(180deg,#0b2c1b,#071f10);color:#f0fdf4;border:1px solid rgba(34,197,94,.18);">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;">
+      <div>
+        <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:4px;">Teacher Review Workspace</h3>
+        <div style="font-size:.82rem;color:#86efac;">Review the applicant profile, background, and contribution details before approval.</div>
+      </div>
+      <button class="btn btn-ghost" onclick="closeTeacherReview()">Close</button>
+    </div>
+    <div id="teacherReviewBody"></div>
+    <div id="teacherReviewFooter" style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;"></div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/admin.js"></script>
+<script>
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ECOSYSTEM ADMIN LOGIC â€” Clubs, Grants, Partners
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+const ADMIN_UPLOAD_BASE = (() => {
+  if (window.API && typeof API.getApiBases === 'function') {
+    const base = API.getApiBases()[0];
+    if (base) return base.replace(/\/api\/?$/, '');
+  }
+  const origin = window.location?.origin || '';
+  if (origin && /^https?:/i.test(origin) && !/^(file:|null)$/i.test(origin)) {
+    return origin.replace(/\/$/, '');
+  }
+  return (window.__EPSA_CONFIG__?.API_BASE_URL || localStorage.getItem('epsa_api_base') || ${window.location.origin}/api).replace(/\/api\/?$/, '');
+})();
+
+function getAdminToken() { return localStorage.getItem('epsa_access_token') || ''; }
+function adminFetch(url, opts={}) {
+  return fetch(ADMIN_UPLOAD_BASE + url, {
+    ...opts,
+    headers: { 'Authorization': 'Bearer ' + getAdminToken(), 'Content-Type': 'application/json', ...(opts.headers||{}) }
+  });
+}
+
+// â”€â”€ CLUBS ADMIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function loadAdminClubs(status='all', tabEl=null) {
+  if (tabEl) {
+    document.querySelectorAll('#clubStatusTabs .pill-tab').forEach(t => t.classList.remove('active'));
+    tabEl.classList.add('active');
+  }
+  const tbody = document.getElementById('clubsAdminTbody');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">Loadingâ€¦</td></tr>';
+  try {
+    const res  = await adminFetch(`/api/admin/clubs?status=${status}`);
+    const data = await res.json();
+    // Update pending badge
+    const pending = data.filter(c => c.status === 'pending').length;
+    const badge = document.getElementById('clubsBadge');
+    if (badge) { badge.textContent = pending; badge.style.display = pending ? '' : 'none'; }
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">No clubs found.</td></tr>'; return; }
+    const statusColors = { pending:'#d97706', approved:'#16a34a', rejected:'#dc2626' };
+    tbody.innerHTML = data.map(c => `
+      <tr>
+        <td><div style="font-weight:700;">${c.logo_url ? `<img src="${ADMIN_UPLOAD_BASE}${c.logo_url}" style="width:28px;height:28px;border-radius:6px;object-fit:cover;vertical-align:middle;margin-right:8px;">` : ''}${c.name}</div></td>
+        <td style="font-size:0.82rem;">${c.university}</td>
+        <td style="font-size:0.82rem;">${c.president_name||'â€”'}</td>
+        <td style="text-align:center;">${c.member_count_live||0}</td>
+        <td><span style="background:${statusColors[c.status]||'#777'}20;color:${statusColors[c.status]||'#777'};padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;">${c.status}</span></td>
+        <td style="font-size:0.78rem;color:var(--text-muted);">${c.created_at ? new Date(c.created_at).toLocaleDateString() : 'â€”'}</td>
+        <td>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${c.status === 'pending' ? `
+              <button class="btn btn-primary btn-sm" onclick="adminApproveClub(${c.id})">âœ… Approve</button>
+              <button class="btn btn-sm" style="background:rgba(220,38,38,0.1);color:#dc2626;border:1px solid rgba(220,38,38,0.2);" onclick="adminRejectClub(${c.id})">âŒ Reject</button>
+            ` : ''}
+            <button class="btn btn-ghost btn-sm" onclick="viewClubMembers(${c.id},'${c.name}')">ðŸ‘¥ Members</button>
+            <button class="btn btn-ghost btn-sm" style="color:#dc2626;" onclick="adminDeleteClub(${c.id})">ðŸ—‘</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;padding:24px;">Error loading clubs.</td></tr>'; }
+}
+
+async function adminApproveClub(id) {
+  if (!confirm('Approve this club? It will be publicly visible on clubs.html.')) return;
+  await adminFetch(`/api/admin/clubs/${id}/approve`, { method:'POST' });
+  showAdminToast('Club approved âœ…'); loadAdminClubs();
+}
+async function adminRejectClub(id) {
+  const reason = prompt('Reason for rejection:') || 'Does not meet requirements';
+  await adminFetch(`/api/admin/clubs/${id}/reject`, { method:'POST', body: JSON.stringify({reason}) });
+  showAdminToast('Club rejected', 'error'); loadAdminClubs();
+}
+async function adminDeleteClub(id) {
+  if (!confirm('Permanently delete this club?')) return;
+  await adminFetch(`/api/admin/clubs/${id}`, { method:'DELETE' });
+  showAdminToast('Club deleted', 'error'); loadAdminClubs();
+}
+
+async function viewClubMembers(id, name) {
+  const res  = await adminFetch(`/api/admin/clubs/${id}/members`);
+  const data = await res.json();
+  alert(`Members of "${name}":\n\n${data.map(m => `${m.name} (${m.role}) â€” ${m.university} â€” ${m.student_id}`).join('\n') || 'No members yet.'}`);
+}
+
+// â”€â”€ GRANTS ADMIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function switchGrantsTab(tab) {
+  document.getElementById('gpanel-proposals').style.display = tab==='proposals' ? '' : 'none';
+  document.getElementById('gpanel-reports').style.display   = tab==='reports' ? '' : 'none';
+  document.getElementById('gtab-proposals').classList.toggle('active', tab==='proposals');
+  document.getElementById('gtab-reports').classList.toggle('active', tab==='reports');
+  if (tab==='reports') loadFinancialReports();
+  else loadAdminProposals();
+}
+
+async function loadAdminProposals(status='all', tabEl=null) {
+  if (tabEl) {
+    document.querySelectorAll('#gpanel-proposals .pill-tab').forEach(t => t.classList.remove('active'));
+    tabEl.classList.add('active');
+  }
+  const tbody = document.getElementById('proposalsTbody');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">Loadingâ€¦</td></tr>';
+  try {
+    const res  = await adminFetch(`/api/admin/proposals?status=${status}`);
+    const data = await res.json();
+    const pending = data.filter(p => p.status==='pending').length;
+    const badge = document.getElementById('grantsBadge');
+    if (badge) { badge.textContent = pending; badge.style.display = pending ? '' : 'none'; }
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">No proposals found.</td></tr>'; return; }
+    const sColors = { pending:'#d97706', approved:'#2563eb', funded:'#16a34a', rejected:'#dc2626', awaiting_verification:'#8b5cf6', completed:'#059669' };
+    tbody.innerHTML = data.map(p => `
+      <tr>
+        <td style="font-weight:600;">${p.club_name}<br><span style="font-size:0.72rem;color:var(--text-muted);">${p.club_uni}</span></td>
+        <td style="font-weight:600;">${p.title}</td>
+        <td style="font-weight:700;color:var(--epsa-green);">ETB ${(p.budget||0).toLocaleString()}</td>
+        <td style="font-size:0.8rem;">${p.timeline||'â€”'}</td>
+        <td><span style="background:${sColors[p.status]||'#777'}20;color:${sColors[p.status]||'#777'};padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;">${p.status.replace('_',' ')}</span></td>
+        <td style="font-size:0.78rem;color:var(--text-muted);">${p.submitted_at ? new Date(p.submitted_at).toLocaleDateString() : 'â€”'}</td>
+        <td>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;">
+            ${p.status==='pending' ? `<button class="btn btn-primary btn-sm" onclick="adminActProposal(${p.id},'approve')">âœ… Approve</button><button class="btn btn-sm" style="background:rgba(220,38,38,0.1);color:#dc2626;border:1px solid rgba(220,38,38,0.2);" onclick="adminActProposal(${p.id},'reject')">âŒ Reject</button>` : ''}
+            ${p.status==='approved' ? `<button class="btn btn-gold btn-sm" onclick="adminActProposal(${p.id},'fund')">ðŸ’° Fund</button>` : ''}
+            ${p.admin_notes ? `<span title="${p.admin_notes}" style="cursor:help;font-size:0.8rem;">ðŸ“</span>` : ''}
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;padding:24px;">Error loading proposals.</td></tr>'; }
+}
+
+async function adminActProposal(id, action) {
+  let body = {};
+  if (action === 'reject') { body.reason = prompt('Rejection reason:') || 'Does not meet funding criteria'; }
+  if (action === 'approve') { body.notes = prompt('Notes for club (optional):') || ''; }
+  const res = await adminFetch(`/api/admin/proposals/${id}/${action}`, { method:'POST', body: JSON.stringify(body) });
+  const data = await res.json();
+  showAdminToast(data.message||'Done');
+  loadAdminProposals();
+}
+
+async function loadFinancialReports() {
+  const tbody = document.getElementById('finReportsTbody');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">Loadingâ€¦</td></tr>';
+  try {
+    const res  = await adminFetch('/api/admin/financial-reports');
+    const data = await res.json();
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">No reports yet.</td></tr>'; return; }
+    tbody.innerHTML = data.map(r => `
+      <tr>
+        <td style="font-weight:600;">${r.club_name}</td>
+        <td style="font-size:0.82rem;">${r.proposal_title}</td>
+        <td style="font-weight:700;color:var(--epsa-green);">ETB ${(r.total_spent||0).toLocaleString()}</td>
+        <td>${r.receipt_path ? `<a href="${ADMIN_UPLOAD_BASE}/uploads/fin_receipts/${r.receipt_path}" target="_blank" class="btn btn-ghost btn-sm">ðŸ“„ View</a>` : 'â€”'}</td>
+        <td><span style="background:${r.status==='verified'?'#16a34a':'#d97706'}20;color:${r.status==='verified'?'#16a34a':'#d97706'};padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;">${r.status}</span></td>
+        <td style="font-size:0.78rem;color:var(--text-muted);">${r.submitted_at ? new Date(r.submitted_at).toLocaleDateString() : 'â€”'}</td>
+        <td>${r.status==='pending'?`<button class="btn btn-primary btn-sm" onclick="adminVerifyReport(${r.id})">âœ… Verify &amp; Complete</button>`:'<span style="color:#16a34a;font-size:0.8rem;">âœ… Verified</span>'}</td>
+      </tr>
+    `).join('');
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;padding:24px;">Error.</td></tr>'; }
+}
+
+async function adminVerifyReport(id) {
+  if (!confirm('Verify this financial report and mark the project as COMPLETED?')) return;
+  const res  = await adminFetch(`/api/admin/financial-reports/${id}/verify`, { method:'POST' });
+  const data = await res.json();
+  showAdminToast(data.message); loadFinancialReports();
+}
+
+// â”€â”€ PARTNERS ADMIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function loadAdminPartners() {
+  const tbody = document.getElementById('partnersAdminTbody');
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px;">Loadingâ€¦</td></tr>';
+  try {
+    const res  = await adminFetch('/api/admin/partners');
+    const data = await res.json();
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px;">No partners yet. Add your first one!</td></tr>'; return; }
+    const catColors = { NGO:'#4ade80', Hospital:'#f472b6', University:'#60a5fa', Government:'#fbbf24', Clinic:'#c084fc', Research:'#fb923c' };
+    tbody.innerHTML = data.map(p => `
+      <tr>
+        <td>${p.logo_url ? `<img src="${ADMIN_UPLOAD_BASE}${p.logo_url}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;">` : '<div style="width:36px;height:36px;background:var(--light-100);border-radius:8px;display:flex;align-items:center;justify-content:center;">ðŸ¤</div>'}</td>
+        <td style="font-weight:700;">${p.name}</td>
+        <td><span style="background:${catColors[p.category]||'#60a5fa'}18;color:${catColors[p.category]||'#60a5fa'};padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;">${p.category}</span></td>
+        <td>${p.website ? `<a href="${p.website}" target="_blank" style="font-size:0.8rem;color:var(--epsa-green);">ðŸ”— Website</a>` : 'â€”'}</td>
+        <td><span style="background:${p.is_active?'#16a34a':'#dc2626'}20;color:${p.is_active?'#16a34a':'#dc2626'};padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;">${p.is_active?'Active':'Hidden'}</span></td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm" style="color:#dc2626;" onclick="adminDeletePartner(${p.id},'${p.name}')">ðŸ—‘ Remove</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;padding:24px;">Error loading partners.</td></tr>'; }
+}
+
+async function submitCreatePartner(e) {
+  e.preventDefault();
+  const fd = new FormData();
+  fd.append('name',        document.getElementById('cp-name').value);
+  fd.append('category',    document.getElementById('cp-cat').value);
+  fd.append('description', document.getElementById('cp-desc').value);
+  fd.append('website',     document.getElementById('cp-website').value);
+  const logo = document.getElementById('cp-logo').files[0];
+  if (logo) fd.append('logo', logo);
+  const res  = await fetch(ADMIN_UPLOAD_BASE + '/api/admin/partners', {
+    method:'POST', headers:{ 'Authorization':'Bearer '+getAdminToken() }, body: fd
+  });
+  const data = await res.json();
+  showAdminToast(data.message);
+  document.getElementById('createPartnerModal').classList.remove('active');
+  document.getElementById('partnerForm').reset();
+  loadAdminPartners();
+}
+
+async function adminDeletePartner(id, name) {
+  if (!confirm(`Remove partner "${name}"? This also removes their gallery.`)) return;
+  await adminFetch(`/api/admin/partners/${id}`, { method:'DELETE' });
+  showAdminToast('Partner removed', 'error'); loadAdminPartners();
+}
+
+// â”€â”€ HOOK INTO EXISTING SECTION SWITCHER â”€â”€â”€â”€â”€â”€
+const _origSwitch = typeof switchAdminSection === 'function' ? switchAdminSection : null;
+window._ecoSections = { 'clubs-admin': loadAdminClubs, 'grants-admin': ()=>loadAdminProposals(), 'partners-admin': loadAdminPartners };
+document.addEventListener('DOMContentLoaded', () => {
+  const orig = window.switchAdminSection;
+  window.switchAdminSection = function(sec) {
+    orig(sec);
+    if (window._ecoSections[sec]) window._ecoSections[sec]();
+  };
+});
+
+function showAdminToast(msg, type='success') {
+  if (typeof showToast === 'function') showToast(msg, type); else alert(msg);
+}
+</script>
+<script src="../js/admin-ecosystem-enhancements.js"></script>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       ADMIN: QUESTION BANK
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div id="admin-section-question-bank" class="admin-section" style="display:none">
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:28px">
+      <div>
+        <h2 style="font-size:1.5rem;font-weight:900;color:#0f172a;margin:0">ðŸ“š Question Bank</h2>
+        <p style="color:#64748b;font-size:.88rem;margin:6px 0 0">Review, approve, and manage teacher-submitted questions</p>
+      </div>
+      <div id="qbStats" style="display:flex;gap:12px;flex-wrap:wrap"></div>
+    </div>
+
+    <!-- Filters -->
+    <div style="background:white;border:1px solid #e2e8f0;border-radius:16px;padding:18px 20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.04);display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <select id="qbStatusFilter" onchange="loadAdminQuestions()" style="padding:9px 14px;background:white;border:1px solid #e2e8f0;border-radius:10px;color:#0f172a;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer">
+        <option value="pending">â³ Pending Review</option>
+        <option value="approved">âœ… Approved</option>
+        <option value="rejected">âŒ Rejected</option>
+        <option value="all">ðŸ“‹ All Status</option>
+      </select>
+      <select id="qbCategoryFilter" onchange="loadAdminQuestions()" style="padding:9px 14px;background:white;border:1px solid #e2e8f0;border-radius:10px;color:#0f172a;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer">
+        <option value="">All Categories</option>
+        <option>Social Psychology</option><option>Clinical Psychology</option>
+        <option>Developmental Psychology</option><option>Cognitive Psychology</option>
+        <option>Abnormal Psychology</option><option>Research Methods &amp; Statistics</option>
+        <option>Counseling Psychology</option><option>Biological Psychology</option>
+        <option>General Psychology</option>
+      </select>
+      <button onclick="loadAdminQuestions()" style="padding:9px 16px;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:10px;color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:.85rem;box-shadow:0 4px 12px rgba(34,197,94,.3)">ðŸ”„ Refresh</button>
+      <span id="qbTotal" style="color:#64748b;font-size:.82rem;margin-left:auto"></span>
+    </div>
+
+    <!-- Table -->
+    <div style="background:white;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.06)">
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="background:linear-gradient(135deg,#f0fdf4,#f8fafc)">
+            <th style="padding:13px 16px;font-size:.72rem;font-weight:800;color:#1a6b3c;text-align:left;letter-spacing:.06em;text-transform:uppercase">Question</th>
+            <th style="padding:13px 16px;font-size:.72rem;font-weight:800;color:#1a6b3c;text-align:left;letter-spacing:.06em;text-transform:uppercase">Category</th>
+            <th style="padding:13px 16px;font-size:.72rem;font-weight:800;color:#1a6b3c;text-align:left;letter-spacing:.06em;text-transform:uppercase">Bloom's</th>
+            <th style="padding:13px 16px;font-size:.72rem;font-weight:800;color:#1a6b3c;text-align:left;letter-spacing:.06em;text-transform:uppercase">Diff.</th>
+            <th style="padding:13px 16px;font-size:.72rem;font-weight:800;color:#1a6b3c;text-align:left;letter-spacing:.06em;text-transform:uppercase">Teacher</th>
+            <th style="padding:13px 16px;font-size:.72rem;font-weight:800;color:#1a6b3c;text-align:left;letter-spacing:.06em;text-transform:uppercase">Status</th>
+            <th style="padding:13px 16px;font-size:.72rem;font-weight:800;color:#1a6b3c;text-align:left;letter-spacing:.06em;text-transform:uppercase">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="qbTableBody">
+          <tr><td colspan="7" style="padding:40px;text-align:center;color:#94a3b8">Loadingâ€¦</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="qbPagination" style="display:flex;gap:8px;justify-content:center;margin-top:18px"></div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       ADMIN: TEACHERS
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div id="admin-section-teachers" class="admin-section" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:28px">
+      <div>
+        <h2 style="font-size:1.5rem;font-weight:900;color:#0f172a;margin:0">ðŸŽ“ Teacher Management</h2>
+        <p style="color:#64748b;font-size:.88rem;margin:6px 0 0">Review teacher applications and manage approved contributors</p>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <select id="teacherStatusFilter" onchange="loadAdminTeachers()" style="padding:9px 14px;background:white;border:1px solid #e2e8f0;border-radius:10px;color:#0f172a;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer">
+          <option value="pending">â³ Pending Approval</option>
+          <option value="approved">âœ… Approved</option>
+          <option value="rejected">âŒ Rejected</option>
+          <option value="all">ðŸ‘¥ All Teachers</option>
+        </select>
+        <button onclick="loadAdminTeachers()" style="padding:9px 14px;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:10px;color:white;font-weight:700;cursor:pointer;font-size:.85rem;box-shadow:0 4px 12px rgba(34,197,94,.3)">ðŸ”„</button>
+      </div>
+    </div>
+    <div id="teacherCardsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px">
+      <div style="text-align:center;color:#94a3b8;padding:60px;grid-column:1/-1">Loadingâ€¦</div>
+    </div>
+  </div>
+
+  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       ADMIN: MOCK EXAMS
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+  <div id="admin-section-mock-exams" class="admin-section" style="display:none">
+    <!-- Hero header -->
+    <div style="background:linear-gradient(135deg,#0f4d29 0%,#1a6b3c 60%,#185c35 100%);border-radius:24px;padding:28px 32px;margin-bottom:28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;box-shadow:0 20px 48px rgba(15,77,41,.28)">
+      <div>
+        <div style="font-size:.78rem;font-weight:800;color:#86efac;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">EPSA National Assessments</div>
+        <h2 style="font-size:1.6rem;font-weight:900;color:white;margin:0;line-height:1.2">ðŸŽ¯ Mock Exam Management</h2>
+        <p style="color:#bbf7d0;font-size:.9rem;margin:8px 0 0">Schedule, activate, and analyze national mock examinations</p>
+      </div>
+      <button onclick="openCreateExamModal()" style="background:white;color:#1a6b3c;border:none;padding:13px 24px;border-radius:14px;font-family:inherit;font-size:.92rem;font-weight:800;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.15);white-space:nowrap">âž• Schedule New Exam</button>
+    </div>
+    <div id="adminExamList" style="display:flex;flex-direction:column;gap:16px">
+      <div style="text-align:center;color:#94a3b8;padding:60px">Loadingâ€¦</div>
+    </div>
+  </div>
+
+  <!-- Report modal -->
+  <div id="examReportModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:8000;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto">
+    <div style="background:#0a2e18;border:1px solid rgba(34,197,94,.2);border-radius:20px;padding:32px;width:100%;max-width:800px;position:relative">
+      <button onclick="document.getElementById('examReportModal').style.display='none'" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,.07);border:none;color:#86efac;width:32px;height:32px;border-radius:50%;cursor:pointer">âœ•</button>
+      <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:20px">ðŸ“Š Post-Exam Analytics Report</h2>
+      <div id="examReportContent" style="color:#86efac">Loadingâ€¦</div>
+    </div>
+  </div>
+
+  <!-- 4-Step Exam Wizard Modal -->
+  <div id="createExamModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto;backdrop-filter:blur(4px)">
+    <div style="background:white;border:1px solid var(--light-200);border-radius:24px;padding:0;width:100%;max-width:820px;position:relative;box-shadow:0 24px 64px rgba(0,0,0,0.18);overflow:hidden">
+      <!-- Header -->
+      <div style="padding:24px 32px;border-bottom:1px solid var(--light-200);display:flex;justify-content:space-between;align-items:center;background:#f8fafc">
+        <div>
+           <h2 style="font-family:var(--font-display);font-size:1.4rem;font-weight:800;color:#0f172a;margin:0">Create Mock Exam</h2>
+           <p style="font-size:0.85rem;color:var(--text-muted);margin:4px 0 0 0">Configure settings and generate blueprints</p>
+        </div>
+        <button onclick="closeExamWizard()" style="background:var(--light-100);border:none;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:1rem;color:var(--text-muted);display:flex;align-items:center;justify-content:center">âœ•</button>
+      </div>
+      
+      <!-- Wizard Steps Indicator -->
+      <div style="display:flex;padding:24px 32px">
+        <div class="wizard-step" id="wstep-ind-1" style="flex:1;text-align:center"><div style="width:32px;height:32px;border-radius:50%;background:#16a34a;color:white;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-weight:700">1</div><div style="font-size:0.8rem;font-weight:700;color:#16a34a">Core Settings</div></div>
+        <div style="flex:0.5;display:flex;align-items:center"><div style="height:2px;background:#e2e8f0;width:100%"></div></div>
+        <div class="wizard-step" id="wstep-ind-2" style="flex:1;text-align:center"><div style="width:32px;height:32px;border-radius:50%;background:#e2e8f0;color:#64748b;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-weight:700">2</div><div style="font-size:0.8rem;font-weight:600;color:var(--text-muted)">Security</div></div>
+        <div style="flex:0.5;display:flex;align-items:center"><div style="height:2px;background:#e2e8f0;width:100%"></div></div>
+        <div class="wizard-step" id="wstep-ind-3" style="flex:1;text-align:center"><div style="width:32px;height:32px;border-radius:50%;background:#e2e8f0;color:#64748b;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-weight:700">3</div><div style="font-size:0.8rem;font-weight:600;color:var(--text-muted)">Blueprint</div></div>
+        <div style="flex:0.5;display:flex;align-items:center"><div style="height:2px;background:#e2e8f0;width:100%"></div></div>
+        <div class="wizard-step" id="wstep-ind-4" style="flex:1;text-align:center"><div style="width:32px;height:32px;border-radius:50%;background:#e2e8f0;color:#64748b;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-weight:700">4</div><div style="font-size:0.8rem;font-weight:600;color:var(--text-muted)">Review</div></div>
+      </div>
+      
+      <div style="padding:0 32px 32px 32px;color:#0f172a">
+        <!-- Step 1: Core -->
+        <div id="wstep-1" class="wizard-panel">
+          <div class="form-group"><label class="form-label" style="color:var(--text-color)">Exam Title *</label><input id="newExamTitle" class="form-input" style="color:#0f172a;background:white" placeholder="e.g. National Pre-exam Prep"></div>
+          <div class="form-group"><label class="form-label" style="color:var(--text-color)">Objective</label><textarea id="newExamDesc" class="form-input" rows="2" style="color:#0f172a;background:white" placeholder="Brief outline..."></textarea></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+            <div class="form-group"><label class="form-label" style="color:var(--text-color)">Questions *</label><input id="newExamCount" type="number" class="form-input" style="color:#0f172a;background:white" value="100"></div>
+            <div class="form-group"><label class="form-label" style="color:var(--text-color)">Duration (Mins) *</label><input id="newExamDuration" type="number" class="form-input" style="color:#0f172a;background:white" value="120"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div class="form-group"><label class="form-label" style="color:var(--text-color)">Opens At</label><input id="newExamStart" type="datetime-local" class="form-input" style="color:#0f172a;background:white"></div>
+            <div class="form-group"><label class="form-label" style="color:var(--text-color)">Closes At</label><input id="newExamEnd" type="datetime-local" class="form-input" style="color:#0f172a;background:white"></div>
+          </div>
+        </div>
+
+        <!-- Step 2: Security -->
+        <div id="wstep-2" class="wizard-panel" style="display:none">
+          <div style="background:#f8fafc;border:1px solid var(--light-200);border-radius:12px;padding:20px;margin-bottom:16px">
+            <div style="display:flex;align-items:flex-start;gap:12px">
+              <input type="checkbox" id="wz-sc-shuffle-q" checked style="margin-top:4px">
+              <div><div style="font-weight:700">Question Randomization</div><div style="font-size:0.8rem;color:var(--text-muted)">Shuffle question order for each student to prevent pattern sharing.</div></div>
+            </div>
+          </div>
+          <div style="background:#f8fafc;border:1px solid var(--light-200);border-radius:12px;padding:20px;margin-bottom:16px">
+            <div style="display:flex;align-items:flex-start;gap:12px">
+              <input type="checkbox" id="wz-sc-shuffle-o" checked style="margin-top:4px">
+              <div><div style="font-weight:700">Option Randomization</div><div style="font-size:0.8rem;color:var(--text-muted)">Shuffle answer options (A, B, C, D) dynamically.</div></div>
+            </div>
+          </div>
+          <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px">
+            <div style="display:flex;align-items:flex-start;gap:12px">
+              <input type="checkbox" id="wz-sc-proctor" disabled style="margin-top:4px">
+              <div>
+                <div style="font-weight:700;color:#dc2626">Facial Anti-Cheat (Upcoming)</div>
+                <div style="font-size:0.8rem;color:var(--text-muted)">Enforce webcam verification during the exam. (Requires Phase 4 Engine)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Blueprint -->
+        <div id="wstep-3" class="wizard-panel" style="display:none">
+           <div style="background:var(--light-50);border-radius:12px;padding:20px;border:1px solid var(--light-200);margin-bottom:20px">
+             <div style="display:flex;justify-content:space-between;align-items:center">
+               <div><div style="font-weight:800">Auto-Generate Blueprint</div><div style="font-size:0.8rem;color:var(--text-muted)">AI will compile a balanced subject allocation.</div></div>
+               <button class="btn btn-primary btn-sm" type="button" onclick="generateWizardBlueprint()">âœ¨ Generate Map</button>
+             </div>
+           </div>
+           <div><div style="font-size:0.85rem;font-weight:700;margin-bottom:12px">Current Blueprint Structure</div></div>
+           <div id="wz-blueprint-container" style="display:flex;flex-direction:column;gap:12px">
+              <div style="text-align:center;color:var(--text-muted);padding:30px;border:1px dashed var(--light-200);border-radius:12px">Click generate to map the curriculum...</div>
+           </div>
+        </div>
+
+        <!-- Step 4: Summary -->
+        <div id="wstep-4" class="wizard-panel" style="display:none">
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:16px;padding:24px;text-align:center;margin-bottom:20px">
+            <div style="font-size:2.5rem;margin-bottom:12px">ðŸš€</div>
+            <h3 style="font-weight:800;color:#166534;font-size:1.3rem">Ready to Schedule!</h3>
+            <p style="font-size:0.9rem;color:#15803d">The exam is configured with <strong><span id="wz-sum-q">100</span></strong> questions mapped.</p>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:0.85rem">
+            <div style="background:#f8fafc;padding:16px;border-radius:12px;border:1px solid var(--light-200)">
+               <div style="color:var(--text-muted);margin-bottom:4px">Duration</div>
+               <div style="font-weight:800;font-size:1rem" id="wz-sum-dur">120 Minutes</div>
+            </div>
+            <div style="background:#f8fafc;padding:16px;border-radius:12px;border:1px solid var(--light-200)">
+               <div style="color:var(--text-muted);margin-bottom:4px">Security</div>
+               <div style="font-weight:800;font-size:1rem;color:#16a34a">Randomized Active</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div style="display:flex;justify-content:space-between;margin-top:32px;padding-top:20px;border-top:1px solid var(--light-200)">
+          <button id="wz-btn-back" class="btn btn-ghost" onclick="wizSetStep(-1)" style="display:none;color:var(--text-muted)">Back</button>
+          <div style="flex:1"></div>
+          <button class="btn btn-ghost" onclick="closeExamWizard()" style="margin-right:12px;color:var(--text-muted)">Cancel</button>
+          <button id="wz-btn-next" class="btn btn-primary" onclick="wizSetStep(1)">Continue</button>
+          <button id="wz-btn-submit" class="btn btn-primary" onclick="submitExamWizard()" style="display:none">Schedule Exam</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  //   ADMIN: QUESTION BANK
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  let qbPage = 1;
+  let qbQuestionCache = [];
+  let teacherReviewCache = [];
+
+  async function loadAdminQuestions(page) {
+    if (page) qbPage = page;
+    const tbody = document.getElementById('qbTableBody');
+    tbody.innerHTML = '<tr><td colspan="7" style="padding:24px;text-align:center;color:#86efac">Loadingâ€¦</td></tr>';
+    try {
+      const params = {
+        status: document.getElementById('qbStatusFilter').value,
+        page: qbPage,
+        category: document.getElementById('qbCategoryFilter').value || '',
+      };
+      const data = await API.adminListQuestions(params);
+      qbQuestionCache = data.questions || [];
+      renderQBStats(data.stats || {});
+      renderQBTableEnhanced(qbQuestionCache);
+      document.getElementById('qbTotal').textContent = data.total + ' question(s) found';
+      renderAdminPagination('qbPagination', data.page, data.pages, loadAdminQuestions);
+    } catch(err) {
+      tbody.innerHTML = `<tr><td colspan="7" style="padding:24px;text-align:center;color:#f87171">${err.message||'Failed'}</td></tr>`;
+    }
+  }
+
+  function renderQBStats(stats) {
+    const el = document.getElementById('qbStats');
+    if (!el) return;
+    el.innerHTML = [
+      ['ðŸ“¬ Pending',  stats.pending||0,  '#f59e0b', '#fef3c7', '#92400e'],
+      ['âœ… Approved', stats.approved||0, '#16a34a', '#dcfce7', '#14532d'],
+      ['âŒ Rejected', stats.rejected||0, '#dc2626', '#fee2e2', '#7f1d1d'],
+      ['ðŸ“¦ Total',    stats.total||0,    '#2563eb', '#dbeafe', '#1e3a8a'],
+    ].map(([l,v,accent,bg,text]) =>
+      `<div style="background:${bg};border:1px solid ${accent}33;border-radius:14px;padding:12px 18px;text-align:center;min-width:80px">
+        <div style="font-size:1.4rem;font-weight:900;color:${accent};line-height:1">${v}</div>
+        <div style="font-size:.72rem;color:${text};margin-top:4px;font-weight:700">${l}</div>
+      </div>`
+    ).join('');
+  }
+
+  function renderQBTableEnhanced(questions) {
+    const tbody = document.getElementById('qbTableBody');
+    if (!tbody) return;
+    if (!questions.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="padding:48px;text-align:center;color:#94a3b8">No questions found matching your filters.</td></tr>';
+      return;
+    }
+    const statusStyle = {
+      pending:  { bg:'#fef3c7', color:'#92400e', border:'#fcd34d' },
+      approved: { bg:'#dcfce7', color:'#14532d', border:'#86efac' },
+      rejected: { bg:'#fee2e2', color:'#7f1d1d', border:'#fca5a5' },
+    };
+    const diffStyle = {
+      easy:   { bg:'#dcfce7', color:'#15803d' },
+      medium: { bg:'#fef3c7', color:'#b45309' },
+      hard:   { bg:'#fee2e2', color:'#dc2626' },
+    };
+    tbody.innerHTML = questions.map((q) => {
+      const ss = statusStyle[q.status] || { bg:'#f1f5f9', color:'#475569', border:'#cbd5e1' };
+      const ds = diffStyle[q.difficulty] || { bg:'#f1f5f9', color:'#64748b' };
+      return `
+      <tr style="border-bottom:1px solid #f1f5f9;transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+        <td style="padding:13px 16px;max-width:260px">
+          <div style="font-size:.84rem;color:#0f172a;line-height:1.5;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-weight:500">${escAdminHtml(q.question_text)}</div>
+        </td>
+        <td style="padding:13px 16px;font-size:.78rem;color:#1a6b3c;font-weight:600;white-space:nowrap">${q.subject_category||'â€”'}</td>
+        <td style="padding:13px 16px;font-size:.78rem;color:#475569;white-space:nowrap">${q.bloom_level||'â€”'}</td>
+        <td style="padding:13px 16px">
+          <span style="background:${ds.bg};color:${ds.color};padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:800">${q.difficulty||'â€”'}</span>
+        </td>
+        <td style="padding:13px 16px;font-size:.78rem;color:#475569;white-space:nowrap">${escAdminHtml(q.teacher_name||'â€”')}</td>
+        <td style="padding:13px 16px">
+          <span style="background:${ss.bg};color:${ss.color};border:1px solid ${ss.border};padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:800">${q.status}</span>
+        </td>
+        <td style="padding:13px 16px;white-space:nowrap">
+          <button onclick="openQuestionReview(${q.id})" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:5px 11px;border-radius:8px;font-family:inherit;font-size:.75rem;font-weight:700;cursor:pointer;margin-right:5px">View</button>
+          ${q.status==='pending' ? `
+            <button onclick="approveQuestion(${q.id})" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;padding:5px 11px;border-radius:8px;font-family:inherit;font-size:.75rem;font-weight:700;cursor:pointer;margin-right:5px">Approve</button>
+            <button onclick="rejectQuestion(${q.id})" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:5px 11px;border-radius:8px;font-family:inherit;font-size:.75rem;font-weight:700;cursor:pointer">Reject</button>
+          ` : `<span style="color:#94a3b8;font-size:.75rem">${q.status}</span>`}
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function findQuestionForReview(id) {
+    return qbQuestionCache.find((item) => Number(item.id) === Number(id));
+  }
+
+  function buildQuestionOptionRows(question) {
+    const optionKeys = ['option_a', 'option_b', 'option_c', 'option_d'];
+    const labels = ['A', 'B', 'C', 'D'];
+    return optionKeys.map((key, index) => {
+      const text = question[key];
+      if (!text) return '';
+      const isCorrect = Number(question.correct_idx) === index;
+      return `<div style="padding:14px 16px;border-radius:14px;border:1px solid ${isCorrect ? 'rgba(34,197,94,.35)' : 'rgba(255,255,255,.08)'};background:${isCorrect ? 'rgba(34,197,94,.10)' : 'rgba(255,255,255,.03)'};">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px;">
+          <strong style="font-size:.8rem;color:${isCorrect ? '#bbf7d0' : '#d1fae5'}">Option ${labels[index]}</strong>
+          ${isCorrect ? '<span style="padding:4px 10px;border-radius:999px;background:rgba(34,197,94,.18);color:#bbf7d0;font-size:.72rem;font-weight:800;">Correct Answer</span>' : ''}
+        </div>
+        <div style="font-size:.92rem;line-height:1.65;color:#f0fdf4;">${escAdminHtml(text)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function openQuestionReview(id) {
+    const question = findQuestionForReview(id);
+    const modal = document.getElementById('questionReviewModal');
+    const body = document.getElementById('questionReviewBody');
+    const footer = document.getElementById('questionReviewFooter');
+    if (!modal || !body || !question) return;
+    body.innerHTML = `
+      <div style="background:linear-gradient(135deg,rgba(34,197,94,.16),rgba(14,116,144,.14));border:1px solid rgba(34,197,94,.22);border-radius:18px;padding:22px;margin-bottom:18px;">
+        <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:#bbf7d0;margin-bottom:8px;">Question Review</div>
+            <div style="font-size:1.08rem;font-weight:800;line-height:1.6;color:#f0fdf4;">${escAdminHtml(question.question_text)}</div>
+          </div>
+          <span style="padding:6px 12px;border-radius:999px;background:rgba(0,0,0,.28);color:#fde68a;border:1px solid rgba(245,158,11,.25);font-size:.72rem;font-weight:800;">${escAdminHtml(question.status || 'pending')}</span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px;">
+        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Teacher</div><div style="font-weight:700;color:#f0fdf4;">${escAdminHtml(question.teacher_name || 'â€”')}</div><div style="font-size:.78rem;color:#86efac;margin-top:4px;">${escAdminHtml(question.specialization || 'Psychology')}</div></div>
+        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Topic</div><div style="font-weight:700;color:#f0fdf4;">${escAdminHtml(question.topic || 'Not provided')}</div><div style="font-size:.78rem;color:#86efac;margin-top:4px;">${escAdminHtml(question.subtopic || 'No subtopic')}</div></div>
+        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Classification</div><div style="font-weight:700;color:#f0fdf4;">${escAdminHtml(question.subject_category || 'â€”')}</div><div style="font-size:.78rem;color:#86efac;margin-top:4px;">${escAdminHtml(question.bloom_level || 'â€”')} â€¢ ${escAdminHtml(question.difficulty || 'â€”')}</div></div>
+      </div>
+      <div style="margin-bottom:18px;">
+        <div style="font-size:.78rem;color:#86efac;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;">Answer Options</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          ${buildQuestionOptionRows(question)}
+        </div>
+      </div>
+      <div style="padding:16px 18px;border-radius:16px;background:rgba(14,116,144,.08);border:1px solid rgba(56,189,248,.14);">
+        <div style="font-size:.78rem;color:#7dd3fc;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Explanation / Rationale</div>
+        <div style="font-size:.9rem;line-height:1.7;color:#e0f2fe;">${escAdminHtml(question.explanation || 'No explanation provided by the teacher.')}</div>
+      </div>
+    `;
+    footer.innerHTML = question.status === 'pending'
+      ? `<button class="btn btn-ghost" onclick="closeQuestionReview()">Close</button>
+         <button class="btn btn-primary" style="background:#dc2626;" onclick="rejectQuestionFromModal(${question.id})">Reject</button>
+         <button class="btn btn-primary" onclick="approveQuestionFromModal(${question.id})">Approve</button>`
+      : `<button class="btn btn-primary" onclick="closeQuestionReview()">Close</button>`;
+    modal.classList.add('active');
+  }
+  window.openQuestionReview = openQuestionReview;
+
+  function closeQuestionReview() {
+    document.getElementById('questionReviewModal')?.classList.remove('active');
+  }
+  window.closeQuestionReview = closeQuestionReview;
+
+  async function approveQuestionFromModal(id) {
+    await approveQuestion(id);
+    closeQuestionReview();
+  }
+  window.approveQuestionFromModal = approveQuestionFromModal;
+
+  async function rejectQuestionFromModal(id) {
+    await rejectQuestion(id);
+    closeQuestionReview();
+  }
+  window.rejectQuestionFromModal = rejectQuestionFromModal;
+
+  async function approveQuestion(id) {
+    try {
+      await API.adminApproveQuestion(id);
+      showToast('Question approved âœ…', 'success');
+      loadAdminQuestions();
+    } catch(e) { showToast(e.message, 'error'); }
+  }
+  async function rejectQuestion(id) {
+    const notes = prompt('Rejection notes for teacher (optional):') || '';
+    try {
+      await API.adminRejectQuestion(id, notes);
+      showToast('Question rejected', 'info');
+      loadAdminQuestions();
+    } catch(e) { showToast(e.message, 'error'); }
+  }
+
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  //   ADMIN: TEACHERS
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  async function loadAdminTeachers() {
+    const grid = document.getElementById('teacherCardsGrid');
+    grid.innerHTML = '<div style="text-align:center;color:#86efac;padding:40px;grid-column:1/-1">Loadingâ€¦</div>';
+    try {
+      const status = document.getElementById('teacherStatusFilter').value;
+      const data = await API.adminListTeachers(status);
+      const teachers = data.teachers || [];
+      teacherReviewCache = teachers;
+      const badge = document.getElementById('teacherBadge');
+      if (badge) {
+        const pending = teachers.filter(t => t.status === 'pending').length;
+        badge.textContent = pending;
+        badge.style.display = pending ? 'inline' : 'none';
+      }
+      if (!teachers.length) {
+        grid.innerHTML = '<div style="text-align:center;color:#86efac;padding:60px;grid-column:1/-1;opacity:.6">No teachers found</div>';
+        return;
+      }
+      grid.innerHTML = teachers.map(t => renderTeacherCardEnhanced(t)).join('');
+    } catch(err) {
+      grid.innerHTML = `<div style="color:#f87171;padding:32px;text-align:center;grid-column:1/-1">${err.message}</div>`;
+    }
+  }
+
+  function renderTeacherCardEnhanced(t) {
+    const statusMap = {
+      pending:  { bg:'#fef3c7', color:'#92400e', border:'#fcd34d', label:'â³ Pending' },
+      approved: { bg:'#dcfce7', color:'#14532d', border:'#86efac', label:'âœ… Approved' },
+      rejected: { bg:'#fee2e2', color:'#7f1d1d', border:'#fca5a5', label:'âŒ Rejected' },
+    };
+    const sm = statusMap[t.status] || statusMap.pending;
+    const initials = (t.name || 'T').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+    const pendingActions = t.status === 'pending'
+      ? `<div style="display:flex;gap:10px;margin-top:18px">
+           <button onclick="approveTeacher(${t.id})" style="flex:1;padding:10px 12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border:none;border-radius:10px;font-family:inherit;font-weight:800;cursor:pointer;font-size:.85rem;box-shadow:0 4px 12px rgba(34,197,94,.3)">Approve</button>
+           <button onclick="rejectTeacher(${t.id})" style="flex:1;padding:10px 12px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:10px;font-family:inherit;font-weight:800;cursor:pointer;font-size:.85rem">Reject</button>
+         </div>`
+      : `<div style="margin-top:14px;padding:10px 14px;background:#f8fafc;border-radius:10px;font-size:.8rem;color:#475569">
+           <span style="font-weight:700;color:#0f172a">${t.approved_count||0}</span> of <span style="font-weight:700;color:#0f172a">${t.question_count||0}</span> questions approved
+         </div>`;
+
+    return `<div style="background:white;border:1px solid #e2e8f0;border-radius:22px;padding:24px;box-shadow:0 8px 28px rgba(0,0,0,.06);transition:box-shadow .2s" onmouseover="this.style.boxShadow='0 16px 40px rgba(0,0,0,.10)'" onmouseout="this.style.boxShadow='0 8px 28px rgba(0,0,0,.06)'">
+      <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:18px">
+        <div style="width:56px;height:56px;border-radius:18px;background:linear-gradient(135deg,#1a6b3c,#0f4d29);color:white;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:900;flex-shrink:0;box-shadow:0 8px 20px rgba(26,107,60,.3)">${initials}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+            <div style="font-weight:800;font-size:1rem;color:#0f172a">${escAdminHtml(t.name||'')}</div>
+            <span style="background:${sm.bg};color:${sm.color};border:1px solid ${sm.border};padding:4px 11px;border-radius:20px;font-size:.7rem;font-weight:800">${sm.label}</span>
+          </div>
+          <div style="font-size:.8rem;color:#64748b;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escAdminHtml(t.email||'')}</div>
+          <div style="font-size:.78rem;color:#1a6b3c;font-weight:700;margin-top:6px">${escAdminHtml(t.specialization||'Psychology')}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div style="padding:12px 14px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0">
+          <div style="font-size:.68rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;font-weight:700">Institution</div>
+          <div style="font-size:.85rem;color:#0f172a;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escAdminHtml(t.institution||'â€”')}</div>
+        </div>
+        <div style="padding:12px 14px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0">
+          <div style="font-size:.68rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;font-weight:700">Experience</div>
+          <div style="font-size:.85rem;color:#0f172a;font-weight:700">${t.years_of_experience||0} years</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+        <span style="padding:5px 11px;border-radius:20px;background:#f0fdf4;color:#15803d;font-size:.72rem;font-weight:700">${t.question_count||0} submitted</span>
+        <span style="padding:5px 11px;border-radius:20px;background:#eff6ff;color:#1d4ed8;font-size:.72rem;font-weight:700">${t.approved_count||0} approved</span>
+      </div>
+      <button onclick="openTeacherReview(${t.id})" style="width:100%;margin-top:14px;padding:11px;background:#f8fafc;color:#1a6b3c;border:1.5px solid #bbf7d0;border-radius:12px;font-family:inherit;font-weight:800;cursor:pointer;font-size:.85rem;transition:background .15s" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#f8fafc'">Review Full Profile</button>
+      ${pendingActions}
+    </div>`;
+  }
+
+  function findTeacherForReview(id) {
+    return teacherReviewCache.find((item) => Number(item.id) === Number(id));
+  }
+
+  function openTeacherReview(id) {
+    const teacher = findTeacherForReview(id);
+    const modal = document.getElementById('teacherReviewModal');
+    const body = document.getElementById('teacherReviewBody');
+    const footer = document.getElementById('teacherReviewFooter');
+    if (!teacher || !modal || !body || !footer) return;
+    body.innerHTML = `
+      <div style="background:linear-gradient(135deg,rgba(34,197,94,.16),rgba(234,179,8,.12));border:1px solid rgba(34,197,94,.22);border-radius:18px;padding:22px;margin-bottom:18px;">
+        <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:#bbf7d0;margin-bottom:8px;">Teacher Application</div>
+            <div style="font-size:1.15rem;font-weight:800;color:#f0fdf4;">${escAdminHtml(teacher.name || '')}</div>
+            <div style="font-size:.86rem;color:#d1fae5;margin-top:6px;">${escAdminHtml(teacher.email || '')}</div>
+          </div>
+          <span style="padding:6px 12px;border-radius:999px;background:rgba(0,0,0,.28);color:${teacher.status === 'approved' ? '#bbf7d0' : teacher.status === 'rejected' ? '#fecaca' : '#fde68a'};border:1px solid rgba(255,255,255,.12);font-size:.72rem;font-weight:800;">${escAdminHtml(teacher.status || 'pending')}</span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px;">
+        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Specialization</div><div style="font-weight:700;color:#f0fdf4;">${escAdminHtml(teacher.specialization || 'â€”')}</div></div>
+        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Institution</div><div style="font-weight:700;color:#f0fdf4;">${escAdminHtml(teacher.institution || 'â€”')}</div></div>
+        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Experience</div><div style="font-weight:700;color:#f0fdf4;">${teacher.years_of_experience || 0} years</div></div>
+        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Username</div><div style="font-weight:700;color:#f0fdf4;">${escAdminHtml(teacher.username || 'â€”')}</div></div>
+      </div>
+      <div style="padding:16px 18px;border-radius:16px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.18);margin-bottom:14px;">
+        <div style="font-size:.78rem;color:#bfdbfe;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Credentials / Summary</div>
+        <div style="font-size:.9rem;line-height:1.75;color:#e0f2fe;">${escAdminHtml(teacher.credentials || 'No credentials or supporting notes were provided during registration.')}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Submitted</div><div style="font-weight:700;color:#f0fdf4;">${teacher.created_at ? new Date(teacher.created_at).toLocaleString() : 'â€”'}</div></div>
+        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Question Contribution</div><div style="font-weight:700;color:#f0fdf4;">${teacher.question_count || 0} submitted â€¢ ${teacher.approved_count || 0} approved</div></div>
+      </div>
+      ${teacher.rejection_reason ? `<div style="margin-top:14px;padding:16px 18px;border-radius:16px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.18);"><div style="font-size:.78rem;color:#fecaca;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Previous Rejection Reason</div><div style="font-size:.9rem;line-height:1.7;color:#fee2e2;">${escAdminHtml(teacher.rejection_reason)}</div></div>` : ''}
+    `;
+    footer.innerHTML = teacher.status === 'pending'
+      ? `<button class="btn btn-ghost" onclick="closeTeacherReview()">Close</button>
+         <button class="btn btn-primary" style="background:#dc2626;" onclick="rejectTeacherFromModal(${teacher.id})">Reject</button>
+         <button class="btn btn-primary" onclick="approveTeacherFromModal(${teacher.id})">Approve</button>`
+      : `<button class="btn btn-primary" onclick="closeTeacherReview()">Close</button>`;
+    modal.classList.add('active');
+  }
+  window.openTeacherReview = openTeacherReview;
+
+  function closeTeacherReview() {
+    document.getElementById('teacherReviewModal')?.classList.remove('active');
+  }
+  window.closeTeacherReview = closeTeacherReview;
+
+  async function approveTeacherFromModal(id) {
+    await approveTeacher(id);
+    closeTeacherReview();
+  }
+  window.approveTeacherFromModal = approveTeacherFromModal;
+
+  async function rejectTeacherFromModal(id) {
+    await rejectTeacher(id);
+    closeTeacherReview();
+  }
+  window.rejectTeacherFromModal = rejectTeacherFromModal;
+
+  async function approveTeacher(id) {
+    try {
+      await API.adminApproveTeacher(id);
+      showToast('Teacher approved! They can now log in.', 'success');
+      loadAdminTeachers();
+    } catch(e) { showToast(e.message, 'error'); }
+  }
+  async function rejectTeacher(id) {
+    const reason = prompt('Rejection reason (shown to teacher):') || '';
+    try {
+      await API.adminRejectTeacher(id, reason);
+      showToast('Teacher application rejected', 'info');
+      loadAdminTeachers();
+    } catch(e) { showToast(e.message, 'error'); }
+  }
+
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  //   ADMIN: MOCK EXAMS
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  async function loadAdminMockExams() {
+    const container = document.getElementById('adminExamList');
+    container.innerHTML = '<div style="text-align:center;color:#86efac;padding:40px">Loadingâ€¦</div>';
+    try {
+      const data = await API.adminListMockExams();
+      const exams = data.exams || [];
+      if (!exams.length) {
+        container.innerHTML = '<div style="text-align:center;color:#86efac;padding:60px;opacity:.6">No mock exams scheduled yet. Click "Schedule New Exam" to create one.</div>';
+        return;
+      }
+      // Build a top-level summary bar
+      const totExams   = exams.length;
+      const active     = exams.filter(e => e.is_active   === 1).length;
+      const released   = exams.filter(e => e.results_released === 1).length;
+      const totalSubs  = exams.reduce((s, e) => s + (e.submission_count || 0), 0);
+      container.innerHTML =
+        `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:26px">
+          ${[
+            ['ðŸ“‹ Total Exams',   totExams,  '#2563eb','#dbeafe','#1e3a8a'],
+            ['â–¶ï¸ Active Now',    active,    '#16a34a','#dcfce7','#14532d'],
+            ['ðŸ“¢ Results Out',  released,  '#7c3aed','#ede9fe','#4c1d95'],
+            ['ðŸ“ Total Taken',  totalSubs, '#d97706','#fef3c7','#92400e'],
+          ].map(([l,v,acc,bg,txt]) =>
+            `<div style="background:${bg};border:1px solid ${acc}33;border-radius:16px;padding:16px 20px">
+              <div style="font-size:1.6rem;font-weight:900;color:${acc};line-height:1">${v}</div>
+              <div style="font-size:.72rem;color:${txt};margin-top:5px;font-weight:700">${l}</div>
+            </div>`
+          ).join('')}
+        </div>` +
+        exams.map(e => renderAdminExamRow(e)).join('');
+    } catch(err) {
+      container.innerHTML = `<div style="color:#dc2626;padding:32px;text-align:center;background:#fef2f2;border-radius:16px;border:1px solid #fecaca">${err.message}</div>`;
+    }
+  }
+
+  function renderAdminExamRow(e) {
+    const isActive       = e.is_active === 1;
+    const resultsOut     = e.results_released === 1;
+    const avgScore       = e.avg_score ? parseFloat(e.avg_score) : null;
+    const passRate       = avgScore !== null ? Math.round(Math.max(0, (avgScore - 30) / 70 * 100)) : null;
+    const subs           = e.submission_count || 0;
+
+    // Status config
+    const statusCfg = resultsOut
+      ? { label:'ðŸ“¢ Results Released', color:'#7c3aed', bg:'#ede9fe', border:'#c4b5fd' }
+      : isActive
+        ? { label:'â–¶ï¸ Live', color:'#16a34a', bg:'#dcfce7', border:'#86efac' }
+        : { label:'â³ Scheduled', color:'#d97706', bg:'#fef3c7', border:'#fcd34d' };
+
+    // Dates
+    const fmtDate = d => d ? new Date(d).toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : 'â€”';
+    const createdAt   = fmtDate(e.created_at);
+    const scheduledAt = fmtDate(e.scheduled_at);
+    const endsAt      = fmtDate(e.ends_at);
+
+    // Blueprint summary
+    let blueprintHtml = '';
+    try {
+      const bp = typeof e.blueprint === 'string' ? JSON.parse(e.blueprint) : e.blueprint;
+      if (Array.isArray(bp) && bp.length) {
+        blueprintHtml = `<div style="margin-top:14px">
+          <div style="font-size:.72rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Blueprint</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">${
+            bp.slice(0,5).map(s =>
+              `<span style="background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700">
+                ${s.category || 'General'} Â· ${s.count}q
+              </span>`
+            ).join('') + (bp.length > 5 ? `<span style="color:#94a3b8;font-size:.72rem;padding:3px 8px">+${bp.length-5} more</span>` : '')
+          }</div></div>`;
+      }
+    } catch (_) {}
+
+    // Action buttons
+    const actions = [];
+    if (!isActive && !resultsOut) {
+      actions.push(`<button onclick="activateExam(${e.id})" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 20px;background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border:none;border-radius:14px;cursor:pointer;font-family:inherit;min-width:110px;box-shadow:0 6px 18px rgba(34,197,94,.35);transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+        <span style="font-size:1.3rem">â–¶ï¸</span>
+        <span style="font-size:.8rem;font-weight:800">Activate</span>
+        <span style="font-size:.68rem;opacity:.85">Open to students</span>
+      </button>`);
+    }
+    if (isActive && !resultsOut) {
+      actions.push(`<button onclick="releaseResults(${e.id})" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 20px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:white;border:none;border-radius:14px;cursor:pointer;font-family:inherit;min-width:110px;box-shadow:0 6px 18px rgba(37,99,235,.3);transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+        <span style="font-size:1.3rem">ðŸ“¢</span>
+        <span style="font-size:.8rem;font-weight:800">Release Results</span>
+        <span style="font-size:.68rem;opacity:.85">Notify students</span>
+      </button>`);
+    }
+    if (subs > 0) {
+      actions.push(`<button onclick="viewExamReport(${e.id})" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 20px;background:white;color:#475569;border:1.5px solid #e2e8f0;border-radius:14px;cursor:pointer;font-family:inherit;min-width:110px;box-shadow:0 4px 12px rgba(0,0,0,.06);transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+        <span style="font-size:1.3rem">ðŸ“Š</span>
+        <span style="font-size:.8rem;font-weight:700">Analytics</span>
+        <span style="font-size:.68rem;color:#94a3b8">View report</span>
+      </button>`);
+    }
+
+    return `<article style="background:white;border:1.5px solid ${statusCfg.border};border-radius:24px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,.07)">
+
+      <!-- Status stripe -->
+      <div style="background:${statusCfg.bg};border-bottom:1px solid ${statusCfg.border};padding:10px 24px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:.78rem;font-weight:800;color:${statusCfg.color}">${statusCfg.label}</span>
+        <span style="font-size:.72rem;color:#94a3b8">Created ${createdAt}</span>
+      </div>
+
+      <div style="padding:24px;display:flex;gap:24px;flex-wrap:wrap">
+
+        <!-- Left: title + meta -->
+        <div style="flex:1;min-width:260px">
+          <div style="font-size:.7rem;font-weight:800;color:#1a6b3c;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">National Mock Examination</div>
+          <h3 style="font-size:1.12rem;font-weight:900;color:#0f172a;margin:0 0 8px;line-height:1.3">${escAdminHtml(e.title)}</h3>
+          ${e.description ? `<p style="font-size:.85rem;color:#64748b;line-height:1.6;margin:0 0 16px">${escAdminHtml(e.description)}</p>` : ''}
+
+          <!-- KPIs -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:14px">
+            <div style="padding:12px;border-radius:14px;background:#f0fdf4;border:1px solid #bbf7d0">
+              <div style="font-size:.65rem;color:#15803d;text-transform:uppercase;font-weight:800;letter-spacing:.07em;margin-bottom:4px">Questions</div>
+              <div style="font-size:1.3rem;font-weight:900;color:#14532d">${e.question_count}</div>
+            </div>
+            <div style="padding:12px;border-radius:14px;background:#eff6ff;border:1px solid #bfdbfe">
+              <div style="font-size:.65rem;color:#1d4ed8;text-transform:uppercase;font-weight:800;letter-spacing:.07em;margin-bottom:4px">Duration</div>
+              <div style="font-size:1.3rem;font-weight:900;color:#1e3a8a">${e.duration_mins}<span style="font-size:.75rem;font-weight:600"> min</span></div>
+            </div>
+            <div style="padding:12px;border-radius:14px;background:#fef3c7;border:1px solid #fcd34d">
+              <div style="font-size:.65rem;color:#b45309;text-transform:uppercase;font-weight:800;letter-spacing:.07em;margin-bottom:4px">Submissions</div>
+              <div style="font-size:1.3rem;font-weight:900;color:#92400e">${subs}</div>
+            </div>
+            <div style="padding:12px;border-radius:14px;background:${avgScore !== null && avgScore >= 50 ? '#f0fdf4' : '#fef2f2'};border:1px solid ${avgScore !== null && avgScore >= 50 ? '#bbf7d0' : '#fecaca'}">
+              <div style="font-size:.65rem;color:${avgScore !== null && avgScore >= 50 ? '#15803d' : '#dc2626'};text-transform:uppercase;font-weight:800;letter-spacing:.07em;margin-bottom:4px">Avg Score</div>
+              <div style="font-size:1.3rem;font-weight:900;color:${avgScore !== null && avgScore >= 50 ? '#14532d' : '#7f1d1d'}">${avgScore !== null ? avgScore.toFixed(1)+'%' : 'â€”'}</div>
+            </div>
+          </div>
+
+          <!-- Score bar if there are submissions -->
+          ${subs > 0 && avgScore !== null ? `
+          <div style="margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;font-size:.75rem;color:#64748b;margin-bottom:5px">
+              <span style="font-weight:600">Cohort Avg Performance</span>
+              <span style="font-weight:800;color:${avgScore >= 50 ? '#16a34a' : '#dc2626'}">${avgScore.toFixed(1)}%</span>
+            </div>
+            <div style="height:8px;background:#f1f5f9;border-radius:20px;overflow:hidden">
+              <div style="height:100%;width:${Math.min(100,avgScore)}%;background:linear-gradient(90deg,${avgScore >= 70 ? '#22c55e' : avgScore >= 50 ? '#eab308' : '#ef4444'},${avgScore >= 70 ? '#16a34a' : avgScore >= 50 ? '#d97706' : '#dc2626'});border-radius:20px;transition:width 1s ease"></div>
+            </div>
+          </div>` : ''}
+
+          <!-- Schedule timeline -->
+          <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:.78rem">
+            <div style="display:flex;align-items:center;gap:6px;color:#64748b">
+              <span style="font-size:1rem">ðŸ“…</span>
+              <div><div style="font-weight:700;color:#0f172a">Opens</div><div>${scheduledAt}</div></div>
+            </div>
+            ${e.ends_at ? `<div style="display:flex;align-items:center;gap:6px;color:#64748b">
+              <span style="font-size:1rem">ðŸ</span>
+              <div><div style="font-weight:700;color:#0f172a">Closes</div><div>${endsAt}</div></div>
+            </div>` : ''}
+          </div>
+          ${blueprintHtml}
+        </div>
+
+        <!-- Right: action buttons -->
+        <div style="display:flex;flex-direction:column;gap:10px;align-items:stretch;justify-content:center;min-width:120px">
+          ${actions.join('') || `<div style="text-align:center;padding:16px;color:#94a3b8;font-size:.82rem">No actions available</div>`}
+        </div>
+
+      </div>
+    </article>`;
+  }
+
+  // Expose section loaders globally
+  window.loadAdminQuestions = loadAdminQuestions;
+  window.loadAdminTeachers  = loadAdminTeachers;
+  window.loadAdminMockExams = loadAdminMockExams;
+
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  //   EXAM WIZARD
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  let _wizStep = 1;
+  const WIZ_TOTAL = 4;
+
+  function openCreateExamModal() {
+    _wizStep = 1;
+    renderWizStep();
+    document.getElementById('createExamModal').style.display = 'flex';
+  }
+  window.openCreateExamModal = openCreateExamModal;
+
+  function closeExamWizard() {
+    document.getElementById('createExamModal').style.display = 'none';
+    _wizStep = 1;
+  }
+  window.closeExamWizard = closeExamWizard;
+
+  function renderWizStep() {
+    for (let i = 1; i <= WIZ_TOTAL; i++) {
+      const panel = document.getElementById('wstep-' + i);
+      if (panel) panel.style.display = i === _wizStep ? '' : 'none';
+      const ind = document.getElementById('wstep-ind-' + i);
+      if (ind) {
+        const dot = ind.querySelector('div:first-child');
+        const lbl = ind.querySelector('div:last-child');
+        if (dot) {
+          dot.style.background = i < _wizStep ? '#16a34a' : i === _wizStep ? '#16a34a' : '#e2e8f0';
+          dot.style.color      = i <= _wizStep ? 'white' : '#64748b';
+        }
+        if (lbl) {
+          lbl.style.color      = i <= _wizStep ? '#16a34a' : 'var(--text-muted)';
+          lbl.style.fontWeight = i === _wizStep ? '800' : '600';
+        }
+      }
+    }
+    const btnBack   = document.getElementById('wz-btn-back');
+    const btnNext   = document.getElementById('wz-btn-next');
+    const btnSubmit = document.getElementById('wz-btn-submit');
+    if (btnBack)   btnBack.style.display   = _wizStep > 1 ? '' : 'none';
+    if (btnNext)   btnNext.style.display   = _wizStep < WIZ_TOTAL ? '' : 'none';
+    if (btnSubmit) btnSubmit.style.display = _wizStep === WIZ_TOTAL ? '' : 'none';
+    // Populate summary on step 4
+    if (_wizStep === 4) {
+      const q = document.getElementById('newExamCount');
+      const d = document.getElementById('newExamDuration');
+      const sq = document.getElementById('wz-sum-q');
+      const sd = document.getElementById('wz-sum-dur');
+      if (sq && q) sq.textContent = q.value || '100';
+      if (sd && d) sd.textContent = (d.value || '120') + ' minutes';
+    }
+  }
+
+  function wizSetStep(delta) {
+    if (delta > 0 && _wizStep === 1) {
+      const title = document.getElementById('newExamTitle');
+      if (!title || !title.value.trim()) {
+        showToast('Please enter an exam title first.', 'error'); return;
+      }
+    }
+    _wizStep = Math.max(1, Math.min(WIZ_TOTAL, _wizStep + delta));
+    renderWizStep();
+  }
+  window.wizSetStep = wizSetStep;
+
+  async function generateWizardBlueprint() {
+    const container = document.getElementById('wz-blueprint-container');
+    if (!container) return;
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">Fetching available question countsâ€¦</div>';
+    try {
+      const data = await API.adminListQuestions({ status: 'approved', page: 1 });
+      const stats = data.stats || {};
+      const SUBJECTS = [
+        { name: 'General Psychology',    pct: 20 },
+        { name: 'Abnormal Psychology',   pct: 18 },
+        { name: 'Research Methods',       pct: 12 },
+        { name: 'Developmental Psychology', pct: 12 },
+        { name: 'Social Psychology',      pct: 10 },
+        { name: 'Biological Psychology', pct: 10 },
+        { name: 'Cognitive Psychology',   pct: 10 },
+        { name: 'Ethics & Law',           pct: 8  },
+      ];
+      const total = parseInt(document.getElementById('newExamCount').value) || 100;
+      const approved = stats.approved || 0;
+      container.innerHTML = SUBJECTS.map(s => {
+        const count = Math.round(total * s.pct / 100);
+        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#f8fafc;border:1px solid var(--light-200);border-radius:10px">
+          <span style="font-weight:700;font-size:0.88rem;color:#0f172a">${s.name}</span>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:80px;background:#e2e8f0;border-radius:4px;height:6px;overflow:hidden">
+              <div style="height:100%;background:#16a34a;width:${s.pct}%;border-radius:4px"></div>
+            </div>
+            <span style="font-size:0.82rem;color:#16a34a;font-weight:800;min-width:30px">${count}</span>
+            <span style="font-size:0.78rem;color:var(--text-muted)">${s.pct}%</span>
+          </div>
+        </div>`;
+      }).join('') +
+      `<div style="margin-top:10px;padding:12px 16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;font-size:0.83rem;color:#166534;font-weight:700">
+        âœ… Blueprint generated Â· ${total} total questions Â· ${approved} approved in pool
+      </div>`;
+    } catch(e) {
+      container.innerHTML = `<div style="color:#dc2626;padding:16px">Could not generate blueprint: ${e.message}</div>`;
+    }
+  }
+  window.generateWizardBlueprint = generateWizardBlueprint;
+
+  async function submitExamWizard() {
+    const btn = document.getElementById('wz-btn-submit');
+    if (btn) { btn.disabled = true; btn.textContent = 'Schedulingâ€¦'; }
+    try {
+      const payload = {
+        title:         document.getElementById('newExamTitle').value.trim(),
+        description:   document.getElementById('newExamDesc').value.trim(),
+        question_count: parseInt(document.getElementById('newExamCount').value) || 100,
+        duration_mins:  parseInt(document.getElementById('newExamDuration').value) || 120,
+        scheduled_at:   document.getElementById('newExamStart').value || null,
+        ends_at:        document.getElementById('newExamEnd').value   || null,
+      };
+      if (!payload.title) { showToast('Exam title is required', 'error'); return; }
+      await API.adminCreateMockExam(payload);
+      showToast('Exam scheduled successfully!', 'success');
+      closeExamWizard();
+      loadAdminMockExams();
+    } catch(e) {
+      showToast(e.message || 'Failed to create exam', 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Schedule Exam'; }
+    }
+  }
+  window.submitExamWizard = submitExamWizard;
+
+  // Keep old function name working (used in cards)
+  async function createMockExam() { await submitExamWizard(); }
+  window.createMockExam = createMockExam;
+
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  //   EXAM ACTIONS
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  async function activateExam(id) {
+    if (!confirm('Activate this exam? Students will be able to start taking it immediately.')) return;
+    try {
+      await API.adminActivateMockExam(id);
+      showToast('Exam activated!', 'success');
+      loadAdminMockExams();
+    } catch(e) { showToast(e.message, 'error'); }
+  }
+  window.activateExam = activateExam;
+
+  async function releaseResults(id) {
+    if (!confirm('Release results to all students now? This cannot be undone.')) return;
+    try {
+      await API.adminReleaseMockExamResults(id);
+      showToast('Results released to students!', 'success');
+      loadAdminMockExams();
+    } catch(e) { showToast(e.message, 'error'); }
+  }
+  window.releaseResults = releaseResults;
+
+  async function viewExamReport(id) {
+    const modal = document.getElementById('examReportModal');
+    const content = document.getElementById('examReportContent');
+    if (!modal || !content) return;
+    modal.style.display = 'flex';
+    content.innerHTML = '<div style="text-align:center;padding:40px;color:#86efac">Loading reportâ€¦</div>';
+    try {
+      const res = await fetch(
+        ((window.API?.getBaseOrigin?.() || window.location.origin) + '/api/analytics/cohort-summary?exam_id=' + id),
+        { headers: { Authorization: 'Bearer ' + localStorage.getItem('epsa_access_token') } }
+      );
+      const data = await res.json();
+      const dist = data.score_distribution || {};
+      const catPerf = data.category_performance || [];
+      content.innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">
+          ${[
+            ['Students', data.total_students || 0, '#22c55e'],
+            ['Avg Score', (data.avg_score || 0).toFixed(1) + '%', '#3b82f6'],
+            ['Passed', data.pass_count || 0, '#16a34a'],
+            ['Failed', data.fail_count || 0, '#ef4444'],
+          ].map(([l, v, c]) =>
+            `<div style="padding:16px;background:rgba(255,255,255,.06);border:1px solid rgba(34,197,94,.15);border-radius:14px;text-align:center">
+               <div style="font-size:1.6rem;font-weight:900;color:${c}">${v}</div>
+               <div style="font-size:.75rem;color:#86efac;margin-top:4px">${l}</div>
+             </div>`
+          ).join('')}
+        </div>
+        <div style="margin-bottom:20px">
+          <div style="font-weight:800;margin-bottom:12px;color:#bbf7d0">Score Distribution</div>
+          ${Object.entries(dist).map(([range, count]) =>
+            `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+               <div style="width:70px;font-size:.78rem;color:#86efac;text-align:right">${range}</div>
+               <div style="flex:1;height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden">
+                 <div style="height:100%;width:${data.total_students ? Math.round(count/data.total_students*100) : 0}%;background:#22c55e;border-radius:4px"></div>
+               </div>
+               <div style="width:30px;font-size:.78rem;color:#86efac;font-weight:700">${count}</div>
+             </div>`
+          ).join('')}
+        </div>
+        ${catPerf.length ? `
+        <div>
+          <div style="font-weight:800;margin-bottom:12px;color:#bbf7d0">Weakest Categories</div>
+          ${catPerf.slice(0, 5).map(c =>
+            `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+               <div style="flex:1;font-size:.82rem;color:#86efac">${c.category}</div>
+               <div style="font-size:.82rem;font-weight:800;color:${c.correctness_rate < 0.5 ? '#f87171' : '#22c55e'}">${Math.round(c.correctness_rate*100)}%</div>
+             </div>`
+          ).join('')}
+        </div>` : ''}
+      `;
+    } catch(e) {
+      content.innerHTML = `<div style="color:#f87171;padding:20px">Failed to load: ${e.message}</div>`;
+    }
+  }
+  window.viewExamReport = viewExamReport;
+
+  // Helpers
+  function escAdminHtml(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function renderAdminPagination(id, page, pages, cb) {
+    const el = document.getElementById(id);
+    if (!el || pages <= 1) { if (el) el.innerHTML = ''; return; }
+    const btn = (label, onclick, disabled) =>
+      `<button onclick="${onclick}" style="padding:6px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(34,197,94,.2);border-radius:7px;color:#86efac;cursor:pointer;font-family:inherit" ${disabled ? 'disabled' : ''}>${label}</button>`;
+    let html = btn('&lsaquo;', `${cb.name}(${Math.max(1, page - 1)})`, page <= 1);
+    for (let p = Math.max(1, page - 2); p <= Math.min(pages, page + 2); p++) {
+      const active = p === page;
+      html += `<button onclick="${cb.name}(${p})" style="padding:6px 12px;background:${active ? 'rgba(34,197,94,.15)' : 'rgba(255,255,255,.06)'};border:1px solid ${active ? 'rgba(34,197,94,.5)' : 'rgba(34,197,94,.2)'};border-radius:7px;color:${active ? '#22c55e' : '#86efac'};cursor:pointer;font-family:inherit;font-weight:${active ? 700 : 400}">${p}</button>`;
+    }
+    html += btn('&rsaquo;', `${cb.name}(${Math.min(pages, page + 1)})`, page >= pages);
+    el.innerHTML = html;
+  }
+
+  </script>
+
+<!-- ANALYTICS STUDENT PROFILE MODAL -->
+<div id="analyticsStudentModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9000;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;backdrop-filter:blur(4px)">
+  <div style="background:white;border-radius:22px;padding:30px;width:100%;max-width:760px;position:relative;box-shadow:0 24px 64px rgba(0,0,0,0.18)">
+    <button onclick="document.getElementById('analyticsStudentModal').style.display='none'" style="position:absolute;top:16px;right:16px;background:#f1f5f9;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:1rem">&#x2715;</button>
+    <div id="analyticsStudentBody"><div style="text-align:center;padding:40px;color:#64748b">Loading&hellip;</div></div>
+  </div>
+</div>
+<script src="../js/admin-analytics.js"></script>
+</body>
+</html>
+
+

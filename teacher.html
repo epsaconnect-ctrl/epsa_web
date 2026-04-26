@@ -1,0 +1,1298 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Teacher Portal â€” EPSA</title>
+  <meta name="description" content="EPSA Teacher Portal â€” Contribute and manage psychology exam questions."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="icon" href="assets/logo.png" type="image/png"/>
+  <style>
+    :root{
+      --g1:#071f10;--g2:#0a2e18;--g3:#0d3a20;
+      --accent:#22c55e;--accent2:#16a34a;--gold:#f59e0b;
+      --blue:#3b82f6;--red:#f87171;--purple:#a78bfa;
+      --text:#f0fdf4;--text-muted:#86efac;--text-dim:#4ade80;
+      --border:rgba(34,197,94,.16);--border2:rgba(34,197,94,.08);
+      --glass:rgba(255,255,255,.04);--glass2:rgba(255,255,255,.027);
+      --glass-hover:rgba(255,255,255,.06);
+      --radius:16px;--shadow:0 8px 32px rgba(0,0,0,.4);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Outfit',sans-serif;background:var(--g1);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+
+    /* â”€â”€ Sidebar â”€â”€ */
+    .sidebar{width:260px;min-height:100vh;background:var(--g2);border-right:1px solid var(--border);padding:24px 0;position:fixed;top:0;left:0;display:flex;flex-direction:column;z-index:100;transition:.25s}
+    .sidebar-logo{padding:0 24px 24px;border-bottom:1px solid var(--border2)}
+    .sidebar-logo .brand{font-size:1.4rem;font-weight:800;color:var(--text)}
+    .sidebar-logo .brand span{color:var(--accent)}
+    .sidebar-logo .role-badge{display:inline-block;margin-top:6px;background:rgba(34,197,94,.12);border:1px solid var(--border);color:var(--accent);font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.06em}
+
+    .nav-section{padding:16px 12px 0;font-size:.7rem;font-weight:700;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;margin-top:4px}
+    .nav-item{display:flex;align-items:center;gap:12px;padding:11px 24px;color:var(--text-muted);font-size:.9rem;font-weight:500;cursor:pointer;border-radius:0;transition:.18s;border-left:3px solid transparent;text-decoration:none}
+    .nav-item:hover{background:var(--glass);color:var(--text)}
+    .nav-item.active{background:rgba(34,197,94,.10);color:var(--accent);border-left-color:var(--accent)}
+    .nav-item .icon{width:20px;font-size:1rem;text-align:center;flex-shrink:0}
+    .sidebar-footer{margin-top:auto;padding:16px 24px;border-top:1px solid var(--border2)}
+    .teacher-info{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .teacher-avatar{width:36px;height:36px;border-radius:50%;background:rgba(34,197,94,.15);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;color:var(--accent);flex-shrink:0}
+    .teacher-info .info{flex:1;min-width:0}
+    .teacher-info .name{font-size:.85rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .teacher-info .spec{font-size:.72rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .logout-btn{width:100%;padding:9px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:10px;color:var(--red);font-family:inherit;font-size:.83rem;font-weight:600;cursor:pointer;transition:.18s}
+    .logout-btn:hover{background:rgba(248,113,113,.15)}
+
+    /* â”€â”€ Main â”€â”€ */
+    .main{margin-left:260px;flex:1;min-height:100vh;padding:32px 36px;transition:.25s}
+    @media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0;padding:20px 16px}}
+
+    .mobile-header{display:none;align-items:center;gap:12px;padding:14px 16px;background:var(--g2);border-bottom:1px solid var(--border);margin:-20px -16px 20px;position:sticky;top:0;z-index:50}
+    @media(max-width:900px){.mobile-header{display:flex}}
+    .hamburger{background:none;border:none;color:var(--text);font-size:1.4rem;cursor:pointer}
+
+    .page-section{display:none}
+    .page-section.active{display:block}
+    .page-header{margin-bottom:28px}
+    .page-header h1{font-size:1.7rem;font-weight:800}
+    .page-header h1 span{color:var(--accent)}
+    .page-header p{color:var(--text-muted);margin-top:6px;font-size:.93rem}
+
+    /* â”€â”€ Stats grid â”€â”€ */
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
+    @media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:600px){.stats-grid{grid-template-columns:1fr}}
+    .stat-card{background:var(--glass);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;transition:.2s}
+    .stat-card:hover{background:var(--glass-hover);transform:translateY(-2px);box-shadow:var(--shadow)}
+    .stat-label{font-size:.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+    .stat-value{font-size:2rem;font-weight:800}
+    .stat-sub{font-size:.78rem;color:var(--text-dim);margin-top:3px}
+    .stat-card.green .stat-value{color:var(--accent)}
+    .stat-card.gold .stat-value{color:var(--gold)}
+    .stat-card.blue .stat-value{color:var(--blue)}
+    .stat-card.red .stat-value{color:var(--red)}
+
+    /* â”€â”€ Cards â”€â”€ */
+    .card{background:var(--glass);border:1px solid var(--border);border-radius:var(--radius);padding:28px}
+    .card-title{font-size:1.05rem;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+
+    /* â”€â”€ Form â”€â”€ */
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media(max-width:700px){.form-grid{grid-template-columns:1fr}}
+    .field{margin-bottom:16px}
+    .field.span2{grid-column:1/-1}
+    label{display:block;font-size:.8rem;font-weight:600;color:var(--text-muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+    input,select,textarea{width:100%;padding:11px 14px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:.92rem;outline:none;transition:.18s}
+    input:focus,select:focus,textarea:focus{border-color:var(--accent);background:rgba(34,197,94,.05)}
+    select option{background:#0a2e18;color:var(--text)}
+    textarea{resize:vertical;min-height:80px}
+    .hint{font-size:.75rem;color:var(--text-muted);margin-top:4px;opacity:.7}
+    .field-err{font-size:.78rem;color:var(--red);margin-top:4px;display:none}
+    .field-err.show{display:block}
+
+    /* â”€â”€ Table â”€â”€ */
+    .table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border)}
+    table{width:100%;border-collapse:collapse}
+    th{background:rgba(0,0,0,.25);padding:11px 16px;font-size:.75rem;font-weight:700;color:var(--text-muted);text-align:left;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+    td{padding:12px 16px;font-size:.87rem;border-bottom:1px solid var(--border2);vertical-align:top;line-height:1.4}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:var(--glass)}
+    .q-text{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+    /* Badges */
+    .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;letter-spacing:.04em}
+    .badge-pending{background:rgba(245,158,11,.12);color:var(--gold);border:1px solid rgba(245,158,11,.3)}
+    .badge-approved{background:rgba(34,197,94,.12);color:var(--accent);border:1px solid var(--border)}
+    .badge-rejected{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.3)}
+    .badge-easy{background:rgba(34,197,94,.1);color:var(--accent)}
+    .badge-medium{background:rgba(245,158,11,.1);color:var(--gold)}
+    .badge-hard{background:rgba(248,113,113,.1);color:var(--red)}
+
+    /* Buttons */
+    .btn{padding:9px 18px;border-radius:10px;font-family:inherit;font-size:.87rem;font-weight:700;cursor:pointer;transition:.18s;border:none;display:inline-flex;align-items:center;gap:6px}
+    .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+    .btn-primary:hover{box-shadow:0 0 20px rgba(34,197,94,.35);transform:translateY(-1px)}
+    .btn-secondary{background:var(--glass);border:1px solid var(--border);color:var(--text-muted)}
+    .btn-secondary:hover{background:var(--glass-hover)}
+    .btn-ghost{background:transparent;border:none;color:var(--text-muted);font-size:.8rem;font-weight:600;cursor:pointer;padding:4px 8px;border-radius:6px}
+    .btn-ghost:hover{color:var(--accent);background:rgba(34,197,94,.08)}
+    .btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+    .btn-row{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap}
+
+    /* Filter row */
+    .filter-row{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+    .filter-row select{width:auto;padding:8px 12px;font-size:.83rem}
+    .filter-row input{width:auto;flex:1;min-width:160px;padding:8px 12px;font-size:.83rem}
+
+    /* Pagination */
+    .pagination{display:flex;align-items:center;gap:8px;margin-top:18px;justify-content:center}
+    .page-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--glass);color:var(--text-muted);font-family:inherit;font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.18s}
+    .page-btn:hover,.page-btn.active{background:rgba(34,197,94,.12);color:var(--accent);border-color:var(--accent)}
+
+    /* Bulk upload zone */
+    .drop-zone{border:2px dashed var(--border);border-radius:14px;padding:40px 24px;text-align:center;cursor:pointer;transition:.2s;background:var(--glass2)}
+    .drop-zone:hover,.drop-zone.dragover{border-color:var(--accent);background:rgba(34,197,94,.05)}
+    .drop-icon{font-size:2.5rem;margin-bottom:12px}
+    .drop-zone p{color:var(--text-muted);font-size:.9rem;line-height:1.5}
+    .drop-zone strong{color:var(--accent)}
+    #csvInput{display:none}
+
+    /* Progress ring */
+    .category-bar{margin-bottom:10px}
+    .cat-label{display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:4px}
+    .cat-label span:first-child{color:var(--text-muted)}
+    .cat-label span:last-child{color:var(--accent);font-weight:700}
+    .bar-track{height:6px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden}
+    .bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent2),var(--accent))}
+
+    /* Toast */
+    #toast{position:fixed;bottom:28px;right:28px;background:#1a3a27;border:1px solid var(--accent);color:var(--text);padding:12px 22px;border-radius:12px;font-size:.88rem;font-weight:600;z-index:9999;opacity:0;transition:.3s;pointer-events:none;max-width:320px}
+    #toast.show{opacity:1}
+    #toast.error{border-color:var(--red);background:#2a1a1a}
+    #toast.gold{border-color:var(--gold)}
+
+    /* Loading skeleton */
+    .skeleton{background:linear-gradient(90deg,rgba(255,255,255,.04) 25%,rgba(255,255,255,.08) 50%,rgba(255,255,255,.04) 75%);background-size:200%;animation:skel 1.4s infinite;border-radius:8px;height:16px;margin-bottom:8px}
+    @keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+    /* Correct answer highlight */
+    .opt-correct{color:var(--accent);font-weight:700}
+
+    /* Overlay */
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+    .overlay.open{display:flex}
+    .modal{background:var(--g2);border:1px solid var(--border);border-radius:20px;padding:32px;width:100%;max-width:620px;position:relative;animation:slideIn .25s ease}
+    @keyframes slideIn{from{transform:translateY(-24px);opacity:0}to{transform:translateY(0);opacity:1}}
+    .modal-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.06);border:none;color:var(--text-muted);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center}
+    .modal-close:hover{background:rgba(248,113,113,.15);color:var(--red)}
+    .modal-title{font-size:1.1rem;font-weight:800;margin-bottom:20px}
+
+    /* Empty state */
+    .empty-state{text-align:center;padding:60px 24px;color:var(--text-muted)}
+    .empty-state .icon{font-size:3rem;margin-bottom:16px;opacity:.5}
+    .empty-state h3{font-size:1rem;font-weight:700;margin-bottom:8px}
+    .empty-state p{font-size:.85rem;line-height:1.5}
+
+    .submit-shell{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(320px,.95fr);gap:20px;align-items:start}
+    @media(max-width:1050px){.submit-shell{grid-template-columns:1fr}}
+    .helper-banner{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:18px 20px;border-radius:18px;background:linear-gradient(135deg,rgba(34,197,94,.18),rgba(59,130,246,.12));border:1px solid rgba(34,197,94,.2);margin-bottom:20px}
+    .helper-banner h3{font-size:1rem;font-weight:800;margin-bottom:8px}
+    .helper-banner p{font-size:.84rem;color:#d1fae5;line-height:1.65;max-width:620px}
+    .helper-metrics{display:flex;gap:10px;flex-wrap:wrap}
+    .helper-pill{padding:10px 14px;border-radius:14px;background:rgba(4,18,9,.34);border:1px solid rgba(255,255,255,.08);min-width:110px}
+    .helper-pill strong{display:block;font-size:1.12rem;color:var(--text);font-weight:800}
+    .helper-pill span{display:block;font-size:.73rem;color:var(--text-muted);margin-top:4px}
+    .draft-panel{position:sticky;top:28px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.03));border:1px solid rgba(34,197,94,.16);border-radius:20px;padding:24px;box-shadow:0 18px 36px rgba(0,0,0,.22)}
+    .draft-panel h3{font-size:1rem;font-weight:800;margin-bottom:8px}
+    .draft-panel p{font-size:.82rem;color:var(--text-muted);line-height:1.65}
+    .draft-counter{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}
+    .draft-counter .item{padding:12px;border-radius:14px;background:rgba(7,31,16,.58);border:1px solid rgba(255,255,255,.06);text-align:center}
+    .draft-counter strong{display:block;font-size:1.05rem;color:var(--text)}
+    .draft-counter span{display:block;font-size:.72rem;color:var(--text-muted);margin-top:4px}
+    .draft-list{display:flex;flex-direction:column;gap:12px;max-height:420px;overflow:auto;padding-right:4px}
+    .draft-card{padding:14px 15px;border-radius:16px;background:rgba(7,31,16,.5);border:1px solid rgba(255,255,255,.06)}
+    .draft-card-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:8px}
+    .draft-card-title{font-size:.88rem;font-weight:700;line-height:1.5;color:var(--text)}
+    .draft-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+    .draft-meta span{padding:4px 9px;border-radius:999px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.14);font-size:.7rem;color:#bbf7d0}
+    .draft-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .draft-actions button{flex:1}
+    .panel-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+    .submit-form-card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.03));border:1px solid rgba(34,197,94,.16);border-radius:20px;padding:28px}
+    .form-section-label{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .form-section-label h3{font-size:1rem;font-weight:800}
+    .form-section-label span{font-size:.78rem;color:var(--text-muted)}
+    .question-rich-preview{padding:16px 18px;border-radius:16px;background:rgba(59,130,246,.09);border:1px solid rgba(59,130,246,.2);margin-top:18px}
+    .question-rich-preview h4{font-size:.75rem;color:#bfdbfe;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
+    .question-rich-preview p{font-size:.88rem;color:#e0f2fe;line-height:1.65}
+    .review-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:18px 0}
+    .review-grid .cell{padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)}
+    .review-grid .cell .k{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:6px}
+    .review-grid .cell .v{font-size:.88rem;color:var(--text);font-weight:700;line-height:1.5}
+    .question-option-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+    @media(max-width:720px){.question-option-grid{grid-template-columns:1fr}}
+    .question-option-card{padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)}
+    .question-option-card.correct{background:rgba(34,197,94,.10);border-color:rgba(34,197,94,.28)}
+    .question-option-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px}
+    .question-option-head strong{font-size:.8rem}
+    .question-option-head span{font-size:.68rem;font-weight:800;color:#bbf7d0;background:rgba(34,197,94,.18);padding:4px 8px;border-radius:999px}
+    .question-inline-note{padding:14px 16px;border-radius:16px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.18);color:#fee2e2;margin-top:16px;font-size:.86rem;line-height:1.65}
+    .myq-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+    .myq-summary{display:flex;gap:10px;flex-wrap:wrap}
+    .myq-summary .pill{padding:10px 14px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-size:.76rem;color:var(--text-muted)}
+    .myq-summary .pill strong{color:var(--text);margin-right:6px}
+  </style>
+</head>
+<body>
+
+<!-- â”€â”€ Sidebar â”€â”€ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">EP<span>SA</span></div>
+    <div class="role-badge">TEACHER PORTAL</div>
+  </div>
+
+  <div class="nav-section">Main</div>
+  <a class="nav-item active" id="nav-dashboard" onclick="showPage('dashboard')">
+    <span class="icon">ðŸ </span>Dashboard
+  </a>
+  <a class="nav-item" id="nav-submit" onclick="showPage('submit')">
+    <span class="icon">âž•</span>Submit Question
+  </a>
+  <a class="nav-item" id="nav-myquestions" onclick="showPage('myquestions')">
+    <span class="icon">ðŸ“ƒ</span>My Questions
+  </a>
+  <a class="nav-item" id="nav-bulk" onclick="showPage('bulk')">
+    <span class="icon">ðŸ“¦</span>Bulk Upload
+  </a>
+
+  <div class="nav-section">Resources</div>
+  <a class="nav-item" href="#" onclick="downloadTemplate()">
+    <span class="icon">â¬‡ï¸</span>CSV Template
+  </a>
+  <a class="nav-item" href="#" id="nav-help" onclick="showPage('help')">
+    <span class="icon">â“</span>Help & Guidelines
+  </a>
+
+  <div class="sidebar-footer">
+    <div class="teacher-info">
+      <div class="teacher-avatar" id="teacherInitial">T</div>
+      <div class="info">
+        <div class="name" id="teacherName">Loadingâ€¦</div>
+        <div class="spec" id="teacherSpec">â€”</div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="logout()">Sign Out</button>
+  </div>
+</aside>
+
+<!-- â”€â”€ Main Content â”€â”€ -->
+<main class="main">
+  <div class="mobile-header">
+    <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">â˜°</button>
+    <span style="font-weight:800">EPSA <span style="color:var(--accent)">Teacher Portal</span></span>
+  </div>
+
+  <!-- DASHBOARD -->
+  <section class="page-section active" id="page-dashboard">
+    <div class="page-header">
+      <h1>Welcome back, <span id="greetName">Teacher</span> ðŸ‘‹</h1>
+      <p>Your question bank contribution dashboard â€” track submissions, approvals, and impact.</p>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card blue"><div class="stat-label">Total Submitted</div><div class="stat-value" id="statTotal">â€”</div><div class="stat-sub">Lifetime contributions</div></div>
+      <div class="stat-card gold"><div class="stat-label">Pending Review</div><div class="stat-value" id="statPending">â€”</div><div class="stat-sub">Awaiting admin decision</div></div>
+      <div class="stat-card green"><div class="stat-label">Approved</div><div class="stat-value" id="statApproved">â€”</div><div class="stat-sub">Live in question bank</div></div>
+      <div class="stat-card red"><div class="stat-label">Rejected</div><div class="stat-value" id="statRejected">â€”</div><div class="stat-sub">Needs revision</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px" id="dashBottom">
+      <div class="card">
+        <div class="card-title">ðŸ“Š Top Approved Categories</div>
+        <div id="catChart"><div class="skeleton" style="height:12px"></div><div class="skeleton" style="height:12px;width:80%"></div><div class="skeleton" style="height:12px;width:60%"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">ðŸ’¡ Quick Actions</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button class="btn btn-primary" style="justify-content:center" onclick="showPage('submit')">âž• Submit New Question</button>
+          <button class="btn btn-secondary" style="justify-content:center" onclick="showPage('myquestions')">ðŸ“ƒ View My Questions</button>
+          <button class="btn btn-secondary" style="justify-content:center" onclick="showPage('bulk')">ðŸ“¦ Bulk CSV Upload</button>
+          <button class="btn btn-secondary" style="justify-content:center" onclick="downloadTemplate()">â¬‡ï¸ Download CSV Template</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SUBMIT QUESTION -->
+  <section class="page-section" id="page-submit">
+    <div class="page-header">
+      <h1>Submit a <span>Question</span></h1>
+      <p>Draft once, submit once, or build a full batch for review. Every question still includes the topic, subtopic, answer options, and rationale admins need.</p>
+    </div>
+    <div class="helper-banner">
+      <div>
+        <h3>Faster authoring workflow</h3>
+        <p>Use the form to compose one strong question, then either submit it immediately or add it to a batch queue. The batch panel lets you review, edit, and submit multiple drafted questions together without switching pages.</p>
+      </div>
+      <div class="helper-metrics">
+        <div class="helper-pill"><strong id="draftCountMetric">0</strong><span>Drafts queued</span></div>
+        <div class="helper-pill"><strong id="draftTopicMetric">0</strong><span>Topics covered</span></div>
+        <div class="helper-pill"><strong id="draftReadyMetric">0</strong><span>Ready to submit</span></div>
+      </div>
+    </div>
+    <div class="submit-shell">
+      <div class="submit-form-card">
+        <div class="form-section-label">
+          <h3>Question composer</h3>
+          <span>Required fields are marked with *</span>
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label>Subject Category *</label>
+            <select id="fCategory"></select>
+            <div class="field-err" id="err-fCategory">Required</div>
+          </div>
+          <div class="field">
+            <label>Topic *</label>
+            <input type="text" id="fTopic" placeholder="e.g. Milgram Obedience Studies"/>
+            <div class="field-err" id="err-fTopic">Topic is required</div>
+          </div>
+          <div class="field">
+            <label>Subtopic *</label>
+            <input type="text" id="fSubtopic" placeholder="e.g. Situational factors in obedience"/>
+            <div class="field-err" id="err-fSubtopic">Subtopic is required</div>
+          </div>
+          <div class="field">
+            <label>Bloom's Taxonomy Level *</label>
+            <select id="fBloom">
+              <option value="Remembering">Remembering</option>
+              <option value="Understanding">Understanding</option>
+              <option value="Applying">Applying</option>
+              <option value="Analyzing">Analyzing</option>
+              <option value="Evaluating">Evaluating</option>
+              <option value="Creating">Creating</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Difficulty Level *</label>
+            <select id="fDifficulty">
+              <option value="easy">Easy</option>
+              <option value="medium" selected>Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+          <div class="field span2">
+            <label>Question Text *</label>
+            <textarea id="fQuestion" placeholder="Write a clear, unambiguous question. Avoid 'all of the above' or 'none of the above'." style="min-height:100px"></textarea>
+            <div class="field-err" id="err-fQuestion">Question text is required</div>
+          </div>
+          <div class="field">
+            <label>Option A *</label>
+            <input type="text" id="fOptA" placeholder="Option A"/>
+            <div class="field-err" id="err-fOptA">Required</div>
+          </div>
+          <div class="field">
+            <label>Option B *</label>
+            <input type="text" id="fOptB" placeholder="Option B"/>
+            <div class="field-err" id="err-fOptB">Required</div>
+          </div>
+          <div class="field">
+            <label>Option C *</label>
+            <input type="text" id="fOptC" placeholder="Option C"/>
+            <div class="field-err" id="err-fOptC">Required</div>
+          </div>
+          <div class="field">
+            <label>Option D *</label>
+            <input type="text" id="fOptD" placeholder="Option D"/>
+            <div class="field-err" id="err-fOptD">Required</div>
+          </div>
+          <div class="field">
+            <label>Correct Answer *</label>
+            <select id="fCorrect">
+              <option value="0">A</option>
+              <option value="1">B</option>
+              <option value="2">C</option>
+              <option value="3">D</option>
+            </select>
+          </div>
+          <div class="field span2">
+            <label>Explanation / Rationale (Recommended)</label>
+            <textarea id="fExplanation" placeholder="Explain why the correct answer is right and why distractors are wrong. This helps students learn."></textarea>
+          </div>
+        </div>
+        <div class="question-rich-preview">
+          <h4>Submission checklist</h4>
+          <p>Make sure the topic and subtopic are specific, each distractor is plausible, the correct option is clear, and the rationale explains the answer logic well enough for both students and EPSA reviewers.</p>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="submitQBtn" onclick="submitQuestion()">Submit This Question</button>
+          <button class="btn btn-secondary" onclick="addQuestionDraft()">Add To Batch</button>
+          <button class="btn btn-secondary" onclick="clearForm()">Clear Form</button>
+        </div>
+      </div>
+      <aside class="draft-panel">
+        <h3>Batch draft queue</h3>
+        <p>Queue multiple questions here, review them quickly, then submit the whole batch in one action through the same approval workflow.</p>
+        <div class="draft-counter">
+          <div class="item"><strong id="draftCounterTotal">0</strong><span>Total drafts</span></div>
+          <div class="item"><strong id="draftCounterTopics">0</strong><span>Unique topics</span></div>
+          <div class="item"><strong id="draftCounterReady">0</strong><span>Valid drafts</span></div>
+        </div>
+        <div id="draftQueueList" class="draft-list">
+          <div class="empty-state" style="padding:28px 12px">
+            <div class="icon">ðŸ§©</div>
+            <h3>No draft questions yet</h3>
+            <p>Add a question from the composer to build a batch for submission.</p>
+          </div>
+        </div>
+        <div class="panel-actions">
+          <button class="btn btn-primary" id="submitDraftBatchBtn" style="flex:1;justify-content:center" onclick="submitDraftBatch()">Submit Batch</button>
+          <button class="btn btn-secondary" style="flex:1;justify-content:center" onclick="clearDraftQueue()">Clear Queue</button>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- MY QUESTIONS -->
+  <section class="page-section" id="page-myquestions">
+    <div class="page-header">
+      <h1>My <span>Questions</span></h1>
+      <p>Track all your submissions, then open any question to review its options, rationale, timestamps, and admin notes in full detail.</p>
+    </div>
+    <div class="card">
+      <div class="myq-toolbar">
+        <div class="myq-summary">
+          <div class="pill"><strong id="myqCount">0</strong> questions on this page</div>
+          <div class="pill"><strong id="myqPending">0</strong> pending review</div>
+          <div class="pill"><strong id="myqReviewed">0</strong> reviewed</div>
+        </div>
+      </div>
+      <div class="filter-row">
+        <select id="filterStatus" onchange="loadMyQuestions()">
+          <option value="all">All Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <select id="filterCategory" onchange="loadMyQuestions()">
+          <option value="">All Categories</option>
+        </select>
+        <button class="btn btn-secondary" onclick="loadMyQuestions()">ðŸ”„ Refresh</button>
+        <button class="btn btn-primary" onclick="showPage('submit')">âž• New</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Question</th>
+              <th>Category</th>
+              <th>Bloom's</th>
+              <th>Difficulty</th>
+              <th>Status</th>
+              <th>Submitted</th>
+              <th>Notes</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="questionsTbody">
+            <tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:32px">Loadingâ€¦</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" id="questionPagination"></div>
+    </div>
+  </section>
+
+  <!-- BULK UPLOAD -->
+  <section class="page-section" id="page-bulk">
+    <div class="page-header">
+      <h1>Bulk <span>Upload</span></h1>
+      <p>Upload hundreds of questions at once using a structured CSV or Excel file.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+      <div class="card">
+        <div class="card-title">ðŸ“‹ CSV Format Requirements</div>
+        <p style="font-size:.85rem;color:var(--text-muted);line-height:1.6;margin-bottom:14px">Your CSV must have the following columns in order:</p>
+        <div style="font-size:.78rem;font-family:monospace;background:rgba(0,0,0,.3);border-radius:10px;padding:14px;color:#a7f3d0;line-height:2">
+          subject_category<br>topic<br>subtopic<br>bloom_level<br>difficulty<br>question_text<br>option_a<br>option_b<br>option_c<br>option_d<br>correct_idx (0=A, 1=B, 2=C, 3=D)<br>explanation
+        </div>
+        <div style="margin-top:16px;padding:12px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:10px;font-size:.8rem;color:var(--gold)">
+          âš ï¸ Max 500 questions per batch. Duplicates (same question text) are automatically skipped.
+        </div>
+        <button class="btn btn-secondary" style="margin-top:16px;width:100%;justify-content:center" onclick="downloadTemplate()">â¬‡ï¸ Download Template CSV</button>
+      </div>
+      <div class="card">
+        <div class="card-title">ðŸ“¦ Upload File</div>
+        <div class="drop-zone" id="dropZone" onclick="document.getElementById('csvInput').click()">
+          <div class="drop-icon">ðŸ“‚</div>
+          <p><strong>Click to select</strong> or drag &amp; drop<br>your CSV file here</p>
+          <p style="margin-top:8px;font-size:.75rem;opacity:.6">Accepts .csv files up to 10MB</p>
+        </div>
+        <input type="file" id="csvInput" accept=".csv" onchange="handleCsvFile(this)"/>
+        <div id="csvPreview" style="margin-top:16px;display:none">
+          <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(34,197,94,.08);border:1px solid var(--border);border-radius:10px;margin-bottom:12px">
+            <span style="font-size:1.2rem">ðŸ“„</span>
+            <div>
+              <div id="csvFileName" style="font-weight:700;font-size:.88rem"></div>
+              <div id="csvRowCount" style="font-size:.78rem;color:var(--text-muted)"></div>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="uploadBtn" style="width:100%;justify-content:center" onclick="uploadCsv()">Upload &amp; Submit</button>
+        </div>
+        <div id="uploadResult" style="margin-top:14px;display:none;font-size:.85rem;line-height:1.6"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HELP -->
+  <section class="page-section" id="page-help">
+    <div class="page-header">
+      <h1>Help &amp; <span>Guidelines</span></h1>
+      <p>Everything you need to know about writing excellent psychology exam questions.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div class="card">
+        <div class="card-title">âœ… Writing Good Questions</div>
+        <ul style="font-size:.87rem;color:var(--text-muted);line-height:2;list-style:none">
+          <li>ðŸ“Œ Write a single, clear, unambiguous stem</li>
+          <li>ðŸ“Œ Make all four options plausible to test comprehension</li>
+          <li>ðŸ“Œ Avoid double negatives and trick wording</li>
+          <li>ðŸ“Œ Match difficulty to the target Bloom's level</li>
+          <li>ðŸ“Œ Write a detailed explanation for the correct answer</li>
+          <li>ðŸ“Œ Specify why distractors are wrong â€” learners benefit</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">ðŸ“š Bloom's Taxonomy Guide</div>
+        <div style="font-size:.83rem;line-height:1.7">
+          <div style="margin-bottom:8px"><span style="color:var(--accent);font-weight:700">Remembering:</span> <span style="color:var(--text-muted)">Recall of facts (define, list, recall)</span></div>
+          <div style="margin-bottom:8px"><span style="color:var(--accent);font-weight:700">Understanding:</span> <span style="color:var(--text-muted)">Explain concepts in own words (describe, summarize)</span></div>
+          <div style="margin-bottom:8px"><span style="color:var(--accent);font-weight:700">Applying:</span> <span style="color:var(--text-muted)">Use knowledge in new situations (solve, apply)</span></div>
+          <div style="margin-bottom:8px"><span style="color:var(--accent);font-weight:700">Analyzing:</span> <span style="color:var(--text-muted)">Break down complex info (compare, contrast)</span></div>
+          <div style="margin-bottom:8px"><span style="color:var(--accent);font-weight:700">Evaluating:</span> <span style="color:var(--text-muted)">Make judgments and defend conclusions (critique, justify)</span></div>
+          <div><span style="color:var(--accent);font-weight:700">Creating:</span> <span style="color:var(--text-muted)">Synthesize new knowledge (design, construct)</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">â±ï¸ Review Process</div>
+        <p style="font-size:.87rem;color:var(--text-muted);line-height:1.7">Each question you submit enters a <strong style="color:var(--text)">pending review queue</strong>. EPSA admins will review for content accuracy, language clarity, and Bloom's alignment. Approved questions are added to the live question bank. Rejected questions are returned with admin notes so you can revise and resubmit.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">ðŸ“Š Adaptive Difficulty</div>
+        <p style="font-size:.87rem;color:var(--text-muted);line-height:1.7">Once your questions are used in <strong style="color:var(--text)">Mock Exams</strong>, the system automatically tracks correctness rates and time-on-question. Questions with â‰¥70% correct rate are reclassified as <span style="color:var(--accent)">easy</span>, and those with â‰¤40% as <span style="color:var(--red)">hard</span>. This keeps the exam calibration accurate over time.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div id="toast"></div>
+
+<div class="overlay" id="questionDetailOverlay">
+  <div class="modal" style="max-width:860px">
+    <button class="modal-close" onclick="closeQuestionDetail()">Ã—</button>
+    <div class="modal-title">Question Detail</div>
+    <div id="questionDetailBody"></div>
+  </div>
+</div>
+
+<script>
+const API_BASES = (() => {
+  const currentOrigin = window.location?.origin || '';
+  const bases = [];
+  if (currentOrigin && /^https?:/i.test(currentOrigin) && !/^(file:|null)$/i.test(currentOrigin)) {
+    bases.push(`${currentOrigin.replace(/\/$/, '')}/api`);
+  }
+  const storedBase = window.__EPSA_CONFIG__?.API_BASE_URL || localStorage.getItem('epsa_api_base');
+  if (storedBase) bases.push(storedBase);
+  return [...new Set(bases)];
+})();
+let activeApiBase = API_BASES[0];
+let teacherProfile = null;
+let csvParsed = [];
+let myQuestionsPage = 1;
+let myQuestionCache = [];
+let questionDrafts = [];
+let draftEditIndex = null;
+const categories = [];
+
+// â”€â”€ Auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function getToken() { return localStorage.getItem('epsa_token') || localStorage.getItem('epsa_access_token'); }
+function authHdr() { return { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' }; }
+
+async function apiGet(url) {
+  let r = null;
+  for (const base of [activeApiBase, ...API_BASES.filter((candidate) => candidate !== activeApiBase)]) {
+    try {
+      r = await fetch(base + url, { headers: authHdr() });
+      activeApiBase = base;
+      break;
+    } catch (_) {
+      r = null;
+    }
+  }
+  if (!r) throw new Error('EPSA backend is unreachable. Start the backend server on port 5000 and retry.');
+  if (r.status === 401) { logout(); return; }
+  const d = await r.json();
+  if (r.status === 403 && /pending admin approval|still pending|rejected|not active/i.test(d.error || '')) {
+    showToast(d.error || 'Teacher access requires admin approval.', 'gold');
+    setTimeout(() => logout(), 1800);
+    return;
+  }
+  if (!r.ok) throw new Error(d.error || 'Request failed');
+  return d;
+}
+async function apiPost(url, body) {
+  let r = null;
+  for (const base of [activeApiBase, ...API_BASES.filter((candidate) => candidate !== activeApiBase)]) {
+    try {
+      r = await fetch(base + url, { method: 'POST', headers: authHdr(), body: JSON.stringify(body) });
+      activeApiBase = base;
+      break;
+    } catch (_) {
+      r = null;
+    }
+  }
+  if (!r) throw new Error('EPSA backend is unreachable. Start the backend server on port 5000 and retry.');
+  if (r.status === 401) { logout(); return; }
+  const d = await r.json();
+  if (r.status === 403 && /pending admin approval|still pending|rejected|not active/i.test(d.error || '')) {
+    showToast(d.error || 'Teacher access requires admin approval.', 'gold');
+    setTimeout(() => logout(), 1800);
+    return;
+  }
+  if (!r.ok) throw new Error(d.error || 'Request failed');
+  return d;
+}
+
+function logout() {
+  localStorage.removeItem('epsa_token');
+  localStorage.removeItem('epsa_access_token');
+  localStorage.removeItem('epsa_user');
+  window.location.href = 'login.html';
+}
+
+// â”€â”€ Toast â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.className = '', 3500);
+}
+
+// â”€â”€ Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function showPage(name) {
+  document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name)?.classList.add('active');
+  document.getElementById('nav-' + name)?.classList.add('active');
+  document.getElementById('sidebar').classList.remove('open');
+  if (name === 'myquestions') loadMyQuestions();
+  if (name === 'dashboard') loadStats();
+}
+
+// â”€â”€ Load profile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function loadProfile() {
+  try {
+    const stored = localStorage.getItem('epsa_user');
+    teacherProfile = stored ? JSON.parse(stored) : null;
+    if (teacherProfile) {
+      const n = teacherProfile.first_name || teacherProfile.name || 'Teacher';
+      document.getElementById('teacherName').textContent = n;
+      document.getElementById('teacherInitial').textContent = n[0].toUpperCase();
+      document.getElementById('greetName').textContent = n;
+      document.getElementById('teacherSpec').textContent = teacherProfile.specialization || 'Psychology Teacher';
+    }
+  } catch (e) {}
+}
+
+// â”€â”€ Load stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function loadStats() {
+  try {
+    const data = await apiGet('/teacher/stats');
+    document.getElementById('statTotal').textContent = data.total;
+    document.getElementById('statPending').textContent = data.pending;
+    document.getElementById('statApproved').textContent = data.approved;
+    document.getElementById('statRejected').textContent = data.rejected;
+    renderCatChart(data.top_categories || []);
+  } catch (e) {
+    showToast('Failed to load stats', 'error');
+  }
+}
+
+function renderCatChart(cats) {
+  const el = document.getElementById('catChart');
+  if (!cats.length) { el.innerHTML = '<div class="empty-state"><div class="icon">ðŸ“Š</div><h3>No data yet</h3><p>Submit and get questions approved to see category stats.</p></div>'; return; }
+  const max = Math.max(...cats.map(c => c.count));
+  el.innerHTML = cats.map(c => `
+    <div class="category-bar">
+      <div class="cat-label"><span>${c.category}</span><span>${c.count}</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(c.count/max*100).toFixed(1)}%"></div></div>
+    </div>
+  `).join('');
+}
+
+// â”€â”€ Load categories â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function loadCategories() {
+  try {
+    const data = await apiGet('/teacher/categories');
+    const cats = data.categories || [];
+    const catSel = document.getElementById('fCategory');
+    const filterCat = document.getElementById('filterCategory');
+    cats.forEach(c => {
+      catSel.innerHTML += `<option value="${c}">${c}</option>`;
+      filterCat.innerHTML += `<option value="${c}">${c}</option>`;
+      categories.push(c);
+    });
+  } catch (e) {}
+}
+
+// â”€â”€ Submit question â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function submitQuestion() {
+  const btn = document.getElementById('submitQBtn');
+  let ok = true;
+  const checks = {
+    fCategory: 'Category is required',
+    fQuestion: 'Question text is required',
+    fOptA: 'Option A is required',
+    fOptB: 'Option B is required',
+    fOptC: 'Option C is required',
+    fOptD: 'Option D is required',
+  };
+  for (const [id, msg] of Object.entries(checks)) {
+    const el = document.getElementById(id);
+    const errEl = document.getElementById('err-' + id);
+    if (!el?.value.trim()) {
+      if (errEl) { errEl.textContent = msg; errEl.classList.add('show'); }
+      ok = false;
+    } else {
+      errEl?.classList.remove('show');
+    }
+  }
+  if (!ok) return showToast('Please fill all required fields', 'error');
+
+  btn.disabled = true;
+  btn.textContent = 'Submittingâ€¦';
+  try {
+    await apiPost('/teacher/questions', {
+      subject_category: document.getElementById('fCategory').value,
+      topic: document.getElementById('fTopic').value.trim(),
+      subtopic: document.getElementById('fSubtopic').value.trim(),
+      bloom_level: document.getElementById('fBloom').value,
+      difficulty: document.getElementById('fDifficulty').value,
+      question_text: document.getElementById('fQuestion').value.trim(),
+      option_a: document.getElementById('fOptA').value.trim(),
+      option_b: document.getElementById('fOptB').value.trim(),
+      option_c: document.getElementById('fOptC').value.trim(),
+      option_d: document.getElementById('fOptD').value.trim(),
+      correct_idx: parseInt(document.getElementById('fCorrect').value),
+      explanation: document.getElementById('fExplanation').value.trim(),
+    });
+    showToast('Question submitted for review! âœ…');
+    clearForm();
+    loadStats();
+  } catch (err) {
+    showToast(err.message || 'Submission failed', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Submit Question';
+  }
+}
+
+function clearForm() {
+  ['fCategory','fTopic','fSubtopic','fBloom','fDifficulty','fQuestion','fOptA','fOptB','fOptC','fOptD','fCorrect','fExplanation'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = el.tagName === 'SELECT' ? el.options[0]?.value : '';
+  });
+  document.querySelectorAll('.field-err').forEach(e => e.classList.remove('show'));
+}
+
+// â”€â”€ My questions table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function loadMyQuestions(page = myQuestionsPage) {
+  myQuestionsPage = page;
+  const status = document.getElementById('filterStatus').value;
+  const cat = document.getElementById('filterCategory').value;
+  const tbody = document.getElementById('questionsTbody');
+  tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:32px">Loadingâ€¦</td></tr>`;
+  try {
+    const params = new URLSearchParams({ status, page });
+    if (cat) params.append('category', cat);
+    const data = await apiGet(`/teacher/questions?${params}`);
+    renderQuestionsTable(data.questions || []);
+    renderPagination('questionPagination', data.page, data.pages, loadMyQuestions);
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--red);padding:24px">${e.message}</td></tr>`;
+  }
+}
+
+function renderQuestionsTable(questions) {
+  const tbody = document.getElementById('questionsTbody');
+  if (!questions.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px"><div class="empty-state" style="padding:0"><div class="icon">ðŸ“</div><h3>No questions yet</h3><p>Submit your first question to get started.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = questions.map((q, i) => `
+    <tr>
+      <td style="color:var(--text-muted)">${q.id}</td>
+      <td><div class="q-text">${escHtml(q.question_text)}</div></td>
+      <td style="color:var(--text-muted);font-size:.8rem">${q.subject_category}</td>
+      <td style="font-size:.8rem">${q.bloom_level || 'â€”'}</td>
+      <td><span class="badge badge-${q.difficulty || 'medium'}">${q.difficulty || 'medium'}</span></td>
+      <td><span class="badge badge-${q.status}">${q.status}</span></td>
+      <td style="color:var(--text-muted);font-size:.78rem;white-space:nowrap">${formatDate(q.created_at)}</td>
+      <td style="font-size:.78rem;color:var(--text-muted);max-width:160px;overflow:hidden;text-overflow:ellipsis">${q.admin_notes ? escHtml(q.admin_notes) : 'â€”'}</td>
+    </tr>`).join('');
+}
+
+function renderPagination(containerId, page, pages, callback) {
+  const el = document.getElementById(containerId);
+  if (!el || pages <= 1) { if (el) el.innerHTML = ''; return; }
+  let html = `<button class="page-btn" onclick="${callback.name}(${Math.max(1, page-1)})" ${page<=1?'disabled':''}>â€¹</button>`;
+  for (let p = Math.max(1, page-2); p <= Math.min(pages, page+2); p++) {
+    html += `<button class="page-btn ${p===page?'active':''}" onclick="${callback.name}(${p})">${p}</button>`;
+  }
+  html += `<button class="page-btn" onclick="${callback.name}(${Math.min(pages,page+1)})" ${page>=pages?'disabled':''}>â€º</button>`;
+  el.innerHTML = html;
+}
+
+// â”€â”€ CSV Bulk upload â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Enhanced teacher workflow
+function collectQuestionPayload(showErrors = true) {
+  const checks = {
+    fCategory: 'Category is required',
+    fTopic: 'Topic is required',
+    fSubtopic: 'Subtopic is required',
+    fQuestion: 'Question text is required',
+    fOptA: 'Option A is required',
+    fOptB: 'Option B is required',
+    fOptC: 'Option C is required',
+    fOptD: 'Option D is required',
+  };
+  let ok = true;
+  for (const [id, msg] of Object.entries(checks)) {
+    const el = document.getElementById(id);
+    const errEl = document.getElementById('err-' + id);
+    const value = (el?.value || '').trim();
+    if (!value) {
+      ok = false;
+      if (showErrors && errEl) {
+        errEl.textContent = msg;
+        errEl.classList.add('show');
+      }
+    } else {
+      errEl?.classList.remove('show');
+    }
+  }
+  if (!ok) return null;
+  return {
+    subject_category: document.getElementById('fCategory').value,
+    topic: document.getElementById('fTopic').value.trim(),
+    subtopic: document.getElementById('fSubtopic').value.trim(),
+    bloom_level: document.getElementById('fBloom').value,
+    difficulty: document.getElementById('fDifficulty').value,
+    question_text: document.getElementById('fQuestion').value.trim(),
+    option_a: document.getElementById('fOptA').value.trim(),
+    option_b: document.getElementById('fOptB').value.trim(),
+    option_c: document.getElementById('fOptC').value.trim(),
+    option_d: document.getElementById('fOptD').value.trim(),
+    correct_idx: parseInt(document.getElementById('fCorrect').value, 10),
+    explanation: document.getElementById('fExplanation').value.trim(),
+  };
+}
+
+function setDraftMetrics() {
+  const total = questionDrafts.length;
+  const topics = new Set(questionDrafts.map((draft) => `${draft.topic}::${draft.subtopic}`)).size;
+  const ready = questionDrafts.filter(Boolean).length;
+  [
+    ['draftCountMetric', total],
+    ['draftCounterTotal', total],
+    ['draftTopicMetric', topics],
+    ['draftCounterTopics', topics],
+    ['draftReadyMetric', ready],
+    ['draftCounterReady', ready],
+  ].forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  });
+}
+
+function renderDraftQueue() {
+  const container = document.getElementById('draftQueueList');
+  if (!container) return;
+  if (!questionDrafts.length) {
+    container.innerHTML = `<div class="empty-state" style="padding:28px 12px"><div class="icon">ðŸ§©</div><h3>No draft questions yet</h3><p>Add a question from the composer to build a batch for submission.</p></div>`;
+    setDraftMetrics();
+    return;
+  }
+  container.innerHTML = questionDrafts.map((draft, index) => `
+    <div class="draft-card">
+      <div class="draft-card-head">
+        <div class="draft-card-title">${escHtml(draft.question_text)}</div>
+        <span class="badge badge-${draft.difficulty || 'medium'}">${escHtml(draft.difficulty || 'medium')}</span>
+      </div>
+      <div class="draft-meta">
+        <span>${escHtml(draft.subject_category)}</span>
+        <span>${escHtml(draft.topic)}</span>
+        <span>${escHtml(draft.subtopic)}</span>
+      </div>
+      <div class="draft-actions">
+        <button class="btn btn-secondary" onclick="editQuestionDraft(${index})">Edit</button>
+        <button class="btn btn-secondary" onclick="removeQuestionDraft(${index})">Remove</button>
+      </div>
+    </div>
+  `).join('');
+  setDraftMetrics();
+}
+
+function fillFormFromPayload(payload) {
+  if (!payload) return;
+  document.getElementById('fCategory').value = payload.subject_category || '';
+  document.getElementById('fTopic').value = payload.topic || '';
+  document.getElementById('fSubtopic').value = payload.subtopic || '';
+  document.getElementById('fBloom').value = payload.bloom_level || 'Remembering';
+  document.getElementById('fDifficulty').value = payload.difficulty || 'medium';
+  document.getElementById('fQuestion').value = payload.question_text || '';
+  document.getElementById('fOptA').value = payload.option_a || '';
+  document.getElementById('fOptB').value = payload.option_b || '';
+  document.getElementById('fOptC').value = payload.option_c || '';
+  document.getElementById('fOptD').value = payload.option_d || '';
+  document.getElementById('fCorrect').value = String(payload.correct_idx ?? 0);
+  document.getElementById('fExplanation').value = payload.explanation || '';
+}
+
+async function submitQuestion() {
+  const btn = document.getElementById('submitQBtn');
+  const payload = collectQuestionPayload(true);
+  if (!payload) return showToast('Please fill all required fields', 'error');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+  try {
+    await apiPost('/teacher/questions', payload);
+    showToast('Question submitted for review!', 'success');
+    clearForm();
+    loadStats();
+    if (document.getElementById('page-myquestions')?.classList.contains('active')) loadMyQuestions();
+  } catch (err) {
+    showToast(err.message || 'Submission failed', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Submit This Question';
+  }
+}
+
+function addQuestionDraft() {
+  const payload = collectQuestionPayload(true);
+  if (!payload) return showToast('Complete the required fields before adding to batch.', 'error');
+  const duplicateIndex = questionDrafts.findIndex((draft, index) => (
+    draft.question_text.toLowerCase() === payload.question_text.toLowerCase() &&
+    index !== draftEditIndex
+  ));
+  if (duplicateIndex >= 0) {
+    showToast('That question is already in the batch queue.', 'gold');
+    return;
+  }
+  if (draftEditIndex !== null) {
+    questionDrafts[draftEditIndex] = payload;
+    showToast('Draft updated in batch queue.', 'success');
+  } else {
+    questionDrafts.unshift(payload);
+    showToast('Question added to batch queue.', 'success');
+  }
+  draftEditIndex = null;
+  clearForm();
+  renderDraftQueue();
+}
+
+function editQuestionDraft(index) {
+  const draft = questionDrafts[index];
+  if (!draft) return;
+  draftEditIndex = index;
+  fillFormFromPayload(draft);
+  showPage('submit');
+  showToast('Draft loaded into the composer for editing.', 'gold');
+}
+window.editQuestionDraft = editQuestionDraft;
+
+function removeQuestionDraft(index) {
+  questionDrafts.splice(index, 1);
+  if (draftEditIndex === index) {
+    draftEditIndex = null;
+    clearForm();
+  } else if (draftEditIndex !== null && draftEditIndex > index) {
+    draftEditIndex -= 1;
+  }
+  renderDraftQueue();
+  showToast('Draft removed from batch queue.', 'success');
+}
+window.removeQuestionDraft = removeQuestionDraft;
+
+function clearDraftQueue() {
+  questionDrafts = [];
+  draftEditIndex = null;
+  renderDraftQueue();
+  showToast('Draft queue cleared.', 'gold');
+}
+window.clearDraftQueue = clearDraftQueue;
+
+async function submitDraftBatch() {
+  if (!questionDrafts.length) {
+    showToast('Add at least one draft before submitting a batch.', 'error');
+    return;
+  }
+  const btn = document.getElementById('submitDraftBatchBtn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting batch...';
+  try {
+    const data = await apiPost('/teacher/questions/bulk', { questions: questionDrafts });
+    showToast(data.message || 'Batch submitted!', data.errors?.length ? 'gold' : 'success');
+    questionDrafts = [];
+    draftEditIndex = null;
+    renderDraftQueue();
+    loadStats();
+    loadMyQuestions();
+  } catch (err) {
+    showToast(err.message || 'Batch submission failed', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Submit Batch';
+  }
+}
+window.submitDraftBatch = submitDraftBatch;
+
+function clearForm() {
+  ['fCategory','fTopic','fSubtopic','fBloom','fDifficulty','fQuestion','fOptA','fOptB','fOptC','fOptD','fCorrect','fExplanation'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.tagName === 'SELECT') {
+      el.value = el.options[0]?.value || '';
+    } else {
+      el.value = '';
+    }
+  });
+  draftEditIndex = null;
+  document.querySelectorAll('.field-err').forEach(e => e.classList.remove('show'));
+}
+
+async function loadMyQuestions(page = myQuestionsPage) {
+  myQuestionsPage = page;
+  const status = document.getElementById('filterStatus').value;
+  const cat = document.getElementById('filterCategory').value;
+  const tbody = document.getElementById('questionsTbody');
+  tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:32px">Loading...</td></tr>`;
+  try {
+    const params = new URLSearchParams({ status, page });
+    if (cat) params.append('category', cat);
+    const data = await apiGet(`/teacher/questions?${params}`);
+    myQuestionCache = data.questions || [];
+    renderQuestionsTable(myQuestionCache);
+    renderQuestionSummary(myQuestionCache);
+    renderPagination('questionPagination', data.page, data.pages, loadMyQuestions);
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--red);padding:24px">${e.message}</td></tr>`;
+  }
+}
+
+function renderQuestionSummary(questions) {
+  const pending = questions.filter((q) => q.status === 'pending').length;
+  const reviewed = questions.filter((q) => q.status !== 'pending').length;
+  [
+    ['myqCount', questions.length],
+    ['myqPending', pending],
+    ['myqReviewed', reviewed],
+  ].forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  });
+}
+
+function renderQuestionsTable(questions) {
+  const tbody = document.getElementById('questionsTbody');
+  if (!questions.length) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px"><div class="empty-state" style="padding:0"><div class="icon">ðŸ“</div><h3>No questions yet</h3><p>Submit your first question to get started.</p></div></td></tr>`;
+    renderQuestionSummary([]);
+    return;
+  }
+  tbody.innerHTML = questions.map((q) => `
+    <tr>
+      <td style="color:var(--text-muted)">${q.id}</td>
+      <td>
+        <div class="q-text">${escHtml(q.question_text)}</div>
+        <div style="font-size:.74rem;color:var(--text-dim);margin-top:6px">${escHtml(q.topic || 'No topic')} â€¢ ${escHtml(q.subtopic || 'No subtopic')}</div>
+      </td>
+      <td style="color:var(--text-muted);font-size:.8rem">${escHtml(q.subject_category || 'â€”')}</td>
+      <td style="font-size:.8rem">${escHtml(q.bloom_level || 'â€”')}</td>
+      <td><span class="badge badge-${q.difficulty || 'medium'}">${escHtml(q.difficulty || 'medium')}</span></td>
+      <td><span class="badge badge-${q.status}">${escHtml(q.status)}</span></td>
+      <td style="color:var(--text-muted);font-size:.78rem;white-space:nowrap">${formatDate(q.created_at)}</td>
+      <td style="font-size:.78rem;color:var(--text-muted);max-width:180px;overflow:hidden;text-overflow:ellipsis">${q.admin_notes ? escHtml(q.admin_notes) : 'â€”'}</td>
+      <td><button class="btn btn-secondary" style="padding:7px 12px;font-size:.8rem" onclick="openQuestionDetail(${q.id})">View</button></td>
+    </tr>`).join('');
+}
+
+function buildQuestionOptionCards(question) {
+  const optionKeys = ['option_a', 'option_b', 'option_c', 'option_d'];
+  const labels = ['A', 'B', 'C', 'D'];
+  return optionKeys.map((key, index) => {
+    const isCorrect = Number(question.correct_idx) === index;
+    return `
+      <div class="question-option-card ${isCorrect ? 'correct' : ''}">
+        <div class="question-option-head">
+          <strong>Option ${labels[index]}</strong>
+          ${isCorrect ? '<span>Correct</span>' : ''}
+        </div>
+        <div style="font-size:.88rem;line-height:1.65;color:var(--text)">${escHtml(question[key] || 'â€”')}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openQuestionDetail(id) {
+  const question = myQuestionCache.find((item) => Number(item.id) === Number(id));
+  const overlay = document.getElementById('questionDetailOverlay');
+  const body = document.getElementById('questionDetailBody');
+  if (!question || !overlay || !body) return;
+  body.innerHTML = `
+    <div style="padding:20px;border-radius:18px;background:linear-gradient(135deg,rgba(34,197,94,.16),rgba(59,130,246,.12));border:1px solid rgba(34,197,94,.22);">
+      <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:#bbf7d0;margin-bottom:8px;">Submitted Question</div>
+          <div style="font-size:1.08rem;font-weight:800;line-height:1.6">${escHtml(question.question_text)}</div>
+        </div>
+        <span class="badge badge-${question.status || 'pending'}">${escHtml(question.status || 'pending')}</span>
+      </div>
+    </div>
+    <div class="review-grid">
+      <div class="cell"><div class="k">Category</div><div class="v">${escHtml(question.subject_category || 'â€”')}</div></div>
+      <div class="cell"><div class="k">Topic</div><div class="v">${escHtml(question.topic || 'â€”')}</div></div>
+      <div class="cell"><div class="k">Subtopic</div><div class="v">${escHtml(question.subtopic || 'â€”')}</div></div>
+      <div class="cell"><div class="k">Bloom Level</div><div class="v">${escHtml(question.bloom_level || 'â€”')}</div></div>
+      <div class="cell"><div class="k">Difficulty</div><div class="v">${escHtml(question.difficulty || 'â€”')}</div></div>
+      <div class="cell"><div class="k">Submitted</div><div class="v">${question.created_at ? new Date(question.created_at).toLocaleString() : 'â€”'}</div></div>
+    </div>
+    <div style="font-size:.78rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Answer Options</div>
+    <div class="question-option-grid">${buildQuestionOptionCards(question)}</div>
+    <div style="margin-top:18px;padding:16px 18px;border-radius:16px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.18);">
+      <div style="font-size:.76rem;color:#bfdbfe;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Explanation / Rationale</div>
+      <div style="font-size:.9rem;line-height:1.75;color:#e0f2fe;">${escHtml(question.explanation || 'No explanation provided.')}</div>
+    </div>
+    ${question.admin_notes ? `<div class="question-inline-note"><strong style="display:block;margin-bottom:6px;">Admin note</strong>${escHtml(question.admin_notes)}</div>` : ''}
+  `;
+  overlay.classList.add('open');
+}
+window.openQuestionDetail = openQuestionDetail;
+
+function closeQuestionDetail() {
+  document.getElementById('questionDetailOverlay')?.classList.remove('open');
+}
+window.closeQuestionDetail = closeQuestionDetail;
+
+function renderPagination(containerId, page, pages, callback) {
+  const el = document.getElementById(containerId);
+  if (!el || pages <= 1) { if (el) el.innerHTML = ''; return; }
+  let html = `<button class="page-btn" onclick="${callback.name}(${Math.max(1, page-1)})" ${page<=1?'disabled':''}>â€¹</button>`;
+  for (let p = Math.max(1, page-2); p <= Math.min(pages, page+2); p++) {
+    html += `<button class="page-btn ${p===page?'active':''}" onclick="${callback.name}(${p})">${p}</button>`;
+  }
+  html += `<button class="page-btn" onclick="${callback.name}(${Math.min(pages,page+1)})" ${page>=pages?'disabled':''}>â€º</button>`;
+  el.innerHTML = html;
+}
+
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const file = e.dataTransfer?.files[0];
+  if (file) processCsvFile(file);
+});
+
+function handleCsvFile(input) {
+  const file = input.files[0];
+  if (file) processCsvFile(file);
+}
+
+function processCsvFile(file) {
+  if (!file.name.endsWith('.csv')) { showToast('Please upload a .csv file', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result;
+    csvParsed = parseCsv(text);
+    document.getElementById('csvFileName').textContent = file.name;
+    document.getElementById('csvRowCount').textContent = `${csvParsed.length} questions parsed`;
+    document.getElementById('csvPreview').style.display = 'block';
+    document.getElementById('uploadResult').style.display = 'none';
+  };
+  reader.readAsText(file);
+}
+
+function parseCsv(text) {
+  const lines = text.trim().split(/\r?\n/);
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,''));
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const vals = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g,''));
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h] = vals[idx] || ''; });
+    rows.push(obj);
+  }
+  return rows;
+}
+
+async function uploadCsv() {
+  if (!csvParsed.length) return;
+  const btn = document.getElementById('uploadBtn');
+  btn.disabled = true;
+  btn.textContent = 'Uploadingâ€¦';
+  try {
+    const data = await apiPost('/teacher/questions/bulk', { questions: csvParsed });
+    const resultEl = document.getElementById('uploadResult');
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = `
+      <div style="background:rgba(34,197,94,.08);border:1px solid var(--border);border-radius:10px;padding:16px">
+        <div style="color:var(--accent);font-weight:700;margin-bottom:8px">âœ… ${data.message}</div>
+        ${data.errors.length ? `<div style="color:var(--red);font-size:.8rem;margin-top:8px">${data.errors.slice(0,5).join('<br>')}</div>` : ''}
+      </div>`;
+    showToast(`Uploaded: ${data.inserted} inserted, ${data.skipped} skipped`);
+    loadStats();
+  } catch(err) {
+    showToast(err.message || 'Upload failed', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Upload & Submit';
+  }
+}
+
+function downloadTemplate() {
+  const headers = ['subject_category','topic','subtopic','bloom_level','difficulty','question_text','option_a','option_b','option_c','option_d','correct_idx','explanation'];
+  const example = ['Social Psychology','Conformity','Asch Experiment','Understanding','medium','Which factor MOST increases conformity according to Asch?','Presence of an ally','Group size of 3+','Unanimous group agreement','Physical proximity of experimenter','2','Asch found that unanimity of the group was the strongest factor â€” even one dissenter dramatically reduced conformity.'];
+  const csv = [headers.join(','), example.join(',')].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'epsa_question_template.csv';
+  a.click();
+  showToast('Template downloaded!');
+}
+
+// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function formatDate(dt) {
+  if (!dt) return 'â€”';
+  try { return new Date(dt).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'2-digit'}); } catch(e) { return dt; }
+}
+
+// â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function init() {
+  if (!getToken()) { window.location.href = 'login.html'; return; }
+  try {
+    const stored = JSON.parse(localStorage.getItem('epsa_user') || 'null');
+    if (!stored || stored.role !== 'teacher') {
+      logout();
+      return;
+    }
+    if (stored.status && stored.status !== 'approved') {
+      showToast('Teacher access starts after admin approval.', 'gold');
+      setTimeout(() => logout(), 1800);
+      return;
+    }
+  } catch (_) {}
+  await loadProfile();
+  await loadCategories();
+  await loadStats();
+  renderDraftQueue();
+  document.getElementById('questionDetailOverlay')?.addEventListener('click', (event) => {
+    if (event.target?.id === 'questionDetailOverlay') closeQuestionDetail();
+  });
+}
+init();
+</script>
+</body>
+</html>
+

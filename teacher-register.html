@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Teacher Registration — EPSA</title>
+  <meta name="description" content="Register as an EPSA question bank contributor and teacher."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="icon" href="assets/logo.png" type="image/png"/>
+  <style>
+    :root {
+      --g1: #0a2e1a;
+      --g2: #0d3d22;
+      --g3: #0f4a2a;
+      --accent: #22c55e;
+      --accent2: #16a34a;
+      --gold: #f59e0b;
+      --text: #f0fdf4;
+      --text-muted: #86efac;
+      --border: rgba(34,197,94,.18);
+      --glass: rgba(255,255,255,.04);
+      --glass-hover: rgba(255,255,255,.07);
+      --error: #f87171;
+      --radius: 16px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Outfit',sans-serif;background:linear-gradient(135deg,var(--g1),var(--g2),var(--g3));min-height:100vh;color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:40px 16px 80px}
+    .logo-row{display:flex;align-items:center;gap:12px;margin-bottom:36px}
+    .logo-row img{width:48px;height:48px;object-fit:contain;border-radius:12px}
+    .logo-row .brand{font-size:1.4rem;font-weight:800;color:var(--text)}
+    .logo-row .brand span{color:var(--accent)}
+
+    .card{width:100%;max-width:640px;background:var(--glass);border:1px solid var(--border);border-radius:22px;padding:40px 36px;backdrop-filter:blur(16px)}
+    @media(max-width:640px){.card{padding:28px 20px}}
+
+    .card-title{font-size:1.7rem;font-weight:800;margin-bottom:6px}
+    .card-title span{color:var(--accent)}
+    .card-sub{color:var(--text-muted);font-size:.95rem;margin-bottom:32px;line-height:1.5}
+
+    /* Steps */
+    .steps{display:flex;gap:0;margin-bottom:36px;background:rgba(0,0,0,.2);border-radius:12px;overflow:hidden}
+    .step-btn{flex:1;padding:10px 6px;font-family:inherit;font-size:.8rem;font-weight:600;border:none;background:transparent;color:var(--text-muted);cursor:pointer;transition:.2s;text-align:center;display:flex;flex-direction:column;align-items:center;gap:3px}
+    .step-btn .step-num{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;margin-bottom:2px}
+    .step-btn.active{background:rgba(34,197,94,.12);color:var(--accent)}
+    .step-btn.active .step-num{background:var(--accent);color:#000}
+    .step-btn.done .step-num{background:var(--accent2);color:#fff}
+
+    .step-body{display:none}
+    .step-body.active{display:block}
+
+    /* Form elements */
+    .field-group{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+    @media(max-width:480px){.field-group{grid-template-columns:1fr}}
+    .field{margin-bottom:16px}
+    label{display:block;font-size:.82rem;font-weight:600;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+    input,select,textarea{width:100%;padding:12px 16px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:.95rem;outline:none;transition:.2s}
+    input:focus,select:focus,textarea:focus{border-color:var(--accent);background:rgba(34,197,94,.06)}
+    select option{background:#0d3d22;color:var(--text)}
+    textarea{resize:vertical;min-height:90px}
+    .hint{font-size:.78rem;color:var(--text-muted);margin-top:4px;opacity:.7}
+    .err{font-size:.8rem;color:var(--error);margin-top:4px;display:none}
+    .err.show{display:block}
+
+    /* Password strength */
+    .pw-bar{height:4px;border-radius:4px;background:rgba(255,255,255,.1);margin-top:8px;overflow:hidden}
+    .pw-fill{height:100%;width:0;border-radius:4px;transition:.3s;background:var(--error)}
+    .pw-fill.fair{background:var(--gold)}
+    .pw-fill.good{background:var(--accent)}
+
+    /* Checklist for Q&A */
+    .info-card{background:rgba(34,197,94,.06);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:24px}
+    .info-card h4{font-size:.95rem;font-weight:700;color:var(--accent);margin-bottom:10px}
+    .info-card ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+    .info-card ul li{display:flex;align-items:flex-start;gap:8px;font-size:.85rem;color:var(--text-muted);line-height:1.4}
+    .info-card ul li::before{content:"✓";color:var(--accent);font-weight:700;flex-shrink:0;margin-top:1px}
+
+    /* Bloom chips */
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .chip{padding:6px 14px;border-radius:20px;background:rgba(255,255,255,.07);border:1px solid var(--border);font-size:.8rem;font-weight:500;color:var(--text-muted)}
+
+    /* Buttons */
+    .btn-row{display:flex;gap:12px;margin-top:28px}
+    .btn{flex:1;padding:14px 20px;border-radius:12px;font-family:inherit;font-size:.95rem;font-weight:700;cursor:pointer;transition:.2s;border:none}
+    .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+    .btn-primary:hover{box-shadow:0 0 24px rgba(34,197,94,.4);transform:translateY(-1px)}
+    .btn-secondary{background:var(--glass);border:1px solid var(--border);color:var(--text-muted)}
+    .btn-secondary:hover{background:var(--glass-hover)}
+    .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+
+    /* Toast */
+    #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a3a27;border:1px solid var(--accent);color:var(--text);padding:12px 24px;border-radius:12px;font-size:.9rem;font-weight:600;z-index:9999;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap}
+    #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    #toast.error{border-color:var(--error);background:#2a1a1a}
+    #toast.gold{border-color:var(--gold)}
+
+    /* Success state */
+    .success-card{text-align:center;padding:40px 20px}
+    .success-icon{width:80px;height:80px;border-radius:50%;background:rgba(34,197,94,.15);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:2.2rem;margin:0 auto 24px}
+    .success-card h2{font-size:1.5rem;font-weight:800;margin-bottom:12px}
+    .success-card p{color:var(--text-muted);line-height:1.6;margin-bottom:24px}
+    .back-link{display:inline-flex;align-items:center;gap:6px;color:var(--accent);text-decoration:none;font-weight:600;font-size:.9rem}
+    .back-link:hover{opacity:.8}
+  </style>
+</head>
+<body>
+  <div class="logo-row">
+    <img src="assets/logo.png" alt="EPSA Logo"/>
+    <div class="brand">EP<span>SA</span></div>
+  </div>
+
+  <div class="card" id="mainCard">
+    <h1 class="card-title">Teacher <span>Registration</span></h1>
+    <p class="card-sub">Join EPSA as a question bank contributor. Help build Ethiopia's national psychology examination ecosystem with 25,000+ quality questions.</p>
+
+    <!-- Step indicators -->
+    <div class="steps">
+      <button class="step-btn active" id="stepBtn1" onclick="goStep(1)">
+        <span class="step-num">1</span>Personal
+      </button>
+      <button class="step-btn" id="stepBtn2" onclick="goStep(2)">
+        <span class="step-num">2</span>Academic
+      </button>
+      <button class="step-btn" id="stepBtn3" onclick="goStep(3)">
+        <span class="step-num">3</span>Credentials
+      </button>
+      <button class="step-btn" id="stepBtn4" onclick="goStep(4)">
+        <span class="step-num">4</span>Review
+      </button>
+    </div>
+
+    <!-- Step 1: Personal Info -->
+    <div class="step-body active" id="step1">
+      <div class="info-card">
+        <h4>What EPSA teachers do</h4>
+        <ul>
+          <li>Submit high-quality MCQs to the national question bank</li>
+          <li>Classify questions by Bloom's Taxonomy and difficulty</li>
+          <li>Help students prepare for national psychology exams</li>
+          <li>Track approval rates and question performance analytics</li>
+        </ul>
+      </div>
+      <div class="field-group">
+        <div class="field">
+          <label>Full Name *</label>
+          <input type="text" id="fullName" placeholder="e.g. Abebe Kebede" autocomplete="name"/>
+          <div class="err" id="err-fullName">Name is required</div>
+        </div>
+        <div class="field">
+          <label>Email Address *</label>
+          <input type="email" id="email" placeholder="you@example.com" autocomplete="email"/>
+          <div class="err" id="err-email">Enter a valid email</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Password *</label>
+        <input type="password" id="password" placeholder="Min 8 chars, with uppercase, lowercase, number" autocomplete="new-password" oninput="checkPwStrength(this.value)"/>
+        <div class="pw-bar"><div class="pw-fill" id="pwFill"></div></div>
+        <div class="err" id="err-password">Password must be 8+ chars with uppercase, lowercase, and number</div>
+      </div>
+      <div class="field">
+        <label>Confirm Password *</label>
+        <input type="password" id="password2" placeholder="Repeat your password"/>
+        <div class="err" id="err-password2">Passwords do not match</div>
+      </div>
+      <div class="btn-row">
+        <a href="login.html" class="btn btn-secondary" style="text-align:center;text-decoration:none">Back to Login</a>
+        <button class="btn btn-primary" onclick="nextStep(1)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Academic Background -->
+    <div class="step-body" id="step2">
+      <div class="field">
+        <label>Specialization / Field of Expertise *</label>
+        <select id="specialization">
+          <option value="">Select your primary specialization…</option>
+          <option>Social Psychology</option>
+          <option>Developmental Psychology</option>
+          <option>Clinical Psychology</option>
+          <option>Counseling Psychology</option>
+          <option>Cognitive Psychology</option>
+          <option>Biological Psychology</option>
+          <option>Personality Psychology</option>
+          <option>Health Psychology</option>
+          <option>Educational Psychology</option>
+          <option>Industrial/Organizational Psychology</option>
+          <option>Sport Psychology</option>
+          <option>Forensic Psychology</option>
+          <option>Neuropsychology</option>
+          <option>Positive Psychology</option>
+          <option>Research Methods &amp; Statistics</option>
+          <option>Abnormal Psychology</option>
+          <option>General Psychology</option>
+        </select>
+        <div class="err" id="err-specialization">Please select your specialization</div>
+      </div>
+      <div class="field">
+        <label>Institution / University *</label>
+        <input type="text" id="institution" placeholder="e.g. Addis Ababa University"/>
+        <div class="err" id="err-institution">Institution name is required</div>
+      </div>
+      <div class="field">
+        <label>Years of Experience in Psychology Teaching</label>
+        <input type="number" id="yearsExp" min="0" max="50" placeholder="e.g. 5"/>
+        <div class="hint">Enter 0 if you are a student or recent graduate</div>
+      </div>
+      <div class="field">
+        <label>Secondary specializations (optional)</label>
+        <input type="text" id="secondarySpec" placeholder="e.g. Counseling, Research Methods"/>
+        <div class="hint">Comma-separated list of other areas you can contribute questions in</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goStep(1)">← Back</button>
+        <button class="btn btn-primary" onclick="nextStep(2)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Credentials & Motivation -->
+    <div class="step-body" id="step3">
+      <div class="field">
+        <label>Highest Qualification *</label>
+        <select id="qualification">
+          <option value="">Select your highest degree…</option>
+          <option value="BSc/BA">BSc / BA (Bachelor's)</option>
+          <option value="MSc/MA">MSc / MA (Master's)</option>
+          <option value="PhD">PhD / Doctorate</option>
+          <option value="Other">Other Professional Credential</option>
+        </select>
+        <div class="err" id="err-qualification">Please select your qualification</div>
+      </div>
+      <div class="field">
+        <label>Professional Credentials / Certifications (optional)</label>
+        <textarea id="credentials" placeholder="e.g. Licensed Clinical Psychologist (LCP), EPA Member, etc."></textarea>
+        <div class="hint">List any professional memberships, licenses, or certifications</div>
+      </div>
+      <div class="field">
+        <label>Why do you want to contribute to EPSA? *</label>
+        <textarea id="motivation" placeholder="Briefly explain your motivation for joining EPSA as a teacher/question contributor (2–4 sentences)…" style="min-height:110px"></textarea>
+        <div class="err" id="err-motivation">Please share your motivation (min 30 characters)</div>
+      </div>
+      <div class="field">
+        <label>How many questions can you commit to submitting per month?</label>
+        <select id="monthlyCommit">
+          <option value="10-30">10–30 questions</option>
+          <option value="30-100">30–100 questions</option>
+          <option value="100+">100+ questions</option>
+          <option value="as-available">As available / no commitment</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Bloom's levels you are most comfortable with</label>
+        <div class="chips">
+          <span class="chip">📝 Remembering</span>
+          <span class="chip">💡 Understanding</span>
+          <span class="chip">⚙️ Applying</span>
+          <span class="chip">🔍 Analyzing</span>
+          <span class="chip">⚖️ Evaluating</span>
+          <span class="chip">🎨 Creating</span>
+        </div>
+        <p class="hint" style="margin-top:10px">All Bloom's levels are welcome — admins will guide you through quality standards after approval.</p>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goStep(2)">← Back</button>
+        <button class="btn btn-primary" onclick="nextStep(3)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Review & Submit -->
+    <div class="step-body" id="step4">
+      <div class="info-card" style="margin-bottom:20px">
+        <h4>Review Your Application</h4>
+        <ul id="reviewList"></ul>
+      </div>
+      <div class="field">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:.9rem;font-weight:400">
+          <input type="checkbox" id="agreeCheck" style="width:18px;height:18px;accent-color:var(--accent)"/>
+          I confirm that the information I've provided is accurate and I agree to EPSA's
+          <a href="#" style="color:var(--accent)">Teacher Code of Conduct</a>
+        </label>
+        <div class="err" id="err-agree">You must agree to the terms to proceed</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goStep(3)">← Back</button>
+        <button class="btn btn-primary" id="submitBtn" onclick="submitApplication()">Submit Application</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    const API_BASE = '/api';
+    let currentStep = 1;
+
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `show ${type}`;
+      setTimeout(() => t.className = '', 3500);
+    }
+
+    function goStep(n) {
+      document.querySelectorAll('.step-body').forEach(b => b.classList.remove('active'));
+      document.getElementById(`step${n}`).classList.add('active');
+      document.querySelectorAll('.step-btn').forEach((btn, i) => {
+        btn.classList.remove('active');
+        if (i + 1 < n) btn.classList.add('done');
+        else btn.classList.remove('done');
+      });
+      document.getElementById(`stepBtn${n}`).classList.add('active');
+      currentStep = n;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showErr(id, show) {
+      const el = document.getElementById('err-' + id);
+      if (el) el.classList.toggle('show', show);
+    }
+
+    function val(id) { return (document.getElementById(id)?.value || '').trim(); }
+
+    function checkPwStrength(pw) {
+      const fill = document.getElementById('pwFill');
+      let score = 0;
+      if (pw.length >= 8) score++;
+      if (/[A-Z]/.test(pw)) score++;
+      if (/[a-z]/.test(pw)) score++;
+      if (/\d/.test(pw)) score++;
+      if (/[^A-Za-z0-9]/.test(pw)) score++;
+      fill.style.width = (score * 20) + '%';
+      fill.className = 'pw-fill' + (score <= 2 ? '' : score <= 3 ? ' fair' : ' good');
+    }
+
+    function nextStep(current) {
+      if (current === 1) {
+        let ok = true;
+        if (!val('fullName')) { showErr('fullName', true); ok = false; } else showErr('fullName', false);
+        const em = val('email');
+        if (!em || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { showErr('email', true); ok = false; } else showErr('email', false);
+        const pw = document.getElementById('password').value;
+        if (pw.length < 8 || !/[A-Z]/.test(pw) || !/[a-z]/.test(pw) || !/\d/.test(pw)) { showErr('password', true); ok = false; } else showErr('password', false);
+        if (document.getElementById('password2').value !== pw) { showErr('password2', true); ok = false; } else showErr('password2', false);
+        if (!ok) return;
+      }
+      if (current === 2) {
+        let ok = true;
+        if (!val('specialization')) { showErr('specialization', true); ok = false; } else showErr('specialization', false);
+        if (!val('institution')) { showErr('institution', true); ok = false; } else showErr('institution', false);
+        if (!ok) return;
+      }
+      if (current === 3) {
+        let ok = true;
+        if (!val('qualification')) { showErr('qualification', true); ok = false; } else showErr('qualification', false);
+        const mot = val('motivation');
+        if (!mot || mot.length < 30) { showErr('motivation', true); ok = false; } else showErr('motivation', false);
+        if (!ok) return;
+      }
+      if (current === 3) populateReview();
+      goStep(current + 1);
+    }
+
+    function populateReview() {
+      const items = [
+        ['Full Name', val('fullName')],
+        ['Email', val('email')],
+        ['Specialization', val('specialization')],
+        ['Institution', val('institution')],
+        ['Years of Experience', val('yearsExp') || '0'],
+        ['Highest Qualification', val('qualification')],
+        ['Monthly Commitment', val('monthlyCommit')],
+      ];
+      document.getElementById('reviewList').innerHTML = items.map(([k, v]) =>
+        `<li><strong style="color:var(--text)">${k}:</strong> ${v}</li>`
+      ).join('');
+    }
+
+    async function submitApplication() {
+      const agree = document.getElementById('agreeCheck').checked;
+      if (!agree) { showErr('agree', true); return; }
+      showErr('agree', false);
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting…';
+
+      try {
+        const resp = await fetch(`${API_BASE}/teacher/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            full_name: val('fullName'),
+            email: val('email'),
+            password: document.getElementById('password').value,
+            specialization: val('specialization'),
+            institution: val('institution'),
+            years_of_experience: parseInt(val('yearsExp') || '0'),
+            credentials: val('qualification') + '. ' + val('credentials') + ' Motivation: ' + val('motivation'),
+          }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error || 'Registration failed');
+
+        // Show success
+        document.getElementById('mainCard').innerHTML = `
+          <div class="success-card">
+            <div class="success-icon">🎓</div>
+            <h2>Application Submitted!</h2>
+            <p>${data.message || 'Your teacher application has been received. Admin will review it within 24–48 hours. You will be able to log in once approved.'}</p>
+            <a href="login.html" class="back-link">← Return to Login</a>
+          </div>`;
+      } catch (err) {
+        showToast(err.message || 'Submission failed. Please try again.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Submit Application';
+      }
+    }
+  </script>
+</body>
+</html>

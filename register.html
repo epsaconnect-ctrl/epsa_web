@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Register as an EPSA student member — Ethiopian Psychology Students' Association">
+  <title>Register — EPSA</title>
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="stylesheet" href="css/globals.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="reg-page">
+  <!-- Header -->
+  <header class="reg-header">
+    <div class="container">
+      <div class="reg-header-inner">
+        <a href="index.html" class="reg-header-logo">
+          <img src="assets/logo.png" alt="EPSA Logo">
+          <span>EPSA</span>
+        </a>
+        <span style="font-size:0.825rem; color:rgba(255,255,255,0.45);">Already a member? <a href="login.html" style="color:var(--epsa-gold-light); font-weight:600;">Sign In</a></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="reg-main">
+    <div class="reg-container">
+      <!-- Title -->
+      <div class="reg-title-block">
+        <div class="section-label" style="justify-content:center; margin-bottom:var(--space-3);">Student Membership</div>
+        <h1 class="reg-title">Join EPSA</h1>
+        <p class="reg-subtitle">Complete the form below. Your application will be reviewed within 24 hours.</p>
+      </div>
+
+      <!-- Step Indicator -->
+      <div class="reg-step-indicator" id="stepIndicator">
+        <div class="reg-step active" id="si-1">
+          <div class="reg-step-num">1</div>
+          <div class="reg-step-label">Personal</div>
+        </div>
+        <div class="reg-step" id="si-2">
+          <div class="reg-step-num">2</div>
+          <div class="reg-step-label">Academic</div>
+        </div>
+        <div class="reg-step" id="si-3">
+          <div class="reg-step-num">3</div>
+          <div class="reg-step-label">Documents</div>
+        </div>
+        <div class="reg-step" id="si-4">
+          <div class="reg-step-num">4</div>
+          <div class="reg-step-label">Face Verify</div>
+        </div>
+        <div class="reg-step" id="si-5">
+          <div class="reg-step-num">5</div>
+          <div class="reg-step-label">Verify & Submit</div>
+        </div>
+      </div>
+
+      <!-- Form Card -->
+      <div class="reg-card">
+
+        <!-- ── STEP 1: Personal Info ── -->
+        <div class="reg-step-body active" id="step1">
+          <div class="reg-step-header">
+            <div class="reg-step-icon">👤</div>
+            <div>
+              <div class="reg-step-title">Personal Information</div>
+              <div class="reg-step-desc">Enter your full legal name as it appears on your student ID</div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="firstName">First Name *</label>
+              <input type="text" id="firstName" class="form-input" placeholder="e.g. Abeba">
+              <div class="form-error" id="firstName-err" style="display:none;">⚠ Required</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="fatherName">Father's Name *</label>
+              <input type="text" id="fatherName" class="form-input" placeholder="e.g. Tadesse">
+              <div class="form-error" id="fatherName-err" style="display:none;">⚠ Required</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="grandfatherName">Grandfather's Name *</label>
+            <input type="text" id="grandfatherName" class="form-input" placeholder="e.g. Bekele">
+            <div class="form-error" id="grandfatherName-err" style="display:none;">⚠ Required</div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="phoneNumber">Phone Number *</label>
+              <input type="tel" id="phoneNumber" class="form-input" placeholder="+251 91X XXX XXXX">
+              <div class="form-error" id="phone-err" style="display:none;">⚠ Valid Ethiopian phone required</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="emailAddress">Email Address *</label>
+              <input type="email" id="emailAddress" class="form-input" placeholder="your@email.com">
+              <div class="form-error" id="email-err" style="display:none;">⚠ Valid email required</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="password1">Create Password *</label>
+            <input type="password" id="password1" class="form-input" placeholder="Minimum 8 characters">
+            <div class="form-hint">Must contain uppercase, lowercase, number and special character</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="password2">Confirm Password *</label>
+            <input type="password" id="password2" class="form-input" placeholder="Repeat your password">
+            <div class="form-error" id="password2-err" style="display:none;">⚠ Passwords do not match</div>
+          </div>
+        </div>
+
+        <!-- ── STEP 2: Academic Info ── -->
+        <div class="reg-step-body" id="step2">
+          <div class="reg-step-header">
+            <div class="reg-step-icon">🎓</div>
+            <div>
+              <div class="reg-step-title">Academic Information</div>
+              <div class="reg-step-desc">Tell us about your studies — this helps us verify your eligibility</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="university">University / Institution *</label>
+            <select id="university" class="form-select">
+              <option value="">— Select your university —</option>
+              <optgroup label="Addis Ababa">
+                <option>Addis Ababa University (AAU)</option>
+                <option>Addis Ababa Science and Technology University (AASTU)</option>
+                <option>Ethiopian Civil Service University (ECSU)</option>
+                <option>Kotebe Metropolitan University</option>
+                <option>St. Mary's University</option>
+                <option>Unity University</option>
+                <option>Admas University</option>
+              </optgroup>
+              <optgroup label="Oromia">
+                <option>Jimma University</option>
+                <option>Haramaya University</option>
+                <option>Adama Science and Technology University</option>
+                <option>Ambo University</option>
+                <option>Bule Hora University</option>
+                <option>Dilla University</option>
+                <option>Mettu University</option>
+                <option>Wollega University</option>
+                <option>Arsi University</option>
+                <option>Oda Bultum University</option>
+                <option>Salale University</option>
+                <option>Dambi Dollo University</option>
+                <option>Bonga University</option>
+                <option>Mizan-Tepi University</option>
+                <option>Wolkite University</option>
+                <option>Wachemo University</option>
+                <option>Hossana College of Health Sciences</option>
+              </optgroup>
+              <optgroup label="Amhara">
+                <option>Bahir Dar University</option>
+                <option>University of Gondar</option>
+                <option>Debre Markos University</option>
+                <option>Debre Berhan University</option>
+                <option>Debre Tabor University</option>
+                <option>Woldia University</option>
+                <option>Injibara University</option>
+                <option>Mekdela Amba University</option>
+                <option>Wollo University</option>
+              </optgroup>
+              <optgroup label="Tigray">
+                <option>Mekelle University</option>
+                <option>Aksum University</option>
+                <option>Adigrat University</option>
+                <option>Raya University</option>
+              </optgroup>
+              <optgroup label="SNNPR / South Ethiopia">
+                <option>Hawassa University</option>
+                <option>Wolaita Sodo University</option>
+                <option>Arba Minch University</option>
+                <option>Dilla University</option>
+                <option>Werabe University</option>
+              </optgroup>
+              <optgroup label="Other Regions">
+                <option>Dire Dawa University</option>
+                <option>Harar Health Sciences College</option>
+                <option>Jijiga University</option>
+                <option>Kebri Dehar University</option>
+                <option>Samara University</option>
+                <option>Assosa University</option>
+                <option>Gambella University</option>
+                <option>Semera University</option>
+                <option>Rift Valley University</option>
+                <option>Wondo Genet College of Forestry</option>
+              </optgroup>
+              <option value="other">Other (specify below)</option>
+            </select>
+            <div class="form-error" id="university-err" style="display:none;">⚠ Please select your university</div>
+          </div>
+
+          <!-- Other university field -->
+          <div class="form-group" id="otherUniversityGroup" style="display:none;">
+            <label class="form-label" for="otherUniversity">Specify University Name *</label>
+            <input type="text" id="otherUniversity" class="form-input" placeholder="Enter your university name">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="programType">Program Type *</label>
+              <select id="programType" class="form-select">
+                <option value="">— Select program —</option>
+                <option value="undergraduate">Undergraduate (BSc/BA)</option>
+                <option value="masters">Master's (MSc/MA/MPH)</option>
+                <option value="graduate">Recent Graduate (within 3 years)</option>
+              </select>
+              <div class="form-error" id="program-err" style="display:none;">⚠ Required</div>
+            </div>
+            <div class="form-group" id="yearGroup">
+              <label class="form-label" for="academicYear">Academic Year *</label>
+              <select id="academicYear" class="form-select">
+                <option value="">— Select year —</option>
+                <option value="1">1st Year</option>
+                <option value="2">2nd Year</option>
+                <option value="3">3rd Year</option>
+                <option value="4">4th Year</option>
+                <option value="5">5th Year</option>
+                <option value="graduated">Graduated (within 3 years)</option>
+              </select>
+              <div class="form-error" id="year-err" style="display:none;">⚠ Required</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="fieldOfStudy">Field of Study / Department</label>
+            <input type="text" id="fieldOfStudy" class="form-input" placeholder="e.g. Clinical Psychology, Counseling Psychology">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="graduationYear">Graduation Year (if graduated)</label>
+            <input type="number" id="graduationYear" class="form-input" placeholder="e.g. 2023" min="2020" max="2026">
+            <div class="form-hint">Only required if you selected "Recent Graduate"</div>
+          </div>
+        </div>
+
+        <!-- ── STEP 3: Document Upload ── -->
+        <div class="reg-step-body" id="step3">
+          <div class="reg-step-header">
+            <div class="reg-step-icon">📎</div>
+            <div>
+              <div class="reg-step-title">Document Uploads</div>
+              <div class="reg-step-desc">Upload required documents for student verification</div>
+            </div>
+          </div>
+
+          <!-- Profile Photo -->
+          <div class="form-group">
+            <label class="form-label">Profile Photo *</label>
+            <div class="photo-upload-area">
+              <div class="photo-preview-circle" id="photoCircle" onclick="document.getElementById('profilePhotoInput').click()">
+                <img id="photoPreview" src="" alt="Profile preview">
+                <div class="photo-preview-placeholder" id="photoPlaceholder">👤</div>
+              </div>
+              <input type="file" id="profilePhotoInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
+              <div style="text-align:center;">
+                <p style="font-size:0.875rem; color:var(--text-secondary); font-weight:500;">Click to upload your photo</p>
+                <p style="font-size:0.75rem; color:var(--text-muted);">JPG, PNG or WEBP · Max 5MB · Clear face photo required</p>
+              </div>
+            </div>
+            <div class="photo-face-status" id="profilePhotoFaceStatus">Upload a clear profile photo and EPSA will locate the face automatically.</div>
+            <div class="form-error" id="photo-err" style="display:none; margin-top:var(--space-2);">⚠ Profile photo required</div>
+          </div>
+
+          <div style="height:1px; background:var(--light-200); margin:var(--space-6) 0;"></div>
+
+          <!-- Registration Slip -->
+          <div class="form-group">
+            <label class="form-label">Student Registration Slip *</label>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:var(--space-3);">
+              📋 Must be an official slip from your current academic year (within the past 12 months). Accepted formats: PDF, JPG, PNG.
+            </p>
+            <div class="upload-zone" id="slipZone" onclick="document.getElementById('regSlipInput').click()">
+              <div class="upload-icon">📄</div>
+              <p style="font-weight:600; color:var(--text-secondary); margin-bottom:4px;">Click to upload or drag & drop</p>
+              <p style="font-size:0.8rem; color:var(--text-muted);">PDF, JPG, PNG · Max 10MB</p>
+            </div>
+            <input type="file" id="regSlipInput" accept=".pdf,.jpg,.jpeg,.png" style="display:none;">
+            <div class="file-preview" id="slipPreview">
+              <span style="font-size:1.2rem;">📄</span>
+              <span class="file-preview-name" id="slipName"></span>
+              <button class="file-preview-remove" id="slipRemove" type="button">✕</button>
+            </div>
+            <div class="form-error" id="slip-err" style="display:none; margin-top:var(--space-2);">⚠ Registration slip required</div>
+          </div>
+
+          <!-- Notice box -->
+          <div style="background:rgba(26,107,60,0.06); border:1px solid rgba(26,107,60,0.2); border-radius:var(--radius-md); padding:var(--space-4) var(--space-5);">
+            <p style="font-size:0.825rem; color:var(--epsa-green); font-weight:600; margin-bottom:4px;">🔒 Privacy & Security</p>
+            <p style="font-size:0.8rem; color:var(--text-secondary); line-height:1.6;">Your documents are encrypted and used solely for membership verification. They will never be shared with third parties without your consent.</p>
+          </div>
+        </div>
+
+        <!-- ── STEP 4: Live Face Verification ── -->
+        <div class="reg-step-body" id="step4">
+          <div class="reg-step-header">
+            <div class="reg-step-icon">📷</div>
+            <div>
+              <div class="reg-step-title">Smart Face Verification</div>
+              <div class="reg-step-desc">Complete a guided live scan one pose at a time. EPSA uses light recovery, expression liveness, left/right angle mapping, and a final close crop before matching your live face to the uploaded profile photo.</div>
+            </div>
+          </div>
+
+          <div class="face-step-layout">
+            <div class="face-reference-card">
+              <div class="face-card-kicker">Reference Profile</div>
+              <div class="face-reference-row">
+                <div class="face-reference-avatar">
+                  <img id="faceReferencePreview" src="" alt="Reference face" style="display:none;">
+                  <div id="faceReferencePlaceholder" class="face-reference-placeholder">👤</div>
+                </div>
+                <div>
+                  <div class="face-reference-title">Uploaded profile photo</div>
+                  <div class="face-reference-copy">This stays on the left while the smart scanner isolates your face, adapts to low light, and checks liveness before it runs the final match.</div>
+                  <div class="face-reference-meta" id="faceReferenceMeta">Waiting for a profile photo face lock.</div>
+                </div>
+              </div>
+
+              <div class="face-challenge-card">
+                <div class="face-card-kicker">Verification Flow</div>
+                <div id="faceScanPrompt" class="face-scan-prompt">Start the smart scan and follow the live prompts one by one.</div>
+                <div class="face-hold-panel" id="faceHoldPanel">
+                  <div class="face-hold-topline">
+                    <strong id="faceHoldTitle">Position yourself</strong>
+                    <span id="faceHoldCountdown">1.0s</span>
+                  </div>
+                  <div class="face-hold-bar">
+                    <span id="faceHoldBarFill"></span>
+                  </div>
+                  <div class="face-hold-caption" id="faceHoldCaption">The camera will capture each angle only after you hold the pose steadily.</div>
+                </div>
+                <div id="faceChallengeList" class="face-challenge-list"></div>
+              </div>
+
+              <div class="face-metric-grid">
+                <div class="face-metric-chip">
+                  <span class="face-metric-label">Lighting</span>
+                  <strong id="faceMetricLighting">Analyzing</strong>
+                </div>
+                <div class="face-metric-chip">
+                  <span class="face-metric-label">Alignment</span>
+                  <strong id="faceMetricAlignment">Waiting</strong>
+                </div>
+                <div class="face-metric-chip">
+                  <span class="face-metric-label">Expression</span>
+                  <strong id="faceMetricExpression">Waiting</strong>
+                </div>
+                <div class="face-metric-chip">
+                  <span class="face-metric-label">Movement</span>
+                  <strong id="faceMetricMovement">Waiting</strong>
+                </div>
+              </div>
+
+              <div class="face-tracker-strip">
+                <div class="face-tracker-pill">
+                  <span>Face tracker</span>
+                  <strong id="faceTrackerStatus">Searching</strong>
+                </div>
+                <div class="face-tracker-pill">
+                  <span>Yaw</span>
+                  <strong id="faceMetricYaw">0 deg</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="face-studio-card">
+              <div class="face-studio-topbar">
+                <div>
+                  <div class="face-studio-title">Identity Camera</div>
+                  <div class="face-studio-copy">A guided camera stage for secure face verification with live tracking, angle mapping, and a final identity comparison.</div>
+                </div>
+                <button type="button" class="btn btn-ghost btn-sm" id="restartFaceCameraBtn">Restart Camera</button>
+              </div>
+
+              <div class="face-stage">
+                <div class="face-stage-orb face-stage-orb-left"></div>
+                <div class="face-stage-orb face-stage-orb-right"></div>
+                <video id="faceVerifyVideo" autoplay playsinline muted class="face-stage-video"></video>
+                <canvas id="faceVerifyCanvas" width="640" height="480" style="display:none;"></canvas>
+                <div class="face-stage-grid"></div>
+                <div class="face-stage-loader" id="faceStageLoader" style="display:none;">
+                  <div class="face-stage-loader-ring"></div>
+                  <div class="face-stage-loader-text" id="faceStageLoaderText">Preparing smart scan...</div>
+                </div>
+                <div class="face-stage-hud">
+                  <div class="face-stage-badge" id="faceStageTaskBadge">Ready when you are</div>
+                  <div class="face-stage-sidepanel">
+                    <div class="face-stage-sidepanel-kicker">Next move</div>
+                    <div class="face-stage-sidepanel-title" id="faceStageInstructionTitle">Align your face</div>
+                    <div class="face-stage-sidepanel-copy" id="faceStageInstructionCopy">EPSA will guide you step by step and compare the live face to your uploaded profile photo.</div>
+                    <div class="face-stage-sidepanel-reason" id="faceStageInstructionReason">Reference face mapping starts as soon as the camera locks.</div>
+                  </div>
+                </div>
+                <svg class="face-landmark-overlay" id="faceLandmarkOverlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+                <div class="face-guide-frame" id="faceGuideFrame">
+                  <div class="face-guide-corner top-left"></div>
+                  <div class="face-guide-corner top-right"></div>
+                  <div class="face-guide-corner bottom-left"></div>
+                  <div class="face-guide-corner bottom-right"></div>
+                  <div class="face-guide-ring"></div>
+                </div>
+                <div class="face-focus-hint" id="faceFocusHint">Camera ready. Your face guide will lock here.</div>
+                <div id="faceCameraFallback" class="face-camera-fallback">
+                  Camera access is required for live identity verification.
+                </div>
+              </div>
+
+              <div class="face-stage-actions">
+                <button type="button" class="btn btn-gold" id="startSmartScanBtn">Start Smart Scan</button>
+                <button type="button" class="btn btn-primary" id="captureFaceBtn" disabled>Verify Identity</button>
+                <button type="button" class="btn btn-ghost" id="testFaceBtn" disabled>Test Match</button>
+                <button type="button" class="btn btn-ghost" id="retakeFaceBtn" style="display:none;">Retake Scan</button>
+              </div>
+
+              <div class="face-angle-gallery" id="faceAngleGallery"></div>
+
+              <div id="faceVerificationStatus" class="face-status-box">
+                Smart face verification has not started yet.
+              </div>
+              <div class="form-error" id="face-err" style="display:none; margin-top:var(--space-3);">⚠ Complete smart face verification before continuing</div>
+            </div>
+          </div>
+
+          <div class="face-privacy-note">
+            EPSA stores a processed facial signature for identity checks. The live smart scan creates a face-focused verification capture and liveness summary, and raw temporary frames are not kept as permanent uploads.
+          </div>
+        </div>
+
+        <!-- ── STEP 5: Review & OTP ── -->
+        <div class="reg-step-body" id="step5">
+          <div class="reg-step-header">
+            <div class="reg-step-icon">✅</div>
+            <div>
+              <div class="reg-step-title">Verify Email & Submit</div>
+              <div class="reg-step-desc">Confirm your email address to complete registration</div>
+            </div>
+          </div>
+
+          <!-- Summary -->
+          <div style="background:var(--light-100); border-radius:var(--radius-lg); padding:var(--space-5); margin-bottom:var(--space-6);">
+            <h4 style="font-size:0.875rem; font-weight:700; color:var(--text-primary); margin-bottom:var(--space-4);">📋 Application Summary</h4>
+            <div id="reviewSummary" style="display:flex; flex-direction:column; gap:var(--space-2);">
+              <!-- Filled by JS -->
+            </div>
+          </div>
+
+          <!-- OTP Section -->
+          <div id="otpSection">
+            <div style="text-align:center; margin-bottom:var(--space-6);">
+              <div style="width:64px; height:64px; background:rgba(26,107,60,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto var(--space-4);">✉️</div>
+              <h4 style="font-family:var(--font-display); font-weight:700; margin-bottom:var(--space-2);">Email Verification</h4>
+              <p style="font-size:0.875rem; color:var(--text-muted);">We've sent a 6-digit code to <strong id="emailDisplay" style="color:var(--epsa-green);"></strong></p>
+            </div>
+
+            <div class="otp-display" id="otpInputs">
+              <input type="text" class="otp-input" maxlength="1" data-index="0" id="otp0">
+              <input type="text" class="otp-input" maxlength="1" data-index="1" id="otp1">
+              <input type="text" class="otp-input" maxlength="1" data-index="2" id="otp2">
+              <input type="text" class="otp-input" maxlength="1" data-index="3" id="otp3">
+              <input type="text" class="otp-input" maxlength="1" data-index="4" id="otp4">
+              <input type="text" class="otp-input" maxlength="1" data-index="5" id="otp5">
+            </div>
+
+            <div class="otp-timer" id="otpTimerBlock">
+              Resend code in <span id="otpTimerCount">60</span>s
+            </div>
+            <div style="text-align:center; margin-top:var(--space-3); display:none;" id="resendBlock">
+              <button class="btn btn-ghost btn-sm" onclick="sendOTP()">Resend Code</button>
+            </div>
+            <div class="form-error" id="otp-err" style="display:none; justify-content:center; margin-top:var(--space-3);">⚠ Invalid or expired code</div>
+          </div>
+
+          <!-- Terms -->
+          <div style="margin-top:var(--space-6);">
+            <label class="checkbox-group" style="align-items:flex-start; gap:var(--space-3); cursor:pointer;">
+              <input type="checkbox" id="agreeTerms" style="margin-top:2px; accent-color:var(--epsa-green);">
+              <span style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6;">
+                I agree to EPSA's <a href="#" style="color:var(--epsa-green); font-weight:600;">Terms of Membership</a> and <a href="#" style="color:var(--epsa-green); font-weight:600;">Privacy Policy</a>. I confirm that all information provided is accurate and that my uploaded documents are genuine.
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- ── PENDING CONFIRMATION ── -->
+        <div class="reg-step-body" id="stepPending">
+          <div class="pending-screen">
+            <div class="pending-icon">⏳</div>
+            <h2 class="pending-title">Application Submitted!</h2>
+            <p class="pending-desc">
+              Thank you for joining EPSA! Your application is now under review. You will receive a decision within <strong>24 hours</strong>.
+            </p>
+            <div class="pending-steps">
+              <div class="pending-step">✅ <span>Application received, documents uploaded, and face verification completed</span></div>
+              <div class="pending-step">🔍 <span>Admin team will verify your student registration slip</span></div>
+              <div class="pending-step">📧 <span>If approved, you can log in with your credentials</span></div>
+              <div class="pending-step">❌ <span>If rejected, you'll receive an email explaining why</span></div>
+            </div>
+            <div style="margin-top:var(--space-8);">
+              <button class="btn btn-primary" onclick="window.location.href='login.html'">Go to Login Page</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="reg-nav" id="regNav">
+        <button class="btn btn-ghost" id="prevBtn" onclick="changeStep(-1)" style="display:none;">← Back</button>
+        <span class="reg-progress-text" id="regProgressText">Step 1 of 5</span>
+        <button class="btn btn-primary" id="nextBtn" onclick="changeStep(1)">Next Step →</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

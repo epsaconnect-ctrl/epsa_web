@@ -1,0 +1,1704 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard â€” EPSA</title>
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="stylesheet" href="css/globals.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/ecosystem-enhancements.css">
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="dash-page">
+  <!-- â•â• SIDEBAR â•â• -->
+  <aside class="sidebar" id="sidebar">
+    <a href="index.html" class="sidebar-logo">
+      <img src="assets/logo.png" alt="EPSA">
+      <div>
+        <div class="sidebar-logo-text">EPSA</div>
+        <div class="sidebar-logo-sub">Student Portal</div>
+      </div>
+    </a>
+
+    <div class="sidebar-user">
+      <img id="sidebarAvatar" class="sidebar-user-avatar" src="assets/president.jpg" alt="Student Avatar">
+      <div>
+        <div class="sidebar-user-name" id="sidebarName">Loadingâ€¦</div>
+        <div class="sidebar-user-role" id="sidebarUni">EPSA Member</div>
+        <div class="sidebar-badge-status">â— Active</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">Main</div>
+      <button class="sidebar-link active" data-section="overview"   onclick="switchSection('overview')"><span class="sidebar-link-icon">ðŸ </span> Overview</button>
+      <button class="sidebar-link"        data-section="profile"    onclick="switchSection('profile')"><span class="sidebar-link-icon">ðŸ‘¤</span> My Profile</button>
+      <button class="sidebar-link"        data-section="trainings"  onclick="switchSection('trainings')"><span class="sidebar-link-icon">ðŸŽ“</span> Trainings</button>
+
+      <div class="sidebar-section-label">Governance</div>
+      <button class="sidebar-link"        data-section="voting"     onclick="switchSection('voting')"><span class="sidebar-link-icon">ðŸ—³ï¸</span> Voting</button>
+
+      <div class="sidebar-section-label">Community</div>
+      <button class="sidebar-link"        data-section="clubs"      onclick="switchSection('clubs')"><span class="sidebar-link-icon">ðŸ›ï¸</span> My Clubs</button>
+      <button class="sidebar-link"        data-section="networking" onclick="switchSection('networking')"><span class="sidebar-link-icon">ðŸ¤</span> Networking</button>
+      <button class="sidebar-link"        data-section="messaging"  onclick="switchSection('messaging')">
+        <span class="sidebar-link-icon">ðŸ’¬</span> Messages
+        <span class="sidebar-link-badge" id="msgBadge" style="display:none;">3</span>
+      </button>
+
+      <div class="sidebar-section-label">Assessment</div>
+      <button class="sidebar-link"        data-section="exams"      onclick="switchSection('exams')"><span class="sidebar-link-icon">ðŸ“</span> Exams</button>
+      <button class="sidebar-link" data-section="mock-exams" onclick="switchSection('mock-exams')"><span class="sidebar-link-icon">ðŸŽ¯</span> Mock Exams</button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="sidebar-logout" onclick="API.logout()">
+        <span>ðŸšª</span> Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- â•â• MAIN â•â• -->
+  <div class="dash-main">
+    <!-- Top Bar -->
+    <header class="dash-topbar">
+      <div class="dash-topbar-left">
+        <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">â˜°</button>
+        <div>
+          <div class="dash-page-title" id="pageTitle">Overview</div>
+          <div class="dash-breadcrumb">EPSA Student Portal</div>
+        </div>
+      </div>
+      <div class="dash-topbar-right">
+        <button class="topbar-icon-btn" title="Notifications" onclick="showToast('No new notifications', 'info')">
+          ðŸ””
+          <span class="topbar-notif-dot" id="notifDot"></span>
+        </button>
+        <button class="topbar-icon-btn" title="Settings" onclick="switchSection('profile')">âš™ï¸</button>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="dash-content">
+
+      <!-- â•â•â•â•â•â•â•â• OVERVIEW â•â•â•â•â•â•â•â• -->
+      <section id="sec-overview" class="dash-section">
+        <div class="welcome-card">
+          <div class="welcome-greeting">Good day,</div>
+          <h1 class="welcome-name">Welcome back, <span id="welcomeName">Student</span> ðŸ‘‹</h1>
+          <p class="welcome-subtitle">Here's what's happening in your EPSA account today</p>
+          <div class="welcome-stats">
+            <div class="welcome-stat"><div class="welcome-stat-num" id="ws-trainings">0</div><div class="welcome-stat-label">Trainings</div></div>
+            <div class="welcome-stat"><div class="welcome-stat-num" id="ws-connections">0</div><div class="welcome-stat-label">Connections</div></div>
+            <div class="welcome-stat"><div class="welcome-stat-num" id="ws-exams">0</div><div class="welcome-stat-label">Exams Taken</div></div>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <div class="quick-action-card" onclick="switchSection('trainings')">
+            <div class="quick-action-icon">ðŸŽ“</div>
+            <div class="quick-action-title">Browse Trainings</div>
+            <div class="quick-action-desc">View and apply for programs</div>
+          </div>
+          <div class="quick-action-card" onclick="switchSection('voting')">
+            <div class="quick-action-icon">ðŸ—³ï¸</div>
+            <div class="quick-action-title">Vote Now</div>
+            <div class="quick-action-desc">Participate in elections</div>
+          </div>
+          <div class="quick-action-card" onclick="switchSection('networking')">
+            <div class="quick-action-icon">ðŸ¤</div>
+            <div class="quick-action-title">Network</div>
+            <div class="quick-action-desc">Connect with peers</div>
+          </div>
+          <div class="quick-action-card" onclick="switchSection('exams')">
+            <div class="quick-action-icon">ðŸ“</div>
+            <div class="quick-action-title">Exams</div>
+            <div class="quick-action-desc">View scheduled exams</div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div style="background:white; border-radius:var(--radius-xl); border:1px solid var(--light-200); overflow:hidden;">
+          <div style="padding:var(--space-5) var(--space-6); border-bottom:1px solid var(--light-200); display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="font-family:var(--font-display); font-weight:700; font-size:1rem;">Recent Activity</h3>
+          </div>
+          <div id="activityFeed" style="padding:var(--space-4);">
+            <div style="display:flex; align-items:center; gap:var(--space-4); padding:var(--space-3); border-radius:var(--radius-md); transition: background 0.2s; cursor: default;" onmouseover="this.style.background='var(--light-100)'" onmouseout="this.style.background='transparent'">
+              <div style="width:36px;height:36px;background:rgba(26,107,60,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">âœ…</div>
+              <div><div style="font-size:0.875rem;font-weight:600;">Registration Approved</div><div style="font-size:0.75rem;color:var(--text-muted);">Your EPSA membership is active</div></div>
+              <span style="margin-left:auto;font-size:0.72rem;color:var(--text-muted);">Today</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:var(--space-4); padding:var(--space-3);">
+              <div style="width:36px;height:36px;background:rgba(200,163,64,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">ðŸŽ“</div>
+              <div><div style="font-size:0.875rem;font-weight:600;">New Training Available</div><div style="font-size:0.75rem;color:var(--text-muted);">Mental Health First Aid â€” Free</div></div>
+              <span style="margin-left:auto;font-size:0.72rem;color:var(--text-muted);">2 days ago</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:var(--space-4); padding:var(--space-3);">
+              <div style="width:36px;height:36px;background:rgba(37,99,235,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">ðŸ—³ï¸</div>
+              <div><div style="font-size:0.875rem;font-weight:600;">Voting Opens Soon</div><div style="font-size:0.75rem;color:var(--text-muted);">University representative election starts next week</div></div>
+              <span style="margin-left:auto;font-size:0.72rem;color:var(--text-muted);">3 days ago</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- â•â•â•â•â•â•â•â• PROFILE â•â•â•â•â•â•â•â• -->
+      <section id="sec-profile" class="dash-section" style="display:none;">
+        <div class="profile-header-card">
+          <div class="profile-cover" id="profileCover">
+            <button class="profile-cover-edit">Edit Cover</button>
+          </div>
+          <div class="profile-info-area">
+            <div class="profile-avatar-wrap">
+              <img src="assets/president.jpg" alt="Avatar" class="profile-avatar" id="profileAvatarImg">
+              <div class="profile-avatar-edit-btn" onclick="document.getElementById('profileAvatarUpload').click()" title="Change photo">ðŸ“·</div>
+              <input type="file" id="profileAvatarUpload" accept="image/*" style="display:none;" onchange="previewProfilePhoto(this)">
+            </div>
+            <div class="profile-info">
+              <h2 class="profile-name" id="profileFullName">Loadingâ€¦</h2>
+              <div class="profile-meta">
+                <span>ðŸ« <span id="profileUni">â€”</span></span>
+                <span>ðŸ“… <span id="profileYear">â€”</span></span>
+                <span>ðŸ“§ <span id="profileEmail">â€”</span></span>
+              </div>
+              <div style="margin-top:var(--space-3);"><span class="badge badge-green">âœ… Active Member</span></div>
+            </div>
+            <div class="profile-actions">
+              <button class="btn btn-outline-green btn-sm" onclick="openEditModal()">Edit Profile</button>
+            </div>
+          </div>
+          <div class="profile-stats-row">
+            <div class="profile-stat-item">
+              <div class="profile-stat-num" id="ps-trainings">0</div>
+              <div class="profile-stat-label">Trainings</div>
+            </div>
+            <div class="profile-stat-item">
+              <div class="profile-stat-num" id="ps-certs">0</div>
+              <div class="profile-stat-label">Certificates</div>
+            </div>
+            <div class="profile-stat-item">
+              <div class="profile-stat-num" id="ps-connections">0</div>
+              <div class="profile-stat-label">Connections</div>
+            </div>
+            <div class="profile-stat-item">
+              <div class="profile-stat-num" id="ps-exams">0</div>
+              <div class="profile-stat-label">Exams</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-tabs-content">
+          <div>
+            <!-- Bio -->
+            <div class="info-card">
+              <div class="info-card-header">
+                <div class="info-card-title">About Me</div>
+                <button class="btn btn-ghost btn-sm" onclick="openEditBio()">Edit</button>
+              </div>
+              <p id="profileBio" style="font-size:0.875rem;color:var(--text-secondary);line-height:1.8;">
+                Psychology student passionate about mental health advocacy and community wellbeing in Ethiopia.
+              </p>
+            </div>
+            <!-- Academic -->
+            <div class="info-card">
+              <div class="info-card-header">
+                <div class="info-card-title">Academic Background</div>
+              </div>
+              <div class="info-row"><span class="info-row-label">University</span><span class="info-row-value" id="pi-uni">â€”</span></div>
+              <div class="info-row"><span class="info-row-label">Program</span><span class="info-row-value" id="pi-program">â€”</span></div>
+              <div class="info-row"><span class="info-row-label">Year</span><span class="info-row-value" id="pi-year">â€”</span></div>
+              <div class="info-row"><span class="info-row-label">Field</span><span class="info-row-value" id="pi-field">â€”</span></div>
+              <div class="info-row"><span class="info-row-label">Student ID</span><span class="info-row-value" id="pi-id">â€”</span></div>
+            </div>
+            <!-- Experience -->
+            <div class="info-card">
+              <div class="info-card-header">
+                <div class="info-card-title">Experience & Internships</div>
+                <button class="btn btn-ghost btn-sm" onclick="showToast('Experience editor coming soon!','gold')">+ Add</button>
+              </div>
+              <div id="experienceList">
+                <p style="font-size:0.85rem;color:var(--text-muted); text-align:center; padding:var(--space-5);">No experience added yet</p>
+              </div>
+            </div>
+          </div>
+          <div>
+            <!-- Certifications -->
+            <div class="info-card">
+              <div class="info-card-header">
+                <div class="info-card-title">Certifications</div>
+              </div>
+              <div id="certList">
+                <p style="font-size:0.85rem;color:var(--text-muted); text-align:center; padding:var(--space-4);">Complete a training to earn certificates</p>
+              </div>
+            </div>
+            <!-- Contact (private) -->
+            <div class="info-card">
+              <div class="info-card-header">
+                <div class="info-card-title">Contact (Private)</div>
+              </div>
+              <div class="info-row"><span class="info-row-label">ðŸ“± Phone</span><span class="info-row-value" id="pi-phone">â€”</span></div>
+              <div class="info-row"><span class="info-row-label">ðŸ“§ Email</span><span class="info-row-value" id="pi-email">â€”</span></div>
+              <p style="font-size:0.72rem;color:var(--text-muted);margin-top:var(--space-3);">ðŸ”’ Only visible to you and EPSA admins</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- â•â•â•â•â•â•â•â• TRAININGS â•â•â•â•â•â•â•â• -->
+      <section id="sec-trainings" class="dash-section" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-6);">
+          <div>
+            <h2 style="font-family:var(--font-display);font-weight:800;font-size:1.4rem;">Training Programs</h2>
+            <p style="color:var(--text-muted);font-size:0.875rem;margin-top:2px;">Enhance your skills with EPSA-curated programs</p>
+          </div>
+          <div class="pill-tabs">
+            <span class="pill-tab active" onclick="filterTrainings('all',this)">All</span>
+            <span class="pill-tab" onclick="filterTrainings('mine',this)">My Trainings</span>
+            <span class="pill-tab" onclick="filterTrainings('free',this)">Free</span>
+          </div>
+        </div>
+
+        <div class="training-grid" id="trainingGrid">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- â•â•â•â•â•â•â•â• VOTING â•â•â•â•â•â•â•â• -->
+      <section id="sec-voting" class="dash-section" style="display:none;">
+        <div class="voting-phase-banner">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+              <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:var(--space-2);">Current Phase</div>
+              <h2 id="votingPhaseTitle" style="font-family:var(--font-display);font-size:1.6rem;font-weight:800;margin-bottom:var(--space-3);">Phase 1 â€” University Representatives</h2>
+              <p id="votingPhaseDesc" style="color:rgba(255,255,255,0.65);font-size:0.9rem;max-width:500px;">
+                Vote for your university's EPSA representative. Only students within your university can vote in this phase.
+              </p>
+            </div>
+            <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:white;border:none;" onclick="document.getElementById('electionRulesModal').classList.add('active')">ðŸ“œ View Election Rules</button>
+          </div>
+          
+          <div style="margin-top:var(--space-5);display:flex;align-items:center;gap:var(--space-4);">
+            <div style="background:rgba(255,255,255,0.1);padding:var(--space-3) var(--space-5);border-radius:var(--radius-full);">
+              <span style="font-size:0.8rem;color:rgba(255,255,255,0.6);">Ends in</span>
+              <span id="votingCountdown" style="font-family:var(--font-display);font-weight:800;color:var(--epsa-gold-light);margin-left:8px;">--</span>
+            </div>
+            <button class="btn btn-gold btn-sm" onclick="document.getElementById('nominateModal').classList.add('active')" id="nominateBtn">Nominate Myself</button>
+            <button class="btn btn-sm" style="background:transparent;border:1px solid rgba(255,255,255,0.3);color:white;" onclick="toggleCompareMode()" id="compareBtn">âš–ï¸ Compare</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom:var(--space-6);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-5);">
+            <h3 style="font-family:var(--font-display);font-weight:700;">Candidates</h3>
+            <span style="font-size:0.8rem;color:var(--text-muted);" id="voteInstructionText">Select a candidate and click Vote</span>
+          </div>
+          <div class="candidate-grid" id="candidateGrid">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <div id="voteConfirmArea" style="display:none;background:white;border-radius:var(--radius-xl);padding:var(--space-6);border:1px solid var(--light-200);">
+          <h4 style="font-family:var(--font-display);font-weight:700;margin-bottom:var(--space-4);">Confirm Your Vote</h4>
+          <p style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:var(--space-5);">
+            You are about to vote for <strong id="selectedCandidateName">â€”</strong>. <br>
+            âš ï¸ This action is <strong>irreversible</strong>. You can only vote once.
+          </p>
+          <div style="display:flex;gap:var(--space-3);">
+            <button class="btn btn-primary" onclick="castVote()">âœ… Confirm Vote</button>
+            <button class="btn btn-ghost" onclick="cancelVote()">Cancel</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- â•â•â•â•â•â•â•â• MESSAGING â•â•â•â•â•â•â•â• -->
+      <section id="sec-messaging" class="dash-section" style="display:none;">
+        <div class="chat-layout" id="chatLayout">
+          <div class="chat-sidebar">
+            <div id="messagingSupportBanner" class="messaging-support-banner" style="display:none;" aria-live="polite"></div>
+            <div class="chat-search">
+              <input type="text" class="form-input" placeholder="ðŸ” Search conversationsâ€¦" style="font-size:0.825rem;" id="chatSearch">
+            </div>
+            <div id="conversationList">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+          <div class="chat-main">
+            <div class="chat-header" id="chatHeader">
+              <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--epsa-green),var(--epsa-gold));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.8rem;" id="chatPartnerAvatar">?</div>
+              <div>
+                <div style="font-weight:700;font-size:0.875rem;" id="chatPartnerName">Select a Conversation</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);" id="chatPartnerUni"></div>
+              </div>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+              <div style="text-align:center;color:var(--text-muted);font-size:0.85rem;margin:auto;">
+                Select a conversation to start messaging
+              </div>
+            </div>
+            <div class="chat-input-area">
+              <input type="text" class="chat-input" id="chatInput" placeholder="Type a messageâ€¦" onkeydown="if(event.key==='Enter')sendChatMessage()">
+              <button class="chat-send-btn" onclick="sendChatMessage()" title="Send">âž¤</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- â•â•â•â•â•â•â•â• EXAMS â•â•â•â•â•â•â•â• -->
+      <section id="sec-exams" class="dash-section" style="display:none;">
+        <div style="margin-bottom:var(--space-6);">
+          <h2 style="font-family:var(--font-display);font-weight:800;font-size:1.4rem;">Examinations</h2>
+          <p style="color:var(--text-muted);font-size:0.875rem;">EPSA national certification exams and assessments</p>
+        </div>
+
+        <div class="exam-list" id="examList">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- â•â•â•â•â•â•â•â• CLUBS & ASSOCIATIONS â•â•â•â•â•â•â•â• -->
+      <section id="sec-clubs" class="dash-section" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-6);">
+          <div>
+            <h2 style="font-family:var(--font-display);font-weight:800;font-size:1.4rem;">Clubs & Associations</h2>
+            <p style="color:var(--text-muted);font-size:0.875rem;">Manage your university chapters and connect locally.</p>
+          </div>
+          <button class="btn btn-primary" onclick="document.getElementById('registerClubModal').classList.add('active')">âž• Register a Club</button>
+        </div>
+
+        <!-- My Clubs List -->
+        <h3 style="font-family:var(--font-display);font-weight:700;margin-bottom:var(--space-4);">My Clubs</h3>
+        <div id="myClubsList" style="display:flex;flex-direction:column;gap:12px;margin-bottom:var(--space-8);">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- CLUB CONSOLE (shown when "Open Console" is clicked) -->
+        <div id="clubConsole" style="display:none;background:white;border-radius:var(--radius-xl);border:1px solid var(--light-200);overflow:hidden;margin-bottom:var(--space-8);">
+          <div style="background:linear-gradient(135deg,var(--epsa-green-dark),var(--epsa-green));padding:var(--space-5) var(--space-6);color:white;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-family:var(--font-display);font-weight:800;font-size:1.15rem;" id="consoleClubName">Club Name</div>
+              <div style="font-size:0.8rem;opacity:0.75;" id="consoleClubUni">ðŸ« University</div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);border:none;color:white;" onclick="document.getElementById('submitProposalModal').classList.add('active')">ðŸ’° New Proposal</button>
+              <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);border:none;color:white;" onclick="openFinancialReportForm()">ðŸ“Š Financial Report</button>
+              <button class="btn btn-sm" style="background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.7);" onclick="closeClubConsole()">âœ• Close</button>
+            </div>
+          </div>
+          <div style="padding:var(--space-5) var(--space-6);">
+            <div class="pill-tabs" style="margin-bottom:var(--space-5);">
+              <span class="pill-tab active" onclick="switchConsoleTab('members',this)">ðŸ‘¥ Members</span>
+              <span class="pill-tab" onclick="switchConsoleTab('proposals',this)">ðŸ’° Proposals</span>
+              <span class="pill-tab" onclick="switchConsoleTab('activities',this)">ðŸ“¢ Activities</span>
+            </div>
+            <div id="ctab-members">
+              <div style="display:flex;gap:8px;margin-bottom:var(--space-4);">
+                <input type="text" class="form-input" id="addMemberInput" placeholder="Enter Student ID to addâ€¦" style="flex:1;">
+                <button class="btn btn-primary btn-sm" onclick="addClubMember()">âž• Add</button>
+              </div>
+              <div id="consoleMembersList" style="display:flex;flex-direction:column;gap:8px;"></div>
+            </div>
+            <div id="ctab-proposals" style="display:none;">
+              <div id="consoleProposalsList" style="display:flex;flex-direction:column;gap:12px;"></div>
+            </div>
+            <div id="ctab-activities" style="display:none;">
+              <div style="background:var(--light-50);border-radius:var(--radius-lg);padding:var(--space-4);margin-bottom:var(--space-4);">
+                <div style="font-weight:700;font-size:0.85rem;margin-bottom:8px;">Post Activity</div>
+                <input type="text" class="form-input" id="activityTitle" placeholder="Activity title" style="margin-bottom:8px;">
+                <select class="form-select" id="activityType" style="margin-bottom:8px;"><option value="event">Event</option><option value="announcement">Announcement</option><option value="report">Report</option></select>
+                <textarea class="form-input" id="activityContent" rows="2" placeholder="Detailsâ€¦" style="margin-bottom:8px;"></textarea>
+                <button class="btn btn-primary btn-sm" onclick="submitClubActivity()">ðŸ“¢ Post Activity</button>
+              </div>
+              <div id="consoleActivitiesList" style="display:flex;flex-direction:column;gap:10px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Discover Clubs Grid -->
+        <h3 style="font-family:var(--font-display);font-weight:700;margin-bottom:var(--space-4);">Discover Chapters</h3>
+        <div id="discoverClubsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- â•â•â•â•â•â•â•â• ENHANCED NETWORKING â•â•â•â•â•â•â•â• -->
+      <section id="sec-networking" class="dash-section" style="display:none;">
+        <link rel="stylesheet" href="css/networking-enhanced.css">
+        
+        <div class="networking-container">
+          <!-- Header with Stats -->
+          <div class="networking-header">
+            <h1 class="networking-title">EPSA Professional Network</h1>
+            <p class="networking-subtitle">Connect with psychology students and professionals across Ethiopia</p>
+          </div>
+          
+          <div class="networking-stats">
+            <div class="stat-card">
+              <div class="stat-number" id="networkConnectionsCount">0</div>
+              <div class="stat-label">Connections</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" id="networkProfileViews">0</div>
+              <div class="stat-label">Profile Views</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" id="networkMessagesCount">0</div>
+              <div class="stat-label">Messages</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" id="networkClubsCount">0</div>
+              <div class="stat-label">Clubs</div>
+            </div>
+          </div>
+
+          <!-- Professional Connections Section -->
+          <div class="connections-section">
+            <div class="section-header">
+              <h2 class="section-title">Professional Connections</h2>
+              <div class="view-toggle">
+                <button class="toggle-btn active" onclick="switchNetworkView('connections')">My Network</button>
+                <button class="toggle-btn" onclick="switchNetworkView('suggestions')">Suggestions</button>
+                <button class="toggle-btn" onclick="switchNetworkView('messaging')">Messages</button>
+              </div>
+            </div>
+            
+            <div id="connectionsView" class="professional-grid">
+              <!-- Populated by JS -->
+            </div>
+            
+            <div id="suggestionsView" class="professional-grid" style="display:none;">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <!-- In-network conversation strip (separate id from main Messaging section) -->
+          <div class="messaging-section" id="networkMessagingWrap" style="display:none;">
+            <div class="section-header">
+              <h2 class="section-title">Recent conversations</h2>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="switchSection('messaging')">Open full inbox</button>
+            </div>
+            <div class="conversation-list" id="networkConversationList">
+              <!-- Populated by networking-enhanced.js -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- end dash-content -->
+  </div><!-- end dash-main -->
+</div><!-- end dash-page -->
+
+<!-- â”€â”€ PAYMENT MODAL â”€â”€ -->
+<div class="modal-overlay" id="paymentModal">
+  <div class="modal" style="max-width:500px;">
+    <div style="display:flex;align-items:center;gap:var(--space-4);margin-bottom:var(--space-6);padding-bottom:var(--space-5);border-bottom:1px solid var(--light-200);">
+      <div style="width:48px;height:48px;background:rgba(26,107,60,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">ðŸ’³</div>
+      <div>
+        <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.1rem;" id="payModalTitle">Training Payment</h3>
+        <p style="font-size:0.8rem;color:var(--text-muted);">Upload your payment receipt to confirm enrollment</p>
+      </div>
+    </div>
+    <div style="background:var(--light-100);border-radius:var(--radius-lg);padding:var(--space-5);margin-bottom:var(--space-5);">
+      <p style="font-size:0.85rem;font-weight:700;color:var(--text-primary);margin-bottom:var(--space-3);">Bank Transfer Details</p>
+      <div style="display:flex;flex-direction:column;gap:var(--space-2);">
+        <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
+          <span style="color:var(--text-muted);">Bank</span>
+          <span style="font-weight:600;">Commercial Bank of Ethiopia (CBE)</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
+          <span style="color:var(--text-muted);">Account Name</span>
+          <span style="font-weight:600;">Ethiopian Psychology Students Association</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
+          <span style="color:var(--text-muted);">Account Number</span>
+          <span style="font-weight:700;color:var(--epsa-green);font-family:monospace;font-size:1rem;">1000123456789</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
+          <span style="color:var(--text-muted);">Amount</span>
+          <span style="font-weight:800;color:var(--epsa-green);font-size:1.1rem;" id="payAmount">ETB â€”</span>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Upload Payment Receipt *</label>
+      <div class="upload-zone" onclick="document.getElementById('receiptInput').click()" id="receiptZone">
+        <div class="upload-icon">ðŸ§¾</div>
+        <p style="font-weight:600;color:var(--text-secondary);">Click to upload receipt</p>
+        <p style="font-size:0.78rem;color:var(--text-muted);">PDF, JPG or PNG Â· Max 5MB</p>
+      </div>
+      <input type="file" id="receiptInput" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" onchange="previewReceipt(this)">
+      <div class="file-preview" id="receiptPreview">
+        <span>ðŸ§¾</span><span class="file-preview-name" id="receiptName"></span>
+        <button class="file-preview-remove" onclick="clearReceipt()">âœ•</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:var(--space-3);justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closePaymentModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitReceipt()">Submit Receipt</button>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€ EDIT PROFILE MODAL â”€â”€ -->
+<div class="modal-overlay" id="editProfileModal">
+  <div class="modal" style="max-width:540px;">
+    <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">Edit Profile</h3>
+    <div class="form-group">
+      <label class="form-label">Bio</label>
+      <textarea id="editBio" class="form-input form-textarea" rows="3" placeholder="Tell your EPSA community about yourselfâ€¦"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Field of Study</label>
+      <input type="text" id="editField" class="form-input" placeholder="e.g. Clinical Psychology">
+    </div>
+    <div class="form-group">
+      <label class="form-label">LinkedIn Profile URL</label>
+      <input type="url" id="editLinkedin" class="form-input" placeholder="https://linkedin.com/in/yourprofile">
+    </div>
+    <div style="display:flex;gap:var(--space-3);justify-content:flex-end;margin-top:var(--space-4);">
+      <button class="btn btn-ghost" onclick="document.getElementById('editProfileModal').classList.remove('active')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProfile()">ðŸ’¾ Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€ ELECTION RULES MODAL â”€â”€ -->
+<div class="modal-overlay" id="electionRulesModal">
+  <div class="modal" style="max-width:650px;">
+    <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.3rem;margin-bottom:var(--space-4);">EPSA Election Rules</h3>
+    <div style="font-size:0.9rem;line-height:1.6;color:var(--text-secondary);margin-bottom:var(--space-5);">
+      <div style="background:rgba(26,107,60,0.05);padding:var(--space-4);border-radius:var(--radius-md);border-left:4px solid var(--epsa-green);margin-bottom:var(--space-4);">
+        <strong style="color:var(--text-primary);display:block;margin-bottom:var(--space-2);">Phase I: University Representatives</strong>
+        The candidate with the highest number of votes in each university automatically becomes the official EPSA representative for that campus. To vote in Phase I, you must be a verified student of that university.
+      </div>
+      <div style="background:rgba(200,163,64,0.08);padding:var(--space-4);border-radius:var(--radius-md);border-left:4px solid var(--epsa-gold);margin-bottom:var(--space-4);">
+        <strong style="color:var(--text-primary);display:block;margin-bottom:var(--space-2);">Phase II: National Executive Board (NEB)</strong>
+        All university representatives and qualified candidates enter a unified national ballot. 
+        <ul style="margin-top:var(--space-2);margin-left:var(--space-5);">
+          <li><strong>1st Place:</strong> President</li>
+          <li><strong>2nd Place:</strong> Vice President</li>
+          <li><strong>3rd Place:</strong> Secretary General</li>
+        </ul>
+        The remaining positions (Directors) are subsequently assigned based on competence and portfolio review by the established leadership hierarchy.
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <button class="btn btn-primary" onclick="document.getElementById('electionRulesModal').classList.remove('active')">Got it</button>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€ NOMINATE MYSELF MODAL Form â”€â”€ -->
+<div class="modal-overlay" id="nominateModal">
+  <div class="modal" style="max-width:600px; max-height: 90vh; overflow-y:auto;">
+    <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-2);">Nominate Myself</h3>
+    <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:var(--space-6);">Fill out your candidate profile to run for leadership.</p>
+    
+    <div class="form-group">
+      <label class="form-label">Position Running For</label>
+      <input type="text" id="nomPosition" class="form-input" disabled value="Representative">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">Short Bio (Headline)</label>
+      <input type="text" id="nomBio" class="form-input" placeholder="e.g. Passionate 3rd year psych student..." maxlength="80">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">Why I should represent my university / lead nationally</label>
+      <textarea id="nomStatement" class="form-input form-textarea" rows="3" placeholder="Tell voters why you are the best fit..."></textarea>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">Vision & Goals</label>
+      <textarea id="nomVision" class="form-input form-textarea" rows="3" placeholder="What changes or improvements do you want to bring?"></textarea>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">Video Introduction Link (Optional)</label>
+      <input type="url" id="nomVideoUrl" class="form-input" placeholder="YouTube or Vimeo URL">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">Campaign Manifesto / Document (Optional)</label>
+      <input type="file" id="nomManifesto" accept=".pdf" class="form-input" style="padding: 10px;">
+      <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">Upload a PDF version of your campaign manifesto</div>
+    </div>
+    
+    <div style="display:flex;gap:var(--space-3);justify-content:flex-end;margin-top:var(--space-5);">
+      <button class="btn btn-ghost" onclick="document.getElementById('nominateModal').classList.remove('active')">Cancel</button>
+      <button class="btn btn-gold" onclick="submitNomination()" id="submitNomBtn">Submit Nomination</button>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€ CANDIDATE BIO MODAL â”€â”€ -->
+<div class="modal-overlay" id="candidateBioModal">
+  <div class="modal" style="max-width:650px; max-height:85vh; overflow-y:auto; padding:0;">
+    <div style="background:var(--light-100);padding:var(--space-6);display:flex;align-items:center;gap:var(--space-5);">
+      <img id="cbImg" src="assets/president.jpg" style="width:80px;height:80px;border-radius:50%;object-fit:cover;">
+      <div>
+        <h2 id="cbName" style="font-family:var(--font-display);font-weight:800;font-size:1.5rem;margin-bottom:2px;">Name</h2>
+        <div id="cbUni" style="font-size:0.875rem;color:var(--text-secondary);font-weight:600;">University</div>
+        <div id="cbMeta" style="font-size:0.8rem;color:var(--text-muted);">Year 3 Â· Program</div>
+      </div>
+      <div style="margin-left:auto; text-align:right;">
+        <div id="cbVotes" style="font-family:var(--font-display);font-size:1.8rem;font-weight:800;color:var(--epsa-green);">--</div>
+        <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;">Votes</div>
+      </div>
+    </div>
+    
+    <div style="padding:var(--space-6);">
+      <div style="margin-bottom:var(--space-6);">
+        <h4 style="font-weight:700;margin-bottom:var(--space-2);color:var(--text-primary);display:flex;align-items:center;gap:8px;"><span>ðŸŽ¯</span> Personal Statement</h4>
+        <p id="cbStatement" style="font-size:0.9rem;line-height:1.6;color:var(--text-secondary);">No statement provided.</p>
+      </div>
+      
+      <div style="margin-bottom:var(--space-6);">
+        <h4 style="font-weight:700;margin-bottom:var(--space-2);color:var(--text-primary);display:flex;align-items:center;gap:8px;"><span>ðŸš€</span> Vision & Goals</h4>
+        <p id="cbVision" style="font-size:0.9rem;line-height:1.6;color:var(--text-secondary);">No vision provided.</p>
+      </div>
+      
+      <div style="display:flex;gap:var(--space-4);margin-bottom:var(--space-6);">
+        <a id="cbVideoBtn" target="_blank" class="btn btn-outline-green btn-sm" style="display:none;align-items:center;gap:6px;">â–¶ï¸ Watch Intro</a>
+        <a id="cbManifestoBtn" target="_blank" class="btn btn-outline-green btn-sm" style="display:none;align-items:center;gap:6px;">ðŸ“„ Read Manifesto</a>
+      </div>
+      
+      <div style="display:flex;gap:var(--space-3);border-top:1px solid var(--light-200);padding-top:var(--space-5);">
+        <button class="btn btn-ghost" style="flex:1;" onclick="document.getElementById('candidateBioModal').classList.remove('active')">Close</button>
+        <button class="btn btn-primary" style="flex:1;" id="cbVoteBtn" onclick="selectCandidateFromModal()">ðŸ—³ï¸ Vote for Candidate</button>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€ COMPARE CANDIDATES MODAL â”€â”€ -->
+<div class="modal-overlay" id="compareModal">
+  <div class="modal" style="max-width:900px; max-height:85vh; overflow-y:auto; background:var(--light-50);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
+      <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.4rem;">âš–ï¸ Compare Candidates</h3>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('compareModal').classList.remove('active'); toggleCompareMode();">âœ• Close</button>
+    </div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:var(--space-6);" id="compareGrid">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€ EXAM PLAYER OVERLAY â”€â”€ -->
+<div id="examOverlay" style="display:none;position:fixed;inset:0;background:white;z-index:9999;overflow-y:auto;">
+  <div style="max-width:800px;margin:0 auto;padding:var(--space-8);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-6);padding:var(--space-4) var(--space-6);background:var(--dark-800);border-radius:var(--radius-xl);color:white;">
+      <div>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);font-weight:600;">EPSA EXAM</div>
+        <div style="font-family:var(--font-display);font-weight:800;" id="examPlayerTitle">â€”</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);">TIME REMAINING</div>
+        <div style="font-family:var(--font-display);font-size:1.8rem;font-weight:900;color:var(--epsa-gold-light);" id="examTimerDisplay">00:00</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);">PROGRESS</div>
+        <div style="font-family:var(--font-display);font-weight:700;" id="examProgress">0/0</div>
+      </div>
+    </div>
+    <div id="examQuestions" style="display:flex;flex-direction:column;gap:var(--space-6);"></div>
+    <div style="margin-top:var(--space-8);text-align:center;">
+      <button class="btn btn-gold btn-lg" onclick="submitExam()">âœ… Submit Exam</button>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€ NEW POST MODAL â”€â”€ -->
+<div class="modal-overlay" id="newPostModal">
+  <div class="modal" style="max-width:560px;">
+    <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-4);">ðŸ“ Create a Post</h3>
+    <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:var(--space-5);">Share an update with the EPSA community</p>
+    <div class="form-group">
+      <textarea id="newPostContent" class="form-input form-textarea" rows="4" placeholder="What's on your mind? Share an update, event, or announcementâ€¦" style="font-size:0.9rem;"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Attach Image (optional)</label>
+      <input type="file" id="newPostImage" class="form-input" accept="image/*" onchange="previewFeedImage(this)" style="padding:10px;">
+      <div id="feedImagePreview" style="display:none;margin-top:8px;position:relative;">
+        <img id="feedPreviewImg" style="max-height:200px;border-radius:var(--radius-lg);">
+        <button onclick="clearFeedImage()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.7);color:white;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:0.8rem;">âœ•</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:var(--space-3);justify-content:flex-end;margin-top:var(--space-4);">
+      <button class="btn btn-ghost" onclick="document.getElementById('newPostModal').classList.remove('active')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitFeedPost();document.getElementById('newPostModal').classList.remove('active')">ðŸš€ Post</button>
+    </div>
+  </div>
+</div>
+
+<!-- â”€â”€ FINANCIAL REPORT MODAL â”€â”€ -->
+<div class="modal-overlay" id="financialReportModal">
+  <div class="modal" style="max-width:540px;">
+    <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">ðŸ“Š Submit Financial Report</h3>
+    <form id="finReportForm" onsubmit="submitFinancialReport(event)">
+      <div class="form-group">
+        <label class="form-label">Select Funded Proposal *</label>
+        <select id="fr-proposal" class="form-select" required></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Total Amount Spent (ETB) *</label>
+        <input type="number" id="fr-spent" class="form-input" required min="0" placeholder="e.g. 12000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Spending Summary *</label>
+        <textarea id="fr-summary" class="form-input" rows="3" required placeholder="Describe how the funds were usedâ€¦"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Upload Receipt (PDF/Image) *</label>
+        <input type="file" id="fr-receipt" class="form-input" accept=".pdf,.jpg,.jpeg,.png" required style="padding:10px;">
+      </div>
+      <div style="display:flex;gap:var(--space-3);justify-content:flex-end;">
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('financialReportModal').classList.remove('active')">Cancel</button>
+        <button type="submit" class="btn btn-primary">ðŸ“Š Submit Report</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/dashboard-enhancements.js"></script>
+<script src="js/networking-enhanced.js"></script>
+<script src="js/voting.js"></script>
+<script src="js/messaging.js"></script>
+<script src="js/exam.js"></script>
+
+<!-- â”€â”€ REGISTER CLUB MODAL â”€â”€ -->
+<div class="modal-overlay" id="registerClubModal">
+  <div class="modal" style="max-width:580px;">
+    <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">ðŸ›ï¸ Register a New Club</h3>
+    <form id="registerClubForm" onsubmit="submitRegisterClub(event)">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);">
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Club Name *</label><input type="text" id="rc-name" class="form-input" required placeholder="e.g. AAU Psychology Students' Club"></div>
+        <div class="form-group"><label class="form-label">Year Established</label><input type="number" id="rc-year" class="form-input" placeholder="e.g. 2023" min="2010" max="2030"></div>
+        <div class="form-group"><label class="form-label">Current Members *</label><input type="number" id="rc-members" class="form-input" placeholder="e.g. 50" min="5" required></div>
+        <div class="form-group"><label class="form-label">VP EPSA ID *</label><input type="text" id="rc-vp" class="form-input" required placeholder="Vice President Student ID"></div>
+        <div class="form-group"><label class="form-label">Secretary EPSA ID *</label><input type="text" id="rc-sec" class="form-input" required placeholder="Secretary Student ID"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Club Logo</label><input type="file" id="rc-logo" class="form-input" accept="image/*"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Description</label><textarea id="rc-desc" class="form-input" rows="3" placeholder="What does your club do? What are your goals?"></textarea></div>
+      </div>
+      <div style="background:var(--light-100);border-radius:var(--radius-lg);padding:var(--space-4);margin:var(--space-4) 0;font-size:0.82rem;color:var(--text-secondary);">
+        â„¹ï¸ Your club will be <strong>pending admin approval</strong>. You will automatically be assigned as Club President. The VP and Secretary must be registered EPSA students.
+      </div>
+      <div style="display:flex;gap:var(--space-3);justify-content:flex-end;">
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('registerClubModal').classList.remove('active')">Cancel</button>
+        <button type="submit" class="btn btn-primary">ðŸ›ï¸ Submit for Approval</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- â”€â”€ SUBMIT PROPOSAL MODAL â”€â”€ -->
+<div class="modal-overlay" id="submitProposalModal">
+  <div class="modal" style="max-width:560px;">
+    <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">ðŸ’° Submit Grant Proposal</h3>
+    <form id="proposalForm" onsubmit="submitGrantProposal(event)">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);">
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Project Title *</label><input type="text" id="sp-title" class="form-input" required placeholder="e.g. Mental Health Awareness Campaign 2026"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Objective *</label><textarea id="sp-obj" class="form-input" rows="3" required placeholder="What is the goal of this project?"></textarea></div>
+        <div class="form-group"><label class="form-label">Budget (ETB) *</label><input type="number" id="sp-budget" class="form-input" required min="0" placeholder="e.g. 15000"></div>
+        <div class="form-group"><label class="form-label">Timeline</label><input type="text" id="sp-timeline" class="form-input" placeholder="e.g. 3 months"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Supporting Document (PDF)</label><input type="file" id="sp-attachment" class="form-input" accept=".pdf,.doc,.docx"></div>
+      </div>
+      <div style="display:flex;gap:var(--space-3);justify-content:flex-end;margin-top:var(--space-4);">
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('submitProposalModal').classList.remove('active')">Cancel</button>
+        <button type="submit" class="btn btn-gold" style="background:var(--epsa-gold);border:none;color:white;">ðŸ’° Submit Proposal</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// CLUBS & SOCIAL FEED â€” Student Portal Logic
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+const APIB = (() => {
+  if (window.API && typeof API.getApiBases === 'function') {
+    const base = API.getApiBases()[0];
+    if (base) return base.replace(/\/api\/?$/, '');
+  }
+  const origin = window.location?.origin || '';
+  if (origin && /^https?:/i.test(origin) && !/^(file:|null)$/i.test(origin)) {
+    return origin.replace(/\/$/, '');
+  }
+  return (window.__EPSA_CONFIG__?.API_BASE_URL || localStorage.getItem('epsa_api_base') || ${window.location.origin}/api).replace(/\/api\/?$/, '');
+})();
+let _activeClubId = null;
+
+function getToken() { return localStorage.getItem('epsa_access_token') || ''; }
+function authFetch(url, opts = {}) {
+  return fetch(APIB + url, {
+    ...opts,
+    headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json', ...(opts.headers || {}) }
+  });
+}
+
+// â”€â”€â”€ Load My Clubs (+ Discover) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function loadMyClubs() {
+  const list = document.getElementById('myClubsList');
+  const disc = document.getElementById('discoverClubsGrid');
+  if (!list) return;
+  try {
+    const [mineRes, allRes] = await Promise.all([
+      authFetch('/api/clubs/mine'),
+      fetch(APIB + '/api/clubs')
+    ]);
+    const mine = await mineRes.json();
+    const all  = await allRes.json();
+
+    if (!mine.length) {
+      list.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted);">
+        <div style="font-size:2.5rem;margin-bottom:12px;">ðŸ›ï¸</div>
+        <div style="font-weight:600;margin-bottom:8px;">You haven't joined a club yet</div>
+        <div style="font-size:0.85rem;">Register your own or discover clubs below</div>
+      </div>`;
+    } else {
+      list.innerHTML = mine.map(c => `
+        <div style="background:white;border-radius:var(--radius-xl);border:1px solid var(--light-200);overflow:hidden;transition:all 0.3s;" onmouseover="this.style.boxShadow='0 8px 32px rgba(0,0,0,0.1)'" onmouseout="this.style.boxShadow=''">
+          <div style="background:linear-gradient(135deg,var(--epsa-green-dark),var(--epsa-green));padding:var(--space-5);color:white;position:relative;">
+            <div style="font-family:var(--font-display);font-weight:800;font-size:1rem;margin-bottom:4px;">${c.name}</div>
+            <div style="font-size:0.8rem;opacity:0.75;">ðŸ« ${c.university}</div>
+            <div style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;">${c.my_role}</div>
+          </div>
+          <div style="padding:var(--space-4);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-3);">
+              <span style="font-size:0.82rem;color:var(--text-muted);">ðŸ‘¥ ${c.member_count||0} members</span>
+              <span style="font-size:0.75rem;padding:3px 10px;border-radius:20px;background:${c.status==='approved'?'rgba(22,163,74,0.1)':'rgba(217,119,6,0.1)'};color:${c.status==='approved'?'#16a34a':'#d97706'};font-weight:700;">${c.status}</span>
+            </div>
+            ${c.my_role === 'president' && c.status === 'approved'
+              ? `<button class="btn btn-primary btn-sm" style="width:100%;" onclick="openClubConsole(${c.id},'${c.name}','${c.university}')">ðŸ›ï¸ Open Console</button>` 
+              : `<div style="font-size:0.8rem;color:var(--text-muted);text-align:center;padding:8px;">${c.status === 'pending' ? 'â³ Awaiting admin approval' : 'âœ… Active member'}</div>`}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Discover grid â€” clubs not in mine
+    const myIds = mine.map(c => c.id);
+    const discover = all.filter(c => !myIds.includes(c.id));
+    if (disc) {
+      disc.innerHTML = discover.length ? discover.slice(0, 6).map(c => `
+        <div style="background:white;border-radius:var(--radius-xl);border:1px solid var(--light-200);padding:var(--space-4);transition:all 0.3s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+          <div style="font-family:var(--font-display);font-weight:700;font-size:0.9rem;margin-bottom:4px;">${c.name}</div>
+          <div style="font-size:0.78rem;color:var(--epsa-green);margin-bottom:10px;">ðŸ« ${c.university}</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${c.description||'Active EPSA chapter.'}</div>
+          <div style="font-size:0.72rem;color:var(--text-muted);">ðŸ‘¥ ${c.member_count||0} members</div>
+        </div>
+      `).join('') : `<div style="grid-column:1/-1;color:var(--text-muted);font-size:0.85rem;text-align:center;padding:24px;">All approved clubs already joined.</div>`;
+    }
+  } catch(e) {
+    if (list) list.innerHTML = `<div style="color:var(--text-muted);text-align:center;padding:40px;grid-column:1/-1;">Unable to load clubs. Make sure you are logged in.</div>`;
+  }
+}
+
+function openClubConsole(id, name, uni) {
+  _activeClubId = id;
+  document.getElementById('consoleClubName').textContent = name;
+  document.getElementById('consoleClubUni').textContent  = 'ðŸ« ' + uni;
+  document.getElementById('clubConsole').style.display   = '';
+  document.getElementById('clubConsole').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  loadConsoleMembers(id);
+}
+
+function closeClubConsole() {
+  document.getElementById('clubConsole').style.display = 'none';
+  _activeClubId = null;
+}
+
+function switchConsoleTab(tab, tabEl) {
+  document.getElementById('ctab-members').style.display    = tab==='members' ? '' : 'none';
+  document.getElementById('ctab-proposals').style.display  = tab==='proposals' ? '' : 'none';
+  document.getElementById('ctab-activities').style.display  = tab==='activities' ? '' : 'none';
+  document.querySelectorAll('#clubConsole .pill-tab').forEach(t => t.classList.remove('active'));
+  if (tabEl) tabEl.classList.add('active');
+  if (tab === 'proposals') loadConsoleProposals(_activeClubId);
+  if (tab === 'activities') loadConsoleActivities(_activeClubId);
+}
+
+async function loadConsoleMembers(cid) {
+  const res  = await authFetch(`/api/clubs/${cid}`);
+  const club = await res.json();
+  const box  = document.getElementById('consoleMembersList');
+  if (!box) return;
+  box.innerHTML = (club.members||[]).map(m => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--light-50);border-radius:12px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--epsa-green),var(--epsa-gold));display:flex;align-items:center;justify-content:center;color:white;font-size:0.85rem;font-weight:700;">${(m.first_name||'?')[0]}</div>
+        <div>
+          <div style="font-weight:600;font-size:0.88rem;">${m.first_name} ${m.father_name}</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">${m.university}</div>
+        </div>
+      </div>
+      <span style="background:${m.role==='president'?'rgba(26,107,60,0.1)':'rgba(0,0,0,0.05)'};color:${m.role==='president'?'var(--epsa-green)':'var(--text-muted)'};padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;">${m.role}</span>
+    </div>
+  `).join('') || '<div style="color:var(--text-muted);font-size:0.85rem;">No members yet.</div>';
+}
+
+async function addClubMember() {
+  const sid = document.getElementById('addMemberInput').value.trim();
+  if (!sid) return;
+  const res  = await authFetch(`/api/clubs/${_activeClubId}/members`, {
+    method: 'POST', body: JSON.stringify({ student_id: sid })
+  });
+  const data = await res.json();
+  if (typeof showToast === 'function') showToast(data.message || data.error, data.error ? 'error' : 'success');
+  document.getElementById('addMemberInput').value = '';
+  loadConsoleMembers(_activeClubId);
+}
+
+async function loadConsoleProposals(cid) {
+  const res  = await authFetch(`/api/clubs/${cid}/proposals`);
+  const data = await res.json();
+  const box  = document.getElementById('consoleProposalsList');
+  if (!box) return;
+  const sColors = { pending:'#d97706', approved:'#2563eb', funded:'#16a34a', rejected:'#dc2626', awaiting_verification:'#8b5cf6', completed:'#059669' };
+  box.innerHTML = data.length ? data.map(p => `
+    <div style="background:var(--light-50);border-radius:14px;padding:var(--space-4);border-left:4px solid ${sColors[p.status]||'#ccc'};">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+        <div style="font-weight:700;font-size:0.9rem;">${p.title}</div>
+        <span style="background:${sColors[p.status]||'#777'}20;color:${sColors[p.status]||'#777'};padding:2px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;white-space:nowrap;">${p.status.replace(/_/g,' ')}</span>
+      </div>
+      <div style="font-size:0.8rem;color:var(--text-muted);">Budget: ETB ${(p.budget||0).toLocaleString()} Â· ${p.timeline||'â€”'}</div>
+      ${p.admin_notes ? `<div style="font-size:0.78rem;color:var(--text-secondary);margin-top:6px;padding:6px 10px;background:rgba(37,99,235,0.05);border-radius:8px;">ðŸ“ ${p.admin_notes}</div>` : ''}
+    </div>
+  `).join('') : '<div style="color:var(--text-muted);font-size:0.85rem;text-align:center;padding:24px;">No proposals submitted yet.</div>';
+}
+
+async function submitRegisterClub(e) {
+  e.preventDefault();
+  try {
+    const fd = new FormData();
+    fd.append('name',             document.getElementById('rc-name').value);
+    fd.append('year_established', document.getElementById('rc-year').value || '');
+    fd.append('member_count',     document.getElementById('rc-members').value);
+    fd.append('vp_student_id',    document.getElementById('rc-vp').value);
+    fd.append('sec_student_id',   document.getElementById('rc-sec').value);
+    fd.append('description',      document.getElementById('rc-desc').value);
+    const logo = document.getElementById('rc-logo').files[0];
+    if (logo) fd.append('logo', logo);
+    const res  = await fetch(APIB + '/api/clubs/register', {
+      method: 'POST', headers: { 'Authorization': 'Bearer ' + getToken() }, body: fd
+    });
+    const data = await res.json();
+    if (typeof showToast === 'function') showToast(data.message || data.error || 'Request processed', data.error ? 'error' : 'success');
+    if (res.ok) {
+      document.getElementById('registerClubModal').classList.remove('active');
+      document.getElementById('registerClubForm').reset();
+      loadMyClubs();
+    }
+  } catch(err) {
+    console.error(err);
+    if (typeof showToast === 'function') showToast('Registration failed. Please try again.', 'error');
+  }
+}
+
+async function submitGrantProposal(e) {
+  e.preventDefault();
+  const fd = new FormData();
+  fd.append('title',     document.getElementById('sp-title').value);
+  fd.append('objective', document.getElementById('sp-obj').value);
+  fd.append('budget',    document.getElementById('sp-budget').value);
+  fd.append('timeline',  document.getElementById('sp-timeline').value);
+  const att = document.getElementById('sp-attachment').files[0];
+  if (att) fd.append('attachment', att);
+  const res  = await fetch(APIB + `/api/clubs/${_activeClubId}/proposals`, {
+    method: 'POST', headers: { 'Authorization': 'Bearer ' + getToken() }, body: fd
+  });
+  const data = await res.json();
+  if (typeof showToast === 'function') showToast(data.message || data.error, data.error ? 'error' : 'success');
+  document.getElementById('submitProposalModal').classList.remove('active');
+  document.getElementById('proposalForm').reset();
+  loadConsoleProposals(_activeClubId);
+}
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// SOCIAL FEED â€” LinkedIn-style Network
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+let feedPage = 1;
+let feedLoading = false;
+
+async function loadFeed(reset = true) {
+  if (feedLoading) return;
+  feedLoading = true;
+  const container = document.getElementById('feedPosts');
+  const loading   = document.getElementById('feedLoading');
+  if (!container) { feedLoading = false; return; }
+  if (reset) { feedPage = 1; container.innerHTML = ''; }
+  if (loading) loading.style.display = '';
+  try {
+    const res   = await authFetch(`/api/network/feed?page=${feedPage}`);
+    const posts = await res.json();
+    if (loading) loading.style.display = 'none';
+    if (!posts.length && feedPage === 1) {
+      container.innerHTML = `<div style="background:white;border-radius:var(--radius-xl);border:1px solid var(--light-200);padding:40px;text-align:center;color:var(--text-muted);">
+        <div style="font-size:2.5rem;margin-bottom:12px;">ðŸŒ</div>
+        <div style="font-weight:600;margin-bottom:8px;">The feed is empty</div>
+        <div style="font-size:0.85rem;">Be the first to post something!</div>
+      </div>`;
+      return;
+    }
+    posts.forEach(post => container.insertAdjacentHTML('beforeend', renderPost(post)));
+    if (posts.length === 15) feedPage++;
+  } catch(e) {
+    if (loading) loading.textContent = 'Unable to load feed.';
+  }
+  feedLoading = false;
+}
+
+function renderPost(p) {
+  const initials = (p.author_name || 'EP').split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
+  const timeAgo  = relTime(p.created_at);
+  return `
+    <div class="feed-post" id="post-${p.id}" style="background:white;border-radius:var(--radius-xl);border:1px solid var(--light-200);overflow:hidden;">
+      <div style="padding:var(--space-5) var(--space-5) var(--space-3);">
+        <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-4);">
+          <div style="width:44px;height:44px;border-radius:50%;overflow:hidden;flex-shrink:0;background:linear-gradient(135deg,var(--epsa-green),var(--epsa-gold));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;">
+            ${p.author_photo_url ? `<img src="${APIB}${p.author_photo_url}" style="width:100%;height:100%;object-fit:cover;">` : initials}
+          </div>
+          <div style="flex:1;">
+            <div style="font-weight:700;font-size:0.9rem;">${p.author_name}${p.club_name ? ` Â· <span style="color:var(--epsa-green);font-size:0.82rem;">${p.club_name}</span>` : ''}</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">${p.author_uni||''} Â· ${timeAgo}</div>
+          </div>
+          ${window._myId && p.user_id === window._myId ? `<button onclick="deletePost(${p.id})" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:0.8rem;padding:4px 8px;" title="Delete post">ðŸ—‘</button>` : ''}
+        </div>
+        <p style="font-size:0.88rem;line-height:1.65;color:var(--text-primary);white-space:pre-wrap;margin:0;">${escHtml(p.content)}</p>
+      </div>
+      ${p.image_url ? `<div style="border-top:1px solid var(--light-100);"><img src="${APIB}${p.image_url}" style="width:100%;max-height:400px;object-fit:cover;" onerror="this.parentElement.remove()"></div>` : ''}
+      <div style="padding:var(--space-3) var(--space-5);border-top:1px solid var(--light-100);display:flex;gap:var(--space-2);">
+        <button onclick="toggleLike(${p.id},this)" id="like-${p.id}" style="display:flex;align-items:center;gap:6px;background:${p.user_liked?'rgba(22,163,74,0.08)':'none'};border:1px solid ${p.user_liked?'rgba(22,163,74,0.25)':'var(--light-200)'};border-radius:8px;padding:6px 14px;cursor:pointer;font-size:0.82rem;color:${p.user_liked?'var(--epsa-green)':'var(--text-muted)'};transition:all 0.2s;">
+          ${p.user_liked ? 'ðŸ’š' : 'ðŸ¤'} <span id="likes-${p.id}">${p.likes||0}</span>
+        </button>
+        <button onclick="toggleComments(${p.id})" style="display:flex;align-items:center;gap:6px;background:none;border:1px solid var(--light-200);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:0.82rem;color:var(--text-muted);transition:all 0.2s;" onmouseover="this.style.background='var(--light-50)'" onmouseout="this.style.background='none'">
+          ðŸ’¬ ${p.comment_count||0}
+        </button>
+      </div>
+      <div id="comments-${p.id}" style="display:none;border-top:1px solid var(--light-100);padding:var(--space-4) var(--space-5);">
+        <div id="comment-list-${p.id}" style="display:flex;flex-direction:column;gap:10px;margin-bottom:var(--space-3);"></div>
+        <div style="display:flex;gap:var(--space-2);">
+          <input id="comment-input-${p.id}" class="form-input" placeholder="Write a commentâ€¦" style="flex:1;padding:8px 14px;font-size:0.85rem;" onkeydown="if(event.key==='Enter')submitComment(${p.id})">
+          <button class="btn btn-primary btn-sm" onclick="submitComment(${p.id})">Post</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function toggleLike(postId, btn) {
+  const res  = await authFetch(`/api/network/posts/${postId}/like`, { method: 'POST' });
+  const data = await res.json();
+  const count = document.getElementById(`likes-${postId}`);
+  if (count) count.textContent = data.likes;
+  btn.style.background = data.liked ? 'rgba(22,163,74,0.08)' : 'none';
+  btn.style.border      = data.liked ? '1px solid rgba(22,163,74,0.25)' : '1px solid var(--light-200)';
+  btn.style.color       = data.liked ? 'var(--epsa-green)' : 'var(--text-muted)';
+  btn.innerHTML = `${data.liked ? 'ðŸ’š' : 'ðŸ¤'} <span id="likes-${postId}">${data.likes}</span>`;
+}
+
+async function toggleComments(postId) {
+  const box = document.getElementById(`comments-${postId}`);
+  const isOpen = box.style.display !== 'none';
+  box.style.display = isOpen ? 'none' : '';
+  if (!isOpen) {
+    const res   = await authFetch(`/api/network/posts/${postId}/comments`);
+    const cmts  = await res.json();
+    const list  = document.getElementById(`comment-list-${postId}`);
+    list.innerHTML = cmts.map(c => `
+      <div style="display:flex;gap:8px;align-items:flex-start;">
+        <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--epsa-green),var(--epsa-gold));display:flex;align-items:center;justify-content:center;color:white;font-size:0.7rem;font-weight:700;flex-shrink:0;">${(c.author_name||'EP').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}</div>
+        <div style="background:var(--light-50);border-radius:12px;padding:8px 12px;flex:1;">
+          <div style="font-weight:600;font-size:0.78rem;">${c.author_name}</div>
+          <div style="font-size:0.83rem;margin-top:2px;">${escHtml(c.content)}</div>
+        </div>
+      </div>
+    `).join('') || '<div style="color:var(--text-muted);font-size:0.82rem;">No comments yet.</div>';
+  }
+}
+
+async function submitComment(postId) {
+  const input   = document.getElementById(`comment-input-${postId}`);
+  const content = input.value.trim();
+  if (!content) return;
+  await authFetch(`/api/network/posts/${postId}/comments`, { method: 'POST', body: JSON.stringify({ content }) });
+  input.value = '';
+  // Re-open comments to refresh
+  document.getElementById(`comments-${postId}`).style.display = 'none';
+  toggleComments(postId);
+}
+
+async function deletePost(postId) {
+  if (!confirm('Delete this post?')) return;
+  await authFetch(`/api/network/posts/${postId}`, { method: 'DELETE' });
+  const el = document.getElementById(`post-${postId}`);
+  if (el) el.remove();
+}
+
+async function submitFeedPost() {
+  const content = (document.getElementById('newPostContent')?.value || '').trim();
+  if (!content) return;
+  const file = document.getElementById('newPostImage')?.files[0];
+  let res;
+  if (file) {
+    const fd = new FormData();
+    fd.append('content', content);
+    fd.append('image', file);
+    res = await fetch(APIB + '/api/network/posts', {
+      method: 'POST', headers: { 'Authorization': 'Bearer ' + getToken() }, body: fd
+    });
+  } else {
+    res = await authFetch('/api/network/posts', { method: 'POST', body: JSON.stringify({ content }) });
+  }
+  const data = await res.json();
+  if (typeof showToast === 'function') showToast(data.message || 'Posted!');
+  document.getElementById('newPostContent').value = '';
+  clearFeedImage();
+  loadFeed(true);
+}
+
+function previewFeedImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const preview = document.getElementById('feedImagePreview');
+  const img     = document.getElementById('feedPreviewImg');
+  img.src = URL.createObjectURL(file);
+  preview.style.display = '';
+}
+
+function clearFeedImage() {
+  document.getElementById('newPostImage').value = '';
+  document.getElementById('feedImagePreview').style.display = 'none';
+  document.getElementById('feedPreviewImg').src = '';
+}
+
+async function loadSuggestedConnections() {
+  const box = document.getElementById('suggestedConnections');
+  if (!box) return;
+  try {
+    const res   = await authFetch('/api/network/suggestions');
+    const data  = await res.json();
+    box.innerHTML = data.length ? data.map(s => `
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--epsa-green),var(--epsa-gold));display:flex;align-items:center;justify-content:center;color:white;font-size:0.8rem;font-weight:700;flex-shrink:0;">
+          ${(s.first_name||'?')[0]}${(s.father_name||'?')[0]}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.first_name} ${s.father_name}</div>
+          <div style="font-size:0.72rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">ðŸ« ${s.university}</div>
+        </div>
+      </div>
+    `).join('') : '<div style="color:var(--text-muted);font-size:0.82rem;">No suggestions right now.</div>';
+  } catch(e) {}
+}
+
+async function loadFeedClubsWidget() {
+  const box = document.getElementById('activeClubsSidebar');
+  if (!box) return;
+  try {
+    const res   = await fetch(APIB + '/api/clubs');
+    const clubs = await res.json();
+    box.innerHTML = clubs.slice(0,5).map(c => `
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:26px;height:26px;border-radius:6px;background:rgba(26,107,60,0.12);display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;">ðŸ›ï¸</div>
+        <div style="min-width:0;">
+          <div style="font-size:0.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name}</div>
+          <div style="font-size:0.7rem;color:var(--text-muted);">ðŸ‘¥ ${c.member_count||0}</div>
+        </div>
+      </div>
+    `).join('') || '<div style="color:var(--text-muted);font-size:0.82rem;">No clubs yet.</div>';
+  } catch(e) {}
+}
+
+// â”€â”€â”€ Club Activities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function loadConsoleActivities(cid) {
+  const box = document.getElementById('consoleActivitiesList');
+  if (!box) return;
+  try {
+    const res  = await fetch(APIB + `/api/clubs/${cid}/activities`);
+    const data = await res.json();
+    box.innerHTML = data.length ? data.map(a => {
+      const typeColors = { event:'#2563eb', announcement:'#d97706', report:'#16a34a' };
+      return `<div style="background:var(--light-50);border-radius:12px;padding:var(--space-3) var(--space-4);border-left:3px solid ${typeColors[a.activity_type]||'#777'};">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <span style="font-weight:700;font-size:0.88rem;">${a.title}</span>
+          <span style="font-size:0.72rem;color:var(--text-muted);">${relTime(a.created_at)}</span>
+        </div>
+        <div style="font-size:0.8rem;color:var(--text-secondary);">${a.content||''}</div>
+      </div>`;
+    }).join('') : '<div style="color:var(--text-muted);font-size:0.85rem;text-align:center;padding:24px;">No activities yet. Post your first one above!</div>';
+  } catch(e) {}
+}
+
+async function submitClubActivity() {
+  const title   = document.getElementById('activityTitle').value.trim();
+  const type    = document.getElementById('activityType').value;
+  const content = document.getElementById('activityContent').value.trim();
+  if (!title) return;
+  const res = await authFetch(`/api/clubs/${_activeClubId}/activities`, {
+    method: 'POST', body: JSON.stringify({ title, activity_type: type, content })
+  });
+  const data = await res.json();
+  if (typeof showToast === 'function') showToast(data.message || data.error, data.error ? 'error' : 'success');
+  document.getElementById('activityTitle').value = '';
+  document.getElementById('activityContent').value = '';
+  loadConsoleActivities(_activeClubId);
+}
+
+// â”€â”€â”€ Financial Report â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function openFinancialReportForm() {
+  const sel = document.getElementById('fr-proposal');
+  sel.innerHTML = '<option value="">Loadingâ€¦</option>';
+  document.getElementById('financialReportModal').classList.add('active');
+  try {
+    const res  = await authFetch(`/api/clubs/${_activeClubId}/proposals`);
+    const data = await res.json();
+    const funded = data.filter(p => p.status === 'funded' || p.status === 'awaiting_verification');
+    sel.innerHTML = funded.length
+      ? funded.map(p => `<option value="${p.id}">${p.title} (ETB ${(p.budget||0).toLocaleString()})</option>`).join('')
+      : '<option value="">No funded proposals available</option>';
+  } catch(e) { sel.innerHTML = '<option value="">Error loading proposals</option>'; }
+}
+
+async function submitFinancialReport(e) {
+  e.preventDefault();
+  const fd = new FormData();
+  fd.append('proposal_id', document.getElementById('fr-proposal').value);
+  fd.append('total_spent', document.getElementById('fr-spent').value);
+  fd.append('summary', document.getElementById('fr-summary').value);
+  const receipt = document.getElementById('fr-receipt').files[0];
+  if (receipt) fd.append('receipt', receipt);
+  const res = await fetch(APIB + `/api/clubs/${_activeClubId}/financial-report`, {
+    method: 'POST', headers: { 'Authorization': 'Bearer ' + getToken() }, body: fd
+  });
+  const data = await res.json();
+  if (typeof showToast === 'function') showToast(data.message || data.error, data.error ? 'error' : 'success');
+  document.getElementById('financialReportModal').classList.remove('active');
+  document.getElementById('finReportForm').reset();
+}
+
+// â”€â”€â”€ Utility â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function escHtml(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function relTime(dateStr) {
+  const d    = new Date(dateStr);
+  const diff = Math.floor((Date.now() - d) / 1000);
+  if (diff < 60)   return 'just now';
+  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+
+// â”€â”€â”€ Hook into section switcher â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const _origSwitch2 = window.switchSection;
+window.switchSection = function(sec) {
+  if (typeof _origSwitch2 === 'function') _origSwitch2(sec);
+  if (sec === 'clubs')      loadMyClubs();
+  if (sec === 'networking') {
+    loadFeed(true);
+    loadSuggestedConnections();
+    loadFeedClubsWidget();
+  }
+};
+</script>
+
+  <!-- â•â• MOCK EXAMS SECTION â•â• -->
+  <style>
+    .mock-shell{
+      position:relative;
+      overflow:hidden;
+    }
+    .mock-shell::before{
+      content:"";
+      position:absolute;
+      inset:0 0 auto 0;
+      height:240px;
+      background:
+        radial-gradient(circle at top left, rgba(26,107,60,0.18), transparent 48%),
+        radial-gradient(circle at top right, rgba(200,163,64,0.18), transparent 44%),
+        linear-gradient(180deg, rgba(15,23,42,0.96), rgba(15,23,42,0));
+      pointer-events:none;
+      border-radius:32px;
+    }
+    .mock-hero{
+      position:relative;
+      z-index:1;
+      display:flex;
+      justify-content:space-between;
+      gap:18px;
+      flex-wrap:wrap;
+      padding:28px;
+      border-radius:28px;
+      background:linear-gradient(135deg, rgba(15,23,42,0.98), rgba(16,94,56,0.92));
+      box-shadow:0 24px 54px rgba(15,23,42,0.18);
+      margin-bottom:22px;
+      color:#fff;
+    }
+    .mock-hero h2{font-family:var(--font-display);font-size:1.55rem;font-weight:800;margin-bottom:10px}
+    .mock-hero p{max-width:620px;color:rgba(255,255,255,0.78);font-size:0.92rem;line-height:1.75}
+    .mock-shell .section-header{position:relative;z-index:1;padding:28px;border-radius:28px;background:linear-gradient(135deg, rgba(15,23,42,0.98), rgba(16,94,56,0.92));box-shadow:0 24px 54px rgba(15,23,42,0.18);margin-bottom:22px;color:#fff}
+    .mock-shell .section-header h2{font-family:var(--font-display);font-size:1.55rem;font-weight:800;margin-bottom:10px;color:#fff}
+    .mock-shell .section-header .section-desc{max-width:620px;color:rgba(255,255,255,0.78);font-size:0.92rem;line-height:1.75}
+    .mock-hero-metrics{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start}
+    .mock-hero-metric{min-width:132px;padding:14px 16px;border-radius:18px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.10);backdrop-filter:blur(10px)}
+    .mock-hero-metric strong{display:block;font-size:1.15rem;font-weight:800;color:#f8fafc}
+    .mock-hero-metric span{display:block;margin-top:6px;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.66)}
+    .mock-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px;margin-bottom:28px;position:relative;z-index:1}
+    .mock-empty{grid-column:1/-1;text-align:center;padding:56px 24px;border-radius:24px;border:1px dashed rgba(26,107,60,0.18);background:rgba(255,255,255,0.82);color:var(--text-muted)}
+  </style>
+  <div id="section-mock-exams" class="dash-section mock-shell" style="display:none">
+    <div class="section-header">
+      <h2>ðŸŽ¯ Mock Examinations</h2>
+      <p class="section-desc">Practice with randomized questions from the national question bank. Results are released after the exam window closes.</p>
+    </div>
+
+    <!-- Exam cards list -->
+    <div id="mockExamCards" class="mock-card-grid">
+      <div style="text-align:center;color:var(--text-muted);padding:40px;grid-column:1/-1">Loading examsâ€¦</div>
+    </div>
+  </div>
+
+  <!-- â•â• MOCK EXAM FULLSCREEN UI â•â• -->
+  <div id="mockExamFullscreen" style="display:none;position:fixed;inset:0;background:#071f10;z-index:9000;flex-direction:column;font-family:Outfit,sans-serif">
+    <!-- Header bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(0,0,0,.4);border-bottom:1px solid rgba(34,197,94,.15);flex-shrink:0">
+      <div>
+        <div id="meExamTitle" style="font-weight:800;font-size:1.05rem;color:#f0fdf4"></div>
+        <div id="meProgress" style="font-size:.8rem;color:#86efac;margin-top:2px"></div>
+      </div>
+      <div id="meTimer" style="font-size:1.4rem;font-weight:800;color:#22c55e;font-variant-numeric:tabular-nums;background:rgba(34,197,94,.1);padding:8px 18px;border-radius:10px;border:1px solid rgba(34,197,94,.2)">00:00</div>
+      <button onclick="confirmSubmitExam()" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-size:.9rem;font-weight:700;cursor:pointer">Submit Exam</button>
+    </div>
+
+    <!-- Question navigator -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;padding:12px 24px;background:rgba(0,0,0,.2);border-bottom:1px solid rgba(34,197,94,.08);flex-shrink:0;overflow-y:auto;max-height:90px" id="meQNav"></div>
+
+    <!-- Question area -->
+    <div style="flex:1;overflow-y:auto;padding:32px 24px;max-width:860px;margin:0 auto;width:100%">
+      <div id="meQuestionArea">
+        <div style="color:#86efac;text-align:center;padding:60px">Loading questionâ€¦</div>
+      </div>
+    </div>
+
+    <!-- Bottom nav -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(0,0,0,.4);border-top:1px solid rgba(34,197,94,.08);flex-shrink:0">
+      <button id="mePrevBtn" onclick="meNavigate(-1)" style="background:rgba(255,255,255,.07);color:#86efac;border:1px solid rgba(34,197,94,.2);padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-weight:600;cursor:pointer">â† Prev</button>
+      <span id="meQLabel" style="color:#86efac;font-size:.9rem"></span>
+      <button id="meNextBtn" onclick="meNavigate(1)" style="background:rgba(255,255,255,.07);color:#86efac;border:1px solid rgba(34,197,94,.2);padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-weight:600;cursor:pointer">Next â†’</button>
+    </div>
+  </div>
+
+  <!-- â•â• MOCK EXAM RESULTS MODAL â•â• -->
+  <div id="mockResultsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9500;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto">
+    <div style="background:#0a2e18;border:1px solid rgba(34,197,94,.2);border-radius:20px;padding:32px;width:100%;max-width:720px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h2 style="font-size:1.3rem;font-weight:800;color:#f0fdf4">ðŸ“Š Exam Results</h2>
+        <button onclick="document.getElementById('mockResultsModal').style.display='none'" style="background:rgba(255,255,255,.07);border:1px solid rgba(34,197,94,.15);color:#86efac;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.1rem">âœ•</button>
+      </div>
+      <div id="mockResultsContent" style="color:#86efac;text-align:center;padding:40px">Loadingâ€¦</div>
+    </div>
+  </div>
+
+  <script>
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  //   MOCK EXAM ENGINE
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  const ME = {
+    examId: null, submissionId: null, questions: [], answers: {},
+    timesPerQ: {}, currentIdx: 0, timerInterval: null, totalSecs: 0,
+    elapsedSecs: 0, qStartTime: null, saveInterval: null,
+  };
+
+  // Load and render exam cards
+  async function loadMockExams() {
+    const container = document.getElementById('mockExamCards');
+    if (!container) return;
+    try {
+      const data = await API.listMockExams();
+      const exams = data.exams || [];
+      if (!exams.length) {
+        container.innerHTML = '<div style="text-align:center;color:#86efac;padding:60px;grid-column:1/-1;opacity:.6"><div style="font-size:2.5rem;margin-bottom:12px">ðŸ“­</div><div style="font-weight:700">No mock exams available right now</div><div style="font-size:.85rem;margin-top:6px">Check back when an exam window opens.</div></div>';
+        return;
+      }
+      container.innerHTML = exams.map(e => renderMockExamCard(e)).join('');
+    } catch(err) {
+      container.innerHTML = '<div style="text-align:center;color:#f87171;padding:40px;grid-column:1/-1">' + (err.message || 'Failed to load exams') + '</div>';
+    }
+  }
+
+  function renderMockExamCard(e) {
+    const statusColor = e.is_open ? '#22c55e' : (e.is_submitted ? '#3b82f6' : '#f59e0b');
+    const statusLabel = e.is_submitted ? 'Submitted' : (e.is_open ? 'Open Now' : 'Scheduled');
+    const btnHtml = e.can_start
+      ? `<button onclick="startMockExam(${e.id})" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-weight:700;cursor:pointer;width:100%;margin-top:16px">ðŸŽ¯ Start Exam</button>`
+      : e.can_continue
+      ? `<button onclick="startMockExam(${e.id})" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-weight:700;cursor:pointer;width:100%;margin-top:16px">â–¶ï¸ Continue Exam</button>`
+      : e.results_viewable
+      ? `<button onclick="viewMockResults(${e.id})" style="background:rgba(59,130,246,.15);color:#3b82f6;border:1px solid rgba(59,130,246,.3);padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-weight:700;cursor:pointer;width:100%;margin-top:16px">ðŸ“Š View My Results</button>`
+      : e.is_submitted
+      ? `<div style="text-align:center;color:#86efac;margin-top:16px;font-size:.85rem">âœ… Submitted â€” Results pending release</div>`
+      : `<div style="text-align:center;color:#86efac;margin-top:16px;font-size:.85rem">â³ Exam not yet open</div>`;
+
+    return `<div style="background:rgba(255,255,255,.04);border:1px solid rgba(34,197,94,.16);border-radius:16px;padding:22px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <h3 style="font-size:1rem;font-weight:700;color:#f0fdf4;line-height:1.3">${escHtml(e.title)}</h3>
+        <span style="background:rgba(0,0,0,.3);color:${statusColor};border:1px solid ${statusColor}44;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;margin-left:8px">${statusLabel}</span>
+      </div>
+      ${e.description ? `<p style="font-size:.83rem;color:#86efac;margin-bottom:12px">${escHtml(e.description)}</p>` : ''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.8rem;color:#86efac">
+        <div>ðŸ“ ${e.question_count} questions</div>
+        <div>â±ï¸ ${e.duration_mins} minutes</div>
+        ${e.my_score != null ? `<div style="grid-column:1/-1;color:#22c55e;font-weight:700">Your score: ${e.my_score}%</div>` : ''}
+      </div>
+      ${btnHtml}
+    </div>`;
+  }
+
+  function renderMockExamCard(e) {
+    const statusColor = e.is_open ? '#16a34a' : (e.is_submitted ? '#2563eb' : '#d97706');
+    const statusLabel = e.is_submitted ? 'Submitted' : (e.is_open ? 'Open Now' : 'Scheduled');
+    const action = e.can_start
+      ? `<button onclick="startMockExam(${e.id})" style="background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:none;padding:12px 18px;border-radius:14px;font-family:Outfit,sans-serif;font-weight:800;cursor:pointer;width:100%;margin-top:18px;box-shadow:0 16px 24px rgba(22,163,74,.22)">Start Exam</button>`
+      : e.can_continue
+      ? `<button onclick="startMockExam(${e.id})" style="background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;border:none;padding:12px 18px;border-radius:14px;font-family:Outfit,sans-serif;font-weight:800;cursor:pointer;width:100%;margin-top:18px;box-shadow:0 16px 24px rgba(217,119,6,.20)">Continue Exam</button>`
+      : e.results_viewable
+      ? `<button onclick="viewMockResults(${e.id})" style="background:rgba(37,99,235,.10);color:#1d4ed8;border:1px solid rgba(37,99,235,.18);padding:12px 18px;border-radius:14px;font-family:Outfit,sans-serif;font-weight:800;cursor:pointer;width:100%;margin-top:18px">View My Results</button>`
+      : e.is_submitted
+      ? `<div style="text-align:center;color:#166534;margin-top:18px;font-size:.84rem;font-weight:700;background:rgba(22,163,74,.08);border-radius:14px;padding:12px 14px;border:1px solid rgba(22,163,74,.12)">Submitted. Results pending release.</div>`
+      : `<div style="text-align:center;color:#92400e;margin-top:18px;font-size:.84rem;font-weight:700;background:rgba(245,158,11,.10);border-radius:14px;padding:12px 14px;border:1px solid rgba(245,158,11,.18)">Exam window not yet open.</div>`;
+
+    return `<article style="background:linear-gradient(180deg,#ffffff,#f8fbf9);border:1px solid rgba(26,107,60,.10);border-radius:24px;padding:22px;box-shadow:0 20px 42px rgba(15,23,42,.08);display:flex;flex-direction:column;min-height:100%">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px">
+        <div>
+          <div style="font-size:.73rem;color:#185c35;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">EPSA Practice</div>
+          <h3 style="font-size:1.02rem;font-weight:800;color:#0f172a;line-height:1.35">${escHtml(e.title)}</h3>
+        </div>
+        <span style="background:${statusColor}14;color:${statusColor};border:1px solid ${statusColor}22;font-size:.72rem;font-weight:800;padding:6px 10px;border-radius:999px;white-space:nowrap">${statusLabel}</span>
+      </div>
+      ${e.description ? `<p style="font-size:.84rem;color:#475569;line-height:1.7;margin-bottom:16px">${escHtml(e.description)}</p>` : '<p style="font-size:.84rem;color:#64748b;line-height:1.7;margin-bottom:16px">Timed mock assessment assembled from the reviewed national question bank.</p>'}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <div style="padding:12px 14px;border-radius:16px;background:rgba(26,107,60,.06);border:1px solid rgba(26,107,60,.08)"><div style="font-size:.7rem;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Questions</div><div style="font-size:1rem;font-weight:800;color:#0f172a">${e.question_count}</div></div>
+        <div style="padding:12px 14px;border-radius:16px;background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.08)"><div style="font-size:.7rem;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Duration</div><div style="font-size:1rem;font-weight:800;color:#0f172a">${e.duration_mins} min</div></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:.76rem;color:#475569;margin-top:auto">
+        ${e.my_score != null ? `<span style="padding:5px 10px;border-radius:999px;background:rgba(22,163,74,.10);color:#166534;font-weight:800">Score ${e.my_score}%</span>` : ''}
+        ${e.scheduled_at ? `<span style="padding:5px 10px;border-radius:999px;background:rgba(15,23,42,.05);color:#475569;font-weight:700">Opens ${new Date(e.scheduled_at).toLocaleDateString()}</span>` : ''}
+      </div>
+      ${action}
+    </article>`;
+  }
+
+  function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  // Start or resume exam
+  async function startMockExam(examId) {
+    try {
+      showToast('Preparing examâ€¦', 'info');
+      const data = await API.startMockExam(examId);
+      ME.examId = examId;
+      ME.submissionId = data.submission_id;
+      ME.questions = data.questions || [];
+      ME.answers = data.answers || {};
+      ME.timesPerQ = {};
+      ME.currentIdx = 0;
+      ME.totalSecs = (data.duration_mins || 120) * 60;
+      ME.elapsedSecs = data.elapsed_secs || 0;
+      ME.qStartTime = Date.now();
+      openExamFullscreen(data);
+    } catch(err) {
+      showToast(err.message || 'Could not start exam', 'error');
+    }
+  }
+
+  function openExamFullscreen(data) {
+    const fs = document.getElementById('mockExamFullscreen');
+    fs.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    document.getElementById('meExamTitle').textContent = 'EPSA Mock Exam';
+    buildQNav();
+    renderMeQuestion(0);
+    startMeTimer();
+    // Auto-save every 30s
+    ME.saveInterval = setInterval(saveProgress, 30000);
+  }
+
+  function buildQNav() {
+    const nav = document.getElementById('meQNav');
+    nav.innerHTML = ME.questions.map((q, i) => {
+      const answered = ME.answers[String(q.id)] !== undefined;
+      return `<button id="meQBtn${i}" onclick="meGoTo(${i})" style="width:32px;height:32px;border-radius:6px;border:1px solid rgba(34,197,94,${answered?'.5':'.15'});background:${answered?'rgba(34,197,94,.2)':'rgba(255,255,255,.04)'};color:${answered?'#22c55e':'#86efac'};font-size:.78rem;font-weight:700;cursor:pointer;transition:.15s">${i+1}</button>`;
+    }).join('');
+  }
+
+  function renderMeQuestion(idx) {
+    ME.currentIdx = idx;
+    const q = ME.questions[idx];
+    if (!q) return;
+    const total = ME.questions.length;
+    const answeredCount = Object.keys(ME.answers).length;
+    document.getElementById('meProgress').textContent = `Question ${idx+1} of ${total} Â· ${answeredCount} answered`;
+    document.getElementById('meQLabel').textContent = `${idx+1} / ${total}`;
+    document.getElementById('mePrevBtn').disabled = idx === 0;
+    document.getElementById('meNextBtn').disabled = idx === total - 1;
+    document.getElementById('meNextBtn').textContent = idx === total - 1 ? 'Last Question' : 'Next â†’';
+
+    const selected = ME.answers[String(q.id)];
+    const optLetters = ['A','B','C','D'];
+    document.getElementById('meQuestionArea').innerHTML = `
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(34,197,94,.12);border-radius:14px;padding:24px;margin-bottom:20px">
+        <div style="font-size:.78rem;color:#86efac;margin-bottom:10px;font-weight:600">QUESTION ${idx+1}</div>
+        <div style="font-size:1.05rem;font-weight:600;line-height:1.6;color:#f0fdf4">${escHtml(q.question_text)}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${q.options.map((opt, oi) => `
+          <button onclick="meSelectAnswer(${q.id}, ${oi})" style="text-align:left;padding:14px 18px;border-radius:12px;border:1px solid ${selected===oi?'rgba(34,197,94,.6)':'rgba(34,197,94,.15)'};background:${selected===oi?'rgba(34,197,94,.15)':'rgba(255,255,255,.035)'};color:${selected===oi?'#22c55e':'#f0fdf4'};font-family:Outfit,sans-serif;font-size:.93rem;cursor:pointer;transition:.18s;display:flex;align-items:flex-start;gap:12px">
+            <span style="width:24px;height:24px;border-radius:50%;background:${selected===oi?'rgba(34,197,94,.3)':'rgba(255,255,255,.08)'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.78rem;flex-shrink:0">${optLetters[oi]}</span>
+            ${escHtml(opt)}
+          </button>`).join('')}
+      </div>`;
+    ME.qStartTime = Date.now();
+  }
+
+  function meSelectAnswer(qid, optIdx) {
+    // Track time on question
+    const elapsed = Math.round((Date.now() - ME.qStartTime) / 1000);
+    ME.timesPerQ[String(qid)] = (ME.timesPerQ[String(qid)] || 0) + elapsed;
+    ME.answers[String(qid)] = optIdx;
+    ME.qStartTime = Date.now();
+    buildQNav();
+    renderMeQuestion(ME.currentIdx);
+  }
+
+  function meNavigate(dir) {
+    const newIdx = ME.currentIdx + dir;
+    if (newIdx >= 0 && newIdx < ME.questions.length) {
+      ME.qStartTime = Date.now();
+      renderMeQuestion(newIdx);
+    }
+  }
+
+  function meGoTo(idx) {
+    ME.qStartTime = Date.now();
+    renderMeQuestion(idx);
+  }
+
+  function startMeTimer() {
+    clearInterval(ME.timerInterval);
+    let remaining = ME.totalSecs - ME.elapsedSecs;
+    const el = document.getElementById('meTimer');
+    ME.timerInterval = setInterval(() => {
+      remaining--;
+      if (remaining <= 0) {
+        clearInterval(ME.timerInterval);
+        el.textContent = '00:00';
+        el.style.color = '#f87171';
+        autoSubmitExam();
+        return;
+      }
+      const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+      const s = (remaining % 60).toString().padStart(2, '0');
+      el.textContent = m + ':' + s;
+      if (remaining < 300) el.style.color = '#f87171';
+      else if (remaining < 600) el.style.color = '#f59e0b';
+    }, 1000);
+  }
+
+  async function saveProgress() {
+    if (!ME.examId) return;
+    try {
+      await API.saveMockProgress(ME.examId, { answers: ME.answers, time_per_question: ME.timesPerQ });
+    } catch(e) {}
+  }
+
+  function confirmSubmitExam() {
+    if (!confirm('Submit your exam now? You cannot change answers after submission.')) return;
+    submitExam(false);
+  }
+  async function autoSubmitExam() {
+    showToast('Time is up! Your exam is being auto-submittedâ€¦', 'gold');
+    await submitExam(true);
+  }
+
+  async function submitExam(auto = false) {
+    clearInterval(ME.timerInterval);
+    clearInterval(ME.saveInterval);
+    ME.timerInterval = null;
+    ME.saveInterval = null;
+    try {
+      const result = await API.submitMockExam(ME.examId, {
+        answers: ME.answers,
+        time_per_question: ME.timesPerQ,
+        auto_submit: auto,
+      });
+      closeExamFullscreen();
+      showToast(`Exam submitted! Score: ${result.score}% (${result.correct}/${result.total})`, 'success');
+      loadMockExams();
+    } catch(err) {
+      showToast(err.message || 'Submit failed', 'error');
+    }
+  }
+
+  function closeExamFullscreen() {
+    document.getElementById('mockExamFullscreen').style.display = 'none';
+    document.body.style.overflow = '';
+    ME.examId = null;
+    ME.questions = [];
+    ME.answers = {};
+  }
+
+  // View results
+  async function viewMockResults(examId) {
+    const modal = document.getElementById('mockResultsModal');
+    const content = document.getElementById('mockResultsContent');
+    modal.style.display = 'flex';
+    content.innerHTML = '<div style="color:#86efac;padding:40px;text-align:center">Loadingâ€¦</div>';
+    try {
+      const data = await API.getMockResults(examId);
+      const pct = data.score || 0;
+      const color = pct >= 70 ? '#22c55e' : pct >= 50 ? '#f59e0b' : '#f87171';
+      content.innerHTML = `
+        <div style="text-align:center;margin-bottom:24px">
+          <div style="font-size:3rem;font-weight:800;color:${color}">${pct}%</div>
+          <div style="color:#86efac;font-size:.9rem;margin-top:6px">${data.correct} correct out of ${data.total} questions</div>
+          <div style="color:#86efac;font-size:.8rem;margin-top:4px">${data.exam_title}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;max-height:400px;overflow-y:auto">
+          ${(data.breakdown || []).map((b, i) => `
+            <div style="background:rgba(${b.correct?'34,197,94':'248,113,113'},.07);border:1px solid rgba(${b.correct?'34,197,94':'248,113,113'},.2);border-radius:10px;padding:14px">
+              <div style="font-size:.82rem;font-weight:600;color:#f0fdf4;margin-bottom:6px">${i+1}. ${escHtml(b.question_text)}</div>
+              <div style="font-size:.78rem;color:${b.correct?'#22c55e':'#f87171'}">${b.correct?'âœ… Correct':'âŒ Incorrect'}</div>
+              ${b.explanation ? `<div style="font-size:.75rem;color:#86efac;margin-top:6px;font-style:italic">${escHtml(b.explanation)}</div>` : ''}
+            </div>`).join('')}
+        </div>`;
+    } catch(err) {
+      content.innerHTML = '<div style="color:#f87171;padding:40px;text-align:center">' + (err.message || 'Failed to load results') + '</div>';
+    }
+  }
+
+  // Hook into the existing switchSection function without shadowing it locally.
+  const previousSwitchSection = window.switchSection;
+  window.switchSection = function(name) {
+    if (typeof previousSwitchSection === 'function') {
+      previousSwitchSection(name);
+    } else {
+      document.querySelectorAll('.dash-section').forEach(s => s.style.display = 'none');
+      const target = document.getElementById('sec-' + name) || document.getElementById('section-' + name);
+      if (target) target.style.display = 'block';
+      document.querySelectorAll('.sidebar-link').forEach((button) => {
+        button.classList.toggle('active', button.dataset.section === name);
+      });
+    }
+    if (name === 'mock-exams') loadMockExams();
+  };
+  </script>
+
+</body>
+</html>
+

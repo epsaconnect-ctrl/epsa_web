@@ -1,0 +1,15 @@
+flask
+flask-cors
+flask-jwt-extended
+flask-socketio
+werkzeug
+pillow
+python-dotenv
+eventlet
+boto3
+gunicorn
+psycopg[binary]
+pyotp
+numpy
+opencv-python-headless
+requests

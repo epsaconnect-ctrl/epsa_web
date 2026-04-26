@@ -1,0 +1,421 @@
+/* ═══════════════════════════════════════════
+   EPSA ENHANCED NETWORKING — LinkedIn-style Professional Networking
+   ═══════════════════════════════════════════ */
+
+/* ─── NETWORKING LAYOUT ───────────────────────────── */
+.networking-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-6);
+}
+
+.networking-header {
+  background: linear-gradient(135deg, var(--epsa-green), var(--epsa-green-dark));
+  color: white;
+  padding: var(--space-8) var(--space-6);
+  border-radius: var(--radius-xl);
+  margin-bottom: var(--space-6);
+  text-align: center;
+}
+
+.networking-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: var(--space-2);
+}
+
+.networking-subtitle {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin-bottom: var(--space-4);
+}
+
+/* ─── NETWORKING STATS ─────────────────────────── */
+.networking-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.stat-card {
+  background: white;
+  border: 1px solid var(--light-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  text-align: center;
+  transition: var(--transition-normal);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--epsa-green);
+  margin-bottom: var(--space-2);
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* ─── CONNECTIONS SECTION ───────────────────── */
+.connections-section {
+  background: white;
+  border: 1px solid var(--light-200);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-5);
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.view-toggle {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.toggle-btn {
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--light-200);
+  background: white;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition-normal);
+  font-size: 0.875rem;
+}
+
+.toggle-btn.active {
+  background: var(--epsa-green);
+  color: white;
+  border-color: var(--epsa-green);
+}
+
+/* ─── PROFESSIONAL CARDS ───────────────────── */
+.professional-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-5);
+}
+
+.professional-card {
+  background: white;
+  border: 1px solid var(--light-200);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: var(--transition-normal);
+}
+
+.professional-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.professional-header {
+  padding: var(--space-5);
+  background: linear-gradient(135deg, var(--light-100), white);
+  border-bottom: 1px solid var(--light-200);
+}
+
+.professional-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--epsa-green);
+  margin-bottom: var(--space-3);
+}
+
+.professional-info {
+  flex: 1;
+}
+
+.professional-name {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.professional-title {
+  font-size: 0.9rem;
+  color: var(--epsa-green);
+  margin-bottom: var(--space-1);
+}
+
+.professional-university {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-3);
+}
+
+.professional-bio {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-line-clamp: 3;
+  -ms-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.professional-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.tag {
+  background: var(--light-100);
+  color: var(--text-secondary);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.professional-actions {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-top: 1px solid var(--light-200);
+}
+
+.action-btn {
+  flex: 1;
+  padding: var(--space-3);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-weight: 600;
+  transition: var(--transition-normal);
+  text-align: center;
+}
+
+.action-btn.primary {
+  background: var(--epsa-green);
+  color: white;
+}
+
+.action-btn.primary:hover {
+  background: var(--epsa-green-dark);
+}
+
+.action-btn.secondary {
+  background: white;
+  color: var(--epsa-green);
+  border: 1px solid var(--epsa-green);
+}
+
+.action-btn.secondary:hover {
+  background: var(--epsa-green);
+  color: white;
+}
+
+/* ─── MESSAGING INTEGRATION ───────────────── */
+.messaging-section {
+  background: white;
+  border: 1px solid var(--light-200);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+}
+
+.conversation-list {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--light-200);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+}
+
+.conversation-item {
+  display: flex;
+  align-items: center;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--light-100);
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.conversation-item:hover {
+  background: var(--light-50);
+}
+
+.conversation-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: var(--space-3);
+}
+
+.conversation-info {
+  flex: 1;
+}
+
+.conversation-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.conversation-preview {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.conversation-time {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ─── IN-NETWORK CONVERSATION STRIP ─────────── */
+.network-conv-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border: none;
+  border-bottom: 1px solid var(--light-100);
+  background: var(--light-50);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: background 0.15s ease;
+}
+.network-conv-row:hover {
+  background: rgba(26, 107, 60, 0.06);
+}
+.network-conv-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.8rem;
+  color: #fff;
+  background: linear-gradient(135deg, var(--epsa-green), var(--epsa-green-dark));
+}
+.network-conv-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.network-conv-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-size: 0.88rem;
+}
+.network-conv-time {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.network-conv-preview {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.network-unread-pill {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--epsa-green);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── RESPONSIVE ───────────────────────────── */
+@media (max-width: 768px) {
+  .networking-container {
+    padding: var(--space-4);
+  }
+  
+  .networking-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+  }
+  
+  .professional-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+  
+  .professional-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .professional-avatar {
+    width: 64px;
+    height: 64px;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    gap: var(--space-3);
+    align-items: flex-start;
+  }
+  
+  .view-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .networking-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .professional-actions {
+    flex-direction: column;
+  }
+  
+  .action-btn {
+    margin-bottom: var(--space-2);
+  }
+}

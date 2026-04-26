@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Explore the EPSA ecosystem: clubs, partners, grants, and pathways to get involved.">
+  <title>EPSA Ecosystem</title>
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="stylesheet" href="css/globals.css">
+  <link rel="stylesheet" href="css/home.css">
+  <link rel="stylesheet" href="css/ecosystem-enhancements.css">
+  <link rel="stylesheet" href="css/public-pages-polish.css">
+  <style>
+    body.hub-page {
+      background:
+        radial-gradient(circle at 12% 10%, rgba(200, 163, 64, 0.12), transparent 24%),
+        radial-gradient(circle at 84% 14%, rgba(26, 107, 60, 0.18), transparent 28%),
+        linear-gradient(180deg, #041008 0%, #08140d 42%, #050b08 100%);
+      color: rgba(255,255,255,0.96);
+    }
+    .hub-hero {
+      padding: 128px 0 74px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hub-hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.18fr) minmax(320px, 0.82fr);
+      gap: 30px;
+      align-items: stretch;
+    }
+    .hub-display {
+      font-size: clamp(2.8rem, 5vw, 5rem);
+      line-height: 1.02;
+      margin-bottom: 18px;
+      letter-spacing: -0.03em;
+    }
+    .hub-display span {
+      display: block;
+      background: linear-gradient(135deg, #f1d183 0%, #84dd9f 52%, #cfaa4d 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hub-subtitle {
+      max-width: 700px;
+      color: rgba(238, 245, 240, 0.84);
+      font-size: 1.05rem;
+      line-height: 1.82;
+    }
+    .hub-rail {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 34px;
+    }
+    .hub-rail-card,
+    .hub-card,
+    .hub-side-panel,
+    .hub-spotlight-panel,
+    .hub-spotlight-list {
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04));
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 24px 70px rgba(0,0,0,0.28);
+      backdrop-filter: blur(18px);
+    }
+    .hub-rail-card {
+      padding: 20px 22px;
+    }
+    .hub-rail-card strong,
+    .hub-panel-kicker {
+      display: block;
+      font-size: 0.76rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--epsa-gold);
+      margin-bottom: 10px;
+      font-weight: 800;
+    }
+    .hub-rail-card p {
+      color: rgba(239,245,241,0.82);
+      font-size: 0.91rem;
+      line-height: 1.68;
+      margin: 0;
+    }
+    .hub-side-panel {
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hub-side-panel::before {
+      content: "";
+      position: absolute;
+      right: -24px;
+      top: -18px;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(200,163,64,0.22), transparent 70%);
+      pointer-events: none;
+    }
+    .hub-panel-title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+    .hub-panel-copy {
+      color: rgba(237, 244, 239, 0.8);
+      line-height: 1.72;
+      font-size: 0.95rem;
+      margin-bottom: 22px;
+    }
+    .hub-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .hub-metric {
+      border-radius: 20px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 16px;
+    }
+    .hub-metric-label {
+      font-size: 0.74rem;
+      color: rgba(255,255,255,0.74);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    .hub-metric-value {
+      font-family: var(--font-display);
+      font-size: 1.95rem;
+      font-weight: 900;
+    }
+    .hub-cards {
+      margin-top: 8px;
+      margin-bottom: 32px;
+    }
+    .hub-card {
+      padding: 30px;
+    }
+    .hub-card h3 {
+      font-size: 1.42rem;
+      margin: 16px 0 12px;
+    }
+    .hub-card p {
+      color: rgba(238,245,240,0.82);
+      line-height: 1.75;
+      font-size: 0.96rem;
+    }
+    .hub-spotlight {
+      max-width: 1240px;
+      margin: 0 auto 90px;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.14fr) minmax(300px, 0.86fr);
+      gap: 22px;
+    }
+    .hub-spotlight-panel,
+    .hub-spotlight-list {
+      padding: 28px;
+    }
+    .hub-spotlight-panel h2,
+    .hub-spotlight-list h3 {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      margin-bottom: 14px;
+    }
+    .hub-spotlight-panel p,
+    .hub-spotlight-list p {
+      color: rgba(238,245,240,0.8);
+      line-height: 1.78;
+      margin-bottom: 18px;
+    }
+    .hub-list-item {
+      padding: 16px 0;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .hub-list-item:first-of-type {
+      border-top: 0;
+      padding-top: 0;
+    }
+    .hub-list-item strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.95rem;
+    }
+    .hub-list-item span {
+      display: block;
+      color: rgba(232,240,234,0.74);
+      font-size: 0.89rem;
+      line-height: 1.62;
+    }
+    @media (max-width: 980px) {
+      .hub-hero-grid,
+      .hub-rail,
+      .hub-spotlight {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 640px) {
+      .hub-hero {
+        padding: 112px 0 58px;
+      }
+      .hub-side-panel,
+      .hub-card,
+      .hub-spotlight-panel,
+      .hub-spotlight-list {
+        padding: 22px;
+      }
+    }
+  </style>
+</head>
+<body class="hub-page">
+  <nav class="navbar scrolled" style="background:rgba(5,14,7,0.92);">
+    <div class="container">
+      <div class="nav-inner">
+        <a href="index.html" class="nav-logo">
+          <img src="assets/logo.png" alt="EPSA Logo">
+          <div class="nav-logo-text">
+            <span class="nav-logo-main">EPSA</span>
+            <span class="nav-logo-sub">Ecosystem Hub</span>
+          </div>
+        </a>
+        <ul class="nav-menu" role="list">
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="ecosystem.html" class="nav-link" style="background:rgba(255,255,255,0.08);color:white;">Ecosystem</a></li>
+          <li><a href="login.html" class="nav-link">Student Portal</a></li>
+          <li><a href="admin/login.html" class="nav-link">Admin</a></li>
+        </ul>
+        <div class="nav-actions">
+          <button class="nav-btn-login" onclick="window.location.href='login.html'">Login</button>
+          <button class="nav-btn-register" onclick="window.location.href='register.html'">Register</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <section class="hub-hero">
+    <div class="container">
+      <div class="hub-hero-grid">
+        <div>
+          <div class="section-label" style="color:var(--epsa-gold);">EPSA Ecosystem</div>
+          <h1 class="hub-display">One place to explore <span>clubs, partners, grants, and participation</span>.</h1>
+          <p class="hub-subtitle">This hub now acts like a proper front door to the public EPSA experience. Students can discover verified clubs, institutions can understand partnership opportunities, and visitors can follow how participation and grants fit into one connected platform.</p>
+          <div class="hero-actions" style="margin-top:24px;">
+            <button class="btn btn-gold btn-lg" onclick="window.location.href='clubs.html'">Browse Clubs</button>
+            <button class="btn btn-secondary btn-lg" onclick="window.location.href='get-involved.html'">Get Involved</button>
+          </div>
+          <div class="hub-rail">
+            <div class="hub-rail-card">
+              <strong>Discover</strong>
+              <p>See the public face of the national club network, leadership structure, and campus activity.</p>
+            </div>
+            <div class="hub-rail-card">
+              <strong>Collaborate</strong>
+              <p>Review the organizations and institutions supporting EPSA through partnership and grants.</p>
+            </div>
+            <div class="hub-rail-card">
+              <strong>Participate</strong>
+              <p>Understand the path for students, club presidents, funders, and strategic partners.</p>
+            </div>
+          </div>
+        </div>
+        <div class="hub-side-panel">
+          <div class="hub-panel-kicker">National snapshot</div>
+          <div class="hub-panel-title">A clearer, more readable entry point into the EPSA network.</div>
+          <div class="hub-panel-copy">The ecosystem page is meant to orient someone quickly without burying them in tiny low-contrast text. The design now emphasizes scale, trust, and the three main branches of the public platform.</div>
+          <div class="hub-metrics">
+            <div class="hub-metric">
+              <div class="hub-metric-label">Verified Clubs</div>
+              <div class="hub-metric-value">30+</div>
+            </div>
+            <div class="hub-metric">
+              <div class="hub-metric-label">Partners</div>
+              <div class="hub-metric-value">15+</div>
+            </div>
+            <div class="hub-metric">
+              <div class="hub-metric-label">Grant Pool</div>
+              <div class="hub-metric-value">ETB 500K+</div>
+            </div>
+            <div class="hub-metric">
+              <div class="hub-metric-label">Universities</div>
+              <div class="hub-metric-value">50+</div>
+            </div>
+          </div>
+          <div style="padding:18px;border-radius:20px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:rgba(238,245,240,0.82);line-height:1.68;font-size:0.93rem;">
+            Choose where you want to go next: discover chapters, evaluate collaborators, or learn how to join and apply for support.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="container">
+    <div class="hub-cards">
+      <article class="hub-card">
+        <div class="soft-badge green">Clubs & Associations</div>
+        <h3>Verified university chapters</h3>
+        <p>Explore EPSA clubs by university, see their leadership, recent activity, and membership strength, then jump into the student portal to follow or apply if you belong to the same campus.</p>
+        <div class="hub-card-actions">
+          <a href="clubs.html" class="btn btn-primary btn-sm">Open Clubs</a>
+          <a href="login.html" class="btn btn-ghost btn-sm">Student Login</a>
+        </div>
+      </article>
+      <article class="hub-card">
+        <div class="soft-badge blue">Partners & Collaboration</div>
+        <h3>Clinical, academic, and NGO partners</h3>
+        <p>Review active partnerships, collaboration types, and impact areas. The partner page now serves as a cleaner public portfolio for organizations considering strategic work with EPSA.</p>
+        <div class="hub-card-actions">
+          <a href="partners.html" class="btn btn-primary btn-sm">Open Partners</a>
+          <a href="get-involved.html#partners" class="btn btn-ghost btn-sm">Become a Partner</a>
+        </div>
+      </article>
+      <article class="hub-card">
+        <div class="soft-badge gold">Pathways & Grants</div>
+        <h3>Students, clubs, partners, and funding</h3>
+        <p>Understand how to join EPSA, register a club, apply for grants, and move through transparent proposal and financial verification workflows before signing in.</p>
+        <div class="hub-card-actions">
+          <a href="get-involved.html" class="btn btn-primary btn-sm">Get Involved</a>
+          <a href="register.html" class="btn btn-ghost btn-sm">Register</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="hub-spotlight">
+    <div class="hub-spotlight-panel">
+      <div class="section-label" style="color:var(--epsa-gold); margin-bottom:12px;">Why This Hub Exists</div>
+      <h2>Built to make the EPSA public experience feel connected, trustworthy, and easy to navigate.</h2>
+      <p>Instead of scattering clubs, partners, and participation across disconnected pages, this hub frames the whole ecosystem first and then hands people off to pages with clearer roles, better visual hierarchy, and more professional presentation.</p>
+      <div class="hero-actions" style="margin-top:18px;">
+        <button class="btn btn-primary btn-lg" onclick="window.location.href='partners.html'">Explore Partners</button>
+        <button class="btn btn-secondary btn-lg" onclick="window.location.href='get-involved.html#grants'">View Grant Path</button>
+      </div>
+    </div>
+    <div class="hub-spotlight-list">
+      <h3>Inside this ecosystem</h3>
+      <div class="hub-list-item">
+        <strong>Club discovery</strong>
+        <span>Browse verified university chapters with leadership visibility, activity context, and membership pathways.</span>
+      </div>
+      <div class="hub-list-item">
+        <strong>Partner portfolio</strong>
+        <span>Present EPSA's collaborators with more legitimacy through category, role, and impact storytelling.</span>
+      </div>
+      <div class="hub-list-item">
+        <strong>Participation pathways</strong>
+        <span>Show students, club leaders, and institutions exactly how they enter the platform and contribute.</span>
+      </div>
+    </div>
+  </section>
+  <script src="js/public-ecosystem.js"></script>
+</body>
+</html>

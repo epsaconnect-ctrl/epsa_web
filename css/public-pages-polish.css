@@ -1,0 +1,149 @@
+body {
+  text-rendering: optimizeLegibility;
+}
+
+.navbar-dark,
+.navbar {
+  box-shadow: 0 14px 30px rgba(0,0,0,0.16);
+}
+
+.nav-link-item,
+.nav-link {
+  font-weight: 600 !important;
+}
+
+.clubs-hero p,
+.partners-hero p,
+.gi-hero p,
+.hub-subtitle {
+  color: rgba(255,255,255,0.82) !important;
+  font-size: 1.02rem !important;
+}
+
+.clubs-grid-section,
+.partners-section,
+.paths-section,
+.faq-section {
+  position: relative;
+}
+
+.clubs-grid-section::before,
+.partners-section::before,
+.paths-section::before,
+.faq-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at top right, rgba(200,163,64,0.06), transparent 24%),
+    radial-gradient(circle at top left, rgba(26,107,60,0.08), transparent 28%);
+}
+
+.club-card,
+.partner-card,
+.path-card,
+.club-modal,
+.partner-modal,
+.faq-item,
+.hub-card {
+  backdrop-filter: blur(18px);
+}
+
+.club-card,
+.partner-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.035)) !important;
+}
+
+.club-desc,
+.partner-desc,
+.path-desc,
+.faq-a-inner,
+.partner-what-they-do {
+  color: rgba(255,255,255,0.76) !important;
+}
+
+.club-meta,
+.club-university,
+.partner-site-link,
+.pstat-label,
+.impact-stat-label,
+.clubs-search::placeholder,
+.filter-search::placeholder {
+  color: rgba(255,255,255,0.6) !important;
+}
+
+.section-eyebrow-text,
+.path-label,
+.hero-eyebrow,
+.section-label {
+  letter-spacing: 0.12em !important;
+}
+
+.partner-card-header,
+.partner-card-body,
+.partner-card-footer,
+.club-card-body,
+.path-card {
+  position: relative;
+  z-index: 1;
+}
+
+.paths-grid {
+  align-items: stretch;
+}
+
+.path-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.path-card .btn {
+  margin-top: auto;
+}
+
+.faq-title,
+.clubs-hero h1,
+.partners-hero h1,
+.gi-hero h1,
+.hub-display {
+  letter-spacing: -0.03em;
+}
+
+.hub-card p {
+  color: var(--text-secondary) !important;
+}
+
+.hub-card {
+  border: 1px solid rgba(26,107,60,0.12);
+  box-shadow: 0 18px 34px rgba(7, 14, 10, 0.08);
+}
+
+.hub-panel .glass-inline-card {
+  background: rgba(255,255,255,0.12);
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .clubs-hero,
+  .partners-hero,
+  .gi-hero,
+  .hub-hero {
+    padding-top: 108px !important;
+  }
+
+  .clubs-hero p,
+  .partners-hero p,
+  .gi-hero p,
+  .hub-subtitle {
+    font-size: 0.95rem !important;
+    line-height: 1.75 !important;
+  }
+
+  .club-card,
+  .partner-card,
+  .path-card,
+  .faq-item {
+    border-radius: 20px !important;
+  }
+}
