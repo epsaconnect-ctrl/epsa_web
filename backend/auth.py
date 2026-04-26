@@ -342,6 +342,10 @@ def _build_login_payload(row):
     token = create_access_token(identity=str(row["id"]))
     user = dict(row)
     user.pop("password_hash", None)
+    # Postgres returns datetime objects; jsonify needs strings
+    for key, value in user.items():
+        if isinstance(value, datetime):
+            user[key] = value.isoformat()
     payload = {"user": user}
     settings = get_settings()
     if settings.expose_jwt_to_client:

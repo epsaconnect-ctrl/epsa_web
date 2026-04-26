@@ -240,7 +240,7 @@ def get_settings():
         )
     )
 
-    auth_token_mode = (os.getenv("EPSA_AUTH_TOKEN_MODE") or ("local_storage" if normalized_env != "production" else "cookie")).strip().lower()
+    auth_token_mode = (os.getenv("EPSA_AUTH_TOKEN_MODE") or "local_storage").strip().lower()
     if auth_token_mode not in {"local_storage", "cookie", "both"}:
         auth_token_mode = "local_storage"
 

@@ -176,9 +176,10 @@ def connect():
         print("DB FIRST ACCESS:", settings.db_engine)
         _FIRST_DB_ACCESS_LOGGED = True
     if settings.db_engine == "postgres":
-        import psycopg
+        import psycopg2
+        import psycopg2.extras
 
-        connection = psycopg.connect(settings.database_url)
+        connection = psycopg2.connect(settings.database_url)
         return DatabaseConnection(connection, engine="postgres")
 
     raw_url = settings.database_url

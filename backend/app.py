@@ -93,7 +93,11 @@ app.config['EPSA_AUTH_TOKEN_MODE'] = settings.auth_token_mode
 app.config['EPSA_API_BASE_URL'] = settings.api_base_url
 app.config['EPSA_APP_URL'] = settings.app_public_url
 
-cors_origins = settings.cors_origins if settings.cors_origins else ([] if settings.is_production else "*")
+VERCEL_ORIGIN = "https://epsa-web-alpha.vercel.app"
+_cors_base = list(settings.cors_origins) if settings.cors_origins else ([] if settings.is_production else ["*"])
+if VERCEL_ORIGIN not in _cors_base:
+    _cors_base.append(VERCEL_ORIGIN)
+cors_origins = _cors_base
 CORS(app, origins=cors_origins, supports_credentials=True)
 jwt  = JWTManager(app)
 sock = None

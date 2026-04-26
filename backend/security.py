@@ -66,6 +66,10 @@ def verify_totp_code(secret, code):
         import pyotp
     except Exception:
         return False
+    try:
+        return bool(pyotp.TOTP(secret).verify(cleaned, valid_window=1))
+    except Exception:
+        return False
 
 
 def _coerce_datetime(value):
@@ -77,10 +81,6 @@ def _coerce_datetime(value):
         return datetime.fromisoformat(str(value).replace("Z", ""))
     except Exception:
         return None
-    try:
-        return bool(pyotp.TOTP(secret).verify(cleaned, valid_window=1))
-    except Exception:
-        return False
 
 
 def _rate_limit_key(scope, key_value):
@@ -95,7 +95,10 @@ def rate_limit(scope, *, limit, window_seconds, key_func=None):
             if not settings.rate_limit_enabled:
                 return func(*args, **kwargs)
 
-            from models import get_db
+            try:
+                from .models import get_db
+            except ImportError:
+                from models import get_db
 
             forwarded = (request.headers.get("X-Forwarded-For") or "").split(",")[0].strip()
             ip_address = forwarded or request.remote_addr or "unknown"
