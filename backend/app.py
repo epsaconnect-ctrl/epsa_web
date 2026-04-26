@@ -1,6 +1,7 @@
 """
 EPSA Platform — Flask Backend Entry Point
 """
+import logging
 import os
 import sys
 import threading
@@ -9,6 +10,14 @@ from flask import Flask, jsonify, request, send_from_directory, abort
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 from werkzeug.middleware.proxy_fix import ProxyFix
+
+# Configure root logger so all output is captured by Gunicorn
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s [%(name)s] %(message)s",
+    stream=sys.stdout,
+)
+logger = logging.getLogger("epsa")
 
 BACKEND_DIR = os.path.dirname(__file__)
 try:
@@ -62,9 +71,8 @@ PROJECT_ROOT = os.path.abspath(os.path.join(BACKEND_DIR, '..'))
 settings = get_settings()
 IS_PRODUCTION_RUNTIME = settings.is_production
 
-print("EPSA backend starting...")
-print(f"[Startup] env={settings.env} db={settings.db_engine} storage={settings.storage_mode}")
-print("ENV RESOLVED:", os.getenv("APP_ENV"), IS_PRODUCTION_RUNTIME)
+logger.info("EPSA backend module loading...")
+logger.info(f"[Startup] env={settings.env} db={settings.db_engine} storage={settings.storage_mode} production={IS_PRODUCTION_RUNTIME}")
 
 app = Flask(__name__, static_folder=None)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
@@ -123,7 +131,7 @@ def ensure_runtime_ready():
         if _runtime_initialized:
             return
         try:
-            print("LAZY INIT STARTED")
+            logger.info("LAZY INIT STARTED")
             init_db()
             migrate_db()
             ensure_bootstrap_admin()
@@ -131,13 +139,11 @@ def ensure_runtime_ready():
                 ensure_local_storage_folders()
             _runtime_initialized = True
             _runtime_init_error = None
-            print("[Startup] Runtime initialization complete.")
+            logger.info("[Startup] Runtime initialization complete.")
         except Exception as exc:
             _runtime_init_error = exc
-            print(f"[Startup] Runtime initialization FAILED: {exc}")
-            traceback.print_exc(file=sys.stdout)
+            logger.error("[Startup] Runtime initialization FAILED: %s", exc, exc_info=True)
             # Do NOT re-raise — let before_request return 503 cleanly
-            # Re-raising here can silently kill gthread workers
 
 
 def _is_fast_health_path():
@@ -146,7 +152,7 @@ def _is_fast_health_path():
 
 @app.before_request
 def log_request_hit():
-    print("REQUEST HIT:", request.path)
+    logger.debug("REQUEST: %s %s", request.method, request.path)
 
 
 @app.before_request
@@ -170,25 +176,23 @@ def initialize_runtime():
 def handle_unhandled_exception(exc):
     """Catch-all: log every unhandled exception so it appears in Railway logs
     instead of silently killing the worker."""
-    print(f"[UNHANDLED EXCEPTION] {request.method} {request.path} -> {exc}")
-    traceback.print_exc(file=sys.stdout)
+    logger.exception("[UNHANDLED EXCEPTION] %s %s", request.method, request.path)
     return jsonify({'status': 'error', 'message': 'Internal server error.', 'detail': str(exc)}), 500
 
 @app.route('/api/health')
 def health():
-    print("HEALTH ROUTE HIT:", request.path)
-    return {'status': 'ok'}, 200
+    logger.debug("Health check hit")
+    return jsonify({'status': 'ok'}), 200
 
 
 @app.route('/health')
 def platform_health():
-    print("HEALTH ROUTE HIT:", request.path)
-    return {'status': 'ok'}, 200
+    logger.debug("Platform health check hit")
+    return jsonify({'status': 'ok'}), 200
 
 
 @app.route('/ping')
 def ping():
-    print("PING HIT")
     return "pong", 200
 
 @app.route('/api/leadership/public')
@@ -622,7 +626,7 @@ if settings.is_local and sock is not None:
         except Exception as e:
             print('[WS Error]', e)
 
-print("WORKER FULLY READY")
+logger.info("WORKER FULLY READY")
 
 if __name__ == '__main__':
     ensure_runtime_ready()
