@@ -2,7 +2,9 @@
 EPSA Platform — Flask Backend Entry Point
 """
 import os
+import sys
 import threading
+import traceback
 from flask import Flask, jsonify, request, send_from_directory, abort
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
@@ -132,8 +134,10 @@ def ensure_runtime_ready():
             print("[Startup] Runtime initialization complete.")
         except Exception as exc:
             _runtime_init_error = exc
-            print(f"[Startup] Runtime initialization failed: {exc}")
-            raise
+            print(f"[Startup] Runtime initialization FAILED: {exc}")
+            traceback.print_exc(file=sys.stdout)
+            # Do NOT re-raise — let before_request return 503 cleanly
+            # Re-raising here can silently kill gthread workers
 
 
 def _is_fast_health_path():
@@ -153,14 +157,22 @@ def initialize_runtime():
         or not request.path.startswith(('/api/', '/uploads/'))
     ):
         return None
-    try:
-        ensure_runtime_ready()
-    except Exception as exc:
+    ensure_runtime_ready()
+    if _runtime_init_error is not None and not _runtime_initialized:
         return jsonify({
             'status': 'error',
             'message': 'Backend startup initialization failed.',
-            'detail': str(exc),
+            'detail': str(_runtime_init_error),
         }), 503
+
+
+@app.errorhandler(Exception)
+def handle_unhandled_exception(exc):
+    """Catch-all: log every unhandled exception so it appears in Railway logs
+    instead of silently killing the worker."""
+    print(f"[UNHANDLED EXCEPTION] {request.method} {request.path} -> {exc}")
+    traceback.print_exc(file=sys.stdout)
+    return jsonify({'status': 'error', 'message': 'Internal server error.', 'detail': str(exc)}), 500
 
 @app.route('/api/health')
 def health():
@@ -181,6 +193,12 @@ def ping():
 
 @app.route('/api/leadership/public')
 def public_leadership():
+    try:
+        ensure_runtime_ready()
+    except Exception:
+        pass
+    if _runtime_init_error and not _runtime_initialized:
+        return jsonify({'status': 'error', 'message': 'DB not ready'}), 503
     db = get_db()
     executives = db.execute('''
         SELECT e.id, e.vote_rank, e.vote_count, e.assigned_role as position, e.status, e.term_start, e.term_end,
@@ -257,6 +275,12 @@ def public_leadership():
 
 @app.route('/api/history/public')
 def public_history():
+    try:
+        ensure_runtime_ready()
+    except Exception:
+        pass
+    if _runtime_init_error and not _runtime_initialized:
+        return jsonify({'status': 'error', 'message': 'DB not ready'}), 503
     db = get_db()
     founders = [
         {
@@ -498,6 +522,12 @@ def public_history():
 
 @app.route('/api/news')
 def public_news():
+    try:
+        ensure_runtime_ready()
+    except Exception:
+        pass
+    if _runtime_init_error and not _runtime_initialized:
+        return jsonify({'status': 'error', 'message': 'DB not ready'}), 503
     db = get_db()
     rows = db.execute("SELECT * FROM news_events ORDER BY is_featured DESC, created_at DESC LIMIT 5").fetchall()
     db.close()
@@ -537,15 +567,24 @@ def get_document(doc_type, filename):
 def serve_home():
     if IS_PRODUCTION_RUNTIME:
         print("ROOT HIT")
-        return {'status': 'ok'}, 200
-    return send_from_directory(PROJECT_ROOT, 'index.html')
+        return jsonify({'status': 'ok', 'service': 'EPSA Platform API'}), 200
+    try:
+        return send_from_directory(PROJECT_ROOT, 'index.html')
+    except Exception:
+        return jsonify({'status': 'ok'}), 200
 
 
 @app.route('/<path:path>')
 def serve_frontend(path):
     if path.startswith(('api/', 'uploads/')):
         abort(404)
-    return send_from_directory(PROJECT_ROOT, path)
+    if IS_PRODUCTION_RUNTIME:
+        # Never attempt file serving in production — no static files on Railway
+        abort(404)
+    try:
+        return send_from_directory(PROJECT_ROOT, path)
+    except Exception:
+        abort(404)
 
 # WebSocket events
 if settings.is_local and sock is not None:
