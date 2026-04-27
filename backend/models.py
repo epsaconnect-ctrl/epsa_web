@@ -1,4 +1,4 @@
-﻿"""
+"""
 EPSA Platform — Database Models & Schema
 """
 try:
@@ -1148,9 +1148,22 @@ def migrate_db():
         try:
             db.execute(sql)
             db.commit()
-            print(f'[DB Migration] Applied: {sql[:60]}...')
-        except Exception:
-            pass  # already exists
+            print(f'[DB Migration] Applied: {sql[:80].strip()}...')
+        except Exception as exc:
+            # CRITICAL for Postgres: a failed statement aborts the whole transaction.
+            # We MUST rollback before attempting the next statement, otherwise every
+            # subsequent migration (including CREATE TABLE epsa_settings) also fails
+            # silently with "current transaction is aborted".
+            try:
+                db.rollback()
+            except Exception:
+                pass
+            # Suppress expected errors (column/table already exists, etc.)
+            err_str = str(exc).lower()
+            if any(k in err_str for k in ('already exists', 'duplicate column', 'already been added')):
+                pass  # expected on re-run
+            else:
+                print(f'[DB Migration Warning] {sql[:60].strip()}: {exc}')
     try:
         db.execute("""
             UPDATE exam_submissions
@@ -1163,8 +1176,9 @@ def migrate_db():
                 END
         """)
         db.commit()
-    except Exception:
-        pass
+    except Exception as exc:
+        try: db.rollback()
+        except Exception: pass
     try:
         db.execute("""
             UPDATE voting_phases
@@ -1177,8 +1191,9 @@ def migrate_db():
         """)
         db.execute("UPDATE voting_phases SET is_active=0 WHERE status != 'active'")
         db.commit()
-    except Exception:
-        pass
+    except Exception as exc:
+        try: db.rollback()
+        except Exception: pass
     try:
         db.execute("""
             UPDATE face_embeddings
@@ -1188,7 +1203,9 @@ def migrate_db():
             END
         """)
         db.commit()
-    except Exception:
-        pass
+    except Exception as exc:
+        try: db.rollback()
+        except Exception: pass
     db.close()
+
 
