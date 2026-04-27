@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import logging
 import re
 import secrets
 from datetime import datetime, timedelta
@@ -61,6 +62,7 @@ except ImportError:
     from tasks import run_biometric_task
 
 auth_bp = Blueprint("auth", __name__)
+logger = logging.getLogger("epsa.auth")
 
 EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 ETHIOPIAN_PHONE_RE = re.compile(r"^(?:\+251|251|0)?9\d{8}$")
@@ -845,13 +847,17 @@ def send_otp():
     </html>
     """
 
-    delivered = send_email(email, "EPSA Secure Verification Code", body)
-    if not delivered:
-        return jsonify({
-            "error": "We could not send the verification email. Please check your email address and try again. "
-                     "If the problem persists, contact EPSA support.",
-            "email_failed": True,
-        }), 503
+    if settings.show_otp_in_response:
+        logger.warning("[DEV OTP] email=%s otp=%s", _mask_email(email), code)
+    else:
+        delivered = send_email(email, "EPSA Secure Verification Code", body)
+        if not delivered:
+            return jsonify({
+                "error": "We could not send the verification email. Please check your email address and try again. "
+                         "If the problem persists, contact EPSA support.",
+                "email_failed": True,
+            }), 503
+
     db = get_db()
     try:
         db.execute(
@@ -865,6 +871,15 @@ def send_otp():
         db.commit()
     finally:
         db.close()
+
+    if settings.show_otp_in_response:
+        return jsonify(
+            {
+                "success": True,
+                "message": "OTP generated successfully",
+                "otp": code,
+            }
+        )
     return jsonify({"message": "OTP sent"})
 
 

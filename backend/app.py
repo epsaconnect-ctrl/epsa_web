@@ -77,16 +77,20 @@ logger.info(f"[Startup] env={settings.env} db={settings.db_engine} storage={sett
 logger.info(
     f"[Startup] email_provider={settings.email_provider} "
     f"resend_api_key_set={bool(settings.resend_api_key)} "
-    f"resend_from_email_set={bool(settings.resend_from_email)}"
+    f"resend_from_email_set={bool(settings.resend_from_email)} "
+    f"show_otp_in_response={settings.show_otp_in_response}"
 )
 import os as _os
 logger.info(
     f"[Startup] RAW env-check: EPSA_RESEND_API_KEY={'SET' if _os.getenv('EPSA_RESEND_API_KEY') else 'MISSING'} "
     f"RESEND_API_KEY={'SET' if _os.getenv('RESEND_API_KEY') else 'MISSING'} "
     f"EPSA_RESEND_FROM_EMAIL={'SET' if _os.getenv('EPSA_RESEND_FROM_EMAIL') else 'MISSING'} "
+    f"EPSA_SHOW_OTP_IN_RESPONSE={'SET' if _os.getenv('EPSA_SHOW_OTP_IN_RESPONSE') else 'MISSING'} "
     f"EPSA_DATABASE_URL={'SET' if _os.getenv('EPSA_DATABASE_URL') else 'MISSING'} "
     f"DATABASE_URL={'SET' if _os.getenv('DATABASE_URL') else 'MISSING'}"
 )
+if settings.is_production and settings.show_otp_in_response:
+    logger.warning("WARNING: OTP is being exposed in API responses in production")
 
 app = Flask(__name__, static_folder=None)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)

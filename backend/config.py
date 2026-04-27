@@ -119,6 +119,7 @@ class AppSettings:
     password_reset_url: str
     otp_ttl_seconds: int
     otp_proof_ttl_seconds: int
+    show_otp_in_response: bool
     require_admin_totp: bool
     admin_totp_secret: str | None
     allow_local_admin_totp_bypass: bool
@@ -287,6 +288,7 @@ def get_settings():
         ),
         otp_ttl_seconds=max(60, _env_int("EPSA_OTP_TTL_SECONDS", 600)),
         otp_proof_ttl_seconds=max(60, _env_int("EPSA_OTP_PROOF_TTL_SECONDS", 1800)),
+        show_otp_in_response=_env_bool("EPSA_SHOW_OTP_IN_RESPONSE", False),
         require_admin_totp=_env_bool("EPSA_REQUIRE_ADMIN_TOTP", default=normalized_env == "production"),
         admin_totp_secret=os.getenv("EPSA_ADMIN_TOTP_SECRET"),
         allow_local_admin_totp_bypass=_env_bool("EPSA_ALLOW_LOCAL_ADMIN_TOTP_BYPASS", default=normalized_env != "production"),
