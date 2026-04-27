@@ -128,6 +128,33 @@ def _is_active_user(row):
     return bool(row and int(row["is_active"] or 0))
 
 
+def _duplicate_email_response(row, *, intended_role="student"):
+    role = (row["role"] or "account") if row else "account"
+    status = (row["status"] or "unknown") if row else "unknown"
+    if role != intended_role:
+        role_label = "admin" if role in {"admin", "super_admin"} else role
+        return (
+            jsonify(
+                {
+                    "error": f"This email is already linked to an existing {role_label} account and cannot be used for {intended_role} registration.",
+                    "existing_role": role,
+                    "existing_status": status,
+                }
+            ),
+            409,
+        )
+    return (
+        jsonify(
+            {
+                "error": "This email already belongs to an existing EPSA account. Please sign in instead.",
+                "existing_role": role,
+                "existing_status": status,
+            }
+        ),
+        409,
+    )
+
+
 def normalize_phone(value):
     digits = re.sub(r"\D", "", str(value or ""))
     if not digits:
@@ -609,9 +636,12 @@ def register():
             return jsonify({"error": "Email verification expired. Request a new OTP and try again."}), 400
         existing_user = db.execute("SELECT * FROM users WHERE LOWER(email)=LOWER(?)", (email,)).fetchone()
         if existing_user and _is_verified_user(existing_user):
-            return jsonify({"error": "Email already registered"}), 409
+            return _duplicate_email_response(existing_user, intended_role="student")
 
         phone_row = db.execute("SELECT id, email FROM users WHERE phone=?", (phone,)).fetchone()
+        if existing_user and (existing_user["role"] or "student") != "student":
+            return _duplicate_email_response(existing_user, intended_role="student")
+
         if phone_row and (not existing_user or phone_row["id"] != existing_user["id"]):
             return jsonify({"error": "Phone number already registered"}), 409
 
@@ -901,8 +931,8 @@ def send_otp():
     db = get_db()
     try:
         existing_user = db.execute("SELECT id, is_verified FROM users WHERE LOWER(email)=LOWER(?)", (email,)).fetchone()
-        if existing_user and _is_verified_user(existing_user):
-            return jsonify({"error": "User already exists, please login"}), 409
+        if existing_user and (_is_verified_user(existing_user) or (existing_user["role"] or "student") != "student"):
+            return _duplicate_email_response(existing_user, intended_role="student")
     finally:
         db.close()
     body = f"""

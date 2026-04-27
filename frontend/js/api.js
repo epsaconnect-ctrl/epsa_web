@@ -8,10 +8,10 @@ const API_BASE_CANDIDATES = (() => {
   const persisted = localStorage.getItem('epsa_api_base') || '';
   const candidates = [];
   if (runtimeConfigured) candidates.push(String(runtimeConfigured).replace(/\/$/, ''));
-  if (persisted) candidates.push(String(persisted).replace(/\/$/, ''));
   if (currentOrigin && /^https?:/i.test(currentOrigin) && !/^(file:|null)$/i.test(currentOrigin)) {
     candidates.push(`${currentOrigin.replace(/\/$/, '')}/api`);
   }
+  if (persisted) candidates.push(String(persisted).replace(/\/$/, ''));
   if (!candidates.length) {
     candidates.push('/api');
   }
