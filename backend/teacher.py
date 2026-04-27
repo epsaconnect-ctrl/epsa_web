@@ -173,8 +173,17 @@ def teacher_register():
 
     db = get_db()
     try:
-        if db.execute("SELECT id FROM users WHERE LOWER(email)=?", (email,)).fetchone():
-            return jsonify({"error": "Email already registered"}), 409
+        existing = db.execute(
+            "SELECT id, role, status FROM users WHERE LOWER(email)=?",
+            (email,),
+        ).fetchone()
+        if existing:
+            role = existing["role"] or "student"
+            status = existing["status"] or "pending"
+            if role != "teacher":
+                return jsonify({"error": "Email already registered"}), 409
+            if status == "approved":
+                return jsonify({"error": "Email already registered"}), 409
 
         # Generate unique username
         base = re.sub(r"[^a-z0-9]", "", first_name.lower()) or "teacher"
@@ -183,25 +192,50 @@ def teacher_register():
             if not db.execute("SELECT id FROM users WHERE LOWER(username)=?", (username,)).fetchone():
                 break
 
-        db.execute(
-            """
-            INSERT INTO users (
-                username, password_hash, first_name, father_name, grandfather_name,
-                email, role, status, specialization, institution,
-                years_of_experience, credentials
-            ) VALUES (?,?,?,?,?,?, 'teacher', 'pending',?,?,?,?)
-            """,
-            (
-                username,
-                generate_password_hash(password),
-                first_name, father_name, ".",
-                email,
-                data["specialization"],
-                data["institution"],
-                int(data.get("years_of_experience", 0) or 0),
-                data.get("credentials", ""),
-            ),
-        )
+        if existing and (existing["status"] or "pending") in {"pending", "rejected", "inactive"}:
+            db.execute(
+                """
+                UPDATE users
+                SET username=?, password_hash=?, first_name=?, father_name=?, grandfather_name='.',
+                    email=?, role='teacher', status='pending',
+                    specialization=?, institution=?, years_of_experience=?, credentials=?,
+                    rejection_reason=NULL, approved_at=NULL,
+                    is_verified=0, is_active=0
+                WHERE id=?
+                """,
+                (
+                    username,
+                    generate_password_hash(password),
+                    first_name,
+                    father_name,
+                    email,
+                    data["specialization"],
+                    data["institution"],
+                    int(data.get("years_of_experience", 0) or 0),
+                    data.get("credentials", ""),
+                    existing["id"],
+                ),
+            )
+        else:
+            db.execute(
+                """
+                INSERT INTO users (
+                    username, password_hash, first_name, father_name, grandfather_name,
+                    email, role, status, specialization, institution,
+                    years_of_experience, credentials
+                ) VALUES (?,?,?,?,?,?, 'teacher', 'pending',?,?,?,?)
+                """,
+                (
+                    username,
+                    generate_password_hash(password),
+                    first_name, father_name, ".",
+                    email,
+                    data["specialization"],
+                    data["institution"],
+                    int(data.get("years_of_experience", 0) or 0),
+                    data.get("credentials", ""),
+                ),
+            )
         db.commit()
     finally:
         db.close()

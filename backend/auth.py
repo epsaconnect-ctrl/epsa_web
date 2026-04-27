@@ -155,6 +155,16 @@ def _duplicate_email_response(row, *, intended_role="student"):
     )
 
 
+def _can_student_reapply(existing_row):
+    if not existing_row:
+        return False
+    if (existing_row["role"] or "student") != "student":
+        return False
+    # Allow replacing stale/pending/rejected student applications so applicants
+    # are never blocked by an old half-completed registration state.
+    return (existing_row["status"] or "pending") in {"pending", "rejected", "inactive"}
+
+
 def normalize_phone(value):
     digits = re.sub(r"\D", "", str(value or ""))
     if not digits:
@@ -635,7 +645,7 @@ def register():
         if not verification_row:
             return jsonify({"error": "Email verification expired. Request a new OTP and try again."}), 400
         existing_user = db.execute("SELECT * FROM users WHERE LOWER(email)=LOWER(?)", (email,)).fetchone()
-        if existing_user and _is_verified_user(existing_user):
+        if existing_user and _is_verified_user(existing_user) and not _can_student_reapply(existing_user):
             return _duplicate_email_response(existing_user, intended_role="student")
 
         phone_row = db.execute("SELECT id, email FROM users WHERE phone=?", (phone,)).fetchone()
@@ -673,7 +683,7 @@ def register():
             graduation_status,
         )
 
-        if existing_user and not _is_verified_user(existing_user):
+        if existing_user and (_can_student_reapply(existing_user) or not _is_verified_user(existing_user)):
             db.execute(
                 """
                 UPDATE users
@@ -930,9 +940,13 @@ def send_otp():
     code_hash = _hash_otp(email, code)
     db = get_db()
     try:
-        existing_user = db.execute("SELECT id, is_verified FROM users WHERE LOWER(email)=LOWER(?)", (email,)).fetchone()
-        if existing_user and (_is_verified_user(existing_user) or (existing_user["role"] or "student") != "student"):
-            return _duplicate_email_response(existing_user, intended_role="student")
+        existing_user = db.execute("SELECT id, role, status, is_verified FROM users WHERE LOWER(email)=LOWER(?)", (email,)).fetchone()
+        if existing_user:
+            existing_role = existing_user["role"] or "student"
+            if existing_role != "student":
+                return _duplicate_email_response(existing_user, intended_role="student")
+            if _is_verified_user(existing_user) and not _can_student_reapply(existing_user):
+                return _duplicate_email_response(existing_user, intended_role="student")
     finally:
         db.close()
     body = f"""

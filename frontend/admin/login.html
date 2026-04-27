@@ -30,12 +30,12 @@
       <div class="auth-panel-features">
         <div class="auth-feature"><div class="auth-feature-icon">👥</div><span>Manage student applications</span></div>
         <div class="auth-feature"><div class="auth-feature-icon">🎓</div><span>Create and manage training programs</span></div>
-        <div class="auth-feature"><div class="auth-feature-icon">🗳️</div><span>Oversee democratic elections</span></div>
+        <div class="auth-feature"><div class="auth-feature-icon">Vote</div><span>Oversee democratic elections</span></div>
         <div class="auth-feature"><div class="auth-feature-icon">📊</div><span>View platform analytics</span></div>
       </div>
     </div>
     <div class="auth-left-bottom">
-      <p class="auth-bottom-quote">ðŸ” This portal is restricted to authorized EPSA administrators only.</p>
+      <p class="auth-bottom-quote">This portal is restricted to authorized EPSA administrators only.</p>
     </div>
   </div>
 
@@ -43,7 +43,7 @@
     <div class="auth-form-container">
       <div class="auth-form-header">
         <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(192,57,43,0.08);border:1px solid rgba(192,57,43,0.2);border-radius:var(--radius-full);padding:6px 14px;margin-bottom:var(--space-4);">
-          <span>ðŸ”</span><span style="font-size:0.75rem;font-weight:700;color:var(--epsa-red);">RESTRICTED ACCESS</span>
+          <span>LOCK</span><span style="font-size:0.75rem;font-weight:700;color:var(--epsa-red);">RESTRICTED ACCESS</span>
         </div>
         <h1 class="auth-form-title">Admin Sign In</h1>
         <p class="auth-form-subtitle">Two-factor authentication required</p>
@@ -59,7 +59,7 @@
             <label class="form-label" for="admin-password">Password</label>
             <div style="position:relative;">
               <input type="password" id="admin-password" class="form-input" placeholder="Admin password" style="padding-right:48px;" required>
-              <button type="button" onclick="togglePw()" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;">ðŸ‘ï¸</button>
+              <button type="button" onclick="togglePw()" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;">Show</button>
             </div>
           </div>
 
@@ -78,12 +78,12 @@
           </div>
 
           <button type="submit" id="adminLoginBtn" class="btn btn-primary w-full" style="margin-bottom:var(--space-3);">
-            <span id="adminBtnText">ðŸ” Sign In to Admin Panel</span>
+            <span id="adminBtnText">Sign In to Admin Panel</span>
             <span class="spinner" id="adminSpinner" style="display:none;"></span>
           </button>
 
           <div style="text-align:center;">
-            <a href="../login.html" style="font-size:0.8rem;color:var(--text-muted);">â† Back to Student Login</a>
+            <a href="../login.html" style="font-size:0.8rem;color:var(--text-muted);">Back to Student Login</a>
           </div>
         </form>
       </div>
@@ -111,7 +111,7 @@
     const btnText = document.getElementById('adminBtnText');
     const spinner = document.getElementById('adminSpinner');
     let redirected = false;
-    btn.disabled = true; btnText.textContent = 'Authenticatingâ€¦'; spinner.style.display = 'block';
+    btn.disabled = true; btnText.textContent = 'Authenticating...'; spinner.style.display = 'block';
 
     try {
 
@@ -119,11 +119,11 @@
       redirected = true;
       window.location.href = 'dashboard.html';
     } catch(err) {
-      showToast('âŒ ' + (err.message || 'Invalid credentials'),'error');
+      showToast((err.message || 'Invalid credentials'),'error');
     } finally {
       if (!redirected) {
         btn.disabled = false;
-        btnText.textContent = 'ðŸ” Sign In to Admin Panel';
+        btnText.textContent = 'Sign In to Admin Panel';
         spinner.style.display = 'none';
       }
     }

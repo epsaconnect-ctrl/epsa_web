@@ -1400,9 +1400,9 @@ window.switchSection = function(sec) {
     <div style="background:#0a2e18;border:1px solid rgba(34,197,94,.2);border-radius:20px;padding:32px;width:100%;max-width:720px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
         <h2 style="font-size:1.3rem;font-weight:800;color:#f0fdf4">📊 Exam Results</h2>
-        <button onclick="document.getElementById('mockResultsModal').style.display='none'" style="background:rgba(255,255,255,.07);border:1px solid rgba(34,197,94,.15);color:#86efac;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.1rem">âœ•</button>
+        <button onclick="document.getElementById('mockResultsModal').style.display='none'" style="background:rgba(255,255,255,.07);border:1px solid rgba(34,197,94,.15);color:#86efac;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.1rem">X</button>
       </div>
-      <div id="mockResultsContent" style="color:#86efac;text-align:center;padding:40px">Loadingâ€¦</div>
+      <div id="mockResultsContent" style="color:#86efac;text-align:center;padding:40px">Loading...</div>
     </div>
   </div>
 
@@ -1424,7 +1424,7 @@ window.switchSection = function(sec) {
       const data = await API.listMockExams();
       const exams = data.exams || [];
       if (!exams.length) {
-        container.innerHTML = '<div style="text-align:center;color:#86efac;padding:60px;grid-column:1/-1;opacity:.6"><div style="font-size:2.5rem;margin-bottom:12px">📝­</div><div style="font-weight:700">No mock exams available right now</div><div style="font-size:.85rem;margin-top:6px">Check back when an exam window opens.</div></div>';
+        container.innerHTML = '<div style="text-align:center;color:#86efac;padding:60px;grid-column:1/-1;opacity:.6"><div style="font-size:2.5rem;margin-bottom:12px">Exam</div><div style="font-weight:700">No mock exams available right now</div><div style="font-size:.85rem;margin-top:6px">Check back when an exam window opens.</div></div>';
         return;
       }
       container.innerHTML = exams.map(e => renderMockExamCard(e)).join('');
@@ -1439,12 +1439,12 @@ window.switchSection = function(sec) {
     const btnHtml = e.can_start
       ? `<button onclick="startMockExam(${e.id})" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-weight:700;cursor:pointer;width:100%;margin-top:16px">🎯 Start Exam</button>`
       : e.can_continue
-      ? `<button onclick="startMockExam(${e.id})" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-weight:700;cursor:pointer;width:100%;margin-top:16px">â–¶ï¸ Continue Exam</button>`
+      ? `<button onclick="startMockExam(${e.id})" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-weight:700;cursor:pointer;width:100%;margin-top:16px">Continue Exam</button>`
       : e.results_viewable
       ? `<button onclick="viewMockResults(${e.id})" style="background:rgba(59,130,246,.15);color:#3b82f6;border:1px solid rgba(59,130,246,.3);padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-weight:700;cursor:pointer;width:100%;margin-top:16px">📊 View My Results</button>`
       : e.is_submitted
       ? `<div style="text-align:center;color:#86efac;margin-top:16px;font-size:.85rem">✅ Submitted — Results pending release</div>`
-      : `<div style="text-align:center;color:#86efac;margin-top:16px;font-size:.85rem">â³ Exam not yet open</div>`;
+      : `<div style="text-align:center;color:#86efac;margin-top:16px;font-size:.85rem">Exam not yet open</div>`;
 
     return `<div style="background:rgba(255,255,255,.04);border:1px solid rgba(34,197,94,.16);border-radius:16px;padding:22px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
@@ -1500,7 +1500,7 @@ window.switchSection = function(sec) {
   // Start or resume exam
   async function startMockExam(examId) {
     try {
-      showToast('Preparing examâ€¦', 'info');
+      showToast('Preparing exam...', 'info');
       const data = await API.startMockExam(examId);
       ME.examId = examId;
       ME.submissionId = data.submission_id;
@@ -1542,8 +1542,8 @@ window.switchSection = function(sec) {
     const q = ME.questions[idx];
     if (!q) return;
     const total = ME.questions.length;
-    const answeredCount = Object.keys(ME.answers).length;
-    document.getElementById('meProgress').textContent = `Question ${idx+1} of ${total} Â· ${answeredCount} answered`;
+      const answeredCount = Object.keys(ME.answers).length;
+    document.getElementById('meProgress').textContent = `Question ${idx+1} of ${total} - ${answeredCount} answered`;
     document.getElementById('meQLabel').textContent = `${idx+1} / ${total}`;
     document.getElementById('mePrevBtn').disabled = idx === 0;
     document.getElementById('meNextBtn').disabled = idx === total - 1;
@@ -1622,7 +1622,7 @@ window.switchSection = function(sec) {
     submitExam(false);
   }
   async function autoSubmitExam() {
-    showToast('Time is up! Your exam is being auto-submittedâ€¦', 'gold');
+    showToast('Time is up! Your exam is being auto-submitted...', 'gold');
     await submitExam(true);
   }
 
@@ -1658,7 +1658,7 @@ window.switchSection = function(sec) {
     const modal = document.getElementById('mockResultsModal');
     const content = document.getElementById('mockResultsContent');
     modal.style.display = 'flex';
-    content.innerHTML = '<div style="color:#86efac;padding:40px;text-align:center">Loadingâ€¦</div>';
+      content.innerHTML = '<div style="color:#86efac;padding:40px;text-align:center">Loading...</div>';
     try {
       const data = await API.getMockResults(examId);
       const pct = data.score || 0;
@@ -1673,7 +1673,7 @@ window.switchSection = function(sec) {
           ${(data.breakdown || []).map((b, i) => `
             <div style="background:rgba(${b.correct?'34,197,94':'248,113,113'},.07);border:1px solid rgba(${b.correct?'34,197,94':'248,113,113'},.2);border-radius:10px;padding:14px">
               <div style="font-size:.82rem;font-weight:600;color:#f0fdf4;margin-bottom:6px">${i+1}. ${escHtml(b.question_text)}</div>
-              <div style="font-size:.78rem;color:${b.correct?'#22c55e':'#f87171'}">${b.correct?'✅ Correct':'âŒ Incorrect'}</div>
+              <div style="font-size:.78rem;color:${b.correct?'#22c55e':'#f87171'}">${b.correct?'Correct':'Incorrect'}</div>
               ${b.explanation ? `<div style="font-size:.75rem;color:#86efac;margin-top:6px;font-style:italic">${escHtml(b.explanation)}</div>` : ''}
             </div>`).join('')}
         </div>`;

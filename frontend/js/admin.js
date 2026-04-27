@@ -8,7 +8,7 @@ let allApplicants       = [];
 let allTeacherApplicants = [];
 let allTrainingsAdmin   = [];
 let allExamsAdmin       = [];
-let currentApplicantFilter = 'pending';
+let currentApplicantFilter = 'all';
 
 function relocateDynamicAdminSections() {
   const adminContent = document.querySelector('.admin-content');
@@ -82,7 +82,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   startClock();
   await loadDashboardStats();
-  await loadApplicants('pending');
+  // Never block dashboard boot on applications APIs.
+  loadApplicants('all');
 });
 
 // â”€â”€ CLOCK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -280,9 +281,14 @@ async function loadApplicants(status = 'pending', tabEl = null) {
     tabEl.classList.add('active');
   }
   try {
+    const withTimeout = (promise, ms, fallbackValue) => Promise.race([
+      promise,
+      new Promise((resolve) => setTimeout(() => resolve(fallbackValue), ms)),
+    ]);
+
     const [studentsResult, teachersResult] = await Promise.allSettled([
       API.getApplicants(status),
-      API.adminListTeachers(status),
+      withTimeout(API.adminListTeachers(status), 6000, { teachers: [] }),
     ]);
 
     allApplicants = studentsResult.status === 'fulfilled' ? (studentsResult.value || []) : [];
