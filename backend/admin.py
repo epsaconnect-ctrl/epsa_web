@@ -485,7 +485,7 @@ def list_applicants():
     status = request.args.get('status','pending')
     uni    = request.args.get('university','')
     db     = get_db()
-    query  = "SELECT id,first_name,father_name,email,phone,university,program_type,academic_year,profile_photo,reg_slip,status,created_at,rejection_reason FROM users WHERE role='student'"
+    query  = "SELECT id,first_name,father_name,email,phone,university,program_type,academic_year,profile_photo,reg_slip,status,is_verified,is_active,created_at,rejection_reason FROM users WHERE role='student'"
     params = []
     if status != 'all': query += ' AND status=?'; params.append(status)
     if uni:             query += ' AND university=?'; params.append(uni)
@@ -2334,7 +2334,7 @@ def delete_news(nid):
 @require_admin
 def all_students():
     db   = get_db()
-    rows = db.execute("SELECT id,first_name,father_name,email,university,program_type,academic_year,status,student_id,created_at FROM users WHERE role='student' ORDER BY created_at DESC").fetchall()
+    rows = db.execute("SELECT id,first_name,father_name,email,university,program_type,academic_year,status,is_verified,is_active,student_id,created_at FROM users WHERE role='student' ORDER BY created_at DESC").fetchall()
     db.close()
     return jsonify([dict(r) for r in rows])
 

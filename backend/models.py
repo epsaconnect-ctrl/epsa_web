@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS users (
     graduation_status TEXT DEFAULT 'active_student',
     graduation_verified_at DATETIME,
     rejection_reason TEXT,
+    is_verified     INTEGER DEFAULT 0,
+    is_active       INTEGER DEFAULT 0,
     created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
     approved_at     DATETIME
 );
@@ -619,7 +621,8 @@ def ensure_bootstrap_admin():
                 db.execute(
                     """
                     UPDATE users
-                    SET password_hash=?, email=?, status='approved', admin_totp_secret=COALESCE(?, admin_totp_secret)
+                    SET password_hash=?, email=?, status='approved', admin_totp_secret=COALESCE(?, admin_totp_secret),
+                        is_verified=1, is_active=1
                     WHERE id=?
                     """,
                     (
@@ -637,9 +640,9 @@ def ensure_bootstrap_admin():
             """
             INSERT INTO users (
                 username, password_hash, first_name, father_name, grandfather_name,
-                email, role, status, admin_totp_secret
+                email, role, status, admin_totp_secret, is_verified, is_active
             )
-            VALUES (?, ?, ?, ?, ?, ?, 'super_admin', 'approved', ?)
+            VALUES (?, ?, ?, ?, ?, ?, 'super_admin', 'approved', ?, 1, 1)
             """,
             (
                 username,
@@ -717,6 +720,8 @@ def migrate_db():
         """CREATE INDEX IF NOT EXISTS idx_face_embeddings_user ON face_embeddings(user_id)""",
         """CREATE INDEX IF NOT EXISTS idx_exam_face_verifications_lookup ON exam_face_verifications(exam_id, user_id, created_at)""",
         "ALTER TABLE users ADD COLUMN admin_totp_secret TEXT",
+        "ALTER TABLE users ADD COLUMN is_verified INTEGER DEFAULT 0",
+        "ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 0",
         "ALTER TABLE nominations ADD COLUMN statement TEXT",
         "ALTER TABLE nominations ADD COLUMN vision TEXT",
         "ALTER TABLE nominations ADD COLUMN manifesto_path TEXT",
@@ -744,6 +749,16 @@ def migrate_db():
         """ALTER TABLE otp_store ADD COLUMN used_at DATETIME""",
         """ALTER TABLE otp_store ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP""",
         """CREATE INDEX IF NOT EXISTS idx_otp_store_lookup ON otp_store(email, used, expires_at)""",
+        """UPDATE users
+            SET is_verified=1
+            WHERE COALESCE(is_verified, 0)=0
+              AND (role != 'student' OR (profile_photo IS NOT NULL AND reg_slip IS NOT NULL))
+        """,
+        """UPDATE users
+            SET is_active=1
+            WHERE COALESCE(is_active, 0)=0
+              AND (role != 'student' OR (profile_photo IS NOT NULL AND reg_slip IS NOT NULL))
+        """,
         """CREATE TABLE IF NOT EXISTS news_events (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             title       TEXT NOT NULL,

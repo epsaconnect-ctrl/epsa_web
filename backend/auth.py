@@ -120,6 +120,14 @@ def _hash_otp(email, code):
     return hashlib.sha256(f"{normalize_email(email)}:{code}".encode("utf-8")).hexdigest()
 
 
+def _is_verified_user(row):
+    return bool(row and int(row["is_verified"] or 0))
+
+
+def _is_active_user(row):
+    return bool(row and int(row["is_active"] or 0))
+
+
 def normalize_phone(value):
     digits = re.sub(r"\D", "", str(value or ""))
     if not digits:
@@ -599,9 +607,12 @@ def register():
         )
         if not verification_row:
             return jsonify({"error": "Email verification expired. Request a new OTP and try again."}), 400
-        if db.execute("SELECT id FROM users WHERE LOWER(email)=LOWER(?)", (email,)).fetchone():
+        existing_user = db.execute("SELECT * FROM users WHERE LOWER(email)=LOWER(?)", (email,)).fetchone()
+        if existing_user and _is_verified_user(existing_user):
             return jsonify({"error": "Email already registered"}), 409
-        if db.execute("SELECT id FROM users WHERE phone=?", (phone,)).fetchone():
+
+        phone_row = db.execute("SELECT id, email FROM users WHERE phone=?", (phone,)).fetchone()
+        if phone_row and (not existing_user or phone_row["id"] != existing_user["id"]):
             return jsonify({"error": "Phone number already registered"}), 409
 
         student_id = _generate_unique_student_id(db, data.get("university"))
@@ -613,53 +624,109 @@ def register():
         graduation_year = int(graduation_year) if str(graduation_year or "").strip().isdigit() else None
         graduation_status = "graduated" if data.get("program_type") == "graduate" else "active_student"
 
-        cur = db.execute(
-            """
-            INSERT INTO users (
-                username, password_hash, first_name, father_name, grandfather_name,
-                email, phone, university, program_type, academic_year, field_of_study,
-                graduation_year, profile_photo, reg_slip, role, status, student_id, graduation_status
-            )
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?, 'student', 'pending', ?, ?)
-            """,
-            (
-                username,
-                hash_password(password),
-                data.get("first_name", "").strip(),
-                data.get("father_name", "").strip(),
-                data.get("grandfather_name", "").strip(),
-                email,
-                phone,
-                data.get("university", "").strip(),
-                data.get("program_type", "").strip(),
-                data.get("academic_year", "").strip(),
-                data.get("field_of_study", "").strip(),
-                graduation_year,
-                profile_photo_name,
-                reg_slip_name,
-                student_id,
-                graduation_status,
-            ),
+        user_values = (
+            username,
+            hash_password(password),
+            data.get("first_name", "").strip(),
+            data.get("father_name", "").strip(),
+            data.get("grandfather_name", "").strip(),
+            email,
+            phone,
+            data.get("university", "").strip(),
+            data.get("program_type", "").strip(),
+            data.get("academic_year", "").strip(),
+            data.get("field_of_study", "").strip(),
+            graduation_year,
+            profile_photo_name,
+            reg_slip_name,
+            student_id,
+            graduation_status,
         )
-        user_id = cur.lastrowid
-        db.execute(
-            """
-            INSERT INTO face_embeddings (
-                user_id, embedding, angle_embeddings, engine, reference_image_hash, match_threshold,
-                registration_verified, registration_score, registration_verified_at, updated_at
+
+        if existing_user and not _is_verified_user(existing_user):
+            db.execute(
+                """
+                UPDATE users
+                SET username=?, password_hash=?, first_name=?, father_name=?, grandfather_name=?,
+                    email=?, phone=?, university=?, program_type=?, academic_year=?, field_of_study=?,
+                    graduation_year=?, profile_photo=?, reg_slip=?, role='student', status='pending',
+                    student_id=?, graduation_status=?, is_verified=1, is_active=1
+                WHERE id=?
+                """,
+                (*user_values, existing_user["id"]),
             )
-            VALUES (?,?,?,?,?,?,1,?,DATETIME('now'),DATETIME('now'))
-            """,
-            (
-                user_id,
-                serialize_embedding(reference_embedding),
-                serialize_embedding_set(live_embedding_set),
-                face_result.engine,
-                hash_image(profile_photo_bytes),
-                face_result.threshold,
-                face_result.score,
-            ),
-        )
+            user_id = existing_user["id"]
+            face_row = db.execute("SELECT id FROM face_embeddings WHERE user_id=?", (user_id,)).fetchone()
+            if face_row:
+                db.execute(
+                    """
+                    UPDATE face_embeddings
+                    SET embedding=?, angle_embeddings=?, engine=?, reference_image_hash=?, match_threshold=?,
+                        registration_verified=1, registration_score=?, registration_verified_at=DATETIME('now'),
+                        updated_at=DATETIME('now')
+                    WHERE user_id=?
+                    """,
+                    (
+                        serialize_embedding(reference_embedding),
+                        serialize_embedding_set(live_embedding_set),
+                        face_result.engine,
+                        hash_image(profile_photo_bytes),
+                        face_result.threshold,
+                        face_result.score,
+                        user_id,
+                    ),
+                )
+            else:
+                db.execute(
+                    """
+                    INSERT INTO face_embeddings (
+                        user_id, embedding, angle_embeddings, engine, reference_image_hash, match_threshold,
+                        registration_verified, registration_score, registration_verified_at, updated_at
+                    )
+                    VALUES (?,?,?,?,?,?,1,?,DATETIME('now'),DATETIME('now'))
+                    """,
+                    (
+                        user_id,
+                        serialize_embedding(reference_embedding),
+                        serialize_embedding_set(live_embedding_set),
+                        face_result.engine,
+                        hash_image(profile_photo_bytes),
+                        face_result.threshold,
+                        face_result.score,
+                    ),
+                )
+        else:
+            cur = db.execute(
+                """
+                INSERT INTO users (
+                    username, password_hash, first_name, father_name, grandfather_name,
+                    email, phone, university, program_type, academic_year, field_of_study,
+                    graduation_year, profile_photo, reg_slip, role, status, student_id, graduation_status,
+                    is_verified, is_active
+                )
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?, 'student', 'pending', ?, ?, 1, 1)
+                """,
+                user_values,
+            )
+            user_id = cur.lastrowid
+            db.execute(
+                """
+                INSERT INTO face_embeddings (
+                    user_id, embedding, angle_embeddings, engine, reference_image_hash, match_threshold,
+                    registration_verified, registration_score, registration_verified_at, updated_at
+                )
+                VALUES (?,?,?,?,?,?,1,?,DATETIME('now'),DATETIME('now'))
+                """,
+                (
+                    user_id,
+                    serialize_embedding(reference_embedding),
+                    serialize_embedding_set(live_embedding_set),
+                    face_result.engine,
+                    hash_image(profile_photo_bytes),
+                    face_result.threshold,
+                    face_result.score,
+                ),
+            )
         db.commit()
     finally:
         db.close()
@@ -705,6 +772,10 @@ def login():
             _record_failed_login(db, identifier_key, ip_address)
             db.commit()
             return jsonify({"error": "Invalid credentials"}), 401
+        if not _is_verified_user(row):
+            return jsonify({"error": "Please verify your account first."}), 403
+        if not _is_active_user(row):
+            return jsonify({"error": "Account is inactive. Please contact EPSA support."}), 403
 
         _clear_login_attempt(db, identifier_key, ip_address)
         db.commit()
@@ -827,6 +898,13 @@ def send_otp():
     settings = get_settings()
     expires = plus_interval(seconds=settings.otp_ttl_seconds)
     code_hash = _hash_otp(email, code)
+    db = get_db()
+    try:
+        existing_user = db.execute("SELECT id, is_verified FROM users WHERE LOWER(email)=LOWER(?)", (email,)).fetchone()
+        if existing_user and _is_verified_user(existing_user):
+            return jsonify({"error": "User already exists, please login"}), 409
+    finally:
+        db.close()
     body = f"""
     <html>
       <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
