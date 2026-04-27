@@ -487,7 +487,12 @@ def list_applicants():
     db     = get_db()
     query  = "SELECT id,first_name,father_name,email,phone,university,program_type,academic_year,profile_photo,reg_slip,status,is_verified,is_active,created_at,rejection_reason FROM users WHERE role='student'"
     params = []
-    if status != 'all': query += ' AND status=?'; params.append(status)
+    if status == 'pending':
+        query += " AND (status=? OR COALESCE(is_verified, 0)=0)"
+        params.append(status)
+    elif status != 'all':
+        query += ' AND status=?'
+        params.append(status)
     if uni:             query += ' AND university=?'; params.append(uni)
     query += ' ORDER BY created_at DESC'
     rows = db.execute(query, params).fetchall()

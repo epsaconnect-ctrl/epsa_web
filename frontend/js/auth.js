@@ -1922,8 +1922,18 @@ async function sendOTP() {
       nextBtn.disabled = true;
       nextBtn.textContent = 'Sending code...';
     }
-    await API.sendOTP(email);
-    showToast(`Verification code sent to ${email}`, 'gold');
+    const response = await API.sendOTP(email);
+    if (response && response.otp) {
+      const digits = String(response.otp).replace(/\D/g, '').slice(0, 6).split('');
+      const inputs = [...document.querySelectorAll('.otp-input')];
+      inputs.forEach((input, index) => {
+        input.value = digits[index] || '';
+      });
+      if (byId('otp-err')) byId('otp-err').style.display = 'none';
+      showToast(`Verification code: ${response.otp}`, 'gold');
+    } else {
+      showToast(`Verification code sent to ${email}`, 'gold');
+    }
     startOTPTimer(60);
   } catch (err) {
     showToast(err.message || 'Failed to send verification code.', 'error');
