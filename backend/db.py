@@ -104,6 +104,9 @@ def _translate_sql(sql, engine):
 
     translated = str(sql)
     translated = re.sub(r"PRAGMA\s+foreign_keys\s*=\s*ON\s*;?", "", translated, flags=re.IGNORECASE)
+    # DATE('now') → CURRENT_DATE (SQLite-only, not valid in Postgres)
+    translated = re.sub(r"DATE\s*\(\s*'now'\s*\)", "CURRENT_DATE", translated, flags=re.IGNORECASE)
+    # DATETIME('now') → CURRENT_TIMESTAMP
     translated = re.sub(r"DATETIME\s*\(\s*'now'\s*\)", "CURRENT_TIMESTAMP", translated, flags=re.IGNORECASE)
     translated = re.sub(
         r"DATETIME\s*\(\s*'now'\s*,\s*'([^']+)'\s*\)",

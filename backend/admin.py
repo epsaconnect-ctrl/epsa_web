@@ -15,6 +15,11 @@ except ImportError:
 
 admin_bp = Blueprint('admin', __name__)
 
+try:
+    from .email_service import send_email
+except ImportError:
+    from email_service import send_email
+
 def require_admin(f):
     from functools import wraps
     @wraps(f)
@@ -502,7 +507,6 @@ def approve(uid):
         return jsonify({'error': 'Applicant not found'}), 404
     db.execute("UPDATE users SET status='approved', approved_at=DATETIME('now') WHERE id=?", (uid,))
     db.commit()
-    from email_service import send_email
     name = user_data['first_name']
     send_email(user_data['email'], 'EPSA Application Approved — Welcome!', f"""
         <html><body style="font-family:Arial,sans-serif;color:#333;line-height:1.6;">
@@ -532,7 +536,6 @@ def reject(uid):
     user = db.execute("SELECT first_name, email FROM users WHERE id=?", (uid,)).fetchone()
     db.close()
     if user:
-        from email_service import send_email
         name = user['first_name']
         send_email(user['email'], 'EPSA Application Update', f"""
         <html><body style="font-family:Arial,sans-serif;color:#333;line-height:1.6;">
@@ -581,7 +584,6 @@ def delete_applicant(uid):
     
     # Send notification email
     if user:
-        from email_service import send_email
         name = user['first_name']
         send_email(user['email'], 'EPSA Account Deleted', f"""
         <html><body style="font-family:Arial,sans-serif;color:#333;line-height:1.6;">
@@ -626,7 +628,6 @@ def delete_student(uid):
     db.close()
 
     if user:
-        from email_service import send_email
         name = user['first_name']
         send_email(user['email'], 'EPSA Account Removed', f"""
         <html><body style="font-family:Arial,sans-serif;color:#333;line-height:1.6;">

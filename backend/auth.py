@@ -834,7 +834,15 @@ def send_otp():
     </html>
     """
 
-    send_email(email, "EPSA Secure Verification Code", body)
+    delivered = send_email(email, "EPSA Secure Verification Code", body)
+    if not delivered:
+        # Log the OTP to Railway logs as a debug fallback (remove once email is confirmed working)
+        print(f"[OTP Fallback] Email delivery failed. Code for {email}: {code}")
+        return jsonify({
+            "error": "We could not send the verification email. Please check your email address and try again. "
+                     "If the problem persists, contact EPSA support.",
+            "email_failed": True,
+        }), 503
     return jsonify({"message": "OTP sent"})
 
 
