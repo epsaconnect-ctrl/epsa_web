@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Dashboard â€” EPSA</title>
+  <title>Student Dashboard — EPSA</title>
   <link rel="icon" type="image/png" href="assets/logo.png">
   <link rel="stylesheet" href="css/globals.css">
   <link rel="stylesheet" href="css/dashboard.css">
@@ -36,22 +36,22 @@
       <div class="sidebar-section-label">Main</div>
       <button class="sidebar-link active" data-section="overview"   onclick="switchSection('overview')"><span class="sidebar-link-icon">ðŸ </span> Overview</button>
       <button class="sidebar-link"        data-section="profile"    onclick="switchSection('profile')"><span class="sidebar-link-icon">ðŸ‘¤</span> My Profile</button>
-      <button class="sidebar-link"        data-section="trainings"  onclick="switchSection('trainings')"><span class="sidebar-link-icon">ðŸŽ“</span> Trainings</button>
+      <button class="sidebar-link"        data-section="trainings"  onclick="switchSection('trainings')"><span class="sidebar-link-icon">🎓</span> Trainings</button>
 
       <div class="sidebar-section-label">Governance</div>
-      <button class="sidebar-link"        data-section="voting"     onclick="switchSection('voting')"><span class="sidebar-link-icon">ðŸ—³ï¸</span> Voting</button>
+      <button class="sidebar-link"        data-section="voting"     onclick="switchSection('voting')"><span class="sidebar-link-icon">🗳️</span> Voting</button>
 
       <div class="sidebar-section-label">Community</div>
       <button class="sidebar-link"        data-section="clubs"      onclick="switchSection('clubs')"><span class="sidebar-link-icon">ðŸ›ï¸</span> My Clubs</button>
-      <button class="sidebar-link"        data-section="networking" onclick="switchSection('networking')"><span class="sidebar-link-icon">ðŸ¤</span> Networking</button>
+      <button class="sidebar-link"        data-section="networking" onclick="switchSection('networking')"><span class="sidebar-link-icon">🤝</span> Networking</button>
       <button class="sidebar-link"        data-section="messaging"  onclick="switchSection('messaging')">
         <span class="sidebar-link-icon">ðŸ’¬</span> Messages
         <span class="sidebar-link-badge" id="msgBadge" style="display:none;">3</span>
       </button>
 
       <div class="sidebar-section-label">Assessment</div>
-      <button class="sidebar-link"        data-section="exams"      onclick="switchSection('exams')"><span class="sidebar-link-icon">ðŸ“</span> Exams</button>
-      <button class="sidebar-link" data-section="mock-exams" onclick="switchSection('mock-exams')"><span class="sidebar-link-icon">ðŸŽ¯</span> Mock Exams</button>
+      <button class="sidebar-link"        data-section="exams"      onclick="switchSection('exams')"><span class="sidebar-link-icon">📝</span> Exams</button>
+      <button class="sidebar-link" data-section="mock-exams" onclick="switchSection('mock-exams')"><span class="sidebar-link-icon">🎯</span> Mock Exams</button>
     </nav>
 
     <div class="sidebar-footer">
@@ -88,7 +88,7 @@
       <section id="sec-overview" class="dash-section">
         <div class="welcome-card">
           <div class="welcome-greeting">Good day,</div>
-          <h1 class="welcome-name">Welcome back, <span id="welcomeName">Student</span> ðŸ‘‹</h1>
+          <h1 class="welcome-name">Welcome back, <span id="welcomeName">Student</span> 👋</h1>
           <p class="welcome-subtitle">Here's what's happening in your EPSA account today</p>
           <div class="welcome-stats">
             <div class="welcome-stat"><div class="welcome-stat-num" id="ws-trainings">0</div><div class="welcome-stat-label">Trainings</div></div>
@@ -99,22 +99,22 @@
 
         <div class="quick-actions">
           <div class="quick-action-card" onclick="switchSection('trainings')">
-            <div class="quick-action-icon">ðŸŽ“</div>
+            <div class="quick-action-icon">🎓</div>
             <div class="quick-action-title">Browse Trainings</div>
             <div class="quick-action-desc">View and apply for programs</div>
           </div>
           <div class="quick-action-card" onclick="switchSection('voting')">
-            <div class="quick-action-icon">ðŸ—³ï¸</div>
+            <div class="quick-action-icon">🗳️</div>
             <div class="quick-action-title">Vote Now</div>
             <div class="quick-action-desc">Participate in elections</div>
           </div>
           <div class="quick-action-card" onclick="switchSection('networking')">
-            <div class="quick-action-icon">ðŸ¤</div>
+            <div class="quick-action-icon">🤝</div>
             <div class="quick-action-title">Network</div>
             <div class="quick-action-desc">Connect with peers</div>
           </div>
           <div class="quick-action-card" onclick="switchSection('exams')">
-            <div class="quick-action-icon">ðŸ“</div>
+            <div class="quick-action-icon">📝</div>
             <div class="quick-action-title">Exams</div>
             <div class="quick-action-desc">View scheduled exams</div>
           </div>
@@ -127,17 +127,17 @@
           </div>
           <div id="activityFeed" style="padding:var(--space-4);">
             <div style="display:flex; align-items:center; gap:var(--space-4); padding:var(--space-3); border-radius:var(--radius-md); transition: background 0.2s; cursor: default;" onmouseover="this.style.background='var(--light-100)'" onmouseout="this.style.background='transparent'">
-              <div style="width:36px;height:36px;background:rgba(26,107,60,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">âœ…</div>
+              <div style="width:36px;height:36px;background:rgba(26,107,60,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✅</div>
               <div><div style="font-size:0.875rem;font-weight:600;">Registration Approved</div><div style="font-size:0.75rem;color:var(--text-muted);">Your EPSA membership is active</div></div>
               <span style="margin-left:auto;font-size:0.72rem;color:var(--text-muted);">Today</span>
             </div>
             <div style="display:flex; align-items:center; gap:var(--space-4); padding:var(--space-3);">
-              <div style="width:36px;height:36px;background:rgba(200,163,64,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">ðŸŽ“</div>
-              <div><div style="font-size:0.875rem;font-weight:600;">New Training Available</div><div style="font-size:0.75rem;color:var(--text-muted);">Mental Health First Aid â€” Free</div></div>
+              <div style="width:36px;height:36px;background:rgba(200,163,64,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">🎓</div>
+              <div><div style="font-size:0.875rem;font-weight:600;">New Training Available</div><div style="font-size:0.75rem;color:var(--text-muted);">Mental Health First Aid — Free</div></div>
               <span style="margin-left:auto;font-size:0.72rem;color:var(--text-muted);">2 days ago</span>
             </div>
             <div style="display:flex; align-items:center; gap:var(--space-4); padding:var(--space-3);">
-              <div style="width:36px;height:36px;background:rgba(37,99,235,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">ðŸ—³ï¸</div>
+              <div style="width:36px;height:36px;background:rgba(37,99,235,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">🗳️</div>
               <div><div style="font-size:0.875rem;font-weight:600;">Voting Opens Soon</div><div style="font-size:0.75rem;color:var(--text-muted);">University representative election starts next week</div></div>
               <span style="margin-left:auto;font-size:0.72rem;color:var(--text-muted);">3 days ago</span>
             </div>
@@ -154,17 +154,17 @@
           <div class="profile-info-area">
             <div class="profile-avatar-wrap">
               <img src="assets/president.jpg" alt="Avatar" class="profile-avatar" id="profileAvatarImg">
-              <div class="profile-avatar-edit-btn" onclick="document.getElementById('profileAvatarUpload').click()" title="Change photo">ðŸ“·</div>
+              <div class="profile-avatar-edit-btn" onclick="document.getElementById('profileAvatarUpload').click()" title="Change photo">📝·</div>
               <input type="file" id="profileAvatarUpload" accept="image/*" style="display:none;" onchange="previewProfilePhoto(this)">
             </div>
             <div class="profile-info">
               <h2 class="profile-name" id="profileFullName">Loadingâ€¦</h2>
               <div class="profile-meta">
-                <span>ðŸ« <span id="profileUni">â€”</span></span>
-                <span>ðŸ“… <span id="profileYear">â€”</span></span>
-                <span>ðŸ“§ <span id="profileEmail">â€”</span></span>
+                <span>ðŸ« <span id="profileUni">—</span></span>
+                <span>📝… <span id="profileYear">—</span></span>
+                <span>📝§ <span id="profileEmail">—</span></span>
               </div>
-              <div style="margin-top:var(--space-3);"><span class="badge badge-green">âœ… Active Member</span></div>
+              <div style="margin-top:var(--space-3);"><span class="badge badge-green">✅ Active Member</span></div>
             </div>
             <div class="profile-actions">
               <button class="btn btn-outline-green btn-sm" onclick="openEditModal()">Edit Profile</button>
@@ -207,11 +207,11 @@
               <div class="info-card-header">
                 <div class="info-card-title">Academic Background</div>
               </div>
-              <div class="info-row"><span class="info-row-label">University</span><span class="info-row-value" id="pi-uni">â€”</span></div>
-              <div class="info-row"><span class="info-row-label">Program</span><span class="info-row-value" id="pi-program">â€”</span></div>
-              <div class="info-row"><span class="info-row-label">Year</span><span class="info-row-value" id="pi-year">â€”</span></div>
-              <div class="info-row"><span class="info-row-label">Field</span><span class="info-row-value" id="pi-field">â€”</span></div>
-              <div class="info-row"><span class="info-row-label">Student ID</span><span class="info-row-value" id="pi-id">â€”</span></div>
+              <div class="info-row"><span class="info-row-label">University</span><span class="info-row-value" id="pi-uni">—</span></div>
+              <div class="info-row"><span class="info-row-label">Program</span><span class="info-row-value" id="pi-program">—</span></div>
+              <div class="info-row"><span class="info-row-label">Year</span><span class="info-row-value" id="pi-year">—</span></div>
+              <div class="info-row"><span class="info-row-label">Field</span><span class="info-row-value" id="pi-field">—</span></div>
+              <div class="info-row"><span class="info-row-label">Student ID</span><span class="info-row-value" id="pi-id">—</span></div>
             </div>
             <!-- Experience -->
             <div class="info-card">
@@ -239,9 +239,9 @@
               <div class="info-card-header">
                 <div class="info-card-title">Contact (Private)</div>
               </div>
-              <div class="info-row"><span class="info-row-label">ðŸ“± Phone</span><span class="info-row-value" id="pi-phone">â€”</span></div>
-              <div class="info-row"><span class="info-row-label">ðŸ“§ Email</span><span class="info-row-value" id="pi-email">â€”</span></div>
-              <p style="font-size:0.72rem;color:var(--text-muted);margin-top:var(--space-3);">ðŸ”’ Only visible to you and EPSA admins</p>
+              <div class="info-row"><span class="info-row-label">📝± Phone</span><span class="info-row-value" id="pi-phone">—</span></div>
+              <div class="info-row"><span class="info-row-label">📝§ Email</span><span class="info-row-value" id="pi-email">—</span></div>
+              <p style="font-size:0.72rem;color:var(--text-muted);margin-top:var(--space-3);">🔒 Only visible to you and EPSA admins</p>
             </div>
           </div>
         </div>
@@ -272,12 +272,12 @@
           <div style="display:flex; justify-content:space-between; align-items:flex-start;">
             <div>
               <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:var(--space-2);">Current Phase</div>
-              <h2 id="votingPhaseTitle" style="font-family:var(--font-display);font-size:1.6rem;font-weight:800;margin-bottom:var(--space-3);">Phase 1 â€” University Representatives</h2>
+              <h2 id="votingPhaseTitle" style="font-family:var(--font-display);font-size:1.6rem;font-weight:800;margin-bottom:var(--space-3);">Phase 1 — University Representatives</h2>
               <p id="votingPhaseDesc" style="color:rgba(255,255,255,0.65);font-size:0.9rem;max-width:500px;">
                 Vote for your university's EPSA representative. Only students within your university can vote in this phase.
               </p>
             </div>
-            <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:white;border:none;" onclick="document.getElementById('electionRulesModal').classList.add('active')">ðŸ“œ View Election Rules</button>
+            <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:white;border:none;" onclick="document.getElementById('electionRulesModal').classList.add('active')">📜 View Election Rules</button>
           </div>
           
           <div style="margin-top:var(--space-5);display:flex;align-items:center;gap:var(--space-4);">
@@ -303,11 +303,11 @@
         <div id="voteConfirmArea" style="display:none;background:white;border-radius:var(--radius-xl);padding:var(--space-6);border:1px solid var(--light-200);">
           <h4 style="font-family:var(--font-display);font-weight:700;margin-bottom:var(--space-4);">Confirm Your Vote</h4>
           <p style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:var(--space-5);">
-            You are about to vote for <strong id="selectedCandidateName">â€”</strong>. <br>
+            You are about to vote for <strong id="selectedCandidateName">—</strong>. <br>
             âš ï¸ This action is <strong>irreversible</strong>. You can only vote once.
           </p>
           <div style="display:flex;gap:var(--space-3);">
-            <button class="btn btn-primary" onclick="castVote()">âœ… Confirm Vote</button>
+            <button class="btn btn-primary" onclick="castVote()">✅ Confirm Vote</button>
             <button class="btn btn-ghost" onclick="cancelVote()">Cancel</button>
           </div>
         </div>
@@ -382,16 +382,16 @@
               <div style="font-size:0.8rem;opacity:0.75;" id="consoleClubUni">ðŸ« University</div>
             </div>
             <div style="display:flex;gap:8px;">
-              <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);border:none;color:white;" onclick="document.getElementById('submitProposalModal').classList.add('active')">ðŸ’° New Proposal</button>
-              <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);border:none;color:white;" onclick="openFinancialReportForm()">ðŸ“Š Financial Report</button>
+              <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);border:none;color:white;" onclick="document.getElementById('submitProposalModal').classList.add('active')">💰 New Proposal</button>
+              <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);border:none;color:white;" onclick="openFinancialReportForm()">📊 Financial Report</button>
               <button class="btn btn-sm" style="background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.7);" onclick="closeClubConsole()">âœ• Close</button>
             </div>
           </div>
           <div style="padding:var(--space-5) var(--space-6);">
             <div class="pill-tabs" style="margin-bottom:var(--space-5);">
-              <span class="pill-tab active" onclick="switchConsoleTab('members',this)">ðŸ‘¥ Members</span>
-              <span class="pill-tab" onclick="switchConsoleTab('proposals',this)">ðŸ’° Proposals</span>
-              <span class="pill-tab" onclick="switchConsoleTab('activities',this)">ðŸ“¢ Activities</span>
+              <span class="pill-tab active" onclick="switchConsoleTab('members',this)">👥 Members</span>
+              <span class="pill-tab" onclick="switchConsoleTab('proposals',this)">💰 Proposals</span>
+              <span class="pill-tab" onclick="switchConsoleTab('activities',this)">📢 Activities</span>
             </div>
             <div id="ctab-members">
               <div style="display:flex;gap:8px;margin-bottom:var(--space-4);">
@@ -409,7 +409,7 @@
                 <input type="text" class="form-input" id="activityTitle" placeholder="Activity title" style="margin-bottom:8px;">
                 <select class="form-select" id="activityType" style="margin-bottom:8px;"><option value="event">Event</option><option value="announcement">Announcement</option><option value="report">Report</option></select>
                 <textarea class="form-input" id="activityContent" rows="2" placeholder="Detailsâ€¦" style="margin-bottom:8px;"></textarea>
-                <button class="btn btn-primary btn-sm" onclick="submitClubActivity()">ðŸ“¢ Post Activity</button>
+                <button class="btn btn-primary btn-sm" onclick="submitClubActivity()">📢 Post Activity</button>
               </div>
               <div id="consoleActivitiesList" style="display:flex;flex-direction:column;gap:10px;"></div>
             </div>
@@ -517,7 +517,7 @@
         </div>
         <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
           <span style="color:var(--text-muted);">Amount</span>
-          <span style="font-weight:800;color:var(--epsa-green);font-size:1.1rem;" id="payAmount">ETB â€”</span>
+          <span style="font-weight:800;color:var(--epsa-green);font-size:1.1rem;" id="payAmount">ETB —</span>
         </div>
       </div>
     </div>
@@ -652,7 +652,7 @@
     
     <div style="padding:var(--space-6);">
       <div style="margin-bottom:var(--space-6);">
-        <h4 style="font-weight:700;margin-bottom:var(--space-2);color:var(--text-primary);display:flex;align-items:center;gap:8px;"><span>ðŸŽ¯</span> Personal Statement</h4>
+        <h4 style="font-weight:700;margin-bottom:var(--space-2);color:var(--text-primary);display:flex;align-items:center;gap:8px;"><span>🎯</span> Personal Statement</h4>
         <p id="cbStatement" style="font-size:0.9rem;line-height:1.6;color:var(--text-secondary);">No statement provided.</p>
       </div>
       
@@ -663,12 +663,12 @@
       
       <div style="display:flex;gap:var(--space-4);margin-bottom:var(--space-6);">
         <a id="cbVideoBtn" target="_blank" class="btn btn-outline-green btn-sm" style="display:none;align-items:center;gap:6px;">â–¶ï¸ Watch Intro</a>
-        <a id="cbManifestoBtn" target="_blank" class="btn btn-outline-green btn-sm" style="display:none;align-items:center;gap:6px;">ðŸ“„ Read Manifesto</a>
+        <a id="cbManifestoBtn" target="_blank" class="btn btn-outline-green btn-sm" style="display:none;align-items:center;gap:6px;">📝„ Read Manifesto</a>
       </div>
       
       <div style="display:flex;gap:var(--space-3);border-top:1px solid var(--light-200);padding-top:var(--space-5);">
         <button class="btn btn-ghost" style="flex:1;" onclick="document.getElementById('candidateBioModal').classList.remove('active')">Close</button>
-        <button class="btn btn-primary" style="flex:1;" id="cbVoteBtn" onclick="selectCandidateFromModal()">ðŸ—³ï¸ Vote for Candidate</button>
+        <button class="btn btn-primary" style="flex:1;" id="cbVoteBtn" onclick="selectCandidateFromModal()">🗳️ Vote for Candidate</button>
       </div>
     </div>
     </div>
@@ -694,7 +694,7 @@
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-6);padding:var(--space-4) var(--space-6);background:var(--dark-800);border-radius:var(--radius-xl);color:white;">
       <div>
         <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);font-weight:600;">EPSA EXAM</div>
-        <div style="font-family:var(--font-display);font-weight:800;" id="examPlayerTitle">â€”</div>
+        <div style="font-family:var(--font-display);font-weight:800;" id="examPlayerTitle">—</div>
       </div>
       <div style="text-align:center;">
         <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);">TIME REMAINING</div>
@@ -707,7 +707,7 @@
     </div>
     <div id="examQuestions" style="display:flex;flex-direction:column;gap:var(--space-6);"></div>
     <div style="margin-top:var(--space-8);text-align:center;">
-      <button class="btn btn-gold btn-lg" onclick="submitExam()">âœ… Submit Exam</button>
+      <button class="btn btn-gold btn-lg" onclick="submitExam()">✅ Submit Exam</button>
     </div>
   </div>
 </div>
@@ -715,7 +715,7 @@
 <!-- â”€â”€ NEW POST MODAL â”€â”€ -->
 <div class="modal-overlay" id="newPostModal">
   <div class="modal" style="max-width:560px;">
-    <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-4);">ðŸ“ Create a Post</h3>
+    <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-4);">📝 Create a Post</h3>
     <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:var(--space-5);">Share an update with the EPSA community</p>
     <div class="form-group">
       <textarea id="newPostContent" class="form-input form-textarea" rows="4" placeholder="What's on your mind? Share an update, event, or announcementâ€¦" style="font-size:0.9rem;"></textarea>
@@ -738,7 +738,7 @@
 <!-- â”€â”€ FINANCIAL REPORT MODAL â”€â”€ -->
 <div class="modal-overlay" id="financialReportModal">
   <div class="modal" style="max-width:540px;">
-    <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">ðŸ“Š Submit Financial Report</h3>
+    <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">📊 Submit Financial Report</h3>
     <form id="finReportForm" onsubmit="submitFinancialReport(event)">
       <div class="form-group">
         <label class="form-label">Select Funded Proposal *</label>
@@ -758,7 +758,7 @@
       </div>
       <div style="display:flex;gap:var(--space-3);justify-content:flex-end;">
         <button type="button" class="btn btn-ghost" onclick="document.getElementById('financialReportModal').classList.remove('active')">Cancel</button>
-        <button type="submit" class="btn btn-primary">ðŸ“Š Submit Report</button>
+        <button type="submit" class="btn btn-primary">📊 Submit Report</button>
       </div>
     </form>
   </div>
@@ -800,7 +800,7 @@
 <!-- â”€â”€ SUBMIT PROPOSAL MODAL â”€â”€ -->
 <div class="modal-overlay" id="submitProposalModal">
   <div class="modal" style="max-width:560px;">
-    <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">ðŸ’° Submit Grant Proposal</h3>
+    <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">💰 Submit Grant Proposal</h3>
     <form id="proposalForm" onsubmit="submitGrantProposal(event)">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);">
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Project Title *</label><input type="text" id="sp-title" class="form-input" required placeholder="e.g. Mental Health Awareness Campaign 2026"></div>
@@ -811,7 +811,7 @@
       </div>
       <div style="display:flex;gap:var(--space-3);justify-content:flex-end;margin-top:var(--space-4);">
         <button type="button" class="btn btn-ghost" onclick="document.getElementById('submitProposalModal').classList.remove('active')">Cancel</button>
-        <button type="submit" class="btn btn-gold" style="background:var(--epsa-gold);border:none;color:white;">ðŸ’° Submit Proposal</button>
+        <button type="submit" class="btn btn-gold" style="background:var(--epsa-gold);border:none;color:white;">💰 Submit Proposal</button>
       </div>
     </form>
   </div>
@@ -819,7 +819,7 @@
 
 <script>
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// CLUBS & SOCIAL FEED â€” Student Portal Logic
+// CLUBS & SOCIAL FEED — Student Portal Logic
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const APIB = (() => {
   if (window.API && typeof API.getApiBases === 'function') {
@@ -871,18 +871,18 @@ async function loadMyClubs() {
           </div>
           <div style="padding:var(--space-4);">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-3);">
-              <span style="font-size:0.82rem;color:var(--text-muted);">ðŸ‘¥ ${c.member_count||0} members</span>
+              <span style="font-size:0.82rem;color:var(--text-muted);">👥 ${c.member_count||0} members</span>
               <span style="font-size:0.75rem;padding:3px 10px;border-radius:20px;background:${c.status==='approved'?'rgba(22,163,74,0.1)':'rgba(217,119,6,0.1)'};color:${c.status==='approved'?'#16a34a':'#d97706'};font-weight:700;">${c.status}</span>
             </div>
             ${c.my_role === 'president' && c.status === 'approved'
               ? `<button class="btn btn-primary btn-sm" style="width:100%;" onclick="openClubConsole(${c.id},'${c.name}','${c.university}')">ðŸ›ï¸ Open Console</button>` 
-              : `<div style="font-size:0.8rem;color:var(--text-muted);text-align:center;padding:8px;">${c.status === 'pending' ? 'â³ Awaiting admin approval' : 'âœ… Active member'}</div>`}
+              : `<div style="font-size:0.8rem;color:var(--text-muted);text-align:center;padding:8px;">${c.status === 'pending' ? 'â³ Awaiting admin approval' : '✅ Active member'}</div>`}
           </div>
         </div>
       `).join('');
     }
 
-    // Discover grid â€” clubs not in mine
+    // Discover grid — clubs not in mine
     const myIds = mine.map(c => c.id);
     const discover = all.filter(c => !myIds.includes(c.id));
     if (disc) {
@@ -891,7 +891,7 @@ async function loadMyClubs() {
           <div style="font-family:var(--font-display);font-weight:700;font-size:0.9rem;margin-bottom:4px;">${c.name}</div>
           <div style="font-size:0.78rem;color:var(--epsa-green);margin-bottom:10px;">ðŸ« ${c.university}</div>
           <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${c.description||'Active EPSA chapter.'}</div>
-          <div style="font-size:0.72rem;color:var(--text-muted);">ðŸ‘¥ ${c.member_count||0} members</div>
+          <div style="font-size:0.72rem;color:var(--text-muted);">👥 ${c.member_count||0} members</div>
         </div>
       `).join('') : `<div style="grid-column:1/-1;color:var(--text-muted);font-size:0.85rem;text-align:center;padding:24px;">All approved clubs already joined.</div>`;
     }
@@ -967,8 +967,8 @@ async function loadConsoleProposals(cid) {
         <div style="font-weight:700;font-size:0.9rem;">${p.title}</div>
         <span style="background:${sColors[p.status]||'#777'}20;color:${sColors[p.status]||'#777'};padding:2px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;white-space:nowrap;">${p.status.replace(/_/g,' ')}</span>
       </div>
-      <div style="font-size:0.8rem;color:var(--text-muted);">Budget: ETB ${(p.budget||0).toLocaleString()} Â· ${p.timeline||'â€”'}</div>
-      ${p.admin_notes ? `<div style="font-size:0.78rem;color:var(--text-secondary);margin-top:6px;padding:6px 10px;background:rgba(37,99,235,0.05);border-radius:8px;">ðŸ“ ${p.admin_notes}</div>` : ''}
+      <div style="font-size:0.8rem;color:var(--text-muted);">Budget: ETB ${(p.budget||0).toLocaleString()} Â· ${p.timeline||'—'}</div>
+      ${p.admin_notes ? `<div style="font-size:0.78rem;color:var(--text-secondary);margin-top:6px;padding:6px 10px;background:rgba(37,99,235,0.05);border-radius:8px;">📝 ${p.admin_notes}</div>` : ''}
     </div>
   `).join('') : '<div style="color:var(--text-muted);font-size:0.85rem;text-align:center;padding:24px;">No proposals submitted yet.</div>';
 }
@@ -1021,7 +1021,7 @@ async function submitGrantProposal(e) {
 }
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// SOCIAL FEED â€” LinkedIn-style Network
+// SOCIAL FEED — LinkedIn-style Network
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 let feedPage = 1;
 let feedLoading = false;
@@ -1040,7 +1040,7 @@ async function loadFeed(reset = true) {
     if (loading) loading.style.display = 'none';
     if (!posts.length && feedPage === 1) {
       container.innerHTML = `<div style="background:white;border-radius:var(--radius-xl);border:1px solid var(--light-200);padding:40px;text-align:center;color:var(--text-muted);">
-        <div style="font-size:2.5rem;margin-bottom:12px;">ðŸŒ</div>
+        <div style="font-size:2.5rem;margin-bottom:12px;">🌐</div>
         <div style="font-weight:600;margin-bottom:8px;">The feed is empty</div>
         <div style="font-size:0.85rem;">Be the first to post something!</div>
       </div>`;
@@ -1075,7 +1075,7 @@ function renderPost(p) {
       ${p.image_url ? `<div style="border-top:1px solid var(--light-100);"><img src="${APIB}${p.image_url}" style="width:100%;max-height:400px;object-fit:cover;" onerror="this.parentElement.remove()"></div>` : ''}
       <div style="padding:var(--space-3) var(--space-5);border-top:1px solid var(--light-100);display:flex;gap:var(--space-2);">
         <button onclick="toggleLike(${p.id},this)" id="like-${p.id}" style="display:flex;align-items:center;gap:6px;background:${p.user_liked?'rgba(22,163,74,0.08)':'none'};border:1px solid ${p.user_liked?'rgba(22,163,74,0.25)':'var(--light-200)'};border-radius:8px;padding:6px 14px;cursor:pointer;font-size:0.82rem;color:${p.user_liked?'var(--epsa-green)':'var(--text-muted)'};transition:all 0.2s;">
-          ${p.user_liked ? 'ðŸ’š' : 'ðŸ¤'} <span id="likes-${p.id}">${p.likes||0}</span>
+          ${p.user_liked ? 'ðŸ’š' : '🤝'} <span id="likes-${p.id}">${p.likes||0}</span>
         </button>
         <button onclick="toggleComments(${p.id})" style="display:flex;align-items:center;gap:6px;background:none;border:1px solid var(--light-200);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:0.82rem;color:var(--text-muted);transition:all 0.2s;" onmouseover="this.style.background='var(--light-50)'" onmouseout="this.style.background='none'">
           ðŸ’¬ ${p.comment_count||0}
@@ -1099,7 +1099,7 @@ async function toggleLike(postId, btn) {
   btn.style.background = data.liked ? 'rgba(22,163,74,0.08)' : 'none';
   btn.style.border      = data.liked ? '1px solid rgba(22,163,74,0.25)' : '1px solid var(--light-200)';
   btn.style.color       = data.liked ? 'var(--epsa-green)' : 'var(--text-muted)';
-  btn.innerHTML = `${data.liked ? 'ðŸ’š' : 'ðŸ¤'} <span id="likes-${postId}">${data.likes}</span>`;
+  btn.innerHTML = `${data.liked ? 'ðŸ’š' : '🤝'} <span id="likes-${postId}">${data.likes}</span>`;
 }
 
 async function toggleComments(postId) {
@@ -1208,7 +1208,7 @@ async function loadFeedClubsWidget() {
         <div style="width:26px;height:26px;border-radius:6px;background:rgba(26,107,60,0.12);display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;">ðŸ›ï¸</div>
         <div style="min-width:0;">
           <div style="font-size:0.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name}</div>
-          <div style="font-size:0.7rem;color:var(--text-muted);">ðŸ‘¥ ${c.member_count||0}</div>
+          <div style="font-size:0.7rem;color:var(--text-muted);">👥 ${c.member_count||0}</div>
         </div>
       </div>
     `).join('') || '<div style="color:var(--text-muted);font-size:0.82rem;">No clubs yet.</div>';
@@ -1355,7 +1355,7 @@ window.switchSection = function(sec) {
   </style>
   <div id="section-mock-exams" class="dash-section mock-shell" style="display:none">
     <div class="section-header">
-      <h2>ðŸŽ¯ Mock Examinations</h2>
+      <h2>🎯 Mock Examinations</h2>
       <p class="section-desc">Practice with randomized questions from the national question bank. Results are released after the exam window closes.</p>
     </div>
 
@@ -1391,7 +1391,7 @@ window.switchSection = function(sec) {
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(0,0,0,.4);border-top:1px solid rgba(34,197,94,.08);flex-shrink:0">
       <button id="mePrevBtn" onclick="meNavigate(-1)" style="background:rgba(255,255,255,.07);color:#86efac;border:1px solid rgba(34,197,94,.2);padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-weight:600;cursor:pointer">â† Prev</button>
       <span id="meQLabel" style="color:#86efac;font-size:.9rem"></span>
-      <button id="meNextBtn" onclick="meNavigate(1)" style="background:rgba(255,255,255,.07);color:#86efac;border:1px solid rgba(34,197,94,.2);padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-weight:600;cursor:pointer">Next â†’</button>
+      <button id="meNextBtn" onclick="meNavigate(1)" style="background:rgba(255,255,255,.07);color:#86efac;border:1px solid rgba(34,197,94,.2);padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-weight:600;cursor:pointer">Next →</button>
     </div>
   </div>
 
@@ -1399,7 +1399,7 @@ window.switchSection = function(sec) {
   <div id="mockResultsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9500;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto">
     <div style="background:#0a2e18;border:1px solid rgba(34,197,94,.2);border-radius:20px;padding:32px;width:100%;max-width:720px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-        <h2 style="font-size:1.3rem;font-weight:800;color:#f0fdf4">ðŸ“Š Exam Results</h2>
+        <h2 style="font-size:1.3rem;font-weight:800;color:#f0fdf4">📊 Exam Results</h2>
         <button onclick="document.getElementById('mockResultsModal').style.display='none'" style="background:rgba(255,255,255,.07);border:1px solid rgba(34,197,94,.15);color:#86efac;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.1rem">âœ•</button>
       </div>
       <div id="mockResultsContent" style="color:#86efac;text-align:center;padding:40px">Loadingâ€¦</div>
@@ -1424,7 +1424,7 @@ window.switchSection = function(sec) {
       const data = await API.listMockExams();
       const exams = data.exams || [];
       if (!exams.length) {
-        container.innerHTML = '<div style="text-align:center;color:#86efac;padding:60px;grid-column:1/-1;opacity:.6"><div style="font-size:2.5rem;margin-bottom:12px">ðŸ“­</div><div style="font-weight:700">No mock exams available right now</div><div style="font-size:.85rem;margin-top:6px">Check back when an exam window opens.</div></div>';
+        container.innerHTML = '<div style="text-align:center;color:#86efac;padding:60px;grid-column:1/-1;opacity:.6"><div style="font-size:2.5rem;margin-bottom:12px">📝­</div><div style="font-weight:700">No mock exams available right now</div><div style="font-size:.85rem;margin-top:6px">Check back when an exam window opens.</div></div>';
         return;
       }
       container.innerHTML = exams.map(e => renderMockExamCard(e)).join('');
@@ -1437,13 +1437,13 @@ window.switchSection = function(sec) {
     const statusColor = e.is_open ? '#22c55e' : (e.is_submitted ? '#3b82f6' : '#f59e0b');
     const statusLabel = e.is_submitted ? 'Submitted' : (e.is_open ? 'Open Now' : 'Scheduled');
     const btnHtml = e.can_start
-      ? `<button onclick="startMockExam(${e.id})" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-weight:700;cursor:pointer;width:100%;margin-top:16px">ðŸŽ¯ Start Exam</button>`
+      ? `<button onclick="startMockExam(${e.id})" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-weight:700;cursor:pointer;width:100%;margin-top:16px">🎯 Start Exam</button>`
       : e.can_continue
       ? `<button onclick="startMockExam(${e.id})" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-weight:700;cursor:pointer;width:100%;margin-top:16px">â–¶ï¸ Continue Exam</button>`
       : e.results_viewable
-      ? `<button onclick="viewMockResults(${e.id})" style="background:rgba(59,130,246,.15);color:#3b82f6;border:1px solid rgba(59,130,246,.3);padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-weight:700;cursor:pointer;width:100%;margin-top:16px">ðŸ“Š View My Results</button>`
+      ? `<button onclick="viewMockResults(${e.id})" style="background:rgba(59,130,246,.15);color:#3b82f6;border:1px solid rgba(59,130,246,.3);padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-weight:700;cursor:pointer;width:100%;margin-top:16px">📊 View My Results</button>`
       : e.is_submitted
-      ? `<div style="text-align:center;color:#86efac;margin-top:16px;font-size:.85rem">âœ… Submitted â€” Results pending release</div>`
+      ? `<div style="text-align:center;color:#86efac;margin-top:16px;font-size:.85rem">✅ Submitted — Results pending release</div>`
       : `<div style="text-align:center;color:#86efac;margin-top:16px;font-size:.85rem">â³ Exam not yet open</div>`;
 
     return `<div style="background:rgba(255,255,255,.04);border:1px solid rgba(34,197,94,.16);border-radius:16px;padding:22px">
@@ -1453,7 +1453,7 @@ window.switchSection = function(sec) {
       </div>
       ${e.description ? `<p style="font-size:.83rem;color:#86efac;margin-bottom:12px">${escHtml(e.description)}</p>` : ''}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.8rem;color:#86efac">
-        <div>ðŸ“ ${e.question_count} questions</div>
+        <div>📝 ${e.question_count} questions</div>
         <div>â±ï¸ ${e.duration_mins} minutes</div>
         ${e.my_score != null ? `<div style="grid-column:1/-1;color:#22c55e;font-weight:700">Your score: ${e.my_score}%</div>` : ''}
       </div>
@@ -1547,7 +1547,7 @@ window.switchSection = function(sec) {
     document.getElementById('meQLabel').textContent = `${idx+1} / ${total}`;
     document.getElementById('mePrevBtn').disabled = idx === 0;
     document.getElementById('meNextBtn').disabled = idx === total - 1;
-    document.getElementById('meNextBtn').textContent = idx === total - 1 ? 'Last Question' : 'Next â†’';
+    document.getElementById('meNextBtn').textContent = idx === total - 1 ? 'Last Question' : 'Next →';
 
     const selected = ME.answers[String(q.id)];
     const optLetters = ['A','B','C','D'];
@@ -1673,7 +1673,7 @@ window.switchSection = function(sec) {
           ${(data.breakdown || []).map((b, i) => `
             <div style="background:rgba(${b.correct?'34,197,94':'248,113,113'},.07);border:1px solid rgba(${b.correct?'34,197,94':'248,113,113'},.2);border-radius:10px;padding:14px">
               <div style="font-size:.82rem;font-weight:600;color:#f0fdf4;margin-bottom:6px">${i+1}. ${escHtml(b.question_text)}</div>
-              <div style="font-size:.78rem;color:${b.correct?'#22c55e':'#f87171'}">${b.correct?'âœ… Correct':'âŒ Incorrect'}</div>
+              <div style="font-size:.78rem;color:${b.correct?'#22c55e':'#f87171'}">${b.correct?'✅ Correct':'âŒ Incorrect'}</div>
               ${b.explanation ? `<div style="font-size:.75rem;color:#86efac;margin-top:6px;font-style:italic">${escHtml(b.explanation)}</div>` : ''}
             </div>`).join('')}
         </div>`;

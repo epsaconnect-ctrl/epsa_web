@@ -786,13 +786,14 @@ def admin_login():
 
     settings = get_settings()
     totp_secret = row["admin_totp_secret"] or settings.admin_totp_secret
-    if settings.require_admin_totp:
-        if not totp_secret:
-            return jsonify({"error": "Admin 2FA is not configured on the server."}), 503
+    if settings.require_admin_totp and totp_secret:
+        # TOTP required AND secret is configured — verify the code
         if not verify_totp_code(totp_secret, totp_code):
             return jsonify({"error": "Invalid two-factor authentication code"}), 401
-    elif not settings.allow_local_admin_totp_bypass and totp_secret and not verify_totp_code(totp_secret, totp_code):
-        return jsonify({"error": "Invalid two-factor authentication code"}), 401
+    elif not settings.allow_local_admin_totp_bypass and totp_secret and totp_code:
+        # TOTP not required, but secret exists and a code was provided — verify it
+        if not verify_totp_code(totp_secret, totp_code):
+            return jsonify({"error": "Invalid two-factor authentication code"}), 401
 
     return _auth_response(row)
 

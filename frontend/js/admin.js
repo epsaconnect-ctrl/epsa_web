@@ -176,7 +176,7 @@ function renderToTbody(tbody, applicants, compact) {
 
   const statusBadge = s => ({
     pending:  `<span class="badge status-pending">â³ Pending</span>`,
-    approved: `<span class="badge status-approved">âœ… Approved</span>`,
+    approved: `<span class="badge status-approved">✅ Approved</span>`,
     rejected: `<span class="badge status-rejected">âŒ Rejected</span>`,
   }[s] || `<span class="badge badge-gray">${s}</span>`);
 
@@ -190,14 +190,14 @@ function renderToTbody(tbody, applicants, compact) {
       </td>
       <td style="font-size:0.8rem;">${a.university}</td>
       ${!compact ? `<td><span class="badge badge-gray">${a.program_type}</span></td>` : ''}
-      <td style="font-size:0.8rem;">${a.academic_year ? `Year ${a.academic_year}` : 'â€”'}</td>
+      <td style="font-size:0.8rem;">${a.academic_year ? `Year ${a.academic_year}` : '—'}</td>
       <td style="font-size:0.78rem;color:var(--text-muted);">${formatDate(a.created_at)}</td>
       <td>${statusBadge(a.status)}</td>
       <td>
         <div class="table-actions">
           <button class="action-btn action-btn-view" onclick="viewApplicant(${a.id})">View</button>
           ${a.status === 'pending' ? `
-            <button class="action-btn action-btn-approve" onclick="quickApprove(${a.id}, this)">âœ…</button>
+            <button class="action-btn action-btn-approve" onclick="quickApprove(${a.id}, this)">✅</button>
             <button class="action-btn action-btn-reject"  onclick="openRejectModal(${a.id})">âŒ</button>` : ''}
           <button type="button" class="action-btn action-btn-reject" title="Delete record" onclick="adminDeleteApplicant(${a.id})">ðŸ—‘</button>
         </div>
@@ -327,10 +327,10 @@ function viewApplicant(id) {
 
   const rows = [
     ['ðŸ« University', a.university],
-    ['ðŸ“‹ Program',    a.program_type],
-    ['ðŸ“… Year',       a.academic_year ? `Year ${a.academic_year}` : 'â€”'],
-    ['ðŸ“± Phone',      a.phone],
-    ['ðŸ“§ Email',      a.email],
+    ['📝‹ Program',    a.program_type],
+    ['📝… Year',       a.academic_year ? `Year ${a.academic_year}` : '—'],
+    ['📝± Phone',      a.phone],
+    ['📝§ Email',      a.email],
     ['ðŸ—“ï¸ Applied',    formatDate(a.created_at)],
   ];
 
@@ -340,7 +340,7 @@ function viewApplicant(id) {
       <span style="font-weight:600;">${v}</span>
     </div>`).join('') +
     `<div style="margin-top:var(--space-4);">
-      <a class="doc-preview-link" href="#" onclick="viewDocument('slips', '${a.reg_slip}'); return false;">ðŸ“„ View Registration Slip</a>
+      <a class="doc-preview-link" href="#" onclick="viewDocument('slips', '${a.reg_slip}'); return false;">📝„ View Registration Slip</a>
     </div>`;
 
   const approveBtn = document.getElementById('modalApproveBtn');
@@ -373,9 +373,9 @@ window.closeApplicantModal = closeApplicantModal;
 
 async function quickApprove(id, btn) {
   try { await API.approveApplicant(id); } catch(_) {}
-  if (btn) btn.closest('tr').querySelector('.badge').outerHTML = `<span class="badge status-approved">âœ… Approved</span>`;
+  if (btn) btn.closest('tr').querySelector('.badge').outerHTML = `<span class="badge status-approved">✅ Approved</span>`;
   const a = allApplicants.find(x => x.id === id); if (a) a.status = 'approved';
-  showToast('âœ… Student approved! They can now log in.', 'success');
+  showToast('✅ Student approved! They can now log in.', 'success');
 }
 window.quickApprove = quickApprove;
 
@@ -383,7 +383,7 @@ async function approveCurrentApplicant() {
   if (!currentApplicantId) return;
   try { await API.approveApplicant(currentApplicantId); } catch(_) {}
   closeApplicantModal();
-  showToast('âœ… Student approved!', 'success');
+  showToast('✅ Student approved!', 'success');
   const a = allApplicants.find(x => x.id === currentApplicantId); if (a) a.status = 'approved';
   renderApplicantsTable(allApplicants);
   loadDashboardStats();
@@ -443,10 +443,10 @@ async function loadAllStudents() {
         <div class="table-avatar">${s.first_name[0]}${s.father_name[0]}</div>
         <div><div class="table-primary">${s.first_name} ${s.father_name}</div><div class="table-secondary">${s.email}</div></div>
       </div></td>
-      <td style="font-family:monospace;font-size:0.78rem;">${s.student_id||'â€”'}</td>
+      <td style="font-family:monospace;font-size:0.78rem;">${s.student_id||'—'}</td>
       <td style="font-size:0.8rem;">${s.university}</td>
       <td><span class="badge badge-gray">${s.program_type}</span></td>
-      <td style="font-size:0.8rem;">${s.academic_year ? `Year ${s.academic_year}` : 'â€”'}</td>
+      <td style="font-size:0.8rem;">${s.academic_year ? `Year ${s.academic_year}` : '—'}</td>
       <td><span class="badge ${s.status==='approved'?'status-approved':s.status==='pending'?'status-pending':'status-rejected'}">${s.status}</span></td>
       <td style="font-size:0.78rem;color:var(--text-muted);">${formatDate(s.created_at)}</td>
       <td><button type="button" class="action-btn action-btn-reject" onclick="adminDeleteRegisteredStudent(${s.id})">ðŸ—‘ Delete</button></td>
@@ -497,7 +497,7 @@ function renderAdminThreadList() {
       const initials = adminEsc(t.initials || '?');
       return `<button type="button" style="display:flex;width:100%;text-align:left;gap:10px;padding:14px 16px;border:none;border-bottom:1px solid var(--light-200);cursor:pointer;font:inherit;${active}" onclick="adminSelectThread(${t.id})">
         <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--epsa-green),var(--epsa-green-dark));color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:0.75rem;">${initials}</div>
-        <div style="flex:1;min-width:0;"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-weight:700;font-size:0.85rem;">${label}</span>${unread}</div><div style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${preview || 'â€”'}</div></div>
+        <div style="flex:1;min-width:0;"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-weight:700;font-size:0.85rem;">${label}</span>${unread}</div><div style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${preview || '—'}</div></div>
       </button>`;
     })
     .join('');
@@ -602,8 +602,8 @@ async function loadAdminTrainings() {
       <td><div class="table-primary">${t.title}</div>
         ${!t.is_active ? '<div style="font-size:0.72rem;color:var(--epsa-red);">âš  Inactive</div>' : ''}
       </td>
-      <td><span class="badge ${t.format==='online'?'badge-blue':'badge-green'}">${t.format==='online'?'ðŸ’» Online':'ðŸ“ In-Person'}</span></td>
-      <td style="font-weight:700;color:var(--epsa-green);">${t.price===0?'ðŸ†“ Free':'ETB '+t.price.toLocaleString()}</td>
+      <td><span class="badge ${t.format==='online'?'badge-blue':'badge-green'}">${t.format==='online'?'ðŸ’» Online':'📝 In-Person'}</span></td>
+      <td style="font-weight:700;color:var(--epsa-green);">${t.price===0?'🏆“ Free':'ETB '+t.price.toLocaleString()}</td>
       <td>${t.applicant_count || 0}</td>
       <td><span class="badge ${t.is_active ? 'status-approved' : 'status-rejected'}">${t.is_active ? 'Active' : 'Inactive'}</span></td>
       <td><div class="table-actions">
@@ -644,7 +644,7 @@ async function submitEditTraining() {
       price:  parseFloat(document.getElementById('et-price').value) || 0
     });
     document.getElementById('editTrainingModal').classList.remove('active');
-    showToast('ðŸŽ“ Training updated!', 'success');
+    showToast('🎓 Training updated!', 'success');
     loadAdminTrainings();
   } catch(e) { showToast('Error updating training', 'error'); }
 }
@@ -678,7 +678,7 @@ async function submitCreateTraining() {
       fd.append('description', desc);
       fd.append('format', document.getElementById('ct-format').value);
       fd.append('price', String(parseFloat(document.getElementById('ct-price').value) || 0));
-      fd.append('icon', document.getElementById('ct-icon').value || 'ðŸŽ“');
+      fd.append('icon', document.getElementById('ct-icon').value || '🎓');
       fd.append('cert_title', document.getElementById('ct-cert').value || '');
       fd.append('content_url', document.getElementById('ct-url').value || '');
       fd.append('graphic_caption', (document.getElementById('ct-graphic-caption')?.value || '').trim());
@@ -690,13 +690,13 @@ async function submitCreateTraining() {
         title, description: desc,
         format: document.getElementById('ct-format').value,
         price: parseFloat(document.getElementById('ct-price').value) || 0,
-        icon: document.getElementById('ct-icon').value || 'ðŸŽ“',
+        icon: document.getElementById('ct-icon').value || '🎓',
         cert_title: document.getElementById('ct-cert').value,
         content_url: document.getElementById('ct-url').value,
       });
     }
     document.getElementById('createTrainingModal').classList.remove('active');
-    showToast('ðŸŽ“ Training program created!', 'success');
+    showToast('🎓 Training program created!', 'success');
     loadAdminTrainings();
   } catch(err) {
     showToast(err.message || 'Failed to create training', 'error');
@@ -720,9 +720,9 @@ async function loadPendingReceipts() {
       <td>${r.training_title}</td>
       <td style="font-weight:700;color:var(--epsa-green);">Paid</td>
       <td style="font-size:0.78rem;color:var(--text-muted);">${formatDate(r.submitted_at)}</td>
-      <td><a class="doc-preview-link" href="#" style="font-size:0.8rem;" onclick="viewDocument('receipts', '${r.receipt_path}'); return false;">ðŸ“„ View Receipt</a></td>
+      <td><a class="doc-preview-link" href="#" style="font-size:0.8rem;" onclick="viewDocument('receipts', '${r.receipt_path}'); return false;">📝„ View Receipt</a></td>
       <td><div class="table-actions">
-        <button class="action-btn action-btn-approve" onclick="verifyReceiptRow(${r.id},this)">âœ… Verify</button>
+        <button class="action-btn action-btn-approve" onclick="verifyReceiptRow(${r.id},this)">✅ Verify</button>
         <button class="action-btn action-btn-reject"  onclick="showToast('Receipt rejected','error')">âŒ Reject</button>
       </div></td>
     </tr>`).join('');
@@ -735,7 +735,7 @@ window.loadPendingReceipts = loadPendingReceipts;
 async function verifyReceiptRow(id, btn) {
   try { await API.verifyReceipt(id); } catch(_) {}
   if (btn) btn.closest('tr').style.opacity = '0.4';
-  showToast('âœ… Receipt verified! Student is now registered for the training.', 'success');
+  showToast('✅ Receipt verified! Student is now registered for the training.', 'success');
 }
 window.verifyReceiptRow = verifyReceiptRow;
 
@@ -1047,7 +1047,7 @@ function renderNominationCards(filter) {
 
   if (!noms.length) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:var(--space-10);background:white;border-radius:var(--radius-xl);border:1px dashed var(--light-300);">
-      <div style="font-size:2rem;margin-bottom:var(--space-3);">ðŸ“‹</div>
+      <div style="font-size:2rem;margin-bottom:var(--space-3);">📝‹</div>
       <div style="font-weight:700;color:var(--text-primary);">No nominations found</div>
       <div style="font-size:0.85rem;margin-top:var(--space-2);">No candidates match this filter</div>
     </div>`;
@@ -1055,7 +1055,7 @@ function renderNominationCards(filter) {
   }
 
   const statusBadge = (s) => {
-    if (s === 1)  return `<span class="nom-badge-approved">âœ… Approved</span>`;
+    if (s === 1)  return `<span class="nom-badge-approved">✅ Approved</span>`;
     if (s === -1) return `<span class="nom-badge-rejected">âŒ Rejected</span>`;
     return `<span class="nom-badge-pending">â³ Pending</span>`;
   };
@@ -1077,14 +1077,14 @@ function renderNominationCards(filter) {
       <div class="nomination-card-body">
         <p style="font-size:0.8rem;color:var(--text-secondary);line-height:1.5;margin-bottom:var(--space-3);">${statementPreview}</p>
         <div style="display:flex;gap:var(--space-2);flex-wrap:wrap;">
-          ${n.manifesto_path ? `<a href="${API.resolveUploadUrl('manifestos', n.manifesto_path)}" target="_blank" style="font-size:0.75rem;padding:4px 10px;background:rgba(37,99,235,0.08);color:#2563eb;border-radius:var(--radius-full);text-decoration:none;font-weight:600;">ðŸ“„ Manifesto</a>` : ''}
+          ${n.manifesto_path ? `<a href="${API.resolveUploadUrl('manifestos', n.manifesto_path)}" target="_blank" style="font-size:0.75rem;padding:4px 10px;background:rgba(37,99,235,0.08);color:#2563eb;border-radius:var(--radius-full);text-decoration:none;font-weight:600;">📝„ Manifesto</a>` : ''}
           ${n.video_url ? `<a href="${n.video_url}" target="_blank" style="font-size:0.75rem;padding:4px 10px;background:rgba(220,38,38,0.08);color:#dc2626;border-radius:var(--radius-full);text-decoration:none;font-weight:600;">â–¶ï¸ Video</a>` : ''}
           <span style="font-size:0.72rem;color:var(--text-muted);align-self:center;margin-left:auto;">${formatDate(n.nominated_at)}</span>
         </div>
       </div>
       <div class="nomination-card-footer">
         ${n.is_approved === 0 ? `
-          <button class="action-btn action-btn-approve" onclick="approveNomination(${n.id},this)">âœ… Approve</button>
+          <button class="action-btn action-btn-approve" onclick="approveNomination(${n.id},this)">✅ Approve</button>
           <button class="action-btn action-btn-reject"  onclick="rejectNomination(${n.id},this)">âŒ Reject</button>
         ` : `<span style="font-size:0.75rem;color:var(--text-muted);">Decision recorded</span>`}
         <button class="action-btn action-btn-view" style="margin-left:auto;" onclick="viewNominationDetail(${n.id})">View Details</button>
@@ -1105,7 +1105,7 @@ window.viewNominationDetail = viewNominationDetail;
 async function approveNomination(id, btn) {
   try {
     await API.request(`/admin/voting/nominations/${id}/approve`, {method: 'POST'});
-    showToast('âœ… Nomination Approved â€” candidate is now visible to voters', 'success');
+    showToast('✅ Nomination Approved — candidate is now visible to voters', 'success');
     loadNominationsAdmin();
   } catch(err) { showToast(err.message, 'error'); }
 }
@@ -1203,7 +1203,7 @@ async function resetElectionCycle() {
   
   try {
     await API.request('/admin/voting/reset', { method: 'POST' });
-    showToast("âœ… Election cycle completely reset and cleared.", "success");
+    showToast("✅ Election cycle completely reset and cleared.", "success");
     loadVotingConfig();
     loadVotingAnalytics();
     if(window.loadNominationsAdmin) loadNominationsAdmin();
@@ -1225,7 +1225,7 @@ async function loadVotingAnalytics() {
     s('vkpi-turnout', `${stats.turnout_pct}%`);
     s('vkpi-unis',    stats.uni_breakdown.length);
 
-    // Analytics tab â€” gauge
+    // Analytics tab — gauge
     const gaugePct = document.getElementById('analyticsGaugePct');
     const gaugeBar = document.getElementById('analyticsGaugeBar');
     const votesEl  = document.getElementById('analyticsVotes');
@@ -1233,7 +1233,7 @@ async function loadVotingAnalytics() {
     if (gaugePct) gaugePct.textContent = `${stats.turnout_pct}%`;
     if (gaugeBar) gaugeBar.style.width = `${Math.min(stats.turnout_pct, 100)}%`;
     if (votesEl)  votesEl.textContent  = stats.total_votes;
-    if (eligEl)   eligEl.textContent   = stats.total_students || 'â€”';
+    if (eligEl)   eligEl.textContent   = stats.total_students || '—';
 
     // University breakdown bars
     const breakdown = document.getElementById('analyticsUniBreakdown');
@@ -1318,10 +1318,10 @@ async function loadNEBCandidates() {
           <div style="font-size:0.72rem;color:var(--text-muted);">Director Position</div>
         </div>
         <select class="form-select" id="neb_assign_${idx}" style="font-size:0.85rem;">
-          <option value="">â€” Select Candidate â€”</option>
+          <option value="">— Select Candidate —</option>
           ${cands.map(c => `<option value="${c.user_id}">${c.name} (${c.university}) Â· ${c.vote_count} votes</option>`).join('')}
         </select>
-        <button class="btn btn-sm" style="background:var(--epsa-gold);color:white;border:none;white-space:nowrap;" onclick="assignNEBRole('${r.replace(/'/g,"\\'")}', 'neb_assign_${idx}')">Assign â†’</button>
+        <button class="btn btn-sm" style="background:var(--epsa-gold);color:white;border:none;white-space:nowrap;" onclick="assignNEBRole('${r.replace(/'/g,"\\'")}', 'neb_assign_${idx}')">Assign →</button>
       </div>`).join('');
   } catch(e) {
     container.innerHTML = `<div style="color:red;padding:var(--space-4);">Error loading candidates: ${e.message}</div>`;
@@ -1337,7 +1337,7 @@ async function assignNEBRole(roleName, selectId) {
       method: 'POST',
       body: { user_id: userId, position: roleName, rank: 5 }
     });
-    showToast(`âœ… ${roleName} assigned successfully!`, 'success');
+    showToast(`✅ ${roleName} assigned successfully!`, 'success');
   } catch(e) {
     showToast(e.message, 'error');
   }
@@ -1356,10 +1356,10 @@ async function loadAdminExams() {
     tbody.innerHTML = allExamsAdmin.map(e => {
       let statusBadge, publishBtn;
       if (!e.is_active) {
-        statusBadge = `<span class="badge badge-gray">ðŸ“„ Draft</span>`;
+        statusBadge = `<span class="badge badge-gray">📝„ Draft</span>`;
         publishBtn  = `<button class="action-btn action-btn-approve" onclick="publishExamSet(${e.id}, true)">ðŸš€ Publish</button>`;
       } else {
-        statusBadge = `<span class="badge status-approved">âœ… Live</span>`;
+        statusBadge = `<span class="badge status-approved">✅ Live</span>`;
         publishBtn  = `<button class="action-btn action-btn-reject" onclick="publishExamSet(${e.id}, false)">â¸ Unpublish</button>`;
       }
       return `
@@ -1375,7 +1375,7 @@ async function loadAdminExams() {
         <td><div class="table-actions" style="flex-wrap:wrap;gap:4px;">
           <button class="action-btn action-btn-view" onclick="openEditExam(${e.id})">Edit</button>
           <button class="action-btn" style="background:#e8f4ff;color:#1d6fa4;" onclick="openQuestionBuilder(${e.id}, '${e.title.replace(/'/g, "\\'")}')">ðŸ—’ Questions</button>
-          <button class="action-btn" style="background:#f0faf5;color:#1a6b3c;" onclick="openSubmissionsModal(${e.id})">ðŸ“Š Results</button>
+          <button class="action-btn" style="background:#f0faf5;color:#1a6b3c;" onclick="openSubmissionsModal(${e.id})">📊 Results</button>
           ${publishBtn}
         </div></td>
       </tr>`;
@@ -1404,7 +1404,7 @@ async function submitCreateExam() {
       questions: [],
     });
     document.getElementById('createExamModal').classList.remove('active');
-    showToast('ðŸ“ Examination created!', 'success');
+    showToast('📝 Examination created!', 'success');
     loadAdminExams();
   } catch(err) { 
     showToast(err.message || 'Error creating exam', 'error'); 
@@ -1440,7 +1440,7 @@ async function submitEditExam() {
       passing_score: Number.isFinite(passing) ? passing : 60,
     });
     document.getElementById('editExamModal').classList.remove('active');
-    showToast('ðŸ“ Examination updated!', 'success');
+    showToast('📝 Examination updated!', 'success');
     loadAdminExams();
   } catch(e) { showToast('Error updating exam', 'error'); }
 }
@@ -1449,7 +1449,7 @@ window.submitEditExam = submitEditExam;
 async function publishExamSet(id, active) {
   try {
     const res = await API.publishExam(id, active);
-    showToast('ðŸ“ ' + res.message, res.is_active ? 'success' : 'gold');
+    showToast('📝 ' + res.message, res.is_active ? 'success' : 'gold');
     loadAdminExams();
   } catch (e) {
     showToast(e.message || 'Error updating exam status', 'error');
@@ -1548,7 +1548,7 @@ async function saveNewQuestion() {
     document.getElementById('qb-opt-c').value = '';
     document.getElementById('qb-opt-d').value = '';
     document.querySelector('input[name="qb-correct"][value="0"]').checked = true;
-    showToast('âœ… Question added!', 'success');
+    showToast('✅ Question added!', 'success');
     loadExamQuestions(eid);
   } catch(err) {
     showToast(err.message || 'Failed to add question', 'error');
@@ -1600,7 +1600,7 @@ async function loadExamSubmissions(examId) {
         </div>
       </div>
       <button class="btn ${released ? 'btn-ghost' : 'btn-primary'}" onclick="releaseExamResultsToggle(${examId})" style="flex-shrink:0;">
-        ${released ? 'ðŸ”’ Hide Results' : 'ðŸš€ Release Results'}
+        ${released ? '🔒 Hide Results' : 'ðŸš€ Release Results'}
       </button>`;
 
     // Submissions tbody
@@ -1610,13 +1610,13 @@ async function loadExamSubmissions(examId) {
       return;
     }
     tbody.innerHTML = data.submissions.map((s, i) => {
-      const score = s.score !== null ? s.score : 'â€”';
-      const passed = s.score !== null ? (s.score >= 60 ? '<span class="badge status-approved">âœ… Pass</span>' : '<span class="badge status-rejected">âŒ Fail</span>') : '<span class="badge badge-gray">â€”</span>';
+      const score = s.score !== null ? s.score : '—';
+      const passed = s.score !== null ? (s.score >= 60 ? '<span class="badge status-approved">✅ Pass</span>' : '<span class="badge status-rejected">âŒ Fail</span>') : '<span class="badge badge-gray">—</span>';
       return `<tr>
         <td style="font-weight:700;color:var(--text-muted);">${i+1}</td>
         <td><div class="table-primary">${s.student_name}</div></td>
-        <td style="font-family:monospace;font-size:0.78rem;">${s.student_id||'â€”'}</td>
-        <td style="font-size:0.8rem;">${s.university||'â€”'}</td>
+        <td style="font-family:monospace;font-size:0.78rem;">${s.student_id||'—'}</td>
+        <td style="font-size:0.8rem;">${s.university||'—'}</td>
         <td><strong style="font-size:1rem;color:${s.score>=60?'#1a6b3c':'#c0392b'}">${score}%</strong></td>
         <td>${passed}</td>
         <td style="font-size:0.78rem;color:var(--text-muted);">${formatDate(s.submitted_at)}</td>
@@ -1680,7 +1680,7 @@ async function loadAdminNews() {
     }
     tbody.innerHTML = news.map(n => `
       <tr>
-        <td>${n.image_path ? `<img src="/uploads/news/${n.image_path}" style="width:40px;height:40px;border-radius:var(--radius-sm);object-fit:cover;">` : 'â€”'}</td>
+        <td>${n.image_path ? `<img src="/uploads/news/${n.image_path}" style="width:40px;height:40px;border-radius:var(--radius-sm);object-fit:cover;">` : '—'}</td>
         <td><span class="badge" style="background:var(--light-100);color:var(--text-muted);">${n.category}</span></td>
         <td style="font-weight:700;">${n.title}</td>
         <td style="font-size:0.8rem;color:var(--text-muted);">${new Date(n.created_at).toLocaleDateString()}</td>
@@ -1778,7 +1778,7 @@ window.switchAdminSection = function(section) {
   if(section === 'voting') loadAppointedLeadership();
 };
 function formatDate(dateStr) {
-  if (!dateStr) return 'â€”';
+  if (!dateStr) return '—';
   const d = new Date(dateStr);
   return d.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
 }
@@ -1929,7 +1929,7 @@ function closeSubmissionsModal() {
 window.closeSubmissionsModal = closeSubmissionsModal;
 
 function formatExamTimestamp(value) {
-  if (!value) return 'â€”';
+  if (!value) return '—';
   return new Date(value).toLocaleString('en-GB', {
     day: '2-digit',
     month: 'short',
@@ -1995,10 +1995,10 @@ function renderExamSubmissionDetail() {
       </div>
     </div>
     <div class="exam-detail-stats">
-      <div class="admin-detail-card"><div class="exam-detail-label">Score</div><div class="exam-detail-value">${selected.score ?? 'â€”'}${selected.score !== null ? '%' : ''}</div></div>
+      <div class="admin-detail-card"><div class="exam-detail-label">Score</div><div class="exam-detail-value">${selected.score ?? '—'}${selected.score !== null ? '%' : ''}</div></div>
       <div class="admin-detail-card"><div class="exam-detail-label">Correct</div><div class="exam-detail-value">${selected.correct_count}/${totalQuestions}</div></div>
       <div class="admin-detail-card"><div class="exam-detail-label">Progress</div><div class="exam-detail-value">${selected.progress_count}/${totalQuestions}</div></div>
-      <div class="admin-detail-card"><div class="exam-detail-label">Duration</div><div class="exam-detail-value">${selected.duration_mins != null ? `${selected.duration_mins} min` : 'â€”'}</div></div>
+      <div class="admin-detail-card"><div class="exam-detail-label">Duration</div><div class="exam-detail-value">${selected.duration_mins != null ? `${selected.duration_mins} min` : '—'}</div></div>
     </div>
     <div class="exam-detail-meta-grid">
       <div><strong>Started:</strong> ${formatExamTimestamp(selected.started_at)}</div>
@@ -2011,7 +2011,7 @@ function renderExamSubmissionDetail() {
         <div class="exam-answer-item ${item.is_correct ? 'correct' : 'incorrect'}">
           <div class="exam-answer-head">
             <strong>Q${index + 1}</strong>
-            <span>${item.is_correct ? 'Correct' : (item.selected_option === 'â€”' ? 'Unanswered' : 'Needs review')}</span>
+            <span>${item.is_correct ? 'Correct' : (item.selected_option === '—' ? 'Unanswered' : 'Needs review')}</span>
           </div>
           <div class="exam-answer-question">${adminEsc(item.question)}</div>
           <div class="exam-answer-meta">Student: ${adminEsc(item.selected_option)} ${item.selected_text ? `â€¢ ${adminEsc(item.selected_text)}` : ''}</div>
@@ -2147,7 +2147,7 @@ async function loadExamSubmissions(examId) {
 
     tbody.innerHTML = data.submissions.map((s, i) => {
       const scoreTone = s.score !== null && s.score >= 60 ? '#1a6b3c' : '#c0392b';
-      const score = s.score !== null ? `${s.score}%` : 'â€”';
+      const score = s.score !== null ? `${s.score}%` : '—';
       return `<tr data-submission-id="${s.id}" onclick="selectExamSubmission(${s.id})">
         <td style="font-weight:700;color:var(--text-muted);">${i+1}</td>
         <td><div class="table-primary">${adminEsc(s.student_name)}</div><div class="table-secondary">${adminEsc(s.student_id || 'No ID')}</div></td>

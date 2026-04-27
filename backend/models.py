@@ -1,5 +1,5 @@
 ﻿"""
-EPSA Platform â€” Database Models & Schema
+EPSA Platform — Database Models & Schema
 """
 try:
     from .config import get_settings
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS trainings (
     format      TEXT DEFAULT 'online',
     price       REAL DEFAULT 0,
     is_free     INTEGER DEFAULT 1,
-    icon        TEXT DEFAULT 'ðŸŽ“',
+    icon        TEXT DEFAULT '🎓',
     cert_title  TEXT,
     cert_desc   TEXT,
     content_url TEXT,

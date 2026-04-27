@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="EPSA Verified Clubs â€” A national directory of Ethiopian Psychology Students' Association university chapters across Ethiopia.">
-  <title>EPSA Clubs â€” National Network</title>
+  <meta name="description" content="EPSA Verified Clubs — A national directory of Ethiopian Psychology Students' Association university chapters across Ethiopia.">
+  <title>EPSA Clubs — National Network</title>
   <link rel="icon" type="image/png" href="assets/logo.png">
   <link rel="stylesheet" href="css/globals.css">
   <link rel="stylesheet" href="css/home.css">
@@ -443,7 +443,7 @@
           <div>
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
               <h2 style="font-family:var(--font-display);font-weight:900;font-size:1.5rem;" id="modalName">Club</h2>
-              <span class="verified-badge">âœ… Verified</span>
+              <span class="verified-badge">✅ Verified</span>
             </div>
             <div style="color:var(--epsa-gold);font-size:0.85rem;font-weight:600;" id="modalUni">University</div>
           </div>
@@ -466,7 +466,7 @@
       <!-- About Tab -->
       <div class="modal-tab-content active" id="mtab-about">
         <p style="color:rgba(255,255,255,0.6);font-size:0.9rem;line-height:1.7;margin-bottom:20px;" id="modalDesc">Description</p>
-        <a href="login.html" class="btn btn-primary" style="width:100%;display:block;text-align:center;">ðŸŽ“ Join This Club</a>
+        <a href="login.html" class="btn btn-primary" style="width:100%;display:block;text-align:center;">🎓 Join This Club</a>
       </div>
 
       <!-- Leadership Tab -->
@@ -500,7 +500,7 @@
     } catch(e) {
       document.getElementById('clubsGrid').innerHTML = `
         <div class="empty-state">
-          <div class="empty-state-icon">ðŸŒ</div>
+          <div class="empty-state-icon">🌐</div>
           <h3>Clubs loading offline</h3>
           <p>Start the EPSA backend to see verified clubs.</p>
         </div>`;
@@ -550,14 +550,14 @@
         <div class="club-card-body">
           <div class="club-name-row">
             <div class="club-name">${c.name}</div>
-            <span class="verified-badge">âœ… Verified</span>
+            <span class="verified-badge">✅ Verified</span>
           </div>
           <div class="club-university">ðŸ« ${c.university}</div>
           <div class="club-desc">${c.description || 'No description provided.'}</div>
           <div class="club-meta">
-            <span>ðŸ‘¥ ${c.live_member_count || c.member_count || 0} members</span>
+            <span>👥 ${c.live_member_count || c.member_count || 0} members</span>
             <span>â¤ï¸ ${c.follower_count || 0} followers</span>
-            ${c.year_established ? `<span>ðŸ“… Est. ${c.year_established}</span>` : ''}
+            ${c.year_established ? `<span>📝… Est. ${c.year_established}</span>` : ''}
           </div>
           ${leaderHtml ? `<div class="club-leaders-strip" style="margin-top:10px;">${leaderHtml}</div>` : ''}
         </div>
@@ -621,7 +621,7 @@
           return `
           <div style="display:flex;align-items:center;gap:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px 18px;">
             <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,${color}30,${color}10);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">
-              ${l.role === 'president' ? 'ðŸ‘‘' : l.role === 'secretary' ? 'ðŸ“‹' : 'â­'}
+              ${l.role === 'president' ? 'ðŸ‘‘' : l.role === 'secretary' ? '📝‹' : 'â­'}
             </div>
             <div style="flex:1;">
               <div style="font-weight:700;font-size:0.92rem;">${l.first_name} ${l.father_name}</div>
