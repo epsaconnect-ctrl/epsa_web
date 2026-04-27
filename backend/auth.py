@@ -35,7 +35,7 @@ try:
     )
     from .models import get_db
     from .email_service import send_email
-    from .security import consume_one_time_token, issue_one_time_token, plus_interval, rate_limit, utcnow, verify_totp_code
+    from .security import consume_one_time_token, enforce_rate_limit, issue_one_time_token, plus_interval, rate_limit, utcnow, verify_totp_code
     from .storage import read_upload_bytes, save_bytes
     from .tasks import run_biometric_task
 except ImportError:
@@ -56,7 +56,7 @@ except ImportError:
     )
     from models import get_db
     from email_service import send_email
-    from security import consume_one_time_token, issue_one_time_token, plus_interval, rate_limit, utcnow, verify_totp_code
+    from security import consume_one_time_token, enforce_rate_limit, issue_one_time_token, plus_interval, rate_limit, utcnow, verify_totp_code
     from storage import read_upload_bytes, save_bytes
     from tasks import run_biometric_task
 
@@ -105,6 +105,17 @@ def allowed_file(filename, exts={"png", "jpg", "jpeg", "webp", "pdf"}):
 
 def normalize_email(value):
     return (value or "").strip().lower()
+
+
+def _mask_email(email):
+    local, _, domain = (email or "").partition("@")
+    if not local or not domain:
+        return "redacted"
+    return f"{local[:2]}***@{domain}"
+
+
+def _hash_otp(email, code):
+    return hashlib.sha256(f"{normalize_email(email)}:{code}".encode("utf-8")).hexdigest()
 
 
 def normalize_phone(value):
@@ -804,16 +815,16 @@ def send_otp():
     email = normalize_email(_request_json().get("email"))
     if not email:
         return jsonify({"error": "Email required"}), 400
+    limited = enforce_rate_limit("send-otp-email", limit=3, window_seconds=900, key_value=email)
+    if limited:
+        return limited
+    limited = enforce_rate_limit("send-otp-ip", limit=10, window_seconds=900, key_value=_client_ip())
+    if limited:
+        return limited
     code = str(secrets.randbelow(900000) + 100000)
     settings = get_settings()
     expires = plus_interval(seconds=settings.otp_ttl_seconds)
-    db = get_db()
-    db.execute("DELETE FROM otp_store WHERE email=?", (email,))
-    db.execute("INSERT INTO otp_store (email,code,expires_at) VALUES (?,?,?)", (email, code, expires))
-    db.commit()
-    db.close()
-
-    print(f"[OTP] Prepared for {email}: {code}")
+    code_hash = _hash_otp(email, code)
     body = f"""
     <html>
       <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
@@ -836,13 +847,24 @@ def send_otp():
 
     delivered = send_email(email, "EPSA Secure Verification Code", body)
     if not delivered:
-        # Log the OTP to Railway logs as a debug fallback (remove once email is confirmed working)
-        print(f"[OTP Fallback] Email delivery failed. Code for {email}: {code}")
         return jsonify({
             "error": "We could not send the verification email. Please check your email address and try again. "
                      "If the problem persists, contact EPSA support.",
             "email_failed": True,
         }), 503
+    db = get_db()
+    try:
+        db.execute(
+            "UPDATE otp_store SET used=1, used_at=? WHERE email=? AND used=0",
+            (utcnow(), email),
+        )
+        db.execute(
+            "INSERT INTO otp_store (email,code,code_hash,expires_at) VALUES (?,?,?,?)",
+            (email, code_hash, code_hash, expires),
+        )
+        db.commit()
+    finally:
+        db.close()
     return jsonify({"message": "OTP sent"})
 
 
@@ -852,19 +874,30 @@ def verify_otp():
     data = _request_json()
     email = normalize_email(data.get("email"))
     code = data.get("code", "").strip()
+    limited = enforce_rate_limit("verify-otp-email", limit=8, window_seconds=900, key_value=email)
+    if limited:
+        return limited
+    limited = enforce_rate_limit("verify-otp-ip", limit=20, window_seconds=900, key_value=_client_ip())
+    if limited:
+        return limited
     db = get_db()
     row = db.execute(
         """
         SELECT *
         FROM otp_store
-        WHERE email=? AND code=? AND used=0 AND expires_at > ?
+        WHERE email=?
+          AND (code_hash=? OR code=? OR code=?)
+          AND used=0
+          AND expires_at > ?
+        ORDER BY id DESC
+        LIMIT 1
         """,
-        (email, code, utcnow()),
+        (email, _hash_otp(email, code), _hash_otp(email, code), code, utcnow()),
     ).fetchone()
     if not row:
         db.close()
         return jsonify({"error": "Invalid or expired code"}), 400
-    db.execute("UPDATE otp_store SET used=1 WHERE id=?", (row["id"],))
+    db.execute("UPDATE otp_store SET used=1, used_at=? WHERE id=?", (utcnow(), row["id"]))
     verification_token = issue_one_time_token(
         db,
         subject=email,
@@ -912,7 +945,9 @@ def forgot_password():
               </body>
             </html>
             """
-            send_email(email, "EPSA Password Reset", body)
+            delivered = send_email(email, "EPSA Password Reset", body)
+            if not delivered:
+                print(f"[Password Reset] Email delivery failed for {_mask_email(email)}")
     finally:
         db.close()
 

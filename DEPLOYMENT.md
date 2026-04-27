@@ -45,9 +45,8 @@
    - `EPSA_JWT_COOKIE_SECURE=true`
    - `EPSA_JWT_COOKIE_SAMESITE=None`
 6. Configure mail and password reset:
-   - choose `EPSA_EMAIL_PROVIDER=smtp` or `EPSA_EMAIL_PROVIDER=resend`
-   - SMTP path: `EPSA_SMTP_EMAIL`, `EPSA_SMTP_PASSWORD`, `EPSA_SMTP_SERVER`, `EPSA_SMTP_PORT`
-   - Resend path: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`
+- use `EPSA_EMAIL_PROVIDER=resend`
+- configure `EPSA_RESEND_API_KEY` and `EPSA_RESEND_FROM_EMAIL`
    - `EPSA_PASSWORD_RESET_URL=https://your-frontend-domain/login.html`
 7. Enforce admin 2FA:
    - `EPSA_REQUIRE_ADMIN_TOTP=true`

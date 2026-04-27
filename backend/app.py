@@ -76,16 +76,14 @@ logger.info("EPSA backend module loading...")
 logger.info(f"[Startup] env={settings.env} db={settings.db_engine} storage={settings.storage_mode} production={IS_PRODUCTION_RUNTIME}")
 logger.info(
     f"[Startup] email_provider={settings.email_provider} "
-    f"smtp_email_set={bool(settings.smtp_email)} "
-    f"smtp_password_set={bool(settings.smtp_password)} "
-    f"smtp_server={settings.smtp_server}:{settings.smtp_port}"
+    f"resend_api_key_set={bool(settings.resend_api_key)} "
+    f"resend_from_email_set={bool(settings.resend_from_email)}"
 )
-# Log which env-var name Railway sees, to catch naming mistakes
 import os as _os
 logger.info(
-    f"[Startup] RAW env-check: EPSA_SMTP_EMAIL={'SET' if _os.getenv('EPSA_SMTP_EMAIL') else 'MISSING'} "
-    f"SMTP_EMAIL={'SET' if _os.getenv('SMTP_EMAIL') else 'MISSING'} "
-    f"EPSA_SMTP_PASSWORD={'SET' if _os.getenv('EPSA_SMTP_PASSWORD') else 'MISSING'} "
+    f"[Startup] RAW env-check: EPSA_RESEND_API_KEY={'SET' if _os.getenv('EPSA_RESEND_API_KEY') else 'MISSING'} "
+    f"RESEND_API_KEY={'SET' if _os.getenv('RESEND_API_KEY') else 'MISSING'} "
+    f"EPSA_RESEND_FROM_EMAIL={'SET' if _os.getenv('EPSA_RESEND_FROM_EMAIL') else 'MISSING'} "
     f"EPSA_DATABASE_URL={'SET' if _os.getenv('EPSA_DATABASE_URL') else 'MISSING'} "
     f"DATABASE_URL={'SET' if _os.getenv('DATABASE_URL') else 'MISSING'}"
 )

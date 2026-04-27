@@ -397,8 +397,11 @@ CREATE TABLE IF NOT EXISTS otp_store (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     email       TEXT NOT NULL,
     code        TEXT NOT NULL,
+    code_hash   TEXT,
     expires_at  DATETIME NOT NULL,
-    used        INTEGER DEFAULT 0
+    used        INTEGER DEFAULT 0,
+    used_at     DATETIME,
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS auth_tokens (
@@ -572,6 +575,7 @@ CREATE INDEX IF NOT EXISTS idx_voting_phases_state ON voting_phases(phase_number
 CREATE INDEX IF NOT EXISTS idx_login_attempts_lookup ON login_attempts(identifier, ip_address);
 CREATE INDEX IF NOT EXISTS idx_face_embeddings_user ON face_embeddings(user_id);
 CREATE INDEX IF NOT EXISTS idx_exam_face_verifications_lookup ON exam_face_verifications(exam_id, user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_otp_store_lookup ON otp_store(email, used, expires_at);
 """
 
 SEED_DATA = """
@@ -736,6 +740,10 @@ def migrate_db():
             window_starts_at DATETIME NOT NULL,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )""",
+        """ALTER TABLE otp_store ADD COLUMN code_hash TEXT""",
+        """ALTER TABLE otp_store ADD COLUMN used_at DATETIME""",
+        """ALTER TABLE otp_store ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP""",
+        """CREATE INDEX IF NOT EXISTS idx_otp_store_lookup ON otp_store(email, used, expires_at)""",
         """CREATE TABLE IF NOT EXISTS news_events (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             title       TEXT NOT NULL,

@@ -122,11 +122,6 @@ class AppSettings:
     require_admin_totp: bool
     admin_totp_secret: str | None
     allow_local_admin_totp_bypass: bool
-    smtp_server: str
-    smtp_port: int
-    smtp_email: str | None
-    smtp_password: str | None
-    smtp_from_name: str
     email_provider: str
     resend_api_key: str | None
     resend_from_email: str | None
@@ -295,12 +290,7 @@ def get_settings():
         require_admin_totp=_env_bool("EPSA_REQUIRE_ADMIN_TOTP", default=normalized_env == "production"),
         admin_totp_secret=os.getenv("EPSA_ADMIN_TOTP_SECRET"),
         allow_local_admin_totp_bypass=_env_bool("EPSA_ALLOW_LOCAL_ADMIN_TOTP_BYPASS", default=normalized_env != "production"),
-        smtp_server=os.getenv("EPSA_SMTP_SERVER") or os.getenv("SMTP_SERVER") or "smtp.gmail.com",
-        smtp_port=max(1, _env_int("EPSA_SMTP_PORT", _env_int("SMTP_PORT", 465))),
-        smtp_email=os.getenv("EPSA_SMTP_EMAIL") or os.getenv("SMTP_EMAIL"),
-        smtp_password=os.getenv("EPSA_SMTP_PASSWORD") or os.getenv("SMTP_PASSWORD"),
-        smtp_from_name=os.getenv("EPSA_SMTP_FROM_NAME") or "EPSA Digital Platform",
-        email_provider=(os.getenv("EPSA_EMAIL_PROVIDER") or "smtp").strip().lower(),
+        email_provider="resend",
         resend_api_key=(os.getenv("EPSA_RESEND_API_KEY") or os.getenv("RESEND_API_KEY") or "").strip() or None,
         resend_from_email=(os.getenv("EPSA_RESEND_FROM_EMAIL") or os.getenv("RESEND_FROM_EMAIL") or "").strip() or None,
         bootstrap_admin_username=(os.getenv("EPSA_BOOTSTRAP_ADMIN_USERNAME") or "").strip() or None,

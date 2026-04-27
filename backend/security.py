@@ -87,78 +87,90 @@ def _rate_limit_key(scope, key_value):
     return f"{scope}:{key_value}"
 
 
+def enforce_rate_limit(scope, *, limit, window_seconds, key_value):
+    settings = get_settings()
+    if not settings.rate_limit_enabled:
+        return None
+
+    try:
+        from .models import get_db
+    except ImportError:
+        from models import get_db
+
+    bucket = _rate_limit_key(scope, key_value or "unknown")
+    db = get_db()
+    try:
+        row = db.execute(
+            "SELECT * FROM rate_limit_state WHERE bucket_key=?",
+            (bucket,),
+        ).fetchone()
+        now = utcnow()
+        window_starts_at = _coerce_datetime(row["window_starts_at"]) if row else None
+        if not row or not window_starts_at or window_starts_at <= now - timedelta(seconds=window_seconds):
+            if row:
+                db.execute(
+                    """
+                    UPDATE rate_limit_state
+                    SET request_count=1, window_starts_at=?, updated_at=?
+                    WHERE id=?
+                    """,
+                    (now, now, row["id"]),
+                )
+            else:
+                db.execute(
+                    """
+                    INSERT INTO rate_limit_state (bucket_key, request_count, window_starts_at, updated_at)
+                    VALUES (?,?,?,?)
+                    """,
+                    (bucket, 1, now, now),
+                )
+            db.commit()
+            return None
+
+        if int(row["request_count"] or 0) >= limit:
+            retry_after = max(
+                1,
+                int(((window_starts_at + timedelta(seconds=window_seconds)) - now).total_seconds()),
+            )
+            return (
+                jsonify(
+                    {
+                        "error": "Too many requests. Please slow down and try again shortly.",
+                        "retry_after_seconds": retry_after,
+                    }
+                ),
+                429,
+            )
+
+        db.execute(
+            """
+            UPDATE rate_limit_state
+            SET request_count=?, updated_at=?
+            WHERE id=?
+            """,
+            (int(row["request_count"] or 0) + 1, now, row["id"]),
+        )
+        db.commit()
+        return None
+    finally:
+        db.close()
+
+
 def rate_limit(scope, *, limit, window_seconds, key_func=None):
     def decorator(func):
         @wraps(func)
         def wrapped(*args, **kwargs):
-            settings = get_settings()
-            if not settings.rate_limit_enabled:
-                return func(*args, **kwargs)
-
-            try:
-                from .models import get_db
-            except ImportError:
-                from models import get_db
-
             forwarded = (request.headers.get("X-Forwarded-For") or "").split(",")[0].strip()
             ip_address = forwarded or request.remote_addr or "unknown"
             key_value = key_func() if callable(key_func) else ip_address
-            bucket = _rate_limit_key(scope, key_value or ip_address)
-            db = get_db()
-            try:
-                row = db.execute(
-                    "SELECT * FROM rate_limit_state WHERE bucket_key=?",
-                    (bucket,),
-                ).fetchone()
-                now = utcnow()
-                window_starts_at = _coerce_datetime(row["window_starts_at"]) if row else None
-                if not row or not window_starts_at or window_starts_at <= now - timedelta(seconds=window_seconds):
-                    if row:
-                        db.execute(
-                            """
-                            UPDATE rate_limit_state
-                            SET request_count=1, window_starts_at=?, updated_at=?
-                            WHERE id=?
-                            """,
-                            (now, now, row["id"]),
-                        )
-                    else:
-                        db.execute(
-                            """
-                            INSERT INTO rate_limit_state (bucket_key, request_count, window_starts_at, updated_at)
-                            VALUES (?,?,?,?)
-                            """,
-                            (bucket, 1, now, now),
-                        )
-                    db.commit()
-                    return func(*args, **kwargs)
-
-                if int(row["request_count"] or 0) >= limit:
-                    retry_after = max(
-                        1,
-                        int(((window_starts_at + timedelta(seconds=window_seconds)) - now).total_seconds()),
-                    )
-                    return (
-                        jsonify(
-                            {
-                                "error": "Too many requests. Please slow down and try again shortly.",
-                                "retry_after_seconds": retry_after,
-                            }
-                        ),
-                        429,
-                    )
-
-                db.execute(
-                    """
-                    UPDATE rate_limit_state
-                    SET request_count=?, updated_at=?
-                    WHERE id=?
-                    """,
-                    (int(row["request_count"] or 0) + 1, now, row["id"]),
-                )
-                db.commit()
-            finally:
-                db.close()
+            limited = enforce_rate_limit(
+                scope,
+                limit=limit,
+                window_seconds=window_seconds,
+                key_value=key_value or ip_address,
+            )
+            if limited:
+                return limited
             return func(*args, **kwargs)
 
         return wrapped
