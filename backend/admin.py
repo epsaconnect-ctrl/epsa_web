@@ -510,7 +510,18 @@ def approve(uid):
     if not user_data:
         db.close()
         return jsonify({'error': 'Applicant not found'}), 404
-    db.execute("UPDATE users SET status='approved', approved_at=DATETIME('now') WHERE id=?", (uid,))
+    db.execute(
+        """
+        UPDATE users
+        SET status='approved',
+            approved_at=DATETIME('now'),
+            rejection_reason=NULL,
+            is_verified=1,
+            is_active=1
+        WHERE id=?
+        """,
+        (uid,),
+    )
     db.commit()
     name = user_data['first_name']
     send_email(user_data['email'], 'EPSA Application Approved — Welcome!', f"""

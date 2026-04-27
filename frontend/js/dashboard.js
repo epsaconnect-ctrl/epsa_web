@@ -612,40 +612,41 @@ async function captureExamFaceAndStart() {
 }
 window.captureExamFaceAndStart = captureExamFaceAndStart;
 
-// Complete the implementation with all required functionality
-async function loadNetworkStudents() {
+// Backward-compatible fallback for layouts that expect #networkStudentsList.
+async function loadNetworkStudentsFallback() {
   const list = document.getElementById('networkStudentsList');
   if (!list) return;
-  
   try {
-    const students = await API.getNetworkStudents();
+    const students = await API.getStudents();
     if (!students.length) {
       list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:var(--space-6);">No network students found</div>';
       return;
     }
-    
-    list.innerHTML = students.map(student => `
+    list.innerHTML = students.map((student) => `
       <div class="network-student-card">
-        <div class="student-avatar">${student.initials || student.name.slice(0,2).toUpperCase()}</div>
+        <div class="student-avatar">${((student.first_name || '')[0] || '') + ((student.father_name || '')[0] || '')}</div>
         <div class="student-info">
-          <div class="student-name">${student.name}</div>
-          <div class="student-details">${student.university} ${student.year ? '· ' + student.year : ''}</div>
+          <div class="student-name">${student.first_name || ''} ${student.father_name || ''}</div>
+          <div class="student-details">${student.university || ''} ${student.academic_year ? '· Year ' + student.academic_year : ''}</div>
         </div>
         <button class="btn btn-outline btn-sm" onclick="connectWithStudent(${student.id})">Connect</button>
       </div>
     `).join('');
   } catch (err) {
-    console.error('Failed to load network students:', err);
     list.innerHTML = '<div style="text-align:center;color:red;padding:var(--space-6);">Failed to load students</div>';
   }
 }
-window.loadNetworkStudents = loadNetworkStudents;
+if (document.getElementById('networkStudentsList')) {
+  window.loadNetworkStudents = loadNetworkStudentsFallback;
+}
 
 async function connectWithStudent(studentId) {
   try {
     await API.connectStudent(studentId);
     showToast('Connected!', 'success');
-    loadNetworkStudents();
+    if (typeof window.loadNetworkStudents === 'function') {
+      window.loadNetworkStudents();
+    }
   } catch (err) {
     showToast(err.message || 'Could not connect', 'error');
   }

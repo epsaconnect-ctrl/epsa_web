@@ -110,15 +110,22 @@
     const btn     = document.getElementById('adminLoginBtn');
     const btnText = document.getElementById('adminBtnText');
     const spinner = document.getElementById('adminSpinner');
+    let redirected = false;
     btn.disabled = true; btnText.textContent = 'Authenticatingâ€¦'; spinner.style.display = 'block';
 
     try {
 
       await API.adminLogin(username, password, totp);
+      redirected = true;
       window.location.href = 'dashboard.html';
     } catch(err) {
       showToast('âŒ ' + (err.message || 'Invalid credentials'),'error');
-      btn.disabled = false; btnText.textContent = 'ðŸ” Sign In to Admin Panel'; spinner.style.display = 'none';
+    } finally {
+      if (!redirected) {
+        btn.disabled = false;
+        btnText.textContent = 'ðŸ” Sign In to Admin Panel';
+        spinner.style.display = 'none';
+      }
     }
   });
 </script>

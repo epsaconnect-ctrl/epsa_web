@@ -619,7 +619,11 @@ def admin_approve_teacher(tid):
         db.execute(
             """
             UPDATE users
-            SET status='approved', approved_at=DATETIME('now'), rejection_reason=NULL
+            SET status='approved',
+                approved_at=DATETIME('now'),
+                rejection_reason=NULL,
+                is_verified=1,
+                is_active=1
             WHERE id=? AND role='teacher'
             """,
             (tid,),

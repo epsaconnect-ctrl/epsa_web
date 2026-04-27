@@ -41,7 +41,7 @@ function adminSectionTitle(section) {
     'clubs-admin': 'Clubs & Oversight',
     'grants-admin': 'Grants & Financials',
     'partners-admin': 'Partner Control',
-    analytics: 'ðŸ§  Analytics Engine',
+    analytics: 'Analytics Engine',
   };
   return titles[section] || section;
 }
@@ -175,9 +175,9 @@ function renderToTbody(tbody, applicants, compact) {
   }
 
   const statusBadge = s => ({
-    pending:  `<span class="badge status-pending">â³ Pending</span>`,
-    approved: `<span class="badge status-approved">✅ Approved</span>`,
-    rejected: `<span class="badge status-rejected">âŒ Rejected</span>`,
+    pending:  `<span class="badge status-pending">Pending</span>`,
+    approved: `<span class="badge status-approved">Approved</span>`,
+    rejected: `<span class="badge status-rejected">Rejected</span>`,
   }[s] || `<span class="badge badge-gray">${s}</span>`);
 
   tbody.innerHTML = applicants.map(a => `
@@ -280,12 +280,23 @@ async function loadApplicants(status = 'pending', tabEl = null) {
     tabEl.classList.add('active');
   }
   try {
-    const [students, teacherData] = await Promise.all([
+    const [studentsResult, teachersResult] = await Promise.allSettled([
       API.getApplicants(status),
       API.adminListTeachers(status),
     ]);
-    allApplicants = students;
-    allTeacherApplicants = teacherData.teachers || [];
+
+    allApplicants = studentsResult.status === 'fulfilled' ? (studentsResult.value || []) : [];
+    allTeacherApplicants = (
+      teachersResult.status === 'fulfilled' ? (teachersResult.value?.teachers || []) : []
+    );
+
+    if (studentsResult.status !== 'fulfilled') {
+      showToast('Student applications partially failed to load.', 'error');
+    }
+    if (teachersResult.status !== 'fulfilled') {
+      showToast('Teacher applications partially failed to load.', 'error');
+    }
+
     renderApplicantsTable(allApplicants);
     renderTeacherApplicationsPanel(allTeacherApplicants);
     renderApplicationMetrics(allApplicants, allTeacherApplicants);

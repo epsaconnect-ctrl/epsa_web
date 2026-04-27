@@ -36,6 +36,24 @@ def _now_utc():
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
+def _parse_dt(value):
+    if not value:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    candidates = [text, text.replace("Z", "+00:00"), text.replace(" ", "T")]
+    for candidate in candidates:
+        try:
+            parsed = datetime.fromisoformat(candidate)
+            if parsed.tzinfo is not None:
+                return parsed.astimezone(timezone.utc).replace(tzinfo=None)
+            return parsed
+        except Exception:
+            continue
+    return None
+
+
 def _parse_blueprint(blueprint_json, total_count):
     """Parse blueprint JSON into a list of {category, count} dicts."""
     if not blueprint_json:
@@ -135,20 +153,14 @@ def list_mock_exams():
     result = []
     for e in exams:
         row = dict(e)
-        scheduled = None
-        ends = None
-        try:
-            if row["scheduled_at"]:
-                scheduled = datetime.fromisoformat(str(row["scheduled_at"]))
-            if row["ends_at"]:
-                ends = datetime.fromisoformat(str(row["ends_at"]))
-        except Exception:
-            pass
+        scheduled = _parse_dt(row.get("scheduled_at"))
+        ends = _parse_dt(row.get("ends_at"))
 
         now_naive = _now_utc()
-        is_open = (row["is_active"] == 1 and
-                   (scheduled is None or scheduled <= now_naive) and
-                   (ends is None or ends > now_naive))
+        # Keep the open-state resilient to mixed datetime formats/timezones.
+        is_open = bool(row["is_active"] == 1 and (ends is None or ends > now_naive))
+        if is_open and scheduled is not None and scheduled > now_naive:
+            is_open = False
         row["is_open"] = is_open
         row["can_start"] = is_open and not row["my_status"]
         row["can_continue"] = is_open and row["my_status"] == "in_progress"

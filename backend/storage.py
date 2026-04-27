@@ -258,7 +258,7 @@ def save_upload(file_storage, folder, *, filename=None):
         return None
     safe_name = filename or _unique_name(file_storage.filename)
     storage = get_storage()
-    if getattr(storage, "mode", "local") == "s3":
+    if getattr(storage, "mode", "local") in {"s3", "supabase"}:
         return storage.save_file(folder, file_storage, safe_name, private=is_private_folder(folder))
     return storage.save_file(folder, file_storage, safe_name)
 
@@ -268,7 +268,7 @@ def save_bytes(folder, payload, *, original_filename):
         return None
     safe_name = _unique_name(original_filename)
     storage = get_storage()
-    if getattr(storage, "mode", "local") == "s3":
+    if getattr(storage, "mode", "local") in {"s3", "supabase"}:
         return storage.save_bytes(folder, payload, safe_name, private=is_private_folder(folder))
     return storage.save_bytes(folder, payload, safe_name)
 
@@ -277,7 +277,7 @@ def read_upload_bytes(folder, filename):
     if not filename:
         return None
     storage = get_storage()
-    if getattr(storage, "mode", "local") == "s3":
+    if getattr(storage, "mode", "local") in {"s3", "supabase"}:
         return storage.read_bytes(folder, filename, private=is_private_folder(folder))
     return storage.read_bytes(folder, filename)
 

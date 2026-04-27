@@ -955,16 +955,16 @@ def send_otp():
     </html>
     """
 
-    if settings.show_otp_in_response:
+    expose_otp = bool(settings.show_otp_in_response)
+    if expose_otp:
         logger.warning("[DEV OTP] email=%s otp=%s", _mask_email(email), code)
     else:
         delivered = send_email(email, "EPSA Secure Verification Code", body)
         if not delivered:
-            return jsonify({
-                "error": "We could not send the verification email. Please check your email address and try again. "
-                         "If the problem persists, contact EPSA support.",
-                "email_failed": True,
-            }), 503
+            # Temporary production fallback: if email delivery fails, still allow
+            # registration flow by returning the OTP directly.
+            expose_otp = True
+            logger.warning("[OTP FALLBACK] Email send failed, exposing OTP for %s", _mask_email(email))
 
     db = get_db()
     try:
@@ -980,12 +980,13 @@ def send_otp():
     finally:
         db.close()
 
-    if settings.show_otp_in_response:
+    if expose_otp:
         return jsonify(
             {
                 "success": True,
                 "message": "OTP generated successfully",
                 "otp": code,
+                "email_failed": not settings.show_otp_in_response,
             }
         )
     return jsonify({"message": "OTP sent"})

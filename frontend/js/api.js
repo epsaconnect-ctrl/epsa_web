@@ -20,6 +20,7 @@ const API_BASE_CANDIDATES = (() => {
 
 const API = {
   _apiBase: API_BASE_CANDIDATES[0],
+  _requestTimeoutMs: 12000,
   getApiBases() {
     return [this._apiBase, ...API_BASE_CANDIDATES.filter((base) => base !== this._apiBase)];
   },
@@ -88,7 +89,10 @@ const API = {
     let resp = null;
     for (const base of this.getApiBases()) {
       try {
-        resp = await fetch(`${base}${path}`, requestOptions);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), this._requestTimeoutMs);
+        resp = await fetch(`${base}${path}`, { ...requestOptions, signal: controller.signal });
+        clearTimeout(timeoutId);
         this._apiBase = base;
         localStorage.setItem('epsa_api_base', base);
         break;
@@ -100,9 +104,16 @@ const API = {
       throw new Error('EPSA backend is unreachable. Start the backend server on port 5000 and retry.');
     }
 
-    // If content-type is not json (e.g. file), return raw response
     const ct = resp.headers.get('content-type') || '';
-    if (!ct.includes('application/json')) return resp;
+    if (!ct.includes('application/json')) {
+      if (!resp.ok) {
+        throw new Error(`Request failed (${resp.status})`);
+      }
+      if (ct.includes('text/html')) {
+        throw new Error('Unexpected non-JSON response from API. Check frontend-to-backend routing.');
+      }
+      return resp;
+    }
 
     let data;
     try {
