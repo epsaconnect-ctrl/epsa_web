@@ -1355,6 +1355,8 @@ window.switchSection = function(sec) {
     .mock-hero-metric span{display:block;margin-top:6px;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.66)}
     .mock-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px;margin-bottom:28px;position:relative;z-index:1}
     .mock-empty{grid-column:1/-1;text-align:center;padding:56px 24px;border-radius:24px;border:1px dashed rgba(26,107,60,0.18);background:rgba(255,255,255,0.82);color:var(--text-muted)}
+    .me-opt-text-blurred { filter: blur(6px); transition: filter 0.2s ease; pointer-events: none; }
+    .me-opt-text-revealed { filter: none !important; transition: filter 0.2s ease; pointer-events: none; }
   </style>
   <div id="section-mock-exams" class="dash-section mock-shell" style="display:none">
     <div class="section-header">
@@ -1545,15 +1547,15 @@ window.switchSection = function(sec) {
       
       const viewToggleBtn = document.createElement('button');
       viewToggleBtn.id = 'meViewToggleBtn';
-      viewToggleBtn.textContent = 'Switch to Scroll View';
-      viewToggleBtn.style.cssText = 'background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:6px 12px;border-radius:6px;font-size:0.8rem;cursor:pointer;';
+      viewToggleBtn.style.cssText = 'background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:6px 12px;border-radius:6px;font-size:0.8rem;cursor:pointer;z-index:9999;';
       viewToggleBtn.onclick = meToggleViewMode;
       
       headerControls.appendChild(viewToggleBtn);
       const timerEl = document.getElementById('meTimer');
       timerEl.parentNode.insertBefore(headerControls, timerEl);
     }
-    document.getElementById('meViewToggleBtn').textContent = 'Switch to Scroll View';
+    document.getElementById('meViewToggleBtn').textContent = ME.viewMode === 'one-by-one' ? 'Switch to Scroll View' : 'Switch to One-by-One';
+    document.getElementById('meViewToggleBtn').style.display = 'block';
     
     buildQNav();
     renderMeQuestion(0);
@@ -1593,9 +1595,10 @@ window.switchSection = function(sec) {
       <div style="display:flex;flex-direction:column;gap:10px">
         ${q.options.map((opt, oi) => {
           const isSel = selected === oi;
-          return `<button onclick="meSelectAnswer(${q.id}, ${oi})" style="text-align:left;padding:14px 18px;border-radius:12px;border:1px solid ${isSel?'rgba(34,197,94,.6)':'rgba(34,197,94,.15)'};background:${isSel?'rgba(34,197,94,.15)':'rgba(255,255,255,.035)'};color:${isSel?'#22c55e':'#f0fdf4'};font-family:Outfit,sans-serif;font-size:.93rem;cursor:pointer;transition:.18s;display:flex;align-items:flex-start;gap:12px;user-select:none" onmouseenter="this.querySelector('.me-opt-text').style.filter='none'" onmouseleave="if(!this.dataset.selected) this.querySelector('.me-opt-text').style.filter='blur(5px)'" data-selected="${isSel?'1':''}">
+          const blurCls = isSel ? 'me-opt-text-revealed' : 'me-opt-text-blurred';
+          return `<button onclick="meSelectAnswer(${q.id}, ${oi})" style="text-align:left;padding:14px 18px;border-radius:12px;border:1px solid ${isSel?'rgba(34,197,94,.6)':'rgba(34,197,94,.15)'};background:${isSel?'rgba(34,197,94,.15)':'rgba(255,255,255,.035)'};color:${isSel?'#22c55e':'#f0fdf4'};font-family:Outfit,sans-serif;font-size:.93rem;cursor:pointer;transition:.18s;display:flex;align-items:flex-start;gap:12px;user-select:none" onmouseenter="this.querySelector('.me-opt-text').className='me-opt-text me-opt-text-revealed'" onmouseleave="if(!this.dataset.selected) this.querySelector('.me-opt-text').className='me-opt-text me-opt-text-blurred'" data-selected="${isSel?'1':''}">
             <span style="width:24px;height:24px;border-radius:50%;background:${isSel?'rgba(34,197,94,.3)':'rgba(255,255,255,.08)'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.78rem;flex-shrink:0">${optLetters[oi]}</span>
-            <span class="me-opt-text" style="filter:${isSel?'none':'blur(5px)'};transition:filter .2s;pointer-events:none">${escHtml(opt)}</span>
+            <span class="me-opt-text ${blurCls}">${escHtml(opt)}</span>
           </button>`;
         }).join('')}
       </div>`;
