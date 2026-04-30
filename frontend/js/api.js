@@ -123,24 +123,36 @@ const API = {
     }
 
     if (!resp.ok) {
-      if (resp.status === 401 || resp.status === 422) {
+      // Use the 'code' field from our custom JWT error handlers (backend/app.py)
+      // to decide whether to force logout. Only real session-ender codes redirect.
+      const sessionEndedCodes = new Set(['token_expired', 'token_invalid', 'token_revoked']);
+      const isSessionEnded = (resp.status === 401 || resp.status === 422)
+                              && sessionEndedCodes.has(data.code);
+
+      // A plain 401 on a login/register endpoint is just wrong credentials — don't redirect.
+      const isLoginEndpoint = path.includes('/auth/login') || path.includes('/auth/register');
+
+      if (isSessionEnded && !isLoginEndpoint) {
         const hadToken = !!this.getToken();
         this.clearToken();
-        // Only redirect to login if we had a live session that expired/was invalidated.
-        // Do NOT redirect when the 401 comes from the login endpoint itself (wrong password).
         if (hadToken) {
           const cur = window.location.pathname;
-          // Handle both /login.html and Vercel cleanUrl /login paths
           const onAuthPage = cur.includes('login') || cur.includes('register') || cur === '/';
           if (!onAuthPage) {
             window.location.href = 'login.html';
           }
         }
+        throw new Error(data.error || data.message || 'Session expired. Please sign in again.');
       }
+
+      // For all other errors (including 401 with code=token_missing on data endpoints),
+      // just surface the error message for the UI to handle — no redirect.
       throw new Error(data.error || data.message || 'Request failed');
     }
     return data;
   },
+
+
 
   // ── Auth endpoints ──
   async login(identifier, password) {

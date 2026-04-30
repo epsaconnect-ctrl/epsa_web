@@ -112,6 +112,33 @@ app.config['EPSA_APP_URL'] = settings.app_public_url
 
 CORS(app, origins="*", supports_credentials=True)
 jwt  = JWTManager(app)
+
+# ── Custom JWT error responses ────────────────────────────────────────────────
+# Flask-JWT-Extended defaults: expired → 401, invalid → 422, missing → 401.
+# We normalise ALL of them to 401 with a consistent JSON body so the frontend
+# can reliably distinguish "session expired" from actual server errors (500).
+
+@jwt.expired_token_loader
+def expired_token_callback(jwt_header, jwt_payload):
+    return jsonify({'error': 'Session expired. Please sign in again.', 'code': 'token_expired'}), 401
+
+@jwt.invalid_token_loader
+def invalid_token_callback(reason):
+    return jsonify({'error': 'Invalid session token. Please sign in again.', 'code': 'token_invalid'}), 401
+
+@jwt.unauthorized_loader
+def missing_token_callback(reason):
+    return jsonify({'error': 'Authentication required.', 'code': 'token_missing'}), 401
+
+@jwt.revoked_token_loader
+def revoked_token_callback(jwt_header, jwt_payload):
+    return jsonify({'error': 'Session has been revoked. Please sign in again.', 'code': 'token_revoked'}), 401
+
+@jwt.needs_fresh_token_loader
+def fresh_token_required_callback(jwt_header, jwt_payload):
+    return jsonify({'error': 'Fresh authentication required.', 'code': 'token_not_fresh'}), 401
+# ─────────────────────────────────────────────────────────────────────────────
+
 sock = None
 _runtime_lock = threading.Lock()
 _runtime_initialized = False
@@ -120,7 +147,7 @@ _runtime_init_error = None
 if settings.is_local:
     from flask_socketio import SocketIO
 
-    sock = SocketIO(app, cors_allowed_origins=cors_origins, async_mode='eventlet')
+    sock = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
 # Register blueprints
 app.register_blueprint(auth_bp,       url_prefix='/api/auth')
