@@ -217,13 +217,30 @@ def start_mock_exam(exam_id):
             qids = json.loads(existing["question_ids"])
             opt_order = json.loads(existing["option_order"] or "{}")
             questions = _load_questions_for_student(db, qids, opt_order)
-            elapsed_secs = (now - datetime.fromisoformat(str(existing["started_at"]))).total_seconds()
+            
+            # 1. Seconds from the actual moment they first clicked "Start"
+            started_at = datetime.fromisoformat(str(existing["started_at"]))
+            elapsed_secs = (now - started_at).total_seconds()
+            
+            # 2. Maximum allowed duration based on exam settings
+            max_duration_secs = (exam["duration_mins"] or 120) * 60
+            
+            # 3. Calculate remaining based on duration vs absolute deadline
+            remaining_from_start = max_duration_secs - elapsed_secs
+            
+            remaining_secs = remaining_from_start
+            if exam["ends_at"]:
+                deadline = datetime.fromisoformat(str(exam["ends_at"]))
+                secs_until_deadline = (deadline - now).total_seconds()
+                remaining_secs = min(remaining_from_start, secs_until_deadline)
+
             return jsonify({
                 "submission_id": existing["id"],
                 "questions": questions,
                 "total": len(qids),
                 "duration_mins": exam["duration_mins"],
-                "elapsed_secs": int(elapsed_secs),
+                "elapsed_secs": int(max(0, elapsed_secs)),
+                "remaining_secs": int(max(0, remaining_secs)),
                 "answers": json.loads(existing["answers"] or "{}"),
                 "resuming": True,
             })
@@ -259,12 +276,21 @@ def start_mock_exam(exam_id):
     finally:
         db.close()
 
+    # Calculate remaining time for new attempt (Hard Stop)
+    max_duration_secs = (exam["duration_mins"] or 120) * 60
+    remaining_secs = max_duration_secs
+    if exam["ends_at"]:
+        deadline = datetime.fromisoformat(str(exam["ends_at"]))
+        secs_until_deadline = (deadline - now).total_seconds()
+        remaining_secs = min(max_duration_secs, secs_until_deadline)
+
     return jsonify({
         "submission_id": sub_id,
         "questions": questions,
         "total": len(question_ids),
         "duration_mins": exam["duration_mins"],
         "elapsed_secs": 0,
+        "remaining_secs": int(max(0, remaining_secs)),
         "answers": {},
         "resuming": False,
     })
@@ -786,4 +812,63 @@ def admin_exam_report(exam_id):
             }
             for s in submissions[:10]
         ],
+    })
+@mock_exams_bp.route("/admin/<int:exam_id>", methods=["DELETE"])
+@jwt_required()
+def admin_delete_exam(exam_id):
+    uid = get_jwt_identity()
+    db = get_db()
+    try:
+        _require_admin(db, uid)
+        # Delete submissions first to maintain integrity
+        db.execute("DELETE FROM mock_exam_submissions WHERE exam_id=?", (exam_id,))
+        db.execute("DELETE FROM mock_exams WHERE id=?", (exam_id,))
+        db.commit()
+    finally:
+        db.close()
+    return jsonify({"message": "Exam deleted successfully"})
+
+
+@mock_exams_bp.route("/admin/<int:exam_id>/stop", methods=["POST"])
+@jwt_required()
+def admin_stop_exam(exam_id):
+    uid = get_jwt_identity()
+    db = get_db()
+    try:
+        _require_admin(db, uid)
+        db.execute("UPDATE mock_exams SET is_active=0 WHERE id=?", (exam_id,))
+        db.commit()
+    finally:
+        db.close()
+    return jsonify({"message": "Exam deactivated (stopped suddenly)"})
+
+
+@mock_exams_bp.route("/admin/live-analytics", methods=["GET"])
+@jwt_required()
+def admin_live_analytics():
+    uid = get_jwt_identity()
+    db = get_db()
+    try:
+        _require_admin(db, uid)
+        # Count students who have 'in_progress' submissions in the last hour
+        active_counts = db.execute(
+            """
+            SELECT me.title, COUNT(ms.id) as active_students
+            FROM mock_exam_submissions ms
+            JOIN mock_exams me ON me.id=ms.exam_id
+            WHERE ms.status='in_progress' 
+              AND ms.updated_at > DATETIME('now', '-30 minutes')
+            GROUP BY ms.exam_id
+            """
+        ).fetchall()
+        
+        total_active = db.execute(
+            "SELECT COUNT(DISTINCT user_id) FROM mock_exam_submissions WHERE status='in_progress' AND updated_at > DATETIME('now', '-30 minutes')"
+        ).fetchone()[0]
+
+    finally:
+        db.close()
+    return jsonify({
+        "total_active": total_active,
+        "exams": [_serialize_row(r) for r in active_counts]
     })

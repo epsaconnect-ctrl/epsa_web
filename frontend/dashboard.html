@@ -1354,9 +1354,23 @@ window.switchSection = function(sec) {
     .mock-hero-metric strong{display:block;font-size:1.15rem;font-weight:800;color:#f8fafc}
     .mock-hero-metric span{display:block;margin-top:6px;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.66)}
     .mock-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px;margin-bottom:28px;position:relative;z-index:1}
-    .mock-empty{grid-column:1/-1;text-align:center;padding:56px 24px;border-radius:24px;border:1px dashed rgba(26,107,60,0.18);background:rgba(255,255,255,0.82);color:var(--text-muted)}
     .me-opt-text-blurred { filter: blur(6px); transition: filter 0.2s ease; pointer-events: none; }
     .me-opt-text-revealed { filter: none !important; transition: filter 0.2s ease; pointer-events: none; }
+
+    /* Mock Exam Themes */
+    #mockExamFullscreen.me-theme-dark {
+      --me-bg: #071f10; --me-header: rgba(0,0,0,.4); --me-border: rgba(34,197,94,.15);
+      --me-text: #f0fdf4; --me-text-muted: #86efac; --me-card-bg: rgba(255,255,255,.04);
+      --me-opt-bg: rgba(255,255,255,.035); --me-opt-border: rgba(34,197,94,.15);
+    }
+    #mockExamFullscreen.me-theme-light {
+      --me-bg: #f8fafc; --me-header: #ffffff; --me-border: #e2e8f0;
+      --me-text: #0f172a; --me-text-muted: #64748b; --me-card-bg: #ffffff;
+      --me-opt-bg: #f1f5f9; --me-opt-border: #cbd5e1;
+    }
+    #mockExamFullscreen { background: var(--me-bg) !important; color: var(--me-text) !important; transition: background 0.3s ease; }
+    #mockExamFullscreen .me-header-bar { background: var(--me-header); border-bottom: 1px solid var(--me-border); }
+    #mockExamFullscreen .me-question-card { background: var(--me-card-bg); border: 1px solid var(--me-border); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
   </style>
   <div id="section-mock-exams" class="dash-section mock-shell" style="display:none">
     <div class="section-header">
@@ -1371,19 +1385,19 @@ window.switchSection = function(sec) {
   </div>
 
   <!--  MOCK EXAM FULLSCREEN UI  -->
-  <div id="mockExamFullscreen" style="display:none;position:fixed;inset:0;background:#071f10;z-index:9000;flex-direction:column;font-family:Outfit,sans-serif">
+  <div id="mockExamFullscreen" class="me-theme-dark" style="display:none;position:fixed;inset:0;z-index:9000;flex-direction:column;font-family:Outfit,sans-serif">
     <!-- Header bar -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(0,0,0,.4);border-bottom:1px solid rgba(34,197,94,.15);flex-shrink:0">
+    <div class="me-header-bar" style="display:flex;align-items:center;justify-content:space-between;padding:14px 24px;flex-shrink:0">
       <div>
-        <div id="meExamTitle" style="font-weight:800;font-size:1.05rem;color:#f0fdf4"></div>
-        <div id="meProgress" style="font-size:.8rem;color:#86efac;margin-top:2px"></div>
+        <div id="meExamTitle" style="font-weight:800;font-size:1.05rem;"></div>
+        <div id="meProgress" style="font-size:.8rem;margin-top:2px;color:var(--me-text-muted)"></div>
       </div>
-      <div id="meTimer" style="font-size:1.4rem;font-weight:800;color:#22c55e;font-variant-numeric:tabular-nums;background:rgba(34,197,94,.1);padding:8px 18px;border-radius:10px;border:1px solid rgba(34,197,94,.2)">00:00</div>
+      <div id="meTimer" style="font-size:1.4rem;font-weight:800;font-variant-numeric:tabular-nums;background:rgba(34,197,94,.1);padding:8px 18px;border-radius:10px;border:1px solid rgba(34,197,94,.2)">00:00</div>
       <button onclick="confirmSubmitExam()" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-size:.9rem;font-weight:700;cursor:pointer">Submit Exam</button>
     </div>
 
     <!-- Question navigator -->
-    <div style="display:flex;gap:6px;flex-wrap:wrap;padding:12px 24px;background:rgba(0,0,0,.2);border-bottom:1px solid rgba(34,197,94,.08);flex-shrink:0;overflow-y:auto;max-height:90px" id="meQNav"></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;padding:12px 24px;background:rgba(0,0,0,.1);border-bottom:1px solid var(--me-border);flex-shrink:0;overflow-y:auto;max-height:90px" id="meQNav"></div>
 
     <!-- Question area -->
     <div style="flex:1;overflow-y:auto;padding:32px 24px;max-width:860px;margin:0 auto;width:100%">
@@ -1418,9 +1432,9 @@ window.switchSection = function(sec) {
   const ME = {
     examId: null, submissionId: null, questions: [], answers: {},
     timesPerQ: {}, currentIdx: 0, timerInterval: null, totalSecs: 0,
-    elapsedSecs: 0, qStartTime: null, saveInterval: null,
+    elapsedSecs: 0, serverRemaining: 0, qStartTime: null, saveInterval: null,
     // Anti-cheat & Layout
-    viewMode: 'one-by-one', tabSwitchCount: 0, maxTabSwitches: 3,
+    viewMode: 'one-by-one', theme: 'dark', tabSwitchCount: 0, maxTabSwitches: 3,
     lastCheatWarning: 0, submitted: false, hasStarted: false,
     startTime: null,
   };
@@ -1496,9 +1510,17 @@ window.switchSection = function(sec) {
         <div style="padding:12px 14px;border-radius:16px;background:rgba(26,107,60,.06);border:1px solid rgba(26,107,60,.08)"><div style="font-size:.7rem;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Questions</div><div style="font-size:1rem;font-weight:800;color:#0f172a">${e.question_count}</div></div>
         <div style="padding:12px 14px;border-radius:16px;background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.08)"><div style="font-size:.7rem;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Duration</div><div style="font-size:1rem;font-weight:800;color:#0f172a">${e.duration_mins} min</div></div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:.76rem;color:#475569;margin-top:auto">
-        ${e.my_score != null ? `<span style="padding:5px 10px;border-radius:999px;background:rgba(22,163,74,.10);color:#166534;font-weight:800">Score ${e.my_score}%</span>` : ''}
-        ${e.scheduled_at ? `<span style="padding:5px 10px;border-radius:999px;background:rgba(15,23,42,.05);color:#475569;font-weight:700">Opens ${new Date(e.scheduled_at).toLocaleDateString()}</span>` : ''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:.76rem;color:#475569;margin-top:auto;background:rgba(15,23,42,0.03);padding:10px;border-radius:14px;border:1px solid rgba(15,23,42,0.05);">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:1rem;">⏰</span>
+          <span style="font-weight:700;color:#0f172a;">${new Date(e.scheduled_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+        </div>
+        <div style="width:1px;height:14px;background:rgba(0,0,0,0.1);margin:0 4px;"></div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:1rem;">📅</span>
+          <span style="font-weight:700;color:#0f172a;">${new Date(e.scheduled_at).toLocaleDateString([], {month:'short', day:'numeric'})}</span>
+        </div>
+        ${e.my_score != null ? `<span style="margin-left:auto;padding:4px 10px;border-radius:999px;background:rgba(22,163,74,.10);color:#166534;font-weight:800">Score ${e.my_score}%</span>` : ''}
       </div>
       ${action}
     </article>`;
@@ -1519,12 +1541,14 @@ window.switchSection = function(sec) {
       ME.currentIdx = 0;
       ME.totalSecs = (data.duration_mins || 120) * 60;
       ME.elapsedSecs = data.elapsed_secs || 0;
+      ME.serverRemaining = data.remaining_secs || (ME.totalSecs - ME.elapsedSecs);
       ME.qStartTime = Date.now();
       ME.startTime = Date.now();
       ME.submitted = false;
       ME.hasStarted = true;
       ME.tabSwitchCount = 0;
       ME.viewMode = 'one-by-one';
+      ME.theme = 'dark'; // Start default dark
       openExamFullscreen(data);
     } catch(err) {
       showToast(err.message || 'Could not start exam', 'error');
@@ -1537,6 +1561,11 @@ window.switchSection = function(sec) {
     document.body.style.overflow = 'hidden';
     document.getElementById('meExamTitle').textContent = 'EPSA Mock Exam';
     
+    // Theme setup
+    fs.classList.remove('me-theme-light');
+    fs.classList.add('me-theme-dark');
+    ME.theme = 'dark';
+
     let headerControls = document.getElementById('meHeaderControls');
     if (!headerControls) {
       headerControls = document.createElement('div');
@@ -1545,11 +1574,18 @@ window.switchSection = function(sec) {
       headerControls.style.gap = '10px';
       headerControls.style.alignItems = 'center';
       
+      const themeBtn = document.createElement('button');
+      themeBtn.id = 'meThemeBtn';
+      themeBtn.innerHTML = '🌙';
+      themeBtn.style.cssText = 'background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);width:36px;height:36px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;';
+      themeBtn.onclick = meToggleTheme;
+
       const viewToggleBtn = document.createElement('button');
       viewToggleBtn.id = 'meViewToggleBtn';
       viewToggleBtn.style.cssText = 'background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:6px 12px;border-radius:6px;font-size:0.8rem;cursor:pointer;z-index:9999;';
       viewToggleBtn.onclick = meToggleViewMode;
       
+      headerControls.appendChild(themeBtn);
       headerControls.appendChild(viewToggleBtn);
       const timerEl = document.getElementById('meTimer');
       timerEl.parentNode.insertBefore(headerControls, timerEl);
@@ -1563,6 +1599,25 @@ window.switchSection = function(sec) {
     meEnableAntiCheat();
     // Auto-save every 30s
     ME.saveInterval = setInterval(saveProgress, 30000);
+  }
+
+  function meToggleTheme() {
+    const fs = document.getElementById('mockExamFullscreen');
+    const btn = document.getElementById('meThemeBtn');
+    if (ME.theme === 'dark') {
+      ME.theme = 'light';
+      fs.classList.remove('me-theme-dark');
+      fs.classList.add('me-theme-light');
+      btn.innerHTML = '☀️';
+    } else {
+      ME.theme = 'dark';
+      fs.classList.remove('me-theme-light');
+      fs.classList.add('me-theme-dark');
+      btn.innerHTML = '🌙';
+    }
+    // Re-render current view to apply theme to dynamic elements
+    if (ME.viewMode === 'one-by-one') renderMeQuestion(ME.currentIdx);
+    else renderMeQuestionsScroll();
   }
 
   function buildQNav() {
@@ -1587,17 +1642,23 @@ window.switchSection = function(sec) {
 
     const selected = ME.answers[String(q.id)];
     const optLetters = ['A','B','C','D'];
+    const isLight = ME.theme === 'light';
+    
     document.getElementById('meQuestionArea').innerHTML = `
-      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(34,197,94,.12);border-radius:14px;padding:24px;margin-bottom:20px">
-        <div style="font-size:.78rem;color:#86efac;margin-bottom:10px;font-weight:600">QUESTION ${idx+1}</div>
-        <div style="font-size:1.05rem;font-weight:600;line-height:1.6;color:#f0fdf4;user-select:none">${escHtml(q.question_text)}</div>
+      <div class="me-question-card" style="border-radius:14px;padding:24px;margin-bottom:20px">
+        <div style="font-size:.78rem;color:var(--me-text-muted);margin-bottom:10px;font-weight:600">QUESTION ${idx+1}</div>
+        <div style="font-size:1.05rem;font-weight:600;line-height:1.6;color:var(--me-text);user-select:none">${escHtml(q.question_text)}</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
         ${q.options.map((opt, oi) => {
           const isSel = selected === oi;
           const blurCls = isSel ? 'me-opt-text-revealed' : 'me-opt-text-blurred';
-          return `<button onclick="meSelectAnswer(${q.id}, ${oi})" style="text-align:left;padding:14px 18px;border-radius:12px;border:1px solid ${isSel?'rgba(34,197,94,.6)':'rgba(34,197,94,.15)'};background:${isSel?'rgba(34,197,94,.15)':'rgba(255,255,255,.035)'};color:${isSel?'#22c55e':'#f0fdf4'};font-family:Outfit,sans-serif;font-size:.93rem;cursor:pointer;transition:.18s;display:flex;align-items:flex-start;gap:12px;user-select:none" onmouseenter="this.querySelector('.me-opt-text').className='me-opt-text me-opt-text-revealed'" onmouseleave="if(!this.dataset.selected) this.querySelector('.me-opt-text').className='me-opt-text me-opt-text-blurred'" data-selected="${isSel?'1':''}">
-            <span style="width:24px;height:24px;border-radius:50%;background:${isSel?'rgba(34,197,94,.3)':'rgba(255,255,255,.08)'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.78rem;flex-shrink:0">${optLetters[oi]}</span>
+          const btnBorder = isSel ? 'rgba(34,197,94,.6)' : 'var(--me-opt-border)';
+          const btnBg = isSel ? 'rgba(34,197,94,.15)' : 'var(--me-opt-bg)';
+          const btnColor = isSel ? (isLight ? '#166534' : '#22c55e') : 'var(--me-text)';
+
+          return `<button onclick="meSelectAnswer(${q.id}, ${oi})" style="text-align:left;padding:14px 18px;border-radius:12px;border:1px solid ${btnBorder};background:${btnBg};color:${btnColor};font-family:Outfit,sans-serif;font-size:.93rem;cursor:pointer;transition:.18s;display:flex;align-items:flex-start;gap:12px;user-select:none" onmouseenter="this.querySelector('.me-opt-text').className='me-opt-text me-opt-text-revealed'" onmouseleave="if(!this.dataset.selected) this.querySelector('.me-opt-text').className='me-opt-text me-opt-text-blurred'" data-selected="${isSel?'1':''}">
+            <span style="width:24px;height:24px;border-radius:50%;background:${isSel?'rgba(34,197,94,.3)':'rgba(0,0,0,.08)'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.78rem;flex-shrink:0">${optLetters[oi]}</span>
             <span class="me-opt-text ${blurCls}">${escHtml(opt)}</span>
           </button>`;
         }).join('')}
@@ -1608,6 +1669,7 @@ window.switchSection = function(sec) {
   function renderMeQuestionsScroll() {
     const total = ME.questions.length;
     const answeredCount = Object.keys(ME.answers).length;
+    const isLight = ME.theme === 'light';
     document.getElementById('meProgress').textContent = `Scroll View - ${answeredCount}/${total} answered`;
     document.getElementById('meQLabel').textContent = '';
     
@@ -1617,16 +1679,20 @@ window.switchSection = function(sec) {
       const selected = ME.answers[String(q.id)];
       html += `
         <div style="margin-bottom:40px">
-          <div style="background:rgba(255,255,255,.04);border:1px solid rgba(34,197,94,.12);border-radius:14px;padding:24px;margin-bottom:16px">
-            <div style="font-size:.78rem;color:#86efac;margin-bottom:10px;font-weight:600">QUESTION ${idx+1}</div>
-            <div style="font-size:1.05rem;font-weight:600;line-height:1.6;color:#f0fdf4;user-select:none">${escHtml(q.question_text)}</div>
+          <div class="me-question-card" style="border-radius:14px;padding:24px;margin-bottom:16px">
+            <div style="font-size:.78rem;color:var(--me-text-muted);margin-bottom:10px;font-weight:600">QUESTION ${idx+1}</div>
+            <div style="font-size:1.05rem;font-weight:600;line-height:1.6;color:var(--me-text);user-select:none">${escHtml(q.question_text)}</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:10px" id="meScrollQ${q.id}">
             ${q.options.map((opt, oi) => {
               const isSel = selected === oi;
-              return `<button onclick="meSelectAnswerScroll(${q.id}, ${oi})" style="text-align:left;padding:14px 18px;border-radius:12px;border:1px solid ${isSel?'rgba(34,197,94,.6)':'rgba(34,197,94,.15)'};background:${isSel?'rgba(34,197,94,.15)':'rgba(255,255,255,.035)'};color:${isSel?'#22c55e':'#f0fdf4'};font-family:Outfit,sans-serif;font-size:.93rem;cursor:pointer;transition:.18s;display:flex;align-items:flex-start;gap:12px;user-select:none" onmouseenter="this.querySelector('.me-opt-text').style.filter='none'" onmouseleave="if(!this.dataset.selected) this.querySelector('.me-opt-text').style.filter='blur(5px)'" data-selected="${isSel?'1':''}" id="meOpt-${q.id}-${oi}">
-                <span class="me-opt-letter" style="width:24px;height:24px;border-radius:50%;background:${isSel?'rgba(34,197,94,.3)':'rgba(255,255,255,.08)'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.78rem;flex-shrink:0">${optLetters[oi]}</span>
-                <span class="me-opt-text" style="filter:${isSel?'none':'blur(5px)'};transition:filter .2s;pointer-events:none">${escHtml(opt)}</span>
+              const btnBorder = isSel ? 'rgba(34,197,94,.6)' : 'var(--me-opt-border)';
+              const btnBg = isSel ? 'rgba(34,197,94,.15)' : 'var(--me-opt-bg)';
+              const btnColor = isSel ? (isLight ? '#166534' : '#22c55e') : 'var(--me-text)';
+
+              return `<button onclick="meSelectAnswerScroll(${q.id}, ${oi})" style="text-align:left;padding:14px 18px;border-radius:12px;border:1px solid ${btnBorder};background:${btnBg};color:${btnColor};font-family:Outfit,sans-serif;font-size:.93rem;cursor:pointer;transition:.18s;display:flex;align-items:flex-start;gap:12px;user-select:none" onmouseenter="this.querySelector('.me-opt-text').className='me-opt-text me-opt-text-revealed'" onmouseleave="if(!this.dataset.selected) this.querySelector('.me-opt-text').className='me-opt-text me-opt-text-blurred'" data-selected="${isSel?'1':''}" id="meOpt-${q.id}-${oi}">
+                <span class="me-opt-letter" style="width:24px;height:24px;border-radius:50%;background:${isSel?'rgba(34,197,94,.3)':'rgba(0,0,0,.08)'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.78rem;flex-shrink:0">${optLetters[oi]}</span>
+                <span class="me-opt-text ${isSel?'me-opt-text-revealed':'me-opt-text-blurred'}">${escHtml(opt)}</span>
               </button>`;
             }).join('')}
           </div>
@@ -1701,7 +1767,8 @@ window.switchSection = function(sec) {
 
   function startMeTimer() {
     clearInterval(ME.timerInterval);
-    const serverRemaining = ME.totalSecs - ME.elapsedSecs;
+    // Use the absolute remaining seconds provided by the server (Respects Hard Stop)
+    const serverRemaining = ME.serverRemaining;
     ME.startTime = Date.now();
     const el = document.getElementById('meTimer');
     
@@ -1720,7 +1787,10 @@ window.switchSection = function(sec) {
       el.textContent = m + ':' + s;
       if (remaining < 300) el.style.color = '#f87171';
       else if (remaining < 600) el.style.color = '#f59e0b';
-      else el.style.color = '#22c55e';
+      else {
+        // Adapt timer color based on theme
+        el.style.color = ME.theme === 'light' ? '#166534' : '#22c55e';
+      }
     };
     tick();
     ME.timerInterval = setInterval(tick, 1000);

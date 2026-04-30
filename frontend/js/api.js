@@ -448,6 +448,9 @@ const API = {
   async adminUpdateMockExam(id, body)           { return this.request(`/mock-exams/admin/${id}`, { method: 'PUT', body }); },
   async adminActivateMockExam(id)               { return this.request(`/mock-exams/admin/${id}/activate`, { method: 'POST' }); },
   async adminReleaseExamResults(id)             { return this.request(`/mock-exams/admin/${id}/release-results`, { method: 'POST' }); },
+  async adminDeleteMockExam(id)                 { return this.request(`/mock-exams/admin/${id}`, { method: 'DELETE' }); },
+  async adminStopMockExam(id)                   { return this.request(`/mock-exams/admin/${id}/stop`, { method: 'POST' }); },
+  async adminGetLiveMockAnalytics()             { return this.request('/mock-exams/admin/live-analytics'); },
   async adminReleaseMockExamResults(id)         { return this.adminReleaseExamResults(id); }, // alias
   async adminGetExamReport(id)                  { return this.request(`/mock-exams/admin/${id}/report`); },
 
