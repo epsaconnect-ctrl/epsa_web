@@ -235,16 +235,16 @@
 
   <div class="nav-section">Main</div>
   <a class="nav-item active" id="nav-dashboard" onclick="showPage('dashboard')">
-    <span class="icon">🏠</span>Dashboard
+    <span class="icon">📊</span>Dashboard
   </a>
   <a class="nav-item" id="nav-submit" onclick="showPage('submit')">
-    <span class="icon">➕</span>Submit Question
+    <span class="icon">📝</span>Submit Question
   </a>
   <a class="nav-item" id="nav-myquestions" onclick="showPage('myquestions')">
-    <span class="icon">📋</span>My Questions
+    <span class="icon">📂</span>My Questions
   </a>
   <a class="nav-item" id="nav-bulk" onclick="showPage('bulk')">
-    <span class="icon">📤</span>Bulk Upload
+    <span class="icon">☁️</span>Bulk Upload
   </a>
 
   <div class="nav-section">Resources</div>
@@ -1211,16 +1211,32 @@ function processCsvFile(file) {
 
 function parseCsv(text) {
   const lines = text.trim().split(/\r?\n/);
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,''));
   const rows = [];
+  if (lines.length < 1) return rows;
+  const headers = parseCsvLine(lines[0]);
   for (let i = 1; i < lines.length; i++) {
     if (!lines[i].trim()) continue;
-    const vals = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g,''));
+    const vals = parseCsvLine(lines[i]);
     const obj = {};
     headers.forEach((h, idx) => { obj[h] = vals[idx] || ''; });
     rows.push(obj);
   }
   return rows;
+}
+
+function parseCsvLine(text) {
+  let ret = [], cur = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '"') {
+      if (inQ && text[i+1] === '"') { cur += '"'; i++; }
+      else inQ = !inQ;
+    } else if (c === ',' && !inQ) {
+      ret.push(cur.trim().replace(/^"|"$/g, '')); cur = '';
+    } else { cur += c; }
+  }
+  ret.push(cur.trim().replace(/^"|"$/g, ''));
+  return ret;
 }
 
 async function uploadCsv() {
