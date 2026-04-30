@@ -1531,15 +1531,6 @@ window.switchSection = function(sec) {
       </div>
       ${action}
     </article>`;
-
-            if (d && !d.endsWith('Z')) d += 'Z';
-            return new Date(d).toLocaleDateString([], {month:'short', day:'numeric'});
-          })()}</span>
-        </div>
-        ${e.my_score != null ? `<span style="margin-left:auto;padding:4px 10px;border-radius:999px;background:rgba(22,163,74,.10);color:#166534;font-weight:800">Score ${e.my_score}%</span>` : ''}
-      </div>
-      ${action}
-    </article>`;
   }
 
   function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
