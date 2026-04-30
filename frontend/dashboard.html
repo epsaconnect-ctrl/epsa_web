@@ -1417,6 +1417,10 @@ window.switchSection = function(sec) {
     examId: null, submissionId: null, questions: [], answers: {},
     timesPerQ: {}, currentIdx: 0, timerInterval: null, totalSecs: 0,
     elapsedSecs: 0, qStartTime: null, saveInterval: null,
+    // Anti-cheat & Layout
+    viewMode: 'one-by-one', tabSwitchCount: 0, maxTabSwitches: 3,
+    lastCheatWarning: 0, submitted: false, hasStarted: false,
+    startTime: null,
   };
 
   // Load and render exam cards
@@ -1514,6 +1518,11 @@ window.switchSection = function(sec) {
       ME.totalSecs = (data.duration_mins || 120) * 60;
       ME.elapsedSecs = data.elapsed_secs || 0;
       ME.qStartTime = Date.now();
+      ME.startTime = Date.now();
+      ME.submitted = false;
+      ME.hasStarted = true;
+      ME.tabSwitchCount = 0;
+      ME.viewMode = 'one-by-one';
       openExamFullscreen(data);
     } catch(err) {
       showToast(err.message || 'Could not start exam', 'error');
@@ -1525,9 +1534,31 @@ window.switchSection = function(sec) {
     fs.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     document.getElementById('meExamTitle').textContent = 'EPSA Mock Exam';
+    
+    let headerControls = document.getElementById('meHeaderControls');
+    if (!headerControls) {
+      headerControls = document.createElement('div');
+      headerControls.id = 'meHeaderControls';
+      headerControls.style.display = 'flex';
+      headerControls.style.gap = '10px';
+      headerControls.style.alignItems = 'center';
+      
+      const viewToggleBtn = document.createElement('button');
+      viewToggleBtn.id = 'meViewToggleBtn';
+      viewToggleBtn.textContent = 'Switch to Scroll View';
+      viewToggleBtn.style.cssText = 'background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:6px 12px;border-radius:6px;font-size:0.8rem;cursor:pointer;';
+      viewToggleBtn.onclick = meToggleViewMode;
+      
+      headerControls.appendChild(viewToggleBtn);
+      const timerEl = document.getElementById('meTimer');
+      timerEl.parentNode.insertBefore(headerControls, timerEl);
+    }
+    document.getElementById('meViewToggleBtn').textContent = 'Switch to Scroll View';
+    
     buildQNav();
     renderMeQuestion(0);
     startMeTimer();
+    meEnableAntiCheat();
     // Auto-save every 30s
     ME.saveInterval = setInterval(saveProgress, 30000);
   }
@@ -1545,7 +1576,7 @@ window.switchSection = function(sec) {
     const q = ME.questions[idx];
     if (!q) return;
     const total = ME.questions.length;
-      const answeredCount = Object.keys(ME.answers).length;
+    const answeredCount = Object.keys(ME.answers).length;
     document.getElementById('meProgress').textContent = `Question ${idx+1} of ${total} - ${answeredCount} answered`;
     document.getElementById('meQLabel').textContent = `${idx+1} / ${total}`;
     document.getElementById('mePrevBtn').disabled = idx === 0;
@@ -1557,16 +1588,64 @@ window.switchSection = function(sec) {
     document.getElementById('meQuestionArea').innerHTML = `
       <div style="background:rgba(255,255,255,.04);border:1px solid rgba(34,197,94,.12);border-radius:14px;padding:24px;margin-bottom:20px">
         <div style="font-size:.78rem;color:#86efac;margin-bottom:10px;font-weight:600">QUESTION ${idx+1}</div>
-        <div style="font-size:1.05rem;font-weight:600;line-height:1.6;color:#f0fdf4">${escHtml(q.question_text)}</div>
+        <div style="font-size:1.05rem;font-weight:600;line-height:1.6;color:#f0fdf4;user-select:none">${escHtml(q.question_text)}</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
-        ${q.options.map((opt, oi) => `
-          <button onclick="meSelectAnswer(${q.id}, ${oi})" style="text-align:left;padding:14px 18px;border-radius:12px;border:1px solid ${selected===oi?'rgba(34,197,94,.6)':'rgba(34,197,94,.15)'};background:${selected===oi?'rgba(34,197,94,.15)':'rgba(255,255,255,.035)'};color:${selected===oi?'#22c55e':'#f0fdf4'};font-family:Outfit,sans-serif;font-size:.93rem;cursor:pointer;transition:.18s;display:flex;align-items:flex-start;gap:12px">
-            <span style="width:24px;height:24px;border-radius:50%;background:${selected===oi?'rgba(34,197,94,.3)':'rgba(255,255,255,.08)'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.78rem;flex-shrink:0">${optLetters[oi]}</span>
-            ${escHtml(opt)}
-          </button>`).join('')}
+        ${q.options.map((opt, oi) => {
+          const isSel = selected === oi;
+          return `<button onclick="meSelectAnswer(${q.id}, ${oi})" style="text-align:left;padding:14px 18px;border-radius:12px;border:1px solid ${isSel?'rgba(34,197,94,.6)':'rgba(34,197,94,.15)'};background:${isSel?'rgba(34,197,94,.15)':'rgba(255,255,255,.035)'};color:${isSel?'#22c55e':'#f0fdf4'};font-family:Outfit,sans-serif;font-size:.93rem;cursor:pointer;transition:.18s;display:flex;align-items:flex-start;gap:12px;user-select:none" onmouseenter="this.querySelector('.me-opt-text').style.filter='none'" onmouseleave="if(!this.dataset.selected) this.querySelector('.me-opt-text').style.filter='blur(5px)'" data-selected="${isSel?'1':''}">
+            <span style="width:24px;height:24px;border-radius:50%;background:${isSel?'rgba(34,197,94,.3)':'rgba(255,255,255,.08)'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.78rem;flex-shrink:0">${optLetters[oi]}</span>
+            <span class="me-opt-text" style="filter:${isSel?'none':'blur(5px)'};transition:filter .2s;pointer-events:none">${escHtml(opt)}</span>
+          </button>`;
+        }).join('')}
       </div>`;
     ME.qStartTime = Date.now();
+  }
+
+  function renderMeQuestionsScroll() {
+    const total = ME.questions.length;
+    const answeredCount = Object.keys(ME.answers).length;
+    document.getElementById('meProgress').textContent = `Scroll View - ${answeredCount}/${total} answered`;
+    document.getElementById('meQLabel').textContent = '';
+    
+    const optLetters = ['A','B','C','D'];
+    let html = '';
+    ME.questions.forEach((q, idx) => {
+      const selected = ME.answers[String(q.id)];
+      html += `
+        <div style="margin-bottom:40px">
+          <div style="background:rgba(255,255,255,.04);border:1px solid rgba(34,197,94,.12);border-radius:14px;padding:24px;margin-bottom:16px">
+            <div style="font-size:.78rem;color:#86efac;margin-bottom:10px;font-weight:600">QUESTION ${idx+1}</div>
+            <div style="font-size:1.05rem;font-weight:600;line-height:1.6;color:#f0fdf4;user-select:none">${escHtml(q.question_text)}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px" id="meScrollQ${q.id}">
+            ${q.options.map((opt, oi) => {
+              const isSel = selected === oi;
+              return `<button onclick="meSelectAnswerScroll(${q.id}, ${oi})" style="text-align:left;padding:14px 18px;border-radius:12px;border:1px solid ${isSel?'rgba(34,197,94,.6)':'rgba(34,197,94,.15)'};background:${isSel?'rgba(34,197,94,.15)':'rgba(255,255,255,.035)'};color:${isSel?'#22c55e':'#f0fdf4'};font-family:Outfit,sans-serif;font-size:.93rem;cursor:pointer;transition:.18s;display:flex;align-items:flex-start;gap:12px;user-select:none" onmouseenter="this.querySelector('.me-opt-text').style.filter='none'" onmouseleave="if(!this.dataset.selected) this.querySelector('.me-opt-text').style.filter='blur(5px)'" data-selected="${isSel?'1':''}" id="meOpt-${q.id}-${oi}">
+                <span class="me-opt-letter" style="width:24px;height:24px;border-radius:50%;background:${isSel?'rgba(34,197,94,.3)':'rgba(255,255,255,.08)'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.78rem;flex-shrink:0">${optLetters[oi]}</span>
+                <span class="me-opt-text" style="filter:${isSel?'none':'blur(5px)'};transition:filter .2s;pointer-events:none">${escHtml(opt)}</span>
+              </button>`;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    });
+    document.getElementById('meQuestionArea').innerHTML = html;
+  }
+
+  function meToggleViewMode() {
+    const btn = document.getElementById('meViewToggleBtn');
+    if (ME.viewMode === 'one-by-one') {
+      ME.viewMode = 'scroll-all';
+      btn.textContent = 'Switch to One-by-One';
+      document.getElementById('mePrevBtn').parentElement.style.display = 'none';
+      renderMeQuestionsScroll();
+    } else {
+      ME.viewMode = 'one-by-one';
+      btn.textContent = 'Switch to Scroll View';
+      document.getElementById('mePrevBtn').parentElement.style.display = 'flex';
+      renderMeQuestion(ME.currentIdx);
+    }
   }
 
   function meSelectAnswer(qid, optIdx) {
@@ -1577,6 +1656,31 @@ window.switchSection = function(sec) {
     ME.qStartTime = Date.now();
     buildQNav();
     renderMeQuestion(ME.currentIdx);
+  }
+
+  function meSelectAnswerScroll(qid, optIdx) {
+    ME.answers[String(qid)] = optIdx;
+    const total = ME.questions.length;
+    const answeredCount = Object.keys(ME.answers).length;
+    document.getElementById('meProgress').textContent = `Scroll View - ${answeredCount}/${total} answered`;
+    
+    // Update visuals
+    const container = document.getElementById(`meScrollQ${qid}`);
+    if (!container) return;
+    const buttons = container.querySelectorAll('button');
+    buttons.forEach((btn, idx) => {
+      const isSel = idx === optIdx;
+      btn.dataset.selected = isSel ? '1' : '';
+      btn.style.border = isSel ? '1px solid rgba(34,197,94,.6)' : '1px solid rgba(34,197,94,.15)';
+      btn.style.background = isSel ? 'rgba(34,197,94,.15)' : 'rgba(255,255,255,.035)';
+      btn.style.color = isSel ? '#22c55e' : '#f0fdf4';
+      
+      const letter = btn.querySelector('.me-opt-letter');
+      if (letter) letter.style.background = isSel ? 'rgba(34,197,94,.3)' : 'rgba(255,255,255,.08)';
+      
+      const text = btn.querySelector('.me-opt-text');
+      if (text) text.style.filter = isSel ? 'none' : 'blur(5px)';
+    });
   }
 
   function meNavigate(dir) {
@@ -1594,10 +1698,13 @@ window.switchSection = function(sec) {
 
   function startMeTimer() {
     clearInterval(ME.timerInterval);
-    let remaining = ME.totalSecs - ME.elapsedSecs;
+    const serverRemaining = ME.totalSecs - ME.elapsedSecs;
+    ME.startTime = Date.now();
     const el = document.getElementById('meTimer');
-    ME.timerInterval = setInterval(() => {
-      remaining--;
+    
+    const tick = () => {
+      const actualElapsed = Math.floor((Date.now() - ME.startTime) / 1000);
+      const remaining = serverRemaining - actualElapsed;
       if (remaining <= 0) {
         clearInterval(ME.timerInterval);
         el.textContent = '00:00';
@@ -1610,7 +1717,10 @@ window.switchSection = function(sec) {
       el.textContent = m + ':' + s;
       if (remaining < 300) el.style.color = '#f87171';
       else if (remaining < 600) el.style.color = '#f59e0b';
-    }, 1000);
+      else el.style.color = '#22c55e';
+    };
+    tick();
+    ME.timerInterval = setInterval(tick, 1000);
   }
 
   async function saveProgress() {
@@ -1651,9 +1761,196 @@ window.switchSection = function(sec) {
   function closeExamFullscreen() {
     document.getElementById('mockExamFullscreen').style.display = 'none';
     document.body.style.overflow = '';
+    meDisableAntiCheat();
+    if (window._meTabWarningTimer) { clearInterval(window._meTabWarningTimer); window._meTabWarningTimer = null; }
     ME.examId = null;
     ME.questions = [];
     ME.answers = {};
+  }
+
+  // ANTI-CHEAT FOR MOCK EXAM
+  function meEnableAntiCheat() {
+    document.addEventListener('copy', meBlockEvent);
+    document.addEventListener('paste', meBlockEvent);
+    document.addEventListener('cut', meBlockEvent);
+    document.addEventListener('contextmenu', meBlockEvent);
+    document.addEventListener('visibilitychange', meHandleVisibilityChange);
+    window.addEventListener('blur', meHandleWindowBlur);
+    document.addEventListener('keydown', meBlockDevTools);
+    document.addEventListener('selectstart', meBlockSelection);
+    document.addEventListener('dragstart', meBlockDrag);
+    window.addEventListener('offline', meHandleOffline);
+    window.addEventListener('online', meHandleOnline);
+  }
+
+  function meDisableAntiCheat() {
+    document.removeEventListener('copy', meBlockEvent);
+    document.removeEventListener('paste', meBlockEvent);
+    document.removeEventListener('cut', meBlockEvent);
+    document.removeEventListener('contextmenu', meBlockEvent);
+    document.removeEventListener('visibilitychange', meHandleVisibilityChange);
+    window.removeEventListener('blur', meHandleWindowBlur);
+    document.removeEventListener('keydown', meBlockDevTools);
+    document.removeEventListener('selectstart', meBlockSelection);
+    document.removeEventListener('dragstart', meBlockDrag);
+    window.removeEventListener('offline', meHandleOffline);
+    window.removeEventListener('online', meHandleOnline);
+  }
+
+  function meIsActive() {
+    return ME.hasStarted && !ME.submitted && document.getElementById('mockExamFullscreen').style.display !== 'none';
+  }
+
+  function meBlockEvent(e) {
+    if (!meIsActive()) return;
+    e.preventDefault();
+    showToast('⚠ Action disabled during exam', 'error');
+  }
+
+  function meBlockSelection(e) {
+    if (meIsActive() && !e.target.closest('input, textarea')) {
+      e.preventDefault();
+      showToast('Text selection is not allowed during exams', 'warning');
+    }
+  }
+
+  function meBlockDrag(e) {
+    if (meIsActive()) {
+      e.preventDefault();
+      showToast('Dragging content is not allowed during exams', 'warning');
+    }
+  }
+
+  function meBlockDevTools(e) {
+    if (!meIsActive()) return;
+    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key)) || (e.ctrlKey && e.key === 'U')) {
+      e.preventDefault();
+      showToast('⚠ Developer tools are blocked', 'error');
+      return;
+    }
+    if (e.key === 'PrintScreen') {
+      e.preventDefault();
+      navigator.clipboard.writeText('').catch(() => {});
+      meAutoDisqualify('📸 Screenshot attempt detected! You have been disqualified.');
+    }
+  }
+
+  function meHandleVisibilityChange() {
+    if (!meIsActive()) return;
+    if (document.hidden) meTriggerCheatWarning();
+  }
+
+  function meHandleWindowBlur() {
+    if (!meIsActive()) return;
+    meTriggerCheatWarning();
+  }
+
+  function meTriggerCheatWarning() {
+    if (Date.now() - ME.lastCheatWarning < 2000) return;
+    ME.lastCheatWarning = Date.now();
+    ME.tabSwitchCount++;
+
+    if (ME.tabSwitchCount > ME.maxTabSwitches) {
+      meAutoDisqualify('🚫 Too many tab switches. You have been disqualified.');
+      return;
+    }
+    meShowTabSwitchWarning(ME.tabSwitchCount, ME.maxTabSwitches);
+  }
+
+  function meShowTabSwitchWarning(count, max) {
+    const existing = document.getElementById('meTabWarning');
+    if (existing) existing.remove();
+    if (window._meTabWarningTimer) clearInterval(window._meTabWarningTimer);
+
+    const warn = document.createElement('div');
+    warn.id = 'meTabWarning';
+    warn.style.cssText = `position:fixed;inset:0;background:rgba(5,14,7,0.96);z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;color:white;text-align:center;padding:var(--space-8);`;
+    let secs = 10;
+    warn.innerHTML = `
+      <div style="background:rgba(200,60,60,0.12);border:2px solid rgba(200,60,60,0.4);border-radius:24px;padding:40px 32px;max-width:480px;width:100%;">
+        <div style="font-size:3rem;margin-bottom:16px;">⚠️</div>
+        <h2 style="font-size:1.8rem;font-weight:900;color:#f87171;margin-bottom:12px;">Focus Violation!</h2>
+        <p style="color:rgba(255,255,255,0.75);font-size:1rem;line-height:1.7;margin-bottom:20px;">
+          You left the exam window.<br>
+          <strong style="color:white;">Warning ${count} of ${max}</strong> — return immediately or your exam will be cancelled.
+        </p>
+        <div style="font-size:3.5rem;font-weight:900;color:#f87171;margin-bottom:12px;" id="meTabWarnCountdown">${secs}</div>
+        <p style="font-size:0.8rem;color:rgba(255,255,255,0.45);margin-bottom:24px;">seconds to return</p>
+        <button onclick="meDismissTabWarning()" style="padding:12px 36px;background:#22c55e;color:white;border:none;border-radius:9999px;font-weight:700;cursor:pointer;font-size:1rem;box-shadow:0 4px 16px rgba(34,197,94,0.4);">✅ I'm Back — Continue Exam</button>
+      </div>`;
+    document.body.appendChild(warn);
+
+    window._meTabWarningTimer = setInterval(() => {
+      secs--;
+      const el = document.getElementById('meTabWarnCountdown');
+      if (el) el.textContent = secs;
+      if (secs <= 0) {
+        clearInterval(window._meTabWarningTimer);
+        warn.remove();
+        if (document.hidden) {
+          ME.tabSwitchCount = ME.maxTabSwitches + 1;
+          meAutoDisqualify('🚫 You did not return in time. You have been disqualified.');
+        }
+      }
+    }, 1000);
+  }
+
+  function meDismissTabWarning() {
+    if (window._meTabWarningTimer) clearInterval(window._meTabWarningTimer);
+    const warn = document.getElementById('meTabWarning');
+    if (warn) warn.remove();
+  }
+  window.meDismissTabWarning = meDismissTabWarning;
+
+  function meAutoDisqualify(reason) {
+    if (ME.submitted) return;
+    ME.submitted = true;
+    clearInterval(ME.timerInterval);
+    clearInterval(ME.saveInterval);
+    if (window._meTabWarningTimer) clearInterval(window._meTabWarningTimer);
+    meDisableAntiCheat();
+    API.submitMockExam(ME.examId, { answers: ME.answers, time_per_question: ME.timesPerQ, auto_submit: true }).catch(()=>{});
+    
+    const fs = document.getElementById('mockExamFullscreen');
+    if (fs) {
+      fs.innerHTML = `
+        <div style="max-width:500px;margin:100px auto;text-align:center;padding:40px;background:rgba(200,60,60,.1);border:1px solid rgba(200,60,60,.3);border-radius:24px;">
+          <div style="font-size:4rem;margin-bottom:20px;">🚫</div>
+          <h2 style="font-size:2rem;font-weight:900;color:#f87171;margin-bottom:16px;">Disqualified</h2>
+          <p style="color:#f0fdf4;font-size:1rem;line-height:1.8;margin-bottom:32px;">
+            ${reason}<br><br>
+            Your session has been logged and your current answers auto-submitted.
+          </p>
+          <button style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:white;border:none;padding:12px 24px;border-radius:12px;font-weight:800;cursor:pointer;" onclick="location.reload()">← Return to Dashboard</button>
+        </div>`;
+    }
+  }
+
+  function meHandleOffline() {
+    if (!meIsActive()) return;
+    const existing = document.getElementById('meOfflineWarning');
+    if (existing) return;
+    const warn = document.createElement('div');
+    warn.id = 'meOfflineWarning';
+    warn.style.cssText = `position:fixed;inset:0;background:rgba(5,14,7,0.98);z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;color:white;text-align:center;padding:var(--space-8);`;
+    warn.innerHTML = `
+      <div style="font-size:4rem;margin-bottom:20px;">📡</div>
+      <h2 style="font-size:2rem;font-weight:900;color:#f59e0b;margin-bottom:16px;">Connection Lost</h2>
+      <p style="color:#f0fdf4;font-size:1.1rem;line-height:1.8;max-width:500px;">
+        You have been disconnected from the network.<br>
+        <span style="color:#f87171;font-weight:800">Do not refresh the page.</span><br>
+        Please check your internet connection. The exam will resume automatically when you are back online.
+      </p>
+    `;
+    document.body.appendChild(warn);
+  }
+
+  function meHandleOnline() {
+    const warn = document.getElementById('meOfflineWarning');
+    if (warn) {
+      warn.remove();
+      showToast('Connection restored! Resuming exam.', 'success');
+    }
   }
 
   // View results
