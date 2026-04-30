@@ -7,6 +7,15 @@ import re
 import secrets
 from datetime import datetime, timedelta
 
+from datetime import datetime, date
+
+def _serialize_row(row):
+    d = _serialize_row(row)
+    for k, v in d.items():
+        if isinstance(v, (datetime, date)):
+            d[k] = v.isoformat()
+    return d
+
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import (
     create_access_token,
@@ -399,7 +408,7 @@ def _verify_registration_faces(reference_bytes, live_capture, angle_samples=None
 
 def _build_login_payload(row):
     token = create_access_token(identity=str(row["id"]))
-    user = dict(row)
+    user = _serialize_row(row)
     user.pop("password_hash", None)
     # Postgres returns datetime objects; jsonify needs strings
     for key, value in user.items():
@@ -1155,6 +1164,6 @@ def me():
     db.close()
     if not row:
         return jsonify({"error": "User not found"}), 404
-    user = dict(row)
+    user = _serialize_row(row)
     user.pop("password_hash", None)
     return jsonify(user)

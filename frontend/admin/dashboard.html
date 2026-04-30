@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard — EPSA</title>
+  <title>Admin Dashboard  EPSA</title>
   <link rel="icon" type="image/png" href="../assets/logo.png">
   <link rel="stylesheet" href="../css/globals.css">
   <link rel="stylesheet" href="../css/admin.css">
@@ -171,22 +171,22 @@
 
     <nav class="admin-nav">
       <div class="admin-nav-label">Overview</div>
-      <button class="admin-nav-link active" data-sec="overview"     onclick="switchAdminSection('overview')"><span class="admin-nav-icon">📊</span> Dashboard</button>
+      <button class="admin-nav-link active" data-sec="overview"     onclick="switchAdminSection('overview')"><span class="admin-nav-icon"></span> Dashboard</button>
 
       <div class="admin-nav-label">Students</div>
       <button class="admin-nav-link" data-sec="applications"        onclick="switchAdminSection('applications')"><span class="admin-nav-icon">Apps</span> Applications <span class="admin-nav-badge" id="pendingBadge">0</span></button>
-      <button class="admin-nav-link" data-sec="students"            onclick="switchAdminSection('students')"><span class="admin-nav-icon">👥</span> All Students</button>
+      <button class="admin-nav-link" data-sec="students"            onclick="switchAdminSection('students')"><span class="admin-nav-icon"></span> All Students</button>
       <button class="admin-nav-link" data-sec="student-messages"    onclick="switchAdminSection('student-messages')"><span class="admin-nav-icon">Msg</span> Student Messages</button>
 
       <div class="admin-nav-label">Programs</div>
-      <button class="admin-nav-link" data-sec="trainings"           onclick="switchAdminSection('trainings')"><span class="admin-nav-icon">🎓</span> Trainings</button>
+      <button class="admin-nav-link" data-sec="trainings"           onclick="switchAdminSection('trainings')"><span class="admin-nav-icon"></span> Trainings</button>
       <button class="admin-nav-link" data-sec="receipts"            onclick="switchAdminSection('receipts')"><span class="admin-nav-icon">Pay</span> Payment Receipts</button>
-      <button class="admin-nav-link" data-sec="news"                onclick="switchAdminSection('news')"><span class="admin-nav-icon">📢</span> News & Events</button>
+      <button class="admin-nav-link" data-sec="news"                onclick="switchAdminSection('news')"><span class="admin-nav-icon"></span> News & Events</button>
 
       <div class="admin-nav-label">Intelligence</div>
-      <button class="admin-nav-link" data-sec="question-bank" onclick="switchAdminSection('question-bank')"><span class="admin-nav-icon">📚</span> Question Bank</button>
-      <button class="admin-nav-link" data-sec="teachers"      onclick="switchAdminSection('teachers')"><span class="admin-nav-icon">🎓</span> Teachers <span class="admin-nav-badge" id="teacherBadge" style="display:none"></span></button>
-      <button class="admin-nav-link" data-sec="mock-exams"   onclick="switchAdminSection('mock-exams')"><span class="admin-nav-icon">🎯</span> Mock Exams</button>
+      <button class="admin-nav-link" data-sec="question-bank" onclick="switchAdminSection('question-bank')"><span class="admin-nav-icon"></span> Question Bank</button>
+      <button class="admin-nav-link" data-sec="teachers"      onclick="switchAdminSection('teachers')"><span class="admin-nav-icon"></span> Teachers <span class="admin-nav-badge" id="teacherBadge" style="display:none"></span></button>
+      <button class="admin-nav-link" data-sec="mock-exams"   onclick="switchAdminSection('mock-exams')"><span class="admin-nav-icon"></span> Mock Exams</button>
       <button class="admin-nav-link" data-sec="analytics"    onclick="switchAdminSection('analytics')"><span class="admin-nav-icon">AI</span> Analytics Engine</button>
 
       <div class="admin-nav-label">Governance</div>
@@ -195,7 +195,7 @@
 
       <div class="admin-nav-label">Ecosystem</div>
       <button class="admin-nav-link" data-sec="clubs-admin"         onclick="switchAdminSection('clubs-admin')"><span class="admin-nav-icon">Club</span> Clubs &amp; Oversight <span class="admin-nav-badge" id="clubsBadge" style="display:none;">0</span></button>
-      <button class="admin-nav-link" data-sec="grants-admin"        onclick="switchAdminSection('grants-admin')"><span class="admin-nav-icon">💰</span> Grants &amp; Financials <span class="admin-nav-badge" id="grantsBadge" style="display:none;">0</span></button>
+      <button class="admin-nav-link" data-sec="grants-admin"        onclick="switchAdminSection('grants-admin')"><span class="admin-nav-icon"></span> Grants &amp; Financials <span class="admin-nav-badge" id="grantsBadge" style="display:none;">0</span></button>
       <button class="admin-nav-link" data-sec="partners-admin"      onclick="switchAdminSection('partners-admin')"><span class="admin-nav-icon">Partner</span> Partner Control</button>
     </nav>
 
@@ -213,38 +213,38 @@
     </div>
   </aside>
 
-  <!-- â•â•â•â• MAIN â•â•â•â• -->
+  <!--  MAIN  -->
   <div class="admin-main">
     <header class="admin-topbar">
       <div style="display:flex;align-items:center;gap:var(--space-4);">
-        <button style="display:none;background:var(--light-100);border:1px solid var(--light-200);border-radius:var(--radius-md);padding:8px;cursor:pointer;" id="adminHamburger" onclick="toggleAdminSidebar()">â˜°</button>
+        <button style="display:none;background:var(--light-100);border:1px solid var(--light-200);border-radius:var(--radius-md);padding:8px;cursor:pointer;" id="adminHamburger" onclick="toggleAdminSidebar()">☰</button>
         <h1 class="admin-topbar-title" id="adminPageTitle">Dashboard</h1>
       </div>
       <div style="display:flex;align-items:center;gap:var(--space-3);">
         <span style="font-size:0.8rem;color:var(--text-muted);" id="adminDateTime"></span>
-        <button class="topbar-icon-btn" title="Refresh" onclick="refreshCurrentSection()">ðŸ”„</button>
+        <button class="topbar-icon-btn" title="Refresh" onclick="refreshCurrentSection()">Refresh</button>
       </div>
     </header>
 
     <div class="admin-content">
 
-      <!-- â•â•â• OVERVIEW â•â•â• -->
+      <!--  OVERVIEW  -->
       <section id="asec-overview" class="admin-section">
         <div class="kpi-grid">
-          <div class="kpi-card green"><div class="kpi-icon">👥</div><div class="kpi-label">Total Students</div><div class="kpi-value" id="kpi-total">—</div><div class="kpi-change up">↑ Growing</div></div>
-          <div class="kpi-card gold"><div class="kpi-icon">â³</div><div class="kpi-label">Pending Applications</div><div class="kpi-value" id="kpi-pending">—</div><div class="kpi-change" style="color:#d97706;">Needs Review</div></div>
-          <div class="kpi-card blue"><div class="kpi-icon">🎓</div><div class="kpi-label">Active Trainings</div><div class="kpi-value" id="kpi-trainings">—</div><div class="kpi-change up">↑ Active</div></div>
-          <div class="kpi-card red"><div class="kpi-icon">ðŸ§¾</div><div class="kpi-label">Pending Receipts</div><div class="kpi-value" id="kpi-receipts">—</div><div class="kpi-change" style="color:#dc2626;">Verify Now</div></div>
+          <div class="kpi-card green"><div class="kpi-icon"></div><div class="kpi-label">Total Students</div><div class="kpi-value" id="kpi-total"></div><div class="kpi-change up"> Growing</div></div>
+          <div class="kpi-card gold"><div class="kpi-icon">Pending</div><div class="kpi-label">Pending Applications</div><div class="kpi-value" id="kpi-pending"></div><div class="kpi-change" style="color:#d97706;">Needs Review</div></div>
+          <div class="kpi-card blue"><div class="kpi-icon"></div><div class="kpi-label">Active Trainings</div><div class="kpi-value" id="kpi-trainings"></div><div class="kpi-change up"> Active</div></div>
+          <div class="kpi-card red"><div class="kpi-icon">Receipts</div><div class="kpi-label">Pending Receipts</div><div class="kpi-value" id="kpi-receipts"></div><div class="kpi-change" style="color:#dc2626;">Verify Now</div></div>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-6);">
           <div class="chart-card">
             <h3 style="font-family:var(--font-display);font-weight:700;margin-bottom:var(--space-4);">Registration Trend</h3>
-            <div class="chart-placeholder">📈 Analytics chart — backend integration required</div>
+            <div class="chart-placeholder"> Analytics chart  backend integration required</div>
           </div>
           <div class="chart-card">
             <h3 style="font-family:var(--font-display);font-weight:700;margin-bottom:var(--space-4);">University Distribution</h3>
-            <div class="chart-placeholder">ðŸ© Donut chart — backend integration required</div>
+            <div class="chart-placeholder">Distribution chart  backend integration required</div>
           </div>
         </div>
 
@@ -252,11 +252,11 @@
         <div class="data-table-card" style="margin-top:var(--space-6);">
           <div class="table-header">
             <div class="table-title">Recent Applications</div>
-            <button class="btn btn-outline-green btn-sm" onclick="switchAdminSection('applications')">View All →</button>
+            <button class="btn btn-outline-green btn-sm" onclick="switchAdminSection('applications')">View All </button>
           </div>
           <table class="data-table" id="recentAppsTable">
             <thead><tr><th>Applicant</th><th>University</th><th>Program</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="recentAppsTbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+            <tbody id="recentAppsTbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading...</td></tr></tbody>
           </table>
         </div>
         <div class="data-table-card" style="margin-top:var(--space-5);">
@@ -273,16 +273,16 @@
         </div>
       </section>
 
-      <!-- â•â•â• APPLICATIONS â•â•â• -->
+      <!--  APPLICATIONS  -->
       <section id="asec-applications" class="admin-section" style="display:none;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-5);">
           <div class="pill-tabs" id="appFilterTabs">
-            <span class="pill-tab active" onclick="loadApplicants('pending',this)">â³ Pending</span>
-            <span class="pill-tab" onclick="loadApplicants('approved',this)">✅ Approved</span>
-            <span class="pill-tab" onclick="loadApplicants('rejected',this)">âŒ Rejected</span>
+            <span class="pill-tab active" onclick="loadApplicants('pending',this)">Pending</span>
+            <span class="pill-tab" onclick="loadApplicants('approved',this)"> Approved</span>
+            <span class="pill-tab" onclick="loadApplicants('rejected',this)">Rejected</span>
             <span class="pill-tab" onclick="loadApplicants('all',this)">All</span>
           </div>
-          <input type="text" class="table-search-input" placeholder="ðŸ” Searchâ€¦" oninput="filterApplicantTable(this.value)">
+          <input type="text" class="table-search-input" placeholder="Search..." oninput="filterApplicantTable(this.value)">
         </div>
         <div class="intel-stat-grid" id="applicationsSummaryCards"></div>
         <div class="data-table-card">
@@ -292,26 +292,26 @@
           </div>
           <table class="data-table" id="applicantsTable">
             <thead><tr><th>Applicant</th><th>University</th><th>Program</th><th>Year</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="applicantsTbody"><tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+            <tbody id="applicantsTbody"><tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading...</td></tr></tbody>
           </table>
         </div>
       </section>
 
-      <!-- â•â•â• ALL STUDENTS â•â•â• -->
+      <!--  ALL STUDENTS  -->
       <section id="asec-students" class="admin-section" style="display:none;">
         <div class="data-table-card">
           <div class="table-header">
             <div class="table-title">All Registered Students</div>
-            <input type="text" class="table-search-input" placeholder="ðŸ” Search studentsâ€¦" oninput="filterStudentTable(this.value)">
+            <input type="text" class="table-search-input" placeholder="Search students..." oninput="filterStudentTable(this.value)">
           </div>
           <table class="data-table">
             <thead><tr><th>Student</th><th>Student ID</th><th>University</th><th>Program</th><th>Year</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
-            <tbody id="studentsTbody"><tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+            <tbody id="studentsTbody"><tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading...</td></tr></tbody>
           </table>
         </div>
       </section>
 
-      <!-- â•â•â• STUDENT MESSAGES (same /api/messages as portal) â•â•â• -->
+      <!--  STUDENT MESSAGES (same /api/messages as portal)  -->
       <section id="asec-student-messages" class="admin-section" style="display:none;">
         <div class="data-table-card" style="margin-bottom:var(--space-5);">
           <div class="table-header" style="flex-direction:column;align-items:flex-start;gap:8px;">
@@ -327,14 +327,14 @@
             <div id="adminMsgHeader" style="padding:var(--space-4);border-bottom:1px solid var(--light-200);font-weight:700;font-size:0.95rem;">Select a conversation</div>
             <div id="adminMsgBody" style="flex:1;overflow:auto;padding:var(--space-4);font-size:0.875rem;line-height:1.5;background:var(--light-50);"></div>
             <div style="padding:var(--space-4);border-top:1px solid var(--light-200);display:flex;gap:10px;align-items:center;">
-              <input type="text" id="adminMsgInput" class="table-search-input" style="flex:1;" placeholder="Type a replyâ€¦" onkeydown="if(event.key==='Enter')sendAdminThreadMessage()">
+              <input type="text" id="adminMsgInput" class="table-search-input" style="flex:1;" placeholder="Type a reply…" onkeydown="if(event.key==='Enter')sendAdminThreadMessage()">
               <button type="button" class="btn btn-primary" onclick="sendAdminThreadMessage()">Send</button>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- â•â•â• TRAININGS â•â•â• -->
+      <!--  TRAININGS  -->
       <section id="asec-trainings" class="admin-section" style="display:none;">
         <div style="display:flex;justify-content:flex-end;margin-bottom:var(--space-5);">
           <button class="btn btn-primary" onclick="openCreateTrainingModal()">+ Create Training</button>
@@ -343,62 +343,62 @@
           <div class="table-header"><div class="table-title">Training Programs</div></div>
           <table class="data-table">
             <thead><tr><th>Title</th><th>Format</th><th>Price</th><th>Applicants</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="trainingsTbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+            <tbody id="trainingsTbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading…</td></tr></tbody>
           </table>
         </div>
       </section>
 
-      <!-- â•â•â• RECEIPTS â•â•â• -->
+      <!--  RECEIPTS  -->
       <section id="asec-receipts" class="admin-section" style="display:none;">
         <div class="data-table-card">
-          <div class="table-header"><div class="table-title">Payment Receipts — Pending Verification</div></div>
+          <div class="table-header"><div class="table-title">Payment Receipts  Pending Verification</div></div>
           <table class="data-table">
             <thead><tr><th>Student</th><th>Training</th><th>Amount</th><th>Submitted</th><th>Receipt</th><th>Actions</th></tr></thead>
-            <tbody id="receiptsTbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+            <tbody id="receiptsTbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading…</td></tr></tbody>
           </table>
         </div>
       </section>
 
-      <!-- â•â•â• VOTING â•â•â• -->
+      <!--  VOTING  -->
       <section id="asec-voting" class="admin-section" style="display:none;">
         
         <!-- Voting KPI Stat Row -->
         <div id="votingStatsRow" style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-4);margin-bottom:var(--space-6);">
           <div class="kpi-card green">
-            <div class="kpi-icon">🗳️</div>
+            <div class="kpi-icon"></div>
             <div class="kpi-label">Total Votes</div>
-            <div class="kpi-value" id="vkpi-votes">—</div>
+            <div class="kpi-value" id="vkpi-votes"></div>
             <div class="kpi-change up">Live Count</div>
           </div>
           <div class="kpi-card gold">
-            <div class="kpi-icon">📝‹</div>
+            <div class="kpi-icon"></div>
             <div class="kpi-label">Nominations</div>
-            <div class="kpi-value" id="vkpi-noms">—</div>
+            <div class="kpi-value" id="vkpi-noms"></div>
             <div class="kpi-change" style="color:#d97706;">Pending Review</div>
           </div>
           <div class="kpi-card blue">
-            <div class="kpi-icon">ðŸ«</div>
+            <div class="kpi-icon"></div>
             <div class="kpi-label">Universities Voting</div>
-            <div class="kpi-value" id="vkpi-unis">—</div>
+            <div class="kpi-value" id="vkpi-unis"></div>
             <div class="kpi-change up">Active</div>
           </div>
           <div class="kpi-card red">
-            <div class="kpi-icon">📊</div>
+            <div class="kpi-icon"></div>
             <div class="kpi-label">Turnout</div>
-            <div class="kpi-value" id="vkpi-turnout">—%</div>
+            <div class="kpi-value" id="vkpi-turnout">%</div>
             <div class="kpi-change">Overall</div>
           </div>
         </div>
 
         <!-- Tab Navigation -->
         <div style="display:flex;gap:0;background:white;border-radius:var(--radius-xl);padding:var(--space-2);border:1px solid var(--light-200);margin-bottom:var(--space-6);width:fit-content;">
-          <button class="voting-admin-tab active" id="vtab-control" onclick="switchVotingTab('control')">🎛️ Election Control</button>
-          <button class="voting-admin-tab" id="vtab-nominations" onclick="switchVotingTab('nominations')">📝‹ Nominations</button>
-          <button class="voting-admin-tab" id="vtab-analytics" onclick="switchVotingTab('analytics')">📊 Live Analytics</button>
-          <button class="voting-admin-tab" id="vtab-neb" onclick="switchVotingTab('neb')">ðŸ›ï¸ NEB Assignment</button>
+          <button class="voting-admin-tab active" id="vtab-control" onclick="switchVotingTab('control')"> Election Control</button>
+          <button class="voting-admin-tab" id="vtab-nominations" onclick="switchVotingTab('nominations')"> Nominations</button>
+          <button class="voting-admin-tab" id="vtab-analytics" onclick="switchVotingTab('analytics')"> Live Analytics</button>
+          <button class="voting-admin-tab" id="vtab-neb" onclick="switchVotingTab('neb')"> NEB Assignment</button>
         </div>
 
-        <!-- â”€â”€â”€ TAB: ELECTION CONTROL â”€â”€â”€ -->
+        <!-- ─── TAB: ELECTION CONTROL ─── -->
         <div id="vpanel-control" class="voting-admin-panel">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-6);">
             <div>
@@ -407,10 +407,10 @@
                   <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.1rem;">Phase Configuration</h3>
                   <p style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;">Set start/end dates, activate phases</p>
                 </div>
-                <button class="btn btn-primary btn-sm" onclick="saveVotingConfig()">ðŸ’¾ Save Changes</button>
+                <button class="btn btn-primary btn-sm" onclick="saveVotingConfig()">💾 Save Changes</button>
               </div>
               <div id="votingConfigForm" style="display:flex;flex-direction:column;gap:var(--space-4);">
-                <div style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading phasesâ€¦</div>
+                <div style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading phases…</div>
               </div>
             </div>
             <div style="display:flex;flex-direction:column;gap:var(--space-4);">
@@ -433,17 +433,17 @@
               <div style="background:rgba(220,38,38,0.06);border:1.5px solid rgba(220,38,38,0.25);border-radius:var(--radius-xl);padding:var(--space-5);margin-top:var(--space-2);">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-3);">
                   <div>
-                    <div style="font-weight:700;color:#dc2626;display:flex;align-items:center;gap:6px;">âš ï¸ Danger Zone</div>
+                    <div style="font-weight:700;color:#dc2626;display:flex;align-items:center;gap:6px;">⚠ Danger Zone</div>
                     <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">Completely wipe all votes, nominations, and results.</div>
                   </div>
                 </div>
-                <button class="btn" style="width:100%;background:rgba(220,38,38,0.1);color:#dc2626;border:1px solid rgba(220,38,38,0.2);" onclick="resetElectionCycle()">ðŸ›‘ End Semester &amp; Reset Election</button>
+                <button class="btn" style="width:100%;background:rgba(220,38,38,0.1);color:#dc2626;border:1px solid rgba(220,38,38,0.2);" onclick="resetElectionCycle()">🛑 End Semester &amp; Reset Election</button>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- â”€â”€â”€ TAB: NOMINATIONS â”€â”€â”€ -->
+        <!-- ─── TAB: NOMINATIONS ─── -->
         <div id="vpanel-nominations" class="voting-admin-panel" style="display:none;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-5);">
             <div>
@@ -453,27 +453,27 @@
             <div style="display:flex;align-items:center;gap:var(--space-3);">
               <div class="pill-tabs" id="nomFilterTabs">
                 <span class="pill-tab active" onclick="filterNominations('all',this)">All</span>
-                <span class="pill-tab" onclick="filterNominations('pending',this)">â³ Pending</span>
-                <span class="pill-tab" onclick="filterNominations('approved',this)">✅ Approved</span>
-                <span class="pill-tab" onclick="filterNominations('rejected',this)">âŒ Rejected</span>
+                <span class="pill-tab" onclick="filterNominations('pending',this)"> Pending</span>
+                <span class="pill-tab" onclick="filterNominations('approved',this)"> Approved</span>
+                <span class="pill-tab" onclick="filterNominations('rejected',this)"> Rejected</span>
               </div>
-              <button class="btn btn-ghost btn-sm" onclick="loadNominationsAdmin()">ðŸ”„</button>
+              <button class="btn btn-ghost btn-sm" onclick="loadNominationsAdmin()">🔄</button>
             </div>
           </div>
           <!-- Nomination Cards Grid -->
           <div id="nominationCardsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:var(--space-4);">
-            <div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:var(--space-8);">Loading nominationsâ€¦</div>
+            <div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:var(--space-8);">Loading nominations…</div>
           </div>
           <!-- Also keep the table for fallback -->
           <div class="data-table-card" style="margin-top:var(--space-5);display:none;" id="nominationsTableWrapper">
             <table class="data-table">
               <thead><tr><th>Candidate</th><th>Phase</th><th>Files/Video</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
-              <tbody id="nominationsTbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+              <tbody id="nominationsTbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading…</td></tr></tbody>
             </table>
           </div>
         </div>
 
-        <!-- â”€â”€â”€ TAB: ANALYTICS â”€â”€â”€ -->
+        <!-- ─── TAB: ANALYTICS ─── -->
         <div id="vpanel-analytics" class="voting-admin-panel" style="display:none;">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-6);margin-bottom:var(--space-6);">
             <!-- Turnout Gauge -->
@@ -490,7 +490,7 @@
             </div>
             <!-- Top Candidates Leaderboard -->
             <div style="background:white;border-radius:var(--radius-xl);padding:var(--space-6);border:1px solid var(--light-200);">
-              <h4 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-5);">ðŸ† Top Candidates</h4>
+              <h4 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-5);"> Top Candidates</h4>
               <div id="analyticsLeaderboard" style="display:flex;flex-direction:column;gap:var(--space-3);">
                 <div style="text-align:center;color:var(--text-muted);padding:var(--space-4);">No votes cast yet</div>
               </div>
@@ -500,24 +500,24 @@
           <div style="background:white;border-radius:var(--radius-xl);padding:var(--space-6);border:1px solid var(--light-200);">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-5);">
               <h4 style="font-family:var(--font-display);font-weight:800;">University Breakdown</h4>
-              <button class="btn btn-ghost btn-sm" onclick="loadVotingAnalytics()">ðŸ”„ Refresh</button>
+              <button class="btn btn-ghost btn-sm" onclick="loadVotingAnalytics()">🔄 Refresh</button>
             </div>
             <div id="analyticsUniBreakdown" style="display:flex;flex-direction:column;gap:var(--space-3);">
-              <div style="text-align:center;color:var(--text-muted);padding:var(--space-4);">Loadingâ€¦</div>
+              <div style="text-align:center;color:var(--text-muted);padding:var(--space-4);">Loading…</div>
             </div>
           </div>
         </div>
 
-        <!-- â”€â”€â”€ TAB: LEADERSHIP MANAGEMENT (NEB & NEC) â”€â”€â”€ -->
+        <!-- ─── TAB: LEADERSHIP MANAGEMENT (NEB & NEC) ─── -->
         <div id="vpanel-neb" class="voting-admin-panel" style="display:none;">
           <div style="background:linear-gradient(135deg,rgba(200,163,64,0.08),rgba(200,163,64,0.03));border:1.5px dashed var(--epsa-gold);border-radius:var(--radius-xl);padding:var(--space-8);margin-bottom:var(--space-6);">
             <div style="display:flex;align-items:center;gap:var(--space-4);margin-bottom:var(--space-6);">
-              <div style="width:56px;height:56px;background:var(--epsa-gold);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0;">ðŸ›ï¸</div>
+              <div style="width:56px;height:56px;background:var(--epsa-gold);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0;"></div>
               <div>
                 <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.3rem;color:var(--epsa-gold-dark);">Elected Director Assignment</h3>
                 <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:2px;">Manually assign top Phase II candidates to Director portfolios.</p>
               </div>
-              <button class="btn btn-sm" style="margin-left:auto;background:var(--epsa-gold);color:white;border:none;" onclick="loadNEBCandidates()">ðŸ”„ Load Phase 2 Candidates</button>
+              <button class="btn btn-sm" style="margin-left:auto;background:var(--epsa-gold);color:white;border:none;" onclick="loadNEBCandidates()">🔄 Load Phase 2 Candidates</button>
             </div>
             <div id="nebCandidatesList" style="display:flex;flex-direction:column;gap:var(--space-4);">
               <div style="text-align:center;color:var(--text-muted);background:rgba(255,255,255,0.6);border-radius:var(--radius-lg);padding:var(--space-8);">
@@ -537,7 +537,7 @@
             <table class="data-table">
               <thead><tr><th>Name</th><th>Position</th><th>Hierarchy</th><th>Actions</th></tr></thead>
               <tbody id="appointedLeadershipTbody">
-                <tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr>
+                <tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading…</td></tr>
               </tbody>
             </table>
           </div>
@@ -547,7 +547,7 @@
         <span id="analyticsTurnout" style="display:none;"></span>
       </section>
 
-      <!-- â•â•â• EXAMS â•â•â• -->
+      <!--  EXAMS  -->
       <section id="asec-exams" class="admin-section" style="display:none;">
         <div style="display:flex;justify-content:flex-end;margin-bottom:var(--space-5);">
           <button class="btn btn-primary" onclick="document.getElementById('createExamModalLegacy').classList.add('active')">+ Create Exam</button>
@@ -556,12 +556,12 @@
           <div class="table-header"><div class="table-title">Examinations</div></div>
           <table class="data-table">
             <thead><tr><th>Title</th><th>Duration</th><th>Questions</th><th>Scheduled</th><th>Status</th><th>Submissions</th><th>Actions</th></tr></thead>
-            <tbody id="examsTbody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+            <tbody id="examsTbody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading…</td></tr></tbody>
           </table>
         </div>
       </section>
 
-      <!-- â•â•â• NEWS & EVENTS â•â•â• -->
+      <!--  NEWS & EVENTS  -->
       <section id="asec-news" class="admin-section" style="display:none;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-5);">
           <div>
@@ -573,12 +573,12 @@
         <div class="data-table-card">
           <table class="data-table">
             <thead><tr><th>Image</th><th>Category</th><th>Title</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="newsTbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+            <tbody id="newsTbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading…</td></tr></tbody>
           </table>
         </div>
       </section>
 
-      <!-- â•â•â• CLUBS & OVERSIGHT â•â•â• -->
+      <!--  CLUBS & OVERSIGHT  -->
       <section id="asec-clubs-admin" class="admin-section" style="display:none;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-5);">
           <div>
@@ -587,20 +587,20 @@
           </div>
           <div class="pill-tabs" id="clubStatusTabs">
             <span class="pill-tab active" onclick="loadAdminClubs('all',this)">All</span>
-            <span class="pill-tab" onclick="loadAdminClubs('pending',this)">â³ Pending</span>
-            <span class="pill-tab" onclick="loadAdminClubs('approved',this)">✅ Approved</span>
-            <span class="pill-tab" onclick="loadAdminClubs('rejected',this)">âŒ Rejected</span>
+            <span class="pill-tab" onclick="loadAdminClubs('pending',this)"> Pending</span>
+            <span class="pill-tab" onclick="loadAdminClubs('approved',this)"> Approved</span>
+            <span class="pill-tab" onclick="loadAdminClubs('rejected',this)"> Rejected</span>
           </div>
         </div>
         <div class="data-table-card">
           <table class="data-table">
             <thead><tr><th>Club</th><th>University</th><th>President</th><th>Members</th><th>Status</th><th>Submitted</th><th>Actions</th></tr></thead>
-            <tbody id="clubsAdminTbody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+            <tbody id="clubsAdminTbody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading…</td></tr></tbody>
           </table>
         </div>
       </section>
 
-      <!-- â•â•â• GRANTS & FINANCIALS â•â•â• -->
+      <!--  GRANTS & FINANCIALS  -->
       <section id="asec-grants-admin" class="admin-section" style="display:none;">
         <div style="margin-bottom:var(--space-5);">
           <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.4rem;">Grants &amp; Financial Auditor</h3>
@@ -608,22 +608,22 @@
         </div>
         <!-- Sub-tabs -->
         <div style="display:flex;gap:0;background:white;border-radius:var(--radius-xl);padding:var(--space-2);border:1px solid var(--light-200);margin-bottom:var(--space-6);width:fit-content;">
-          <button class="voting-admin-tab active" id="gtab-proposals" onclick="switchGrantsTab('proposals')">📝‹ Proposals</button>
-          <button class="voting-admin-tab" id="gtab-reports" onclick="switchGrantsTab('reports')">📊 Financial Reports</button>
+          <button class="voting-admin-tab active" id="gtab-proposals" onclick="switchGrantsTab('proposals')"> Proposals</button>
+          <button class="voting-admin-tab" id="gtab-reports" onclick="switchGrantsTab('reports')"> Financial Reports</button>
         </div>
         <div id="gpanel-proposals">
           <div style="display:flex;gap:8px;margin-bottom:var(--space-4);">
             <span class="pill-tab active" onclick="loadAdminProposals('all',this)">All</span>
-            <span class="pill-tab" onclick="loadAdminProposals('pending',this)">â³ Pending</span>
-            <span class="pill-tab" onclick="loadAdminProposals('approved',this)">✅ Approved</span>
-            <span class="pill-tab" onclick="loadAdminProposals('funded',this)">💰 Funded</span>
-            <span class="pill-tab" onclick="loadAdminProposals('awaiting_verification',this)">ðŸ” Awaiting Report</span>
-            <span class="pill-tab" onclick="loadAdminProposals('completed',this)">ðŸ Completed</span>
+            <span class="pill-tab" onclick="loadAdminProposals('pending',this)"> Pending</span>
+            <span class="pill-tab" onclick="loadAdminProposals('approved',this)"> Approved</span>
+            <span class="pill-tab" onclick="loadAdminProposals('funded',this)"> Funded</span>
+            <span class="pill-tab" onclick="loadAdminProposals('awaiting_verification',this)"> Awaiting Report</span>
+            <span class="pill-tab" onclick="loadAdminProposals('completed',this)"> Completed</span>
           </div>
           <div class="data-table-card">
             <table class="data-table">
               <thead><tr><th>Club</th><th>Project</th><th>Budget (ETB)</th><th>Timeline</th><th>Status</th><th>Submitted</th><th>Actions</th></tr></thead>
-              <tbody id="proposalsTbody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+              <tbody id="proposalsTbody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading…</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -631,13 +631,13 @@
           <div class="data-table-card">
             <table class="data-table">
               <thead><tr><th>Club</th><th>Project</th><th>Spent (ETB)</th><th>Receipt</th><th>Status</th><th>Submitted</th><th>Actions</th></tr></thead>
-              <tbody id="finReportsTbody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+              <tbody id="finReportsTbody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading…</td></tr></tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- â•â•â• PARTNERS CONTROL â•â•â• -->
+      <!--  PARTNERS CONTROL  -->
       <section id="asec-partners-admin" class="admin-section" style="display:none;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-5);">
           <div>
@@ -649,33 +649,33 @@
         <div class="data-table-card">
           <table class="data-table">
             <thead><tr><th>Logo</th><th>Name</th><th>Category</th><th>Website</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="partnersAdminTbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+            <tbody id="partnersAdminTbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading…</td></tr></tbody>
           </table>
         </div>
       </section>
 
-      <!-- â•â•â• ANALYTICS ENGINE â•â•â• -->
+      <!--  ANALYTICS ENGINE  -->
       <section id="asec-analytics" class="admin-section" style="display:none;position:relative">
         <!-- Header -->
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:22px">
           <div>
-            <h2 style="font-family:var(--font-display);font-weight:800;font-size:1.5rem">ðŸ§  Intelligent Analytics Engine</h2>
+            <h2 style="font-family:var(--font-display);font-weight:800;font-size:1.5rem">🧠 Intelligent Analytics Engine</h2>
             <p style="font-size:0.85rem;color:var(--text-muted);margin-top:4px">In-depth cohort, question, and student performance insights</p>
           </div>
           <div style="display:flex;align-items:center;gap:10px">
             <select id="analyticsExamFilter" onchange="onAnalyticsExamChange(this)" class="form-select" style="width:auto;font-size:0.85rem">
               <option value="">All Exams (Combined)</option>
             </select>
-            <button class="btn btn-ghost btn-sm" onclick="loadAnalyticsDashboard()">ðŸ”„ Refresh</button>
+            <button class="btn btn-ghost btn-sm" onclick="loadAnalyticsDashboard()">🔄 Refresh</button>
           </div>
         </div>
 
         <!-- Sub-tabs -->
         <div style="display:flex;gap:0;background:white;border-radius:var(--radius-xl);padding:var(--space-2);border:1px solid var(--light-200);margin-bottom:22px;width:fit-content;flex-wrap:wrap">
-          <button class="ata-tab voting-admin-tab active" data-tab="cohort"    onclick="switchAnalyticsTab('cohort')">📊 Cohort Insights</button>
-          <button class="ata-tab voting-admin-tab"         data-tab="bloom"    onclick="switchAnalyticsTab('bloom')">🎯 Bloom's Taxonomy</button>
-          <button class="ata-tab voting-admin-tab"         data-tab="atrisk"   onclick="switchAnalyticsTab('atrisk')">âš ï¸ At-Risk Students</button>
-          <button class="ata-tab voting-admin-tab"         data-tab="questions" onclick="switchAnalyticsTab('questions')">📝‹ Question Quality</button>
+          <button class="ata-tab voting-admin-tab active" data-tab="cohort"    onclick="switchAnalyticsTab('cohort')"> Cohort Insights</button>
+          <button class="ata-tab voting-admin-tab"         data-tab="bloom"    onclick="switchAnalyticsTab('bloom')"> Bloom's Taxonomy</button>
+          <button class="ata-tab voting-admin-tab"         data-tab="atrisk"   onclick="switchAnalyticsTab('atrisk')">⚠ At-Risk Students</button>
+          <button class="ata-tab voting-admin-tab"         data-tab="questions" onclick="switchAnalyticsTab('questions')"> Question Quality</button>
         </div>
 
         <!-- Cohort Panel -->
@@ -687,22 +687,22 @@
         <div class="ata-panel" id="ata-panel-bloom" style="display:none">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
             <div style="background:white;border:1px solid var(--light-200);border-radius:18px;padding:22px;box-shadow:0 4px 12px rgba(0,0,0,0.04)">
-              <div style="font-weight:800;margin-bottom:14px;font-size:0.95rem">🎯 Bloom's Taxonomy Coverage</div>
-              <div id="analyticsBloomPanel"><div style="color:var(--text-muted);text-align:center;padding:24px">Loadingâ€¦</div></div>
+              <div style="font-weight:800;margin-bottom:14px;font-size:0.95rem"> Bloom's Taxonomy Coverage</div>
+              <div id="analyticsBloomPanel"><div style="color:var(--text-muted);text-align:center;padding:24px">Loading…</div></div>
             </div>
             <div style="background:linear-gradient(135deg,#0f172a,#1a3a2e);border-radius:18px;padding:22px;color:white">
               <div style="font-size:0.75rem;letter-spacing:0.1em;color:rgba(255,255,255,0.5);text-transform:uppercase;margin-bottom:12px">Cognitive Depth Legend</div>
               <div style="display:flex;flex-direction:column;gap:10px;font-size:0.85rem">
-                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#dbeafe"></div><span>Remembering — Recall facts</span></div>
-                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#bfdbfe"></div><span>Understanding — Interpret meaning</span></div>
-                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#93c5fd"></div><span>Applying — Use knowledge</span></div>
-                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#60a5fa"></div><span>Analyzing — Break down components</span></div>
-                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#3b82f6"></div><span>Evaluating — Judge and assess</span></div>
-                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#1d4ed8"></div><span>Creating — Produce new ideas</span></div>
+                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#dbeafe"></div><span>Remembering  Recall facts</span></div>
+                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#bfdbfe"></div><span>Understanding  Interpret meaning</span></div>
+                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#93c5fd"></div><span>Applying  Use knowledge</span></div>
+                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#60a5fa"></div><span>Analyzing  Break down components</span></div>
+                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#3b82f6"></div><span>Evaluating  Judge and assess</span></div>
+                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#1d4ed8"></div><span>Creating  Produce new ideas</span></div>
               </div>
               <div style="margin-top:20px;background:rgba(255,255,255,0.06);border-radius:12px;padding:14px">
                 <div style="font-size:0.8rem;color:rgba(255,255,255,0.7);line-height:1.7">
-                  Aim for <strong>20â€“40% high-order</strong> questions (Analyzing, Evaluating, Creating) for a psychologically rigorous exam aligned with clinical training standards.
+                  Aim for <strong>20–40% high-order</strong> questions (Analyzing, Evaluating, Creating) for a psychologically rigorous exam aligned with clinical training standards.
                 </div>
               </div>
             </div>
@@ -712,15 +712,15 @@
         <!-- At-Risk Panel -->
         <div class="ata-panel" id="ata-panel-atrisk" style="display:none">
           <div style="background:white;border:1px solid var(--light-200);border-radius:18px;padding:22px;box-shadow:0 4px 12px rgba(0,0,0,0.04)">
-            <div id="analyticsAtRiskPanel"><div style="color:var(--text-muted);text-align:center;padding:24px">Loadingâ€¦</div></div>
+            <div id="analyticsAtRiskPanel"><div style="color:var(--text-muted);text-align:center;padding:24px">Loading…</div></div>
           </div>
         </div>
 
         <!-- Questions Panel -->
         <div class="ata-panel" id="ata-panel-questions" style="display:none">
           <div style="background:white;border:1px solid var(--light-200);border-radius:18px;padding:22px;box-shadow:0 4px 12px rgba(0,0,0,0.04)">
-            <div style="font-weight:800;margin-bottom:16px">📝‹ Question Performance (Bottom 50 by Correctness)</div>
-            <div id="analyticsQuestionsPanel"><div style="color:var(--text-muted);text-align:center;padding:24px">Loadingâ€¦</div></div>
+            <div style="font-weight:800;margin-bottom:16px"> Question Performance (Bottom 50 by Correctness)</div>
+            <div id="analyticsQuestionsPanel"><div style="color:var(--text-muted);text-align:center;padding:24px">Loading…</div></div>
           </div>
         </div>
       </section>
@@ -729,7 +729,7 @@
   </div>
 </div>
 
-<!-- â”€â”€ APPLICANT DETAIL MODAL â”€â”€ -->
+<!-- ── APPLICANT DETAIL MODAL ── -->
 <div class="modal-overlay" id="applicantModal">
   <div class="modal applicant-detail" style="max-width:660px;">
     <div class="applicant-detail-header" id="applicantDetailHeader">
@@ -738,53 +738,53 @@
     <div id="applicantDetailBody" style="display:flex;flex-direction:column;gap:var(--space-3);"></div>
     <div style="display:flex;gap:var(--space-3);justify-content:flex-end;margin-top:var(--space-6);padding-top:var(--space-5);border-top:1px solid var(--light-200);">
       <button class="btn btn-ghost" onclick="closeApplicantModal()">Close</button>
-      <button class="btn btn-primary action-btn-reject" id="modalRejectBtn" onclick="rejectCurrentApplicant()">âŒ Reject</button>
-      <button class="btn btn-primary" id="modalApproveBtn" onclick="approveCurrentApplicant()">✅ Approve</button>
+      <button class="btn btn-primary action-btn-reject" id="modalRejectBtn" onclick="rejectCurrentApplicant()"> Reject</button>
+      <button class="btn btn-primary" id="modalApproveBtn" onclick="approveCurrentApplicant()"> Approve</button>
     </div>
   </div>
 </div>
 
-<!-- â”€â”€ CREATE TRAINING MODAL â”€â”€ -->
+<!-- ── CREATE TRAINING MODAL ── -->
 <div class="modal-overlay" id="createTrainingModal">
   <div class="modal" style="max-width:600px;">
     <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">Create Training Program</h3>
     <div class="admin-form-grid">
       <div class="form-group"><label class="form-label">Title *</label><input id="ct-title" class="form-input" placeholder="e.g. Mental Health First Aid"></div>
-      <div class="form-group"><label class="form-label">Format *</label><select id="ct-format" class="form-select"><option value="online">ðŸ’» Online</option><option value="in-person">📝 In-Person</option></select></div>
+      <div class="form-group"><label class="form-label">Format *</label><select id="ct-format" class="form-select"><option value="online">💻 Online</option><option value="in-person"> In-Person</option></select></div>
       <div class="form-group"><label class="form-label">Price (ETB, 0 = free)</label><input id="ct-price" type="number" class="form-input" value="0" min="0"></div>
-      <div class="form-group"><label class="form-label">Icon Emoji</label><input id="ct-icon" class="form-input" value="🎓" maxlength="2"></div>
+      <div class="form-group"><label class="form-label">Icon Emoji</label><input id="ct-icon" class="form-input" value="" maxlength="2"></div>
     </div>
-    <div class="form-group"><label class="form-label">Description *</label><textarea id="ct-desc" class="form-input" rows="3" placeholder="Describe the training programâ€¦"></textarea></div>
+    <div class="form-group"><label class="form-label">Description *</label><textarea id="ct-desc" class="form-input" rows="3" placeholder="Describe the training program…"></textarea></div>
     <div class="form-group"><label class="form-label">Certificate Title</label><input id="ct-cert" class="form-input" placeholder="e.g. Certificate of Mental Health First Aid"></div>
-    <div class="form-group"><label class="form-label">Content URL (optional)</label><input id="ct-url" class="form-input" type="url" placeholder="https://â€¦"></div>
+    <div class="form-group"><label class="form-label">Content URL (optional)</label><input id="ct-url" class="form-input" type="url" placeholder="https://…"></div>
     <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Graphic design (optional)</label><input id="ct-graphic" class="form-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></div>
     <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Graphic caption</label><input id="ct-graphic-caption" class="form-input" placeholder="Short caption shown under the image"></div>
     <div style="display:flex;gap:var(--space-3);justify-content:flex-end;margin-top:var(--space-4);">
       <button class="btn btn-ghost" onclick="document.getElementById('createTrainingModal').classList.remove('active')">Cancel</button>
-      <button class="btn btn-primary" onclick="submitCreateTraining()">ðŸš€ Create Training</button>
+      <button class="btn btn-primary" onclick="submitCreateTraining()">🚀 Create Training</button>
     </div>
   </div>
 </div>
 
-<!-- â”€â”€ EDIT TRAINING MODAL â”€â”€ -->
+<!-- ── EDIT TRAINING MODAL ── -->
 <div class="modal-overlay" id="editTrainingModal">
   <div class="modal" style="max-width:600px;">
     <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">Edit Training Program</h3>
     <div class="admin-form-grid">
       <input type="hidden" id="et-id">
       <div class="form-group"><label class="form-label">Title *</label><input id="et-title" class="form-input"></div>
-      <div class="form-group"><label class="form-label">Format *</label><select id="et-format" class="form-select"><option value="online">ðŸ’» Online</option><option value="in-person">📝 In-Person</option></select></div>
+      <div class="form-group"><label class="form-label">Format *</label><select id="et-format" class="form-select"><option value="online">💻 Online</option><option value="in-person"> In-Person</option></select></div>
       <div class="form-group"><label class="form-label">Price (ETB)</label><input id="et-price" type="number" class="form-input" min="0"></div>
     </div>
     <div class="form-group"><label class="form-label">Description *</label><textarea id="et-desc" class="form-input" rows="3"></textarea></div>
     <div style="display:flex;gap:var(--space-3);justify-content:flex-end;margin-top:var(--space-4);">
       <button class="btn btn-ghost" onclick="document.getElementById('editTrainingModal').classList.remove('active')">Cancel</button>
-      <button class="btn btn-primary" onclick="submitEditTraining()">ðŸ’¾ Save Changes</button>
+      <button class="btn btn-primary" onclick="submitEditTraining()">💾 Save Changes</button>
     </div>
   </div>
 </div>
 
-<!-- â”€â”€ CREATE EXAM MODAL â”€â”€ -->
+<!-- ── CREATE EXAM MODAL ── -->
 <div class="modal-overlay" id="createExamModalLegacy">
   <div class="modal" style="max-width:600px;">
     <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">Create Examination</h3>
@@ -794,15 +794,15 @@
       <div class="form-group"><label class="form-label">Passing mark (%)</label><input id="ce-passing" type="number" class="form-input" value="60" min="0" max="100" step="0.5"></div>
       <div class="form-group"><label class="form-label">Scheduled For</label><input id="ce-scheduled" type="datetime-local" class="form-input"></div>
     </div>
-    <div class="form-group"><label class="form-label">Description *</label><textarea id="ce-desc" class="form-input" rows="2" placeholder="Exam descriptionâ€¦"></textarea></div>
+    <div class="form-group"><label class="form-label">Description *</label><textarea id="ce-desc" class="form-input" rows="2" placeholder="Exam description…"></textarea></div>
     <div style="display:flex;gap:var(--space-3);justify-content:flex-end;margin-top:var(--space-4);">
       <button class="btn btn-ghost" onclick="document.getElementById('createExamModalLegacy').classList.remove('active')">Cancel</button>
-      <button class="btn btn-primary" onclick="submitCreateExam()">ðŸš€ Build Exam</button>
+      <button class="btn btn-primary" onclick="submitCreateExam()">🚀 Build Exam</button>
     </div>
   </div>
 </div>
 
-<!-- â”€â”€ EDIT EXAM MODAL â”€â”€ -->
+<!-- ── EDIT EXAM MODAL ── -->
 <div class="modal-overlay" id="editExamModal">
   <div class="modal" style="max-width:600px;">
     <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">Edit Examination</h3>
@@ -815,12 +815,12 @@
     </div>
     <div style="display:flex;gap:var(--space-3);justify-content:flex-end;margin-top:var(--space-4);">
       <button class="btn btn-ghost" onclick="document.getElementById('editExamModal').classList.remove('active')">Cancel</button>
-      <button class="btn btn-primary" onclick="submitEditExam()">ðŸ’¾ Save Changes</button>
+      <button class="btn btn-primary" onclick="submitEditExam()">💾 Save Changes</button>
     </div>
   </div>
 </div>
 
-<!-- â”€â”€ CREATE NEWS MODAL â”€â”€ -->
+<!-- ── CREATE NEWS MODAL ── -->
 <div class="modal-overlay" id="createNewsModal">
   <div class="modal" style="max-width:650px;">
     <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">Post News &amp; Updates</h3>
@@ -860,13 +860,13 @@
       </div>
       <div style="display:flex;gap:var(--space-3);justify-content:flex-end;">
         <button type="button" class="btn btn-ghost" onclick="document.getElementById('createNewsModal').classList.remove('active')">Cancel</button>
-        <button type="submit" class="btn btn-primary">ðŸš€ Publish</button>
+        <button type="submit" class="btn btn-primary">🚀 Publish</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- â”€â”€ ADD LEADERSHIP MODAL â”€â”€ -->
+<!-- ── ADD LEADERSHIP MODAL ── -->
 <div class="modal-overlay" id="addLeadershipModal">
   <div class="modal" style="max-width:600px;">
     <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">Appoint Leadership Profile</h3>
@@ -881,13 +881,13 @@
       </div>
       <div style="display:flex;gap:var(--space-3);justify-content:flex-end;">
         <button type="button" class="btn btn-ghost" onclick="document.getElementById('addLeadershipModal').classList.remove('active')">Cancel</button>
-        <button type="submit" class="btn btn-primary">ðŸ’¾ Add Profile</button>
+        <button type="submit" class="btn btn-primary">💾 Add Profile</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- â”€â”€ REJECT REASON MODAL â”€â”€ -->
+<!-- ── REJECT REASON MODAL ── -->
 <div class="modal-overlay" id="rejectModal">
   <div class="modal" style="max-width:480px;">
     <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-4);">Reject Application</h3>
@@ -901,7 +901,7 @@
         <option value="Profile photo does not meet requirements">Profile photo does not meet requirements</option>
         <option value="other">Other (specify below)</option>
       </select>
-      <textarea id="rejectReasonCustom" class="form-input" rows="2" placeholder="Additional notes (optional)â€¦"></textarea>
+      <textarea id="rejectReasonCustom" class="form-input" rows="2" placeholder="Additional notes (optional)…"></textarea>
     </div>
     <div style="display:flex;gap:var(--space-3);justify-content:flex-end;">
       <button class="btn btn-ghost" onclick="document.getElementById('rejectModal').classList.remove('active')">Cancel</button>
@@ -910,7 +910,7 @@
   </div>
 </div>
 
-<!-- â”€â”€ QUESTION BUILDER MODAL â”€â”€ -->
+<!-- ── QUESTION BUILDER MODAL ── -->
 <div class="modal-overlay" id="questionBuilderModal">
   <div class="modal" style="max-width:860px;width:95vw;max-height:88vh;display:flex;flex-direction:column;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-5);flex-shrink:0;">
@@ -958,7 +958,7 @@
   </div>
 </div>
 
-<!-- â”€â”€ SUBMISSIONS & RESULTS MODAL â”€â”€ -->
+<!-- ── SUBMISSIONS & RESULTS MODAL ── -->
 <div class="modal-overlay" id="submissionsModal">
   <div class="modal" style="max-width:780px;width:95vw;max-height:88vh;display:flex;flex-direction:column;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-5);flex-shrink:0;">
@@ -974,13 +974,13 @@
     <div style="flex:1;overflow-y:auto;">
       <table class="data-table">
         <thead><tr><th>#</th><th>Student</th><th>Student ID</th><th>University</th><th>Score</th><th>Passed</th><th>Submitted</th></tr></thead>
-        <tbody id="sub-tbody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+        <tbody id="sub-tbody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading…</td></tr></tbody>
       </table>
     </div>
   </div>
 </div>
 
-<!-- â”€â”€ CREATE PARTNER MODAL â”€â”€ -->
+<!-- ── CREATE PARTNER MODAL ── -->
 <div class="modal-overlay" id="createPartnerModal">
   <div class="modal" style="max-width:600px;">
     <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-6);">Add Partner</h3>
@@ -994,12 +994,12 @@
           </select>
         </div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Logo</label><input type="file" id="cp-logo" class="form-input" accept="image/*"></div>
-        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Website URL</label><input type="url" id="cp-website" class="form-input" placeholder="https://â€¦"></div>
-        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Description</label><textarea id="cp-desc" class="form-input" rows="3" placeholder="Brief description of the partnershipâ€¦"></textarea></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Website URL</label><input type="url" id="cp-website" class="form-input" placeholder="https://…"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Description</label><textarea id="cp-desc" class="form-input" rows="3" placeholder="Brief description of the partnership…"></textarea></div>
       </div>
       <div style="display:flex;gap:var(--space-3);justify-content:flex-end;margin-top:var(--space-4);">
         <button type="button" class="btn btn-ghost" onclick="document.getElementById('createPartnerModal').classList.remove('active')">Cancel</button>
-        <button type="submit" class="btn btn-primary">🤝 Add Partner</button>
+        <button type="submit" class="btn btn-primary"> Add Partner</button>
       </div>
     </form>
   </div>
@@ -1036,9 +1036,9 @@
 <script src="../js/api.js"></script>
 <script src="../js/admin.js"></script>
 <script>
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// ECOSYSTEM ADMIN LOGIC — Clubs, Grants, Partners
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// 
+// ECOSYSTEM ADMIN LOGIC  Clubs, Grants, Partners
+// 
 
 const ADMIN_UPLOAD_BASE = (() => {
   if (window.API && typeof API.getApiBases === 'function') {
@@ -1060,14 +1060,14 @@ function adminFetch(url, opts={}) {
   });
 }
 
-// â”€â”€ CLUBS ADMIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── CLUBS ADMIN ──────────────────────────────
 async function loadAdminClubs(status='all', tabEl=null) {
   if (tabEl) {
     document.querySelectorAll('#clubStatusTabs .pill-tab').forEach(t => t.classList.remove('active'));
     tabEl.classList.add('active');
   }
   const tbody = document.getElementById('clubsAdminTbody');
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">Loadingâ€¦</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">Loading…</td></tr>';
   try {
     const res  = await adminFetch(`/api/admin/clubs?status=${status}`);
     const data = await res.json();
@@ -1081,18 +1081,18 @@ async function loadAdminClubs(status='all', tabEl=null) {
       <tr>
         <td><div style="font-weight:700;">${c.logo_url ? `<img src="${ADMIN_UPLOAD_BASE}${c.logo_url}" style="width:28px;height:28px;border-radius:6px;object-fit:cover;vertical-align:middle;margin-right:8px;">` : ''}${c.name}</div></td>
         <td style="font-size:0.82rem;">${c.university}</td>
-        <td style="font-size:0.82rem;">${c.president_name||'—'}</td>
+        <td style="font-size:0.82rem;">${c.president_name||''}</td>
         <td style="text-align:center;">${c.member_count_live||0}</td>
         <td><span style="background:${statusColors[c.status]||'#777'}20;color:${statusColors[c.status]||'#777'};padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;">${c.status}</span></td>
-        <td style="font-size:0.78rem;color:var(--text-muted);">${c.created_at ? new Date(c.created_at).toLocaleDateString() : '—'}</td>
+        <td style="font-size:0.78rem;color:var(--text-muted);">${c.created_at ? new Date(c.created_at).toLocaleDateString() : ''}</td>
         <td>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
             ${c.status === 'pending' ? `
-              <button class="btn btn-primary btn-sm" onclick="adminApproveClub(${c.id})">✅ Approve</button>
-              <button class="btn btn-sm" style="background:rgba(220,38,38,0.1);color:#dc2626;border:1px solid rgba(220,38,38,0.2);" onclick="adminRejectClub(${c.id})">âŒ Reject</button>
+              <button class="btn btn-primary btn-sm" onclick="adminApproveClub(${c.id})"> Approve</button>
+              <button class="btn btn-sm" style="background:rgba(220,38,38,0.1);color:#dc2626;border:1px solid rgba(220,38,38,0.2);" onclick="adminRejectClub(${c.id})"> Reject</button>
             ` : ''}
-            <button class="btn btn-ghost btn-sm" onclick="viewClubMembers(${c.id},'${c.name}')">👥 Members</button>
-            <button class="btn btn-ghost btn-sm" style="color:#dc2626;" onclick="adminDeleteClub(${c.id})">ðŸ—‘</button>
+            <button class="btn btn-ghost btn-sm" onclick="viewClubMembers(${c.id},'${c.name}')"> Members</button>
+            <button class="btn btn-ghost btn-sm" style="color:#dc2626;" onclick="adminDeleteClub(${c.id})">🗑</button>
           </div>
         </td>
       </tr>
@@ -1103,7 +1103,7 @@ async function loadAdminClubs(status='all', tabEl=null) {
 async function adminApproveClub(id) {
   if (!confirm('Approve this club? It will be publicly visible on clubs.html.')) return;
   await adminFetch(`/api/admin/clubs/${id}/approve`, { method:'POST' });
-  showAdminToast('Club approved ✅'); loadAdminClubs();
+  showAdminToast('Club approved '); loadAdminClubs();
 }
 async function adminRejectClub(id) {
   const reason = prompt('Reason for rejection:') || 'Does not meet requirements';
@@ -1119,10 +1119,10 @@ async function adminDeleteClub(id) {
 async function viewClubMembers(id, name) {
   const res  = await adminFetch(`/api/admin/clubs/${id}/members`);
   const data = await res.json();
-  alert(`Members of "${name}":\n\n${data.map(m => `${m.name} (${m.role}) — ${m.university} — ${m.student_id}`).join('\n') || 'No members yet.'}`);
+  alert(`Members of "${name}":\n\n${data.map(m => `${m.name} (${m.role})  ${m.university}  ${m.student_id}`).join('\n') || 'No members yet.'}`);
 }
 
-// â”€â”€ GRANTS ADMIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── GRANTS ADMIN ─────────────────────────────
 function switchGrantsTab(tab) {
   document.getElementById('gpanel-proposals').style.display = tab==='proposals' ? '' : 'none';
   document.getElementById('gpanel-reports').style.display   = tab==='reports' ? '' : 'none';
@@ -1138,7 +1138,7 @@ async function loadAdminProposals(status='all', tabEl=null) {
     tabEl.classList.add('active');
   }
   const tbody = document.getElementById('proposalsTbody');
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">Loadingâ€¦</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">Loading…</td></tr>';
   try {
     const res  = await adminFetch(`/api/admin/proposals?status=${status}`);
     const data = await res.json();
@@ -1152,14 +1152,14 @@ async function loadAdminProposals(status='all', tabEl=null) {
         <td style="font-weight:600;">${p.club_name}<br><span style="font-size:0.72rem;color:var(--text-muted);">${p.club_uni}</span></td>
         <td style="font-weight:600;">${p.title}</td>
         <td style="font-weight:700;color:var(--epsa-green);">ETB ${(p.budget||0).toLocaleString()}</td>
-        <td style="font-size:0.8rem;">${p.timeline||'—'}</td>
+        <td style="font-size:0.8rem;">${p.timeline||''}</td>
         <td><span style="background:${sColors[p.status]||'#777'}20;color:${sColors[p.status]||'#777'};padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;">${p.status.replace('_',' ')}</span></td>
-        <td style="font-size:0.78rem;color:var(--text-muted);">${p.submitted_at ? new Date(p.submitted_at).toLocaleDateString() : '—'}</td>
+        <td style="font-size:0.78rem;color:var(--text-muted);">${p.submitted_at ? new Date(p.submitted_at).toLocaleDateString() : ''}</td>
         <td>
           <div style="display:flex;gap:5px;flex-wrap:wrap;">
-            ${p.status==='pending' ? `<button class="btn btn-primary btn-sm" onclick="adminActProposal(${p.id},'approve')">✅ Approve</button><button class="btn btn-sm" style="background:rgba(220,38,38,0.1);color:#dc2626;border:1px solid rgba(220,38,38,0.2);" onclick="adminActProposal(${p.id},'reject')">âŒ Reject</button>` : ''}
-            ${p.status==='approved' ? `<button class="btn btn-gold btn-sm" onclick="adminActProposal(${p.id},'fund')">💰 Fund</button>` : ''}
-            ${p.admin_notes ? `<span title="${p.admin_notes}" style="cursor:help;font-size:0.8rem;">📝</span>` : ''}
+            ${p.status==='pending' ? `<button class="btn btn-primary btn-sm" onclick="adminActProposal(${p.id},'approve')"> Approve</button><button class="btn btn-sm" style="background:rgba(220,38,38,0.1);color:#dc2626;border:1px solid rgba(220,38,38,0.2);" onclick="adminActProposal(${p.id},'reject')"> Reject</button>` : ''}
+            ${p.status==='approved' ? `<button class="btn btn-gold btn-sm" onclick="adminActProposal(${p.id},'fund')"> Fund</button>` : ''}
+            ${p.admin_notes ? `<span title="${p.admin_notes}" style="cursor:help;font-size:0.8rem;"></span>` : ''}
           </div>
         </td>
       </tr>
@@ -1179,7 +1179,7 @@ async function adminActProposal(id, action) {
 
 async function loadFinancialReports() {
   const tbody = document.getElementById('finReportsTbody');
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">Loadingâ€¦</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">Loading…</td></tr>';
   try {
     const res  = await adminFetch('/api/admin/financial-reports');
     const data = await res.json();
@@ -1189,10 +1189,10 @@ async function loadFinancialReports() {
         <td style="font-weight:600;">${r.club_name}</td>
         <td style="font-size:0.82rem;">${r.proposal_title}</td>
         <td style="font-weight:700;color:var(--epsa-green);">ETB ${(r.total_spent||0).toLocaleString()}</td>
-        <td>${r.receipt_path ? `<a href="${ADMIN_UPLOAD_BASE}/uploads/fin_receipts/${r.receipt_path}" target="_blank" class="btn btn-ghost btn-sm">📝„ View</a>` : '—'}</td>
+        <td>${r.receipt_path ? `<a href="${ADMIN_UPLOAD_BASE}/uploads/fin_receipts/${r.receipt_path}" target="_blank" class="btn btn-ghost btn-sm"> View</a>` : ''}</td>
         <td><span style="background:${r.status==='verified'?'#16a34a':'#d97706'}20;color:${r.status==='verified'?'#16a34a':'#d97706'};padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;">${r.status}</span></td>
-        <td style="font-size:0.78rem;color:var(--text-muted);">${r.submitted_at ? new Date(r.submitted_at).toLocaleDateString() : '—'}</td>
-        <td>${r.status==='pending'?`<button class="btn btn-primary btn-sm" onclick="adminVerifyReport(${r.id})">✅ Verify &amp; Complete</button>`:'<span style="color:#16a34a;font-size:0.8rem;">✅ Verified</span>'}</td>
+        <td style="font-size:0.78rem;color:var(--text-muted);">${r.submitted_at ? new Date(r.submitted_at).toLocaleDateString() : ''}</td>
+        <td>${r.status==='pending'?`<button class="btn btn-primary btn-sm" onclick="adminVerifyReport(${r.id})"> Verify &amp; Complete</button>`:'<span style="color:#16a34a;font-size:0.8rem;"> Verified</span>'}</td>
       </tr>
     `).join('');
   } catch(e) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;padding:24px;">Error.</td></tr>'; }
@@ -1205,10 +1205,10 @@ async function adminVerifyReport(id) {
   showAdminToast(data.message); loadFinancialReports();
 }
 
-// â”€â”€ PARTNERS ADMIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── PARTNERS ADMIN ───────────────────────────
 async function loadAdminPartners() {
   const tbody = document.getElementById('partnersAdminTbody');
-  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px;">Loadingâ€¦</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px;">Loading…</td></tr>';
   try {
     const res  = await adminFetch('/api/admin/partners');
     const data = await res.json();
@@ -1216,14 +1216,14 @@ async function loadAdminPartners() {
     const catColors = { NGO:'#4ade80', Hospital:'#f472b6', University:'#60a5fa', Government:'#fbbf24', Clinic:'#c084fc', Research:'#fb923c' };
     tbody.innerHTML = data.map(p => `
       <tr>
-        <td>${p.logo_url ? `<img src="${ADMIN_UPLOAD_BASE}${p.logo_url}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;">` : '<div style="width:36px;height:36px;background:var(--light-100);border-radius:8px;display:flex;align-items:center;justify-content:center;">🤝</div>'}</td>
+        <td>${p.logo_url ? `<img src="${ADMIN_UPLOAD_BASE}${p.logo_url}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;">` : '<div style="width:36px;height:36px;background:var(--light-100);border-radius:8px;display:flex;align-items:center;justify-content:center;"></div>'}</td>
         <td style="font-weight:700;">${p.name}</td>
         <td><span style="background:${catColors[p.category]||'#60a5fa'}18;color:${catColors[p.category]||'#60a5fa'};padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;">${p.category}</span></td>
-        <td>${p.website ? `<a href="${p.website}" target="_blank" style="font-size:0.8rem;color:var(--epsa-green);">ðŸ”— Website</a>` : '—'}</td>
+        <td>${p.website ? `<a href="${p.website}" target="_blank" style="font-size:0.8rem;color:var(--epsa-green);">🔗 Website</a>` : ''}</td>
         <td><span style="background:${p.is_active?'#16a34a':'#dc2626'}20;color:${p.is_active?'#16a34a':'#dc2626'};padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;">${p.is_active?'Active':'Hidden'}</span></td>
         <td>
           <div style="display:flex;gap:6px;">
-            <button class="btn btn-ghost btn-sm" style="color:#dc2626;" onclick="adminDeletePartner(${p.id},'${p.name}')">ðŸ—‘ Remove</button>
+            <button class="btn btn-ghost btn-sm" style="color:#dc2626;" onclick="adminDeletePartner(${p.id},'${p.name}')">🗑 Remove</button>
           </div>
         </td>
       </tr>
@@ -1256,7 +1256,7 @@ async function adminDeletePartner(id, name) {
   showAdminToast('Partner removed', 'error'); loadAdminPartners();
 }
 
-// â”€â”€ HOOK INTO EXISTING SECTION SWITCHER â”€â”€â”€â”€â”€â”€
+// ── HOOK INTO EXISTING SECTION SWITCHER ──────
 const _origSwitch = typeof switchAdminSection === 'function' ? switchAdminSection : null;
 window._ecoSections = { 'clubs-admin': loadAdminClubs, 'grants-admin': ()=>loadAdminProposals(), 'partners-admin': loadAdminPartners };
 document.addEventListener('DOMContentLoaded', () => {
@@ -1273,14 +1273,14 @@ function showAdminToast(msg, type='success') {
 </script>
 <script src="../js/admin-ecosystem-enhancements.js"></script>
 
-  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  <!-- 
        ADMIN: QUESTION BANK
-  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+   -->
   <div id="admin-section-question-bank" class="admin-section" style="display:none">
     <!-- Header -->
     <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:28px">
       <div>
-        <h2 style="font-size:1.5rem;font-weight:900;color:#0f172a;margin:0">📚 Question Bank</h2>
+        <h2 style="font-size:1.5rem;font-weight:900;color:#0f172a;margin:0"> Question Bank</h2>
         <p style="color:#64748b;font-size:.88rem;margin:6px 0 0">Review, approve, and manage teacher-submitted questions</p>
       </div>
       <div id="qbStats" style="display:flex;gap:12px;flex-wrap:wrap"></div>
@@ -1289,10 +1289,10 @@ function showAdminToast(msg, type='success') {
     <!-- Filters -->
     <div style="background:white;border:1px solid #e2e8f0;border-radius:16px;padding:18px 20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.04);display:flex;gap:10px;flex-wrap:wrap;align-items:center">
       <select id="qbStatusFilter" onchange="loadAdminQuestions()" style="padding:9px 14px;background:white;border:1px solid #e2e8f0;border-radius:10px;color:#0f172a;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer">
-        <option value="pending">â³ Pending Review</option>
-        <option value="approved">✅ Approved</option>
-        <option value="rejected">âŒ Rejected</option>
-        <option value="all">📝‹ All Status</option>
+        <option value="pending"> Pending Review</option>
+        <option value="approved"> Approved</option>
+        <option value="rejected"> Rejected</option>
+        <option value="all"> All Status</option>
       </select>
       <select id="qbCategoryFilter" onchange="loadAdminQuestions()" style="padding:9px 14px;background:white;border:1px solid #e2e8f0;border-radius:10px;color:#0f172a;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer">
         <option value="">All Categories</option>
@@ -1302,7 +1302,7 @@ function showAdminToast(msg, type='success') {
         <option>Counseling Psychology</option><option>Biological Psychology</option>
         <option>General Psychology</option>
       </select>
-      <button onclick="loadAdminQuestions()" style="padding:9px 16px;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:10px;color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:.85rem;box-shadow:0 4px 12px rgba(34,197,94,.3)">ðŸ”„ Refresh</button>
+      <button onclick="loadAdminQuestions()" style="padding:9px 16px;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:10px;color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:.85rem;box-shadow:0 4px 12px rgba(34,197,94,.3)">🔄 Refresh</button>
       <span id="qbTotal" style="color:#64748b;font-size:.82rem;margin-left:auto"></span>
     </div>
 
@@ -1321,61 +1321,61 @@ function showAdminToast(msg, type='success') {
           </tr>
         </thead>
         <tbody id="qbTableBody">
-          <tr><td colspan="7" style="padding:40px;text-align:center;color:#94a3b8">Loadingâ€¦</td></tr>
+          <tr><td colspan="7" style="padding:40px;text-align:center;color:#94a3b8">Loading…</td></tr>
         </tbody>
       </table>
     </div>
     <div id="qbPagination" style="display:flex;gap:8px;justify-content:center;margin-top:18px"></div>
   </div>
 
-  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  <!-- 
        ADMIN: TEACHERS
-  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+   -->
   <div id="admin-section-teachers" class="admin-section" style="display:none">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:28px">
       <div>
-        <h2 style="font-size:1.5rem;font-weight:900;color:#0f172a;margin:0">🎓 Teacher Management</h2>
+        <h2 style="font-size:1.5rem;font-weight:900;color:#0f172a;margin:0"> Teacher Management</h2>
         <p style="color:#64748b;font-size:.88rem;margin:6px 0 0">Review teacher applications and manage approved contributors</p>
       </div>
       <div style="display:flex;gap:10px;align-items:center">
         <select id="teacherStatusFilter" onchange="loadAdminTeachers()" style="padding:9px 14px;background:white;border:1px solid #e2e8f0;border-radius:10px;color:#0f172a;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer">
-          <option value="pending">â³ Pending Approval</option>
-          <option value="approved">✅ Approved</option>
-          <option value="rejected">âŒ Rejected</option>
-          <option value="all">👥 All Teachers</option>
+          <option value="pending"> Pending Approval</option>
+          <option value="approved"> Approved</option>
+          <option value="rejected"> Rejected</option>
+          <option value="all"> All Teachers</option>
         </select>
-        <button onclick="loadAdminTeachers()" style="padding:9px 14px;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:10px;color:white;font-weight:700;cursor:pointer;font-size:.85rem;box-shadow:0 4px 12px rgba(34,197,94,.3)">ðŸ”„</button>
+        <button onclick="loadAdminTeachers()" style="padding:9px 14px;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:10px;color:white;font-weight:700;cursor:pointer;font-size:.85rem;box-shadow:0 4px 12px rgba(34,197,94,.3)">🔄</button>
       </div>
     </div>
     <div id="teacherCardsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px">
-      <div style="text-align:center;color:#94a3b8;padding:60px;grid-column:1/-1">Loadingâ€¦</div>
+      <div style="text-align:center;color:#94a3b8;padding:60px;grid-column:1/-1">Loading…</div>
     </div>
   </div>
 
-  <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  <!-- 
        ADMIN: MOCK EXAMS
-  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+   -->
   <div id="admin-section-mock-exams" class="admin-section" style="display:none">
     <!-- Hero header -->
     <div style="background:linear-gradient(135deg,#0f4d29 0%,#1a6b3c 60%,#185c35 100%);border-radius:24px;padding:28px 32px;margin-bottom:28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;box-shadow:0 20px 48px rgba(15,77,41,.28)">
       <div>
         <div style="font-size:.78rem;font-weight:800;color:#86efac;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">EPSA National Assessments</div>
-        <h2 style="font-size:1.6rem;font-weight:900;color:white;margin:0;line-height:1.2">🎯 Mock Exam Management</h2>
+        <h2 style="font-size:1.6rem;font-weight:900;color:white;margin:0;line-height:1.2"> Mock Exam Management</h2>
         <p style="color:#bbf7d0;font-size:.9rem;margin:8px 0 0">Schedule, activate, and analyze national mock examinations</p>
       </div>
-      <button onclick="openCreateExamModal()" style="background:white;color:#1a6b3c;border:none;padding:13px 24px;border-radius:14px;font-family:inherit;font-size:.92rem;font-weight:800;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.15);white-space:nowrap">âž• Schedule New Exam</button>
+      <button onclick="openCreateExamModal()" style="background:white;color:#1a6b3c;border:none;padding:13px 24px;border-radius:14px;font-family:inherit;font-size:.92rem;font-weight:800;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.15);white-space:nowrap">➕ Schedule New Exam</button>
     </div>
     <div id="adminExamList" style="display:flex;flex-direction:column;gap:16px">
-      <div style="text-align:center;color:#94a3b8;padding:60px">Loadingâ€¦</div>
+      <div style="text-align:center;color:#94a3b8;padding:60px">Loading…</div>
     </div>
   </div>
 
   <!-- Report modal -->
   <div id="examReportModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:8000;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto">
     <div style="background:#0a2e18;border:1px solid rgba(34,197,94,.2);border-radius:20px;padding:32px;width:100%;max-width:800px;position:relative">
-      <button onclick="document.getElementById('examReportModal').style.display='none'" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,.07);border:none;color:#86efac;width:32px;height:32px;border-radius:50%;cursor:pointer">âœ•</button>
-      <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:20px">📊 Post-Exam Analytics Report</h2>
-      <div id="examReportContent" style="color:#86efac">Loadingâ€¦</div>
+      <button onclick="document.getElementById('examReportModal').style.display='none'" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,.07);border:none;color:#86efac;width:32px;height:32px;border-radius:50%;cursor:pointer">✕</button>
+      <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:20px"> Post-Exam Analytics Report</h2>
+      <div id="examReportContent" style="color:#86efac">Loading…</div>
     </div>
   </div>
 
@@ -1388,7 +1388,7 @@ function showAdminToast(msg, type='success') {
            <h2 style="font-family:var(--font-display);font-size:1.4rem;font-weight:800;color:#0f172a;margin:0">Create Mock Exam</h2>
            <p style="font-size:0.85rem;color:var(--text-muted);margin:4px 0 0 0">Configure settings and generate blueprints</p>
         </div>
-        <button onclick="closeExamWizard()" style="background:var(--light-100);border:none;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:1rem;color:var(--text-muted);display:flex;align-items:center;justify-content:center">âœ•</button>
+        <button onclick="closeExamWizard()" style="background:var(--light-100);border:none;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:1rem;color:var(--text-muted);display:flex;align-items:center;justify-content:center">✕</button>
       </div>
       
       <!-- Wizard Steps Indicator -->
@@ -1447,7 +1447,7 @@ function showAdminToast(msg, type='success') {
            <div style="background:var(--light-50);border-radius:12px;padding:20px;border:1px solid var(--light-200);margin-bottom:20px">
              <div style="display:flex;justify-content:space-between;align-items:center">
                <div><div style="font-weight:800">Auto-Generate Blueprint</div><div style="font-size:0.8rem;color:var(--text-muted)">AI will compile a balanced subject allocation.</div></div>
-               <button class="btn btn-primary btn-sm" type="button" onclick="generateWizardBlueprint()">âœ¨ Generate Map</button>
+               <button class="btn btn-primary btn-sm" type="button" onclick="generateWizardBlueprint()">✨ Generate Map</button>
              </div>
            </div>
            <div><div style="font-size:0.85rem;font-weight:700;margin-bottom:12px">Current Blueprint Structure</div></div>
@@ -1459,7 +1459,7 @@ function showAdminToast(msg, type='success') {
         <!-- Step 4: Summary -->
         <div id="wstep-4" class="wizard-panel" style="display:none">
           <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:16px;padding:24px;text-align:center;margin-bottom:20px">
-            <div style="font-size:2.5rem;margin-bottom:12px">ðŸš€</div>
+            <div style="font-size:2.5rem;margin-bottom:12px">🚀</div>
             <h3 style="font-weight:800;color:#166534;font-size:1.3rem">Ready to Schedule!</h3>
             <p style="font-size:0.9rem;color:#15803d">The exam is configured with <strong><span id="wz-sum-q">100</span></strong> questions mapped.</p>
           </div>
@@ -1488,9 +1488,9 @@ function showAdminToast(msg, type='success') {
   </div>
 
   <script>
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   //   ADMIN: QUESTION BANK
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   let qbPage = 1;
   let qbQuestionCache = [];
   let teacherReviewCache = [];
@@ -1498,7 +1498,7 @@ function showAdminToast(msg, type='success') {
   async function loadAdminQuestions(page) {
     if (page) qbPage = page;
     const tbody = document.getElementById('qbTableBody');
-    tbody.innerHTML = '<tr><td colspan="7" style="padding:24px;text-align:center;color:#86efac">Loadingâ€¦</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="padding:24px;text-align:center;color:#86efac">Loading…</td></tr>';
     try {
       const params = {
         status: document.getElementById('qbStatusFilter').value,
@@ -1520,10 +1520,10 @@ function showAdminToast(msg, type='success') {
     const el = document.getElementById('qbStats');
     if (!el) return;
     el.innerHTML = [
-      ['📝¬ Pending',  stats.pending||0,  '#f59e0b', '#fef3c7', '#92400e'],
-      ['✅ Approved', stats.approved||0, '#16a34a', '#dcfce7', '#14532d'],
-      ['âŒ Rejected', stats.rejected||0, '#dc2626', '#fee2e2', '#7f1d1d'],
-      ['📝¦ Total',    stats.total||0,    '#2563eb', '#dbeafe', '#1e3a8a'],
+      [' Pending',  stats.pending||0,  '#f59e0b', '#fef3c7', '#92400e'],
+      [' Approved', stats.approved||0, '#16a34a', '#dcfce7', '#14532d'],
+      [' Rejected', stats.rejected||0, '#dc2626', '#fee2e2', '#7f1d1d'],
+      [' Total',    stats.total||0,    '#2563eb', '#dbeafe', '#1e3a8a'],
     ].map(([l,v,accent,bg,text]) =>
       `<div style="background:${bg};border:1px solid ${accent}33;border-radius:14px;padding:12px 18px;text-align:center;min-width:80px">
         <div style="font-size:1.4rem;font-weight:900;color:${accent};line-height:1">${v}</div>
@@ -1557,12 +1557,12 @@ function showAdminToast(msg, type='success') {
         <td style="padding:13px 16px;max-width:260px">
           <div style="font-size:.84rem;color:#0f172a;line-height:1.5;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-weight:500">${escAdminHtml(q.question_text)}</div>
         </td>
-        <td style="padding:13px 16px;font-size:.78rem;color:#1a6b3c;font-weight:600;white-space:nowrap">${q.subject_category||'—'}</td>
-        <td style="padding:13px 16px;font-size:.78rem;color:#475569;white-space:nowrap">${q.bloom_level||'—'}</td>
+        <td style="padding:13px 16px;font-size:.78rem;color:#1a6b3c;font-weight:600;white-space:nowrap">${q.subject_category||''}</td>
+        <td style="padding:13px 16px;font-size:.78rem;color:#475569;white-space:nowrap">${q.bloom_level||''}</td>
         <td style="padding:13px 16px">
-          <span style="background:${ds.bg};color:${ds.color};padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:800">${q.difficulty||'—'}</span>
+          <span style="background:${ds.bg};color:${ds.color};padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:800">${q.difficulty||''}</span>
         </td>
-        <td style="padding:13px 16px;font-size:.78rem;color:#475569;white-space:nowrap">${escAdminHtml(q.teacher_name||'—')}</td>
+        <td style="padding:13px 16px;font-size:.78rem;color:#475569;white-space:nowrap">${escAdminHtml(q.teacher_name||'')}</td>
         <td style="padding:13px 16px">
           <span style="background:${ss.bg};color:${ss.color};border:1px solid ${ss.border};padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:800">${q.status}</span>
         </td>
@@ -1615,9 +1615,9 @@ function showAdminToast(msg, type='success') {
         </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px;">
-        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Teacher</div><div style="font-weight:700;color:#f0fdf4;">${escAdminHtml(question.teacher_name || '—')}</div><div style="font-size:.78rem;color:#86efac;margin-top:4px;">${escAdminHtml(question.specialization || 'Psychology')}</div></div>
+        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Teacher</div><div style="font-weight:700;color:#f0fdf4;">${escAdminHtml(question.teacher_name || '')}</div><div style="font-size:.78rem;color:#86efac;margin-top:4px;">${escAdminHtml(question.specialization || 'Psychology')}</div></div>
         <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Topic</div><div style="font-weight:700;color:#f0fdf4;">${escAdminHtml(question.topic || 'Not provided')}</div><div style="font-size:.78rem;color:#86efac;margin-top:4px;">${escAdminHtml(question.subtopic || 'No subtopic')}</div></div>
-        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Classification</div><div style="font-weight:700;color:#f0fdf4;">${escAdminHtml(question.subject_category || '—')}</div><div style="font-size:.78rem;color:#86efac;margin-top:4px;">${escAdminHtml(question.bloom_level || '—')} â€¢ ${escAdminHtml(question.difficulty || '—')}</div></div>
+        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Classification</div><div style="font-weight:700;color:#f0fdf4;">${escAdminHtml(question.subject_category || '')}</div><div style="font-size:.78rem;color:#86efac;margin-top:4px;">${escAdminHtml(question.bloom_level || '')} • ${escAdminHtml(question.difficulty || '')}</div></div>
       </div>
       <div style="margin-bottom:18px;">
         <div style="font-size:.78rem;color:#86efac;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;">Answer Options</div>
@@ -1659,7 +1659,7 @@ function showAdminToast(msg, type='success') {
   async function approveQuestion(id) {
     try {
       await API.adminApproveQuestion(id);
-      showToast('Question approved ✅', 'success');
+      showToast('Question approved ', 'success');
       loadAdminQuestions();
     } catch(e) { showToast(e.message, 'error'); }
   }
@@ -1672,12 +1672,12 @@ function showAdminToast(msg, type='success') {
     } catch(e) { showToast(e.message, 'error'); }
   }
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   //   ADMIN: TEACHERS
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   async function loadAdminTeachers() {
     const grid = document.getElementById('teacherCardsGrid');
-    grid.innerHTML = '<div style="text-align:center;color:#86efac;padding:40px;grid-column:1/-1">Loadingâ€¦</div>';
+    grid.innerHTML = '<div style="text-align:center;color:#86efac;padding:40px;grid-column:1/-1">Loading…</div>';
     try {
       const status = document.getElementById('teacherStatusFilter').value;
       const data = await API.adminListTeachers(status);
@@ -1701,9 +1701,9 @@ function showAdminToast(msg, type='success') {
 
   function renderTeacherCardEnhanced(t) {
     const statusMap = {
-      pending:  { bg:'#fef3c7', color:'#92400e', border:'#fcd34d', label:'â³ Pending' },
-      approved: { bg:'#dcfce7', color:'#14532d', border:'#86efac', label:'✅ Approved' },
-      rejected: { bg:'#fee2e2', color:'#7f1d1d', border:'#fca5a5', label:'âŒ Rejected' },
+      pending:  { bg:'#fef3c7', color:'#92400e', border:'#fcd34d', label:' Pending' },
+      approved: { bg:'#dcfce7', color:'#14532d', border:'#86efac', label:' Approved' },
+      rejected: { bg:'#fee2e2', color:'#7f1d1d', border:'#fca5a5', label:' Rejected' },
     };
     const sm = statusMap[t.status] || statusMap.pending;
     const initials = (t.name || 'T').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
@@ -1731,7 +1731,7 @@ function showAdminToast(msg, type='success') {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
         <div style="padding:12px 14px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0">
           <div style="font-size:.68rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;font-weight:700">Institution</div>
-          <div style="font-size:.85rem;color:#0f172a;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escAdminHtml(t.institution||'—')}</div>
+          <div style="font-size:.85rem;color:#0f172a;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escAdminHtml(t.institution||'')}</div>
         </div>
         <div style="padding:12px 14px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0">
           <div style="font-size:.68rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;font-weight:700">Experience</div>
@@ -1769,18 +1769,18 @@ function showAdminToast(msg, type='success') {
         </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px;">
-        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Specialization</div><div style="font-weight:700;color:#f0fdf4;">${escAdminHtml(teacher.specialization || '—')}</div></div>
-        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Institution</div><div style="font-weight:700;color:#f0fdf4;">${escAdminHtml(teacher.institution || '—')}</div></div>
+        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Specialization</div><div style="font-weight:700;color:#f0fdf4;">${escAdminHtml(teacher.specialization || '')}</div></div>
+        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Institution</div><div style="font-weight:700;color:#f0fdf4;">${escAdminHtml(teacher.institution || '')}</div></div>
         <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Experience</div><div style="font-weight:700;color:#f0fdf4;">${teacher.years_of_experience || 0} years</div></div>
-        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Username</div><div style="font-weight:700;color:#f0fdf4;">${escAdminHtml(teacher.username || '—')}</div></div>
+        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Username</div><div style="font-weight:700;color:#f0fdf4;">${escAdminHtml(teacher.username || '')}</div></div>
       </div>
       <div style="padding:16px 18px;border-radius:16px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.18);margin-bottom:14px;">
         <div style="font-size:.78rem;color:#bfdbfe;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Credentials / Summary</div>
         <div style="font-size:.9rem;line-height:1.75;color:#e0f2fe;">${escAdminHtml(teacher.credentials || 'No credentials or supporting notes were provided during registration.')}</div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Submitted</div><div style="font-weight:700;color:#f0fdf4;">${teacher.created_at ? new Date(teacher.created_at).toLocaleString() : '—'}</div></div>
-        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Question Contribution</div><div style="font-weight:700;color:#f0fdf4;">${teacher.question_count || 0} submitted â€¢ ${teacher.approved_count || 0} approved</div></div>
+        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Submitted</div><div style="font-weight:700;color:#f0fdf4;">${teacher.created_at ? new Date(teacher.created_at).toLocaleString() : ''}</div></div>
+        <div style="padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);"><div style="font-size:.72rem;color:#86efac;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Question Contribution</div><div style="font-weight:700;color:#f0fdf4;">${teacher.question_count || 0} submitted • ${teacher.approved_count || 0} approved</div></div>
       </div>
       ${teacher.rejection_reason ? `<div style="margin-top:14px;padding:16px 18px;border-radius:16px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.18);"><div style="font-size:.78rem;color:#fecaca;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Previous Rejection Reason</div><div style="font-size:.9rem;line-height:1.7;color:#fee2e2;">${escAdminHtml(teacher.rejection_reason)}</div></div>` : ''}
     `;
@@ -1826,12 +1826,12 @@ function showAdminToast(msg, type='success') {
     } catch(e) { showToast(e.message, 'error'); }
   }
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   //   ADMIN: MOCK EXAMS
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   async function loadAdminMockExams() {
     const container = document.getElementById('adminExamList');
-    container.innerHTML = '<div style="text-align:center;color:#86efac;padding:40px">Loadingâ€¦</div>';
+    container.innerHTML = '<div style="text-align:center;color:#86efac;padding:40px">Loading…</div>';
     try {
       const data = await API.adminListMockExams();
       const exams = data.exams || [];
@@ -1847,10 +1847,10 @@ function showAdminToast(msg, type='success') {
       container.innerHTML =
         `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:26px">
           ${[
-            ['📝‹ Total Exams',   totExams,  '#2563eb','#dbeafe','#1e3a8a'],
-            ['â–¶ï¸ Active Now',    active,    '#16a34a','#dcfce7','#14532d'],
-            ['📢 Results Out',  released,  '#7c3aed','#ede9fe','#4c1d95'],
-            ['📝 Total Taken',  totalSubs, '#d97706','#fef3c7','#92400e'],
+            [' Total Exams',   totExams,  '#2563eb','#dbeafe','#1e3a8a'],
+            ['▶ Active Now',    active,    '#16a34a','#dcfce7','#14532d'],
+            [' Results Out',  released,  '#7c3aed','#ede9fe','#4c1d95'],
+            [' Total Taken',  totalSubs, '#d97706','#fef3c7','#92400e'],
           ].map(([l,v,acc,bg,txt]) =>
             `<div style="background:${bg};border:1px solid ${acc}33;border-radius:16px;padding:16px 20px">
               <div style="font-size:1.6rem;font-weight:900;color:${acc};line-height:1">${v}</div>
@@ -1873,13 +1873,13 @@ function showAdminToast(msg, type='success') {
 
     // Status config
     const statusCfg = resultsOut
-      ? { label:'📢 Results Released', color:'#7c3aed', bg:'#ede9fe', border:'#c4b5fd' }
+      ? { label:' Results Released', color:'#7c3aed', bg:'#ede9fe', border:'#c4b5fd' }
       : isActive
-        ? { label:'â–¶ï¸ Live', color:'#16a34a', bg:'#dcfce7', border:'#86efac' }
-        : { label:'â³ Scheduled', color:'#d97706', bg:'#fef3c7', border:'#fcd34d' };
+        ? { label:'▶ Live', color:'#16a34a', bg:'#dcfce7', border:'#86efac' }
+        : { label:' Scheduled', color:'#d97706', bg:'#fef3c7', border:'#fcd34d' };
 
     // Dates
-    const fmtDate = d => d ? new Date(d).toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+    const fmtDate = d => d ? new Date(d).toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
     const createdAt   = fmtDate(e.created_at);
     const scheduledAt = fmtDate(e.scheduled_at);
     const endsAt      = fmtDate(e.ends_at);
@@ -1894,7 +1894,7 @@ function showAdminToast(msg, type='success') {
           <div style="display:flex;flex-wrap:wrap;gap:6px">${
             bp.slice(0,5).map(s =>
               `<span style="background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700">
-                ${s.category || 'General'} Â· ${s.count}q
+                ${s.category || 'General'} · ${s.count}q
               </span>`
             ).join('') + (bp.length > 5 ? `<span style="color:#94a3b8;font-size:.72rem;padding:3px 8px">+${bp.length-5} more</span>` : '')
           }</div></div>`;
@@ -1905,21 +1905,21 @@ function showAdminToast(msg, type='success') {
     const actions = [];
     if (!isActive && !resultsOut) {
       actions.push(`<button onclick="activateExam(${e.id})" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 20px;background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border:none;border-radius:14px;cursor:pointer;font-family:inherit;min-width:110px;box-shadow:0 6px 18px rgba(34,197,94,.35);transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
-        <span style="font-size:1.3rem">â–¶ï¸</span>
+        <span style="font-size:1.3rem">▶</span>
         <span style="font-size:.8rem;font-weight:800">Activate</span>
         <span style="font-size:.68rem;opacity:.85">Open to students</span>
       </button>`);
     }
     if (isActive && !resultsOut) {
       actions.push(`<button onclick="releaseResults(${e.id})" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 20px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:white;border:none;border-radius:14px;cursor:pointer;font-family:inherit;min-width:110px;box-shadow:0 6px 18px rgba(37,99,235,.3);transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
-        <span style="font-size:1.3rem">📢</span>
+        <span style="font-size:1.3rem"></span>
         <span style="font-size:.8rem;font-weight:800">Release Results</span>
         <span style="font-size:.68rem;opacity:.85">Notify students</span>
       </button>`);
     }
     if (subs > 0) {
       actions.push(`<button onclick="viewExamReport(${e.id})" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 20px;background:white;color:#475569;border:1.5px solid #e2e8f0;border-radius:14px;cursor:pointer;font-family:inherit;min-width:110px;box-shadow:0 4px 12px rgba(0,0,0,.06);transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
-        <span style="font-size:1.3rem">📊</span>
+        <span style="font-size:1.3rem"></span>
         <span style="font-size:.8rem;font-weight:700">Analytics</span>
         <span style="font-size:.68rem;color:#94a3b8">View report</span>
       </button>`);
@@ -1957,7 +1957,7 @@ function showAdminToast(msg, type='success') {
             </div>
             <div style="padding:12px;border-radius:14px;background:${avgScore !== null && avgScore >= 50 ? '#f0fdf4' : '#fef2f2'};border:1px solid ${avgScore !== null && avgScore >= 50 ? '#bbf7d0' : '#fecaca'}">
               <div style="font-size:.65rem;color:${avgScore !== null && avgScore >= 50 ? '#15803d' : '#dc2626'};text-transform:uppercase;font-weight:800;letter-spacing:.07em;margin-bottom:4px">Avg Score</div>
-              <div style="font-size:1.3rem;font-weight:900;color:${avgScore !== null && avgScore >= 50 ? '#14532d' : '#7f1d1d'}">${avgScore !== null ? avgScore.toFixed(1)+'%' : '—'}</div>
+              <div style="font-size:1.3rem;font-weight:900;color:${avgScore !== null && avgScore >= 50 ? '#14532d' : '#7f1d1d'}">${avgScore !== null ? avgScore.toFixed(1)+'%' : ''}</div>
             </div>
           </div>
 
@@ -1976,11 +1976,11 @@ function showAdminToast(msg, type='success') {
           <!-- Schedule timeline -->
           <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:.78rem">
             <div style="display:flex;align-items:center;gap:6px;color:#64748b">
-              <span style="font-size:1rem">📝…</span>
+              <span style="font-size:1rem"></span>
               <div><div style="font-weight:700;color:#0f172a">Opens</div><div>${scheduledAt}</div></div>
             </div>
             ${e.ends_at ? `<div style="display:flex;align-items:center;gap:6px;color:#64748b">
-              <span style="font-size:1rem">ðŸ</span>
+              <span style="font-size:1rem"></span>
               <div><div style="font-weight:700;color:#0f172a">Closes</div><div>${endsAt}</div></div>
             </div>` : ''}
           </div>
@@ -2001,9 +2001,9 @@ function showAdminToast(msg, type='success') {
   window.loadAdminTeachers  = loadAdminTeachers;
   window.loadAdminMockExams = loadAdminMockExams;
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   //   EXAM WIZARD
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   let _wizStep = 1;
   const WIZ_TOTAL = 4;
 
@@ -2070,7 +2070,7 @@ function showAdminToast(msg, type='success') {
   async function generateWizardBlueprint() {
     const container = document.getElementById('wz-blueprint-container');
     if (!container) return;
-    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">Fetching available question countsâ€¦</div>';
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">Fetching available question counts…</div>';
     try {
       const data = await API.adminListQuestions({ status: 'approved', page: 1 });
       const stats = data.stats || {};
@@ -2100,7 +2100,7 @@ function showAdminToast(msg, type='success') {
         </div>`;
       }).join('') +
       `<div style="margin-top:10px;padding:12px 16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;font-size:0.83rem;color:#166534;font-weight:700">
-        ✅ Blueprint generated Â· ${total} total questions Â· ${approved} approved in pool
+         Blueprint generated · ${total} total questions · ${approved} approved in pool
       </div>`;
     } catch(e) {
       container.innerHTML = `<div style="color:#dc2626;padding:16px">Could not generate blueprint: ${e.message}</div>`;
@@ -2110,7 +2110,7 @@ function showAdminToast(msg, type='success') {
 
   async function submitExamWizard() {
     const btn = document.getElementById('wz-btn-submit');
-    if (btn) { btn.disabled = true; btn.textContent = 'Schedulingâ€¦'; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Scheduling…'; }
     try {
       const payload = {
         title:         document.getElementById('newExamTitle').value.trim(),
@@ -2137,9 +2137,9 @@ function showAdminToast(msg, type='success') {
   async function createMockExam() { await submitExamWizard(); }
   window.createMockExam = createMockExam;
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   //   EXAM ACTIONS
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   async function activateExam(id) {
     if (!confirm('Activate this exam? Students will be able to start taking it immediately.')) return;
     try {
@@ -2165,7 +2165,7 @@ function showAdminToast(msg, type='success') {
     const content = document.getElementById('examReportContent');
     if (!modal || !content) return;
     modal.style.display = 'flex';
-    content.innerHTML = '<div style="text-align:center;padding:40px;color:#86efac">Loading reportâ€¦</div>';
+    content.innerHTML = '<div style="text-align:center;padding:40px;color:#86efac">Loading report…</div>';
     try {
       const res = await fetch(
         ((window.API?.getBaseOrigin?.() || window.location.origin) + '/api/analytics/cohort-summary?exam_id=' + id),

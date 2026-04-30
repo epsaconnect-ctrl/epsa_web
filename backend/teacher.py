@@ -2,9 +2,19 @@
 import csv
 import io
 import json
+import logging
 import re
 import secrets
 from datetime import datetime
+
+from datetime import datetime, date
+
+def _serialize_row(row):
+    d = _serialize_row(row)
+    for k, v in d.items():
+        if isinstance(v, (datetime, date)):
+            d[k] = v.isoformat()
+    return d
 
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
@@ -16,6 +26,7 @@ except ImportError:
     from models import get_db
 
 teacher_bp = Blueprint("teacher", __name__)
+logger = logging.getLogger(__name__)
 
 PSYCHOLOGY_CATEGORIES = [
     "Social Psychology",
@@ -79,63 +90,74 @@ def _require_admin(db, uid):
 def _send_teacher_status_email(teacher_row, status, rejection_reason=""):
     if not teacher_row or not teacher_row.get("email"):
         return
-    from email_service import send_email
+    try:
+        from .email_service import send_email
+    except ImportError:
+        from email_service import send_email
 
     teacher_name = (
         f"{teacher_row.get('first_name', '')} {teacher_row.get('father_name', '')}".strip()
         or teacher_row.get("email", "Teacher")
     )
-    if status == "approved":
+    try:
+        if status == "approved":
+            send_email(
+                teacher_row["email"],
+                "EPSA Teacher Application Approved",
+                f"""
+                <html><body style="font-family:Arial,sans-serif;color:#1f2937;line-height:1.7;background:#f6fbf8;padding:20px;">
+                  <div style="max-width:620px;margin:0 auto;background:#ffffff;border:1px solid #d1fae5;border-radius:18px;overflow:hidden;">
+                    <div style="padding:28px 28px 18px;background:linear-gradient(135deg,#0f3d23,#1a6b3c);color:#f0fdf4;">
+                      <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.72;">EPSA Teacher Portal</div>
+                      <h2 style="margin:10px 0 0;font-size:28px;line-height:1.2;">Application Approved</h2>
+                    </div>
+                    <div style="padding:28px;">
+                      <p>Hello <strong>{teacher_name}</strong>,</p>
+                      <p>Your EPSA teacher application has been <strong style="color:#15803d;">approved</strong>. You can now sign in to the teacher portal using the same email and password you used during registration.</p>
+                      <div style="margin:22px 0;padding:18px;border-radius:14px;background:#f0fdf4;border:1px solid #bbf7d0;">
+                        <div style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#166534;margin-bottom:10px;">Login Details</div>
+                        <div style="margin-bottom:8px;"><strong>Email:</strong> {teacher_row["email"]}</div>
+                        <div><strong>Password:</strong> The password you created during teacher registration</div>
+                      </div>
+                      <p>Once you log in, you can submit questions, manage your question drafts, and track review status from the portal.</p>
+                      <p style="margin-top:24px;color:#4b5563;">Thank you for contributing to EPSA's national psychology question bank.</p>
+                    </div>
+                  </div>
+                </body></html>
+                """,
+            )
+            return
+
         send_email(
             teacher_row["email"],
-            "EPSA Teacher Application Approved",
+            "EPSA Teacher Application Update",
             f"""
-            <html><body style="font-family:Arial,sans-serif;color:#1f2937;line-height:1.7;background:#f6fbf8;padding:20px;">
-              <div style="max-width:620px;margin:0 auto;background:#ffffff;border:1px solid #d1fae5;border-radius:18px;overflow:hidden;">
-                <div style="padding:28px 28px 18px;background:linear-gradient(135deg,#0f3d23,#1a6b3c);color:#f0fdf4;">
+            <html><body style="font-family:Arial,sans-serif;color:#1f2937;line-height:1.7;background:#fff7f7;padding:20px;">
+              <div style="max-width:620px;margin:0 auto;background:#ffffff;border:1px solid #fecaca;border-radius:18px;overflow:hidden;">
+                <div style="padding:28px 28px 18px;background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fef2f2;">
                   <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.72;">EPSA Teacher Portal</div>
-                  <h2 style="margin:10px 0 0;font-size:28px;line-height:1.2;">Application Approved</h2>
+                  <h2 style="margin:10px 0 0;font-size:28px;line-height:1.2;">Application Update</h2>
                 </div>
                 <div style="padding:28px;">
                   <p>Hello <strong>{teacher_name}</strong>,</p>
-                  <p>Your EPSA teacher application has been <strong style="color:#15803d;">approved</strong>. You can now sign in to the teacher portal using the same email and password you used during registration.</p>
-                  <div style="margin:22px 0;padding:18px;border-radius:14px;background:#f0fdf4;border:1px solid #bbf7d0;">
-                    <div style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#166534;margin-bottom:10px;">Login Details</div>
-                    <div style="margin-bottom:8px;"><strong>Email:</strong> {teacher_row["email"]}</div>
-                    <div><strong>Password:</strong> The password you created during teacher registration</div>
+                  <p>Your EPSA teacher application was not approved at this time.</p>
+                  <div style="margin:22px 0;padding:18px;border-radius:14px;background:#fef2f2;border:1px solid #fecaca;">
+                    <div style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#991b1b;margin-bottom:10px;">Review Note</div>
+                    <div>{rejection_reason or "Please contact the EPSA admin team for more details about the decision."}</div>
                   </div>
-                  <p>Once you log in, you can submit questions, manage your question drafts, and track review status from the portal.</p>
-                  <p style="margin-top:24px;color:#4b5563;">Thank you for contributing to EPSA's national psychology question bank.</p>
+                  <p>You can contact the EPSA administration team if you need clarification or want to reapply with updated information.</p>
                 </div>
               </div>
             </body></html>
             """,
         )
-        return
-
-    send_email(
-        teacher_row["email"],
-        "EPSA Teacher Application Update",
-        f"""
-        <html><body style="font-family:Arial,sans-serif;color:#1f2937;line-height:1.7;background:#fff7f7;padding:20px;">
-          <div style="max-width:620px;margin:0 auto;background:#ffffff;border:1px solid #fecaca;border-radius:18px;overflow:hidden;">
-            <div style="padding:28px 28px 18px;background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fef2f2;">
-              <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.72;">EPSA Teacher Portal</div>
-              <h2 style="margin:10px 0 0;font-size:28px;line-height:1.2;">Application Update</h2>
-            </div>
-            <div style="padding:28px;">
-              <p>Hello <strong>{teacher_name}</strong>,</p>
-              <p>Your EPSA teacher application was not approved at this time.</p>
-              <div style="margin:22px 0;padding:18px;border-radius:14px;background:#fef2f2;border:1px solid #fecaca;">
-                <div style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#991b1b;margin-bottom:10px;">Review Note</div>
-                <div>{rejection_reason or "Please contact the EPSA admin team for more details about the decision."}</div>
-              </div>
-              <p>You can contact the EPSA administration team if you need clarification or want to reapply with updated information.</p>
-            </div>
-          </div>
-        </body></html>
-        """,
-    )
+    except Exception:
+        logger.warning(
+            "[Teacher Email] Manual follow-up required for teacher=%s status=%s",
+            teacher_row.get("email"),
+            status,
+            exc_info=True,
+        )
 
 
 # ── Public categories ──────────────────────────────────────────────────────────
@@ -241,7 +263,7 @@ def teacher_register():
         db.close()
 
     return jsonify({
-        "message": "Teacher application submitted. Admin will review and approve within 24–48 hours.",
+        "message": "Teacher application submitted. Admin will review and approve within 24-48 hours.",
         "status": "pending",
     }), 201
 
@@ -259,14 +281,14 @@ def teacher_stats():
             """
             SELECT
                 COUNT(*) as total,
-                SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) as pending,
-                SUM(CASE WHEN status='approved' THEN 1 ELSE 0 END) as approved,
-                SUM(CASE WHEN status='rejected' THEN 1 ELSE 0 END) as rejected
+                SUM(CASE WHEN COALESCE(status, 'pending')='pending' THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN COALESCE(status, 'pending')='approved' THEN 1 ELSE 0 END) as approved,
+                SUM(CASE WHEN COALESCE(status, 'pending')='rejected' THEN 1 ELSE 0 END) as rejected
             FROM question_bank WHERE submitted_by=?
             """, (uid,)
         ).fetchone()
         cats = db.execute(
-            "SELECT subject_category, COUNT(*) as cnt FROM question_bank WHERE submitted_by=? AND status='approved' GROUP BY subject_category ORDER BY cnt DESC LIMIT 8",
+            "SELECT subject_category, COUNT(*) as cnt FROM question_bank WHERE submitted_by=? AND COALESCE(status, 'pending')='approved' GROUP BY subject_category ORDER BY cnt DESC LIMIT 8",
             (uid,)
         ).fetchall()
     except ValueError as exc:
@@ -301,7 +323,7 @@ def get_my_questions():
         clauses = ["submitted_by=?"]
         params = [uid]
         if status_filter != "all":
-            clauses.append("status=?")
+            clauses.append("COALESCE(status, 'pending')=?")
             params.append(status_filter)
         if category_filter:
             clauses.append("subject_category=?")
@@ -318,7 +340,7 @@ def get_my_questions():
         db.close()
 
     return jsonify({
-        "questions": [dict(r) for r in rows],
+        "questions": [_serialize_row(r) for r in rows],
         "total": total,
         "page": page,
         "per_page": per_page,
@@ -366,8 +388,9 @@ def submit_question():
             """
             INSERT INTO question_bank (
                 submitted_by, subject_category, topic, subtopic, bloom_level, difficulty,
-                question_text, option_a, option_b, option_c, option_d, correct_idx, explanation
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+                question_text, option_a, option_b, option_c, option_d, correct_idx, explanation,
+                status, created_at, updated_at
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,DATETIME('now'),DATETIME('now'))
             """,
             (
                 uid,
@@ -383,6 +406,7 @@ def submit_question():
                 data["option_d"].strip(),
                 correct_idx,
                 data.get("explanation", "").strip(),
+                "pending",
             ),
         )
         db.commit()
@@ -430,7 +454,7 @@ def bulk_submit_questions():
                     raise ValueError(f"Invalid category: {q['subject_category']}")
                 correct_idx = int(q["correct_idx"])
                 if correct_idx not in (0, 1, 2, 3):
-                    raise ValueError("correct_idx must be 0–3")
+                    raise ValueError("correct_idx must be 0-3")
                 existing = db.execute(
                     "SELECT id FROM question_bank WHERE submitted_by=? AND LOWER(question_text)=LOWER(?)",
                     (uid, q["question_text"].strip())
@@ -442,8 +466,9 @@ def bulk_submit_questions():
                     """
                     INSERT INTO question_bank (
                         submitted_by, subject_category, topic, subtopic, bloom_level, difficulty,
-                        question_text, option_a, option_b, option_c, option_d, correct_idx, explanation
-                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+                        question_text, option_a, option_b, option_c, option_d, correct_idx, explanation,
+                        status, created_at, updated_at
+                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,DATETIME('now'),DATETIME('now'))
                     """,
                     (
                         uid,
@@ -459,6 +484,7 @@ def bulk_submit_questions():
                         q["option_d"].strip(),
                         correct_idx,
                         q.get("explanation", "").strip(),
+                        "pending",
                     ),
                 )
                 inserted += 1
@@ -495,7 +521,7 @@ def admin_list_questions():
         clauses = []
         params = []
         if status_filter != "all":
-            clauses.append("q.status=?")
+            clauses.append("COALESCE(q.status, 'pending')=?")
             params.append(status_filter)
         if category_filter:
             clauses.append("q.subject_category=?")
@@ -518,16 +544,16 @@ def admin_list_questions():
         stats = db.execute(
             """SELECT
                 COUNT(*) as total,
-                SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) as pending,
-                SUM(CASE WHEN status='approved' THEN 1 ELSE 0 END) as approved,
-                SUM(CASE WHEN status='rejected' THEN 1 ELSE 0 END) as rejected
+                SUM(CASE WHEN COALESCE(status, 'pending')='pending' THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN COALESCE(status, 'pending')='approved' THEN 1 ELSE 0 END) as approved,
+                SUM(CASE WHEN COALESCE(status, 'pending')='rejected' THEN 1 ELSE 0 END) as rejected
                FROM question_bank"""
         ).fetchone()
     finally:
         db.close()
 
     return jsonify({
-        "questions": [dict(r) for r in rows],
+        "questions": [_serialize_row(r) for r in rows],
         "total": total,
         "page": page,
         "per_page": per_page,
@@ -630,7 +656,7 @@ def admin_list_teachers():
         ).fetchall()
     finally:
         db.close()
-    return jsonify({"teachers": [dict(r) for r in rows]})
+    return jsonify({"teachers": [_serialize_row(r) for r in rows]})
 
 
 @teacher_bp.route("/admin/teachers/<int:tid>/approve", methods=["POST"])

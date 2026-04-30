@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="EPSA Verified Clubs — A national directory of Ethiopian Psychology Students' Association university chapters across Ethiopia.">
-  <title>EPSA Clubs — National Network</title>
+  <meta name="description" content="EPSA Verified Clubs  A national directory of Ethiopian Psychology Students' Association university chapters across Ethiopia.">
+  <title>EPSA Clubs  National Network</title>
   <link rel="icon" type="image/png" href="assets/logo.png">
   <link rel="stylesheet" href="css/globals.css">
   <link rel="stylesheet" href="css/home.css">
@@ -408,11 +408,11 @@
 <!-- FILTER BAR -->
 <div class="clubs-filter-bar">
   <div class="clubs-filter-inner">
-    <input type="text" class="clubs-search" placeholder="ðŸ” Search clubs by name or universityâ€¦" id="clubSearchInput" oninput="filterClubs()">
+    <input type="text" class="clubs-search" placeholder=" Search clubs by name or university…" id="clubSearchInput" oninput="filterClubs()">
     <select class="uni-filter" id="uniFilter" onchange="filterClubs()">
       <option value="">All Universities</option>
     </select>
-    <div style="font-size:0.8rem;color:rgba(255,255,255,0.4);" id="clubCountLabel">Loadingâ€¦</div>
+    <div style="font-size:0.8rem;color:rgba(255,255,255,0.4);" id="clubCountLabel">Loading…</div>
   </div>
 </div>
 
@@ -427,8 +427,8 @@
   </div>
   <div class="clubs-grid" id="clubsGrid">
     <div class="empty-state">
-      <div class="empty-state-icon">â³</div>
-      <h3>Loading clubsâ€¦</h3>
+      <div class="empty-state-icon"></div>
+      <h3>Loading clubs…</h3>
     </div>
   </div>
 </div>
@@ -439,16 +439,16 @@
     <div class="club-modal-header">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div style="display:flex;gap:16px;align-items:flex-start;">
-          <div style="width:64px;height:64px;border-radius:18px;overflow:hidden;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0;" id="modalLogo">ðŸ›ï¸</div>
+          <div style="width:64px;height:64px;border-radius:18px;overflow:hidden;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0;" id="modalLogo"></div>
           <div>
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
               <h2 style="font-family:var(--font-display);font-weight:900;font-size:1.5rem;" id="modalName">Club</h2>
-              <span class="verified-badge">✅ Verified</span>
+              <span class="verified-badge"> Verified</span>
             </div>
             <div style="color:var(--epsa-gold);font-size:0.85rem;font-weight:600;" id="modalUni">University</div>
           </div>
         </div>
-        <button onclick="closeClubModal()" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:0.85rem;">âœ•</button>
+        <button onclick="closeClubModal()" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:0.85rem;">✕</button>
       </div>
     </div>
     <div class="club-modal-body">
@@ -466,7 +466,7 @@
       <!-- About Tab -->
       <div class="modal-tab-content active" id="mtab-about">
         <p style="color:rgba(255,255,255,0.6);font-size:0.9rem;line-height:1.7;margin-bottom:20px;" id="modalDesc">Description</p>
-        <a href="login.html" class="btn btn-primary" style="width:100%;display:block;text-align:center;">🎓 Join This Club</a>
+        <a href="login.html" class="btn btn-primary" style="width:100%;display:block;text-align:center;"> Join This Club</a>
       </div>
 
       <!-- Leadership Tab -->
@@ -500,7 +500,7 @@
     } catch(e) {
       document.getElementById('clubsGrid').innerHTML = `
         <div class="empty-state">
-          <div class="empty-state-icon">🌐</div>
+          <div class="empty-state-icon"></div>
           <h3>Clubs loading offline</h3>
           <p>Start the EPSA backend to see verified clubs.</p>
         </div>`;
@@ -531,7 +531,7 @@
     const grid = document.getElementById('clubsGrid');
     document.getElementById('clubCountLabel').textContent = `${clubs.length} club${clubs.length !== 1 ? 's' : ''} found`;
     if (!clubs.length) {
-      grid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">ðŸ”</div><h3>No clubs match</h3><p>Try a different search or university filter.</p></div>`;
+      grid.innerHTML = `<div class="empty-state"><div class="empty-state-icon"></div><h3>No clubs match</h3><p>Try a different search or university filter.</p></div>`;
       return;
     }
     grid.innerHTML = clubs.map(c => {
@@ -544,20 +544,20 @@
         <div class="club-card-banner" style="background:linear-gradient(135deg,#1a4c2a,var(--epsa-green));">
           ${hasActivity ? '<div class="active-indicator"><div class="dot"></div> Active</div>' : ''}
           <div class="club-card-logo">
-            ${c.logo_url ? `<img src="${API}${c.logo_url}" style="width:100%;height:100%;object-fit:cover;">` : 'ðŸ›ï¸'}
+            ${c.logo_url ? `<img src="${API}${c.logo_url}" style="width:100%;height:100%;object-fit:cover;">` : ''}
           </div>
         </div>
         <div class="club-card-body">
           <div class="club-name-row">
             <div class="club-name">${c.name}</div>
-            <span class="verified-badge">✅ Verified</span>
+            <span class="verified-badge"> Verified</span>
           </div>
-          <div class="club-university">ðŸ« ${c.university}</div>
+          <div class="club-university"> ${c.university}</div>
           <div class="club-desc">${c.description || 'No description provided.'}</div>
           <div class="club-meta">
-            <span>👥 ${c.live_member_count || c.member_count || 0} members</span>
-            <span>â¤ï¸ ${c.follower_count || 0} followers</span>
-            ${c.year_established ? `<span>📝… Est. ${c.year_established}</span>` : ''}
+            <span> ${c.live_member_count || c.member_count || 0} members</span>
+            <span> ${c.follower_count || 0} followers</span>
+            ${c.year_established ? `<span> Est. ${c.year_established}</span>` : ''}
           </div>
           ${leaderHtml ? `<div class="club-leaders-strip" style="margin-top:10px;">${leaderHtml}</div>` : ''}
         </div>
@@ -589,9 +589,9 @@
 
       document.getElementById('modalLogo').innerHTML = club.logo_url
         ? `<img src="${API}${club.logo_url}" style="width:100%;height:100%;object-fit:cover;">`
-        : 'ðŸ›ï¸';
+        : '';
       document.getElementById('modalName').textContent = club.name;
-      document.getElementById('modalUni').textContent  = 'ðŸ« ' + club.university;
+      document.getElementById('modalUni').textContent  = ' ' + club.university;
       document.getElementById('modalDesc').textContent = club.description || 'No description.';
 
       // Stats
@@ -621,7 +621,7 @@
           return `
           <div style="display:flex;align-items:center;gap:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px 18px;">
             <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,${color}30,${color}10);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">
-              ${l.role === 'president' ? 'ðŸ‘‘' : l.role === 'secretary' ? '📝‹' : 'â­'}
+              ${l.role === 'president' ? '👑' : l.role === 'secretary' ? '' : ''}
             </div>
             <div style="flex:1;">
               <div style="font-weight:700;font-size:0.92rem;">${l.first_name} ${l.father_name}</div>

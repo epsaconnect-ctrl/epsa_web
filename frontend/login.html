@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -37,19 +37,19 @@
 
       <div class="auth-panel-features">
         <div class="auth-feature">
-          <div class="auth-feature-icon">🎓</div>
+          <div class="auth-feature-icon"></div>
           <span>Access exclusive training programs and certifications</span>
         </div>
         <div class="auth-feature">
-          <div class="auth-feature-icon">🗳️</div>
+          <div class="auth-feature-icon"></div>
           <span>Participate in democratic student elections</span>
         </div>
         <div class="auth-feature">
-          <div class="auth-feature-icon">🤝</div>
+          <div class="auth-feature-icon"></div>
           <span>Connect with 1,200+ psychology students nationwide</span>
         </div>
         <div class="auth-feature">
-          <div class="auth-feature-icon">📝</div>
+          <div class="auth-feature-icon"></div>
           <span>Take secure, certified national examinations</span>
         </div>
       </div>
@@ -65,7 +65,7 @@
       <div class="auth-form-header">
         <h1 class="auth-form-title">Sign In</h1>
         <p class="auth-form-subtitle">
-          New to EPSA? <a href="register.html" id="go-register">Register as a Student</a> &nbsp;Â·&nbsp; <a href="teacher-register.html" style="color:#f59e0b;font-weight:600">Join as a Teacher</a>
+          New to EPSA? <a href="register.html" id="go-register">Register as a Student</a> &nbsp;·&nbsp; <a href="teacher-register.html" style="color:#f59e0b;font-weight:600">Join as a Teacher</a>
         </p>
       </div>
 
@@ -81,7 +81,7 @@
               autocomplete="username"
               required>
             <div class="form-error" id="username-error" style="display:none;">
-              âš  Please enter your email, phone number, username, or student ID
+              ⚠ Please enter your email, phone number, username, or student ID
             </div>
           </div>
 
@@ -101,11 +101,11 @@
                 id="togglePassword"
                 style="position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:1rem; color:var(--text-muted);"
                 aria-label="Toggle password visibility">
-                ðŸ‘ï¸
+                
               </button>
             </div>
             <div class="form-error" id="password-error" style="display:none;">
-              âš  Please enter your password
+              ⚠ Please enter your password
             </div>
           </div>
 
@@ -134,7 +134,7 @@
             <a href="admin/login.html" style="font-size:0.8rem; color:var(--text-muted); text-decoration:none; transition:var(--transition-fast);"
                onmouseover="this.style.color='var(--epsa-green)'"
                onmouseout="this.style.color='var(--text-muted)'">
-              ðŸ” Admin / Staff Login
+               Admin / Staff Login
             </a>
           </div>
         </form>
@@ -183,16 +183,16 @@
       <div>
         <div class="face-login-kicker">Secure Identity Access</div>
         <h2 class="face-login-title">Face Sign-In</h2>
-        <p class="face-login-subtitle">Complete the guided liveness scan (same steps as registration). EPSA then compares your live capture to your <strong>enrolled profile photo</strong> first—only the account that photo belongs to can open.</p>
+        <p class="face-login-subtitle">Complete the guided liveness scan (same steps as registration). EPSA then compares your live capture to your <strong>enrolled profile photo</strong> firstonly the account that photo belongs to can open.</p>
         <div class="face-login-trust-banner" role="status">
-          <div class="face-login-trust-icon" aria-hidden="true">ðŸ›¡ï¸</div>
+          <div class="face-login-trust-icon" aria-hidden="true">🛡</div>
           <div class="face-login-trust-copy">
             <strong>Photo-first identity</strong>
-            <span>Wrong faces are rejected before any account is chosen—just like the registration face-verify step.</span>
+            <span>Wrong faces are rejected before any account is chosenjust like the registration face-verify step.</span>
           </div>
         </div>
       </div>
-      <button type="button" class="face-login-close" id="closeFaceLoginBtn" aria-label="Close face login">Ã—</button>
+      <button type="button" class="face-login-close" id="closeFaceLoginBtn" aria-label="Close face login">×</button>
     </div>
 
     <div class="face-login-layout">
@@ -253,7 +253,7 @@
             <img id="faceLoginProfileImage" class="face-login-profile-image" alt="Verified EPSA profile">
             <div class="face-login-profile-copy">
               <div class="face-login-profile-name" id="faceLoginProfileName">Student Name</div>
-              <div class="face-login-profile-meta" id="faceLoginProfileMeta">University â€¢ Academic year</div>
+              <div class="face-login-profile-meta" id="faceLoginProfileMeta">University • Academic year</div>
               <div class="face-login-profile-details" id="faceLoginProfileDetails">Student details</div>
               <div class="face-login-profile-pill" id="faceLoginSuccessNote">Verified identity. Redirecting to your portal...</div>
             </div>
@@ -286,7 +286,7 @@
             <div class="face-card-kicker">Verified Identity</div>
             <img id="faceLoginSuccessImage" class="face-login-success-image" alt="Verified EPSA profile">
             <div class="face-login-success-name" id="faceLoginSuccessName">Student Name</div>
-            <div class="face-login-success-meta" id="faceLoginSuccessMeta">University â€¢ Academic year</div>
+            <div class="face-login-success-meta" id="faceLoginSuccessMeta">University • Academic year</div>
             <div class="face-login-success-details" id="faceLoginSuccessDetails">Student details</div>
             <div class="face-login-success-countdown" id="faceLoginSuccessCountdown">Entering portal in 5s...</div>
           </div>
@@ -303,8 +303,8 @@
   document.getElementById('togglePassword').addEventListener('click', () => {
     const pw = document.getElementById('login-password');
     const btn = document.getElementById('togglePassword');
-    if (pw.type === 'password') { pw.type = 'text'; btn.textContent = 'ðŸ™ˆ'; }
-    else { pw.type = 'password'; btn.textContent = 'ðŸ‘ï¸'; }
+    if (pw.type === 'password') { pw.type = 'text'; btn.textContent = '🙈'; }
+    else { pw.type = 'password'; btn.textContent = ''; }
   });
   document.getElementById('forgotPasswordLink').addEventListener('click', (e) => {
     e.preventDefault();

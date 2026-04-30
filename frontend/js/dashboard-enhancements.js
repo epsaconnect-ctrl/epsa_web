@@ -86,7 +86,7 @@
                 <span class="soft-badge ${data.connected ? 'green' : 'blue'}">${data.connected ? 'Connected' : 'EPSA Member'}</span>
               </div>
               <div style="font-size:0.86rem;color:var(--text-muted);line-height:1.7;">
-                ${html(data.university || 'University not set')} · ${html(data.program_type || 'Program not set')} · Year ${html(data.academic_year || '—')}
+                ${html(data.university || 'University not set')}  ${html(data.program_type || 'Program not set')}  Year ${html(data.academic_year || '')}
               </div>
               <div style="font-size:0.84rem;color:var(--text-secondary);margin-top:10px;line-height:1.75;">${html(data.bio || 'This student has not written a profile summary yet.')}</div>
             </div>
@@ -97,7 +97,7 @@
             <h4 style="margin-bottom:10px;">Academic Snapshot</h4>
             <div style="font-size:0.84rem;color:var(--text-secondary);line-height:1.8;">
               <div><strong>Field:</strong> ${html(data.field_of_study || 'Psychology')}</div>
-              <div><strong>EPSA ID:</strong> ${html(data.student_id || '—')}</div>
+              <div><strong>EPSA ID:</strong> ${html(data.student_id || '')}</div>
               <div><strong>LinkedIn:</strong> ${data.linkedin ? `<a href="${html(data.linkedin)}" target="_blank" rel="noreferrer">Open profile</a>` : 'Not added'}</div>
             </div>
           </div>
@@ -107,7 +107,7 @@
               ${(data.clubs || []).length ? data.clubs.map(club => `
                 <div style="padding:10px 12px;border-radius:14px;background:var(--light-50);border:1px solid var(--light-200);">
                   <div style="font-weight:700;font-size:0.84rem;">${html(club.name)}</div>
-                  <div style="font-size:0.76rem;color:var(--text-muted);">${html(club.role || 'member')} · ${html(club.university || '')}</div>
+                  <div style="font-size:0.76rem;color:var(--text-muted);">${html(club.role || 'member')}  ${html(club.university || '')}</div>
                 </div>
               `).join('') : '<div style="font-size:0.82rem;color:var(--text-muted);">No clubs joined yet.</div>'}
             </div>
@@ -147,8 +147,8 @@
 
     if (!byId('ctab-requests')) {
       tabs.insertAdjacentHTML('beforeend', `
-        <span class="pill-tab" data-extra-tab="requests" onclick="switchConsoleTab('requests',this)">📝 Applications</span>
-        <span class="pill-tab" data-extra-tab="support" onclick="switchConsoleTab('support',this)">🤲 Support</span>
+        <span class="pill-tab" data-extra-tab="requests" onclick="switchConsoleTab('requests',this)"> Applications</span>
+        <span class="pill-tab" data-extra-tab="support" onclick="switchConsoleTab('support',this)"> Support</span>
       `);
       contentWrap.insertAdjacentHTML('beforeend', `
         <div id="ctab-requests" style="display:none;">
@@ -203,7 +203,7 @@
           <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;">
             <div>
               <div style="font-weight:800;font-size:0.92rem;">${html(row.name)}</div>
-              <div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">${html(row.student_id)} · ${html(row.university)} · Applied ${timeAgo(row.requested_at)}</div>
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">${html(row.student_id)}  ${html(row.university)}  Applied ${timeAgo(row.requested_at)}</div>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
               <button class="btn btn-primary btn-sm" onclick="approveJoinRequest(${clubId}, ${row.id})">Approve</button>
@@ -347,7 +347,7 @@
                 <span class="soft-badge blue">${html(club.my_role || 'member')}</span>
                 ${club.joinRequests?.length ? `<span class="soft-badge gold">${club.joinRequests.length} pending applications</span>` : ''}
               </div>
-              <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:10px;">${html(club.university)} · ${club.member_count || club.live_member_count || 0} members</div>
+              <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:10px;">${html(club.university)}  ${club.member_count || club.live_member_count || 0} members</div>
               <div style="font-size:0.84rem;color:var(--text-secondary);line-height:1.7;margin-bottom:12px;">${html(club.description || 'This chapter is active in the EPSA ecosystem and shares updates with its members here.')}</div>
               <div class="club-activity-stack">
                 ${(club.activities || []).slice(0, 2).map(activity => `
@@ -371,7 +371,7 @@
         </div>
       `).join('') : `
         <div class="glass-inline-card" style="text-align:center;">
-          <div style="font-size:2rem;margin-bottom:10px;">🏛️</div>
+          <div style="font-size:2rem;margin-bottom:10px;"></div>
           <div style="font-weight:800;margin-bottom:6px;">You have not joined a club yet</div>
           <div style="font-size:0.84rem;color:var(--text-muted);">Apply to a chapter from your university below, or register a new club if your campus does not have one yet.</div>
         </div>
@@ -401,7 +401,7 @@
                 <strong>${html(club.name)}</strong>
                 <span class="soft-badge green">Verified</span>
               </div>
-              <div style="font-size:0.76rem;color:var(--text-muted);margin-top:4px;">${html(club.university)} · ${club.member_count || club.live_member_count || 0} members · ${club.follower_count || 0} followers</div>
+              <div style="font-size:0.76rem;color:var(--text-muted);margin-top:4px;">${html(club.university)}  ${club.member_count || club.live_member_count || 0} members  ${club.follower_count || 0} followers</div>
             </div>
           </div>
           <div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.7;margin-bottom:14px;">${html(club.description || 'Active EPSA club building campus-level psychology community and professional development.')}</div>
@@ -528,7 +528,7 @@
             </div>
             <div style="flex:1;">
               <h4 style="margin:0 0 4px 0;">${html(student.first_name)} ${html(student.father_name)}</h4>
-              <div style="font-size:0.78rem;color:var(--text-muted);">${html(student.university)} · ${html(student.program_type || 'Psychology')}</div>
+              <div style="font-size:0.78rem;color:var(--text-muted);">${html(student.university)}  ${html(student.program_type || 'Psychology')}</div>
               <div style="font-size:0.76rem;color:var(--text-secondary);margin-top:6px;">${html(student.bio || 'EPSA member ready to connect with peers across the network.')}</div>
             </div>
           </div>
@@ -544,7 +544,7 @@
           <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:8px;">
             <div>
               <h4 style="margin:0 0 4px 0;">${html(club.name)}</h4>
-              <div style="font-size:0.78rem;color:var(--text-muted);">${html(club.university)} · ${club.member_count || 0} members</div>
+              <div style="font-size:0.78rem;color:var(--text-muted);">${html(club.university)}  ${club.member_count || 0} members</div>
             </div>
             <span class="soft-badge green">Club</span>
           </div>
@@ -592,18 +592,18 @@
                   <strong>${authorName}</strong>
                   ${clubLabel}
                 </div>
-                <div style="font-size:0.76rem;color:var(--text-muted);margin-top:4px;">${authorUni} · ${timeAgo(post.created_at)}</div>
+                <div style="font-size:0.76rem;color:var(--text-muted);margin-top:4px;">${authorUni}  ${timeAgo(post.created_at)}</div>
               </div>
             </div>
-            ${String(post.user_id) === String(me.id || '') ? `<button onclick="deletePost(${post.id})" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:6px;">🗑️</button>` : ''}
+            ${String(post.user_id) === String(me.id || '') ? `<button onclick="deletePost(${post.id})" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:6px;"></button>` : ''}
           </div>
           <div style="margin-top:14px;font-size:0.88rem;line-height:1.75;color:var(--text-primary);white-space:pre-wrap;">${html(post.content)}</div>
         </div>
         ${post.image_url ? `<img src="${API.toAbsoluteUrl(post.image_url)}" style="width:100%;max-height:380px;object-fit:cover;border-top:1px solid var(--light-100);border-bottom:1px solid var(--light-100);">` : ''}
         <div style="display:flex;gap:8px;flex-wrap:wrap;padding:14px 20px;">
-          <button onclick="toggleLike(${post.id}, this)" style="display:flex;align-items:center;gap:6px;border-radius:12px;padding:8px 14px;border:1px solid ${post.user_liked ? 'rgba(22,163,74,0.3)' : 'var(--light-200)'};background:${post.user_liked ? 'rgba(22,163,74,0.08)' : 'transparent'};color:${post.user_liked ? 'var(--epsa-green)' : 'var(--text-muted)'};cursor:pointer;">🤍 <span id="likes-${post.id}">${post.likes || 0}</span></button>
-          <button onclick="toggleComments(${post.id})" class="btn btn-ghost btn-sm">💬 ${post.comment_count || 0}</button>
-          <button onclick="shareNetworkPost(${post.id})" class="btn btn-ghost btn-sm">🔄 Share</button>
+          <button onclick="toggleLike(${post.id}, this)" style="display:flex;align-items:center;gap:6px;border-radius:12px;padding:8px 14px;border:1px solid ${post.user_liked ? 'rgba(22,163,74,0.3)' : 'var(--light-200)'};background:${post.user_liked ? 'rgba(22,163,74,0.08)' : 'transparent'};color:${post.user_liked ? 'var(--epsa-green)' : 'var(--text-muted)'};cursor:pointer;"> <span id="likes-${post.id}">${post.likes || 0}</span></button>
+          <button onclick="toggleComments(${post.id})" class="btn btn-ghost btn-sm"> ${post.comment_count || 0}</button>
+          <button onclick="shareNetworkPost(${post.id})" class="btn btn-ghost btn-sm"> Share</button>
           ${profileButton}
           ${messageButton}
         </div>
@@ -695,7 +695,7 @@
           <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
             <div>
               <div style="font-weight:700;font-size:0.83rem;">${html(club.name)}</div>
-              <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">${club.live_member_count || club.member_count || 0} members · ${club.follower_count || 0} followers</div>
+              <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">${club.live_member_count || club.member_count || 0} members  ${club.follower_count || 0} followers</div>
             </div>
             <span class="soft-badge green">Club</span>
           </div>
@@ -735,7 +735,7 @@
     if (nav && !nav.querySelector('[data-section="representative"]')) {
       const votingBtn = nav.querySelector('[data-section="voting"]');
       votingBtn?.insertAdjacentHTML('afterend', `
-        <button class="sidebar-link" data-section="representative" style="display:none;" onclick="switchSection('representative')"><span class="sidebar-link-icon">ðŸ›ï¸</span> NRC Portal</button>
+        <button class="sidebar-link" data-section="representative" style="display:none;" onclick="switchSection('representative')"><span class="sidebar-link-icon"></span> NRC Portal</button>
       `);
     }
     const content = document.querySelector('.dash-content');
@@ -753,7 +753,7 @@
             </div>
           </div>
           <div id="representativePortalRoot">
-            <div class="glass-inline-card" style="padding:24px;text-align:center;color:var(--text-muted);">Loading representative portal…</div>
+            <div class="glass-inline-card" style="padding:24px;text-align:center;color:var(--text-muted);">Loading representative portal</div>
           </div>
         </section>
       `;
@@ -777,8 +777,8 @@
     root.innerHTML = `
       <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:16px;">
         <div class="admin-detail-card"><div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">University</div><div style="font-family:var(--font-display);font-weight:900;font-size:1.15rem;">${html(member.university || '')}</div></div>
-        <div class="admin-detail-card"><div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Term Start</div><div style="font-family:var(--font-display);font-weight:900;font-size:1.15rem;">${member.term_start ? new Date(member.term_start).toLocaleDateString() : '—'}</div></div>
-        <div class="admin-detail-card"><div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Term End</div><div style="font-family:var(--font-display);font-weight:900;font-size:1.15rem;">${member.term_end ? new Date(member.term_end).toLocaleDateString() : '—'}</div></div>
+        <div class="admin-detail-card"><div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Term Start</div><div style="font-family:var(--font-display);font-weight:900;font-size:1.15rem;">${member.term_start ? new Date(member.term_start).toLocaleDateString() : ''}</div></div>
+        <div class="admin-detail-card"><div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Term End</div><div style="font-family:var(--font-display);font-weight:900;font-size:1.15rem;">${member.term_end ? new Date(member.term_end).toLocaleDateString() : ''}</div></div>
         <div class="admin-detail-card"><div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Status</div><div style="font-family:var(--font-display);font-weight:900;font-size:1.15rem;">${html(member.status || 'active')}</div></div>
         <div class="admin-detail-card"><div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Election Eligibility</div><div style="font-family:var(--font-display);font-weight:900;font-size:1.15rem;">${html(member.eligibility_status || 'eligible')}</div></div>
       </div>
@@ -787,7 +787,7 @@
         <div class="glass-inline-card">
           <div style="font-family:var(--font-display);font-weight:800;font-size:1rem;margin-bottom:10px;">Representative Briefing</div>
           <div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.75;">
-            ${(data.responsibilities || []).map(item => `• ${html(item)}`).join('<br>')}
+            ${(data.responsibilities || []).map(item => ` ${html(item)}`).join('<br>')}
           </div>
           <div style="margin-top:14px;padding:12px 14px;border-radius:16px;background:rgba(26,107,60,0.06);font-size:0.8rem;color:var(--text-secondary);">
             <strong>Mid-term status:</strong> ${html(member.midterm_status || 'pending')}<br>
@@ -818,7 +818,7 @@
               <div style="padding:10px 12px;border-radius:14px;background:var(--light-50);border:1px solid var(--light-200);display:flex;justify-content:space-between;gap:10px;align-items:center;">
                 <div>
                   <div style="font-weight:700;font-size:0.84rem;">${html(item.first_name)} ${html(item.father_name)}</div>
-                  <div style="font-size:0.74rem;color:var(--text-muted);">${html(item.student_id || '—')} • ${html(item.program_type || '')}</div>
+                  <div style="font-size:0.74rem;color:var(--text-muted);">${html(item.student_id || '')}  ${html(item.program_type || '')}</div>
                 </div>
                 <button class="btn btn-ghost btn-sm" onclick="messageStudent(${item.id}, '${html(`${item.first_name} ${item.father_name}`)}', '${html(member.university || '')}')">Message</button>
               </div>
@@ -833,7 +833,7 @@
                 <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;">
                   <div>
                     <div style="font-weight:700;font-size:0.84rem;">${html(item.name)}</div>
-                    <div style="font-size:0.74rem;color:var(--text-muted);">${html(item.university)} • ${html(item.status)}</div>
+                    <div style="font-size:0.74rem;color:var(--text-muted);">${html(item.university)}  ${html(item.status)}</div>
                   </div>
                   <button class="btn btn-ghost btn-sm" onclick="messageStudent(${item.user_id}, '${html(item.name)}', '${html(item.university)}')">Message</button>
                 </div>
@@ -850,7 +850,7 @@
             ${docs.map(item => `
               <div style="padding:10px 12px;border-radius:14px;background:rgba(26,107,60,0.05);border:1px solid rgba(26,107,60,0.1);">
                 <div style="font-weight:700;font-size:0.84rem;">${html(item.title)}</div>
-                <div style="font-size:0.74rem;color:var(--text-muted);">${html(item.document_type || 'report')} • ${item.submitted_at ? new Date(item.submitted_at).toLocaleDateString() : ''}</div>
+                <div style="font-size:0.74rem;color:var(--text-muted);">${html(item.document_type || 'report')}  ${item.submitted_at ? new Date(item.submitted_at).toLocaleDateString() : ''}</div>
               </div>
             `).join('') || '<div style="font-size:0.82rem;color:var(--text-muted);">No representative documents yet.</div>'}
           </div>
@@ -860,14 +860,14 @@
           <div class="club-activity-stack">
             ${cycles.map(item => `
               <div style="padding:10px 12px;border-radius:14px;background:rgba(200,163,64,0.08);border:1px solid rgba(200,163,64,0.16);">
-                <div style="font-weight:700;font-size:0.84rem;">${html(item.body_type)} • ${html(item.cycle_type)}</div>
-                <div style="font-size:0.74rem;color:var(--text-muted);">${html(item.scope_value || item.scope_type || 'national')} • ${html(item.status || 'scheduled')}</div>
+                <div style="font-weight:700;font-size:0.84rem;">${html(item.body_type)}  ${html(item.cycle_type)}</div>
+                <div style="font-size:0.74rem;color:var(--text-muted);">${html(item.scope_value || item.scope_type || 'national')}  ${html(item.status || 'scheduled')}</div>
               </div>
             `).join('')}
             ${(data.announcements || []).slice(0, 4).map(item => `
               <div style="padding:10px 12px;border-radius:14px;background:var(--light-50);border:1px solid var(--light-200);">
                 <div style="font-weight:700;font-size:0.84rem;">${html(item.title)}</div>
-                <div style="font-size:0.74rem;color:var(--text-muted);">${html(item.category || 'Announcement')} • ${item.created_at ? new Date(item.created_at).toLocaleDateString() : ''}</div>
+                <div style="font-size:0.74rem;color:var(--text-muted);">${html(item.category || 'Announcement')}  ${item.created_at ? new Date(item.created_at).toLocaleDateString() : ''}</div>
               </div>
             `).join('') || '<div style="font-size:0.82rem;color:var(--text-muted);">No cycles or announcements available.</div>'}
           </div>
@@ -880,7 +880,7 @@
     const root = byId('representativePortalRoot');
     const navButton = document.querySelector('[data-section="representative"]');
     if (!root) return;
-    root.innerHTML = '<div class="glass-inline-card" style="padding:24px;text-align:center;color:var(--text-muted);">Loading representative portal…</div>';
+    root.innerHTML = '<div class="glass-inline-card" style="padding:24px;text-align:center;color:var(--text-muted);">Loading representative portal</div>';
     try {
       const data = await API.getNRCPortal();
       window._repPortalData = data;

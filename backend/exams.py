@@ -1,6 +1,15 @@
 """EPSA Exams Routes"""
 import json
 from datetime import datetime, timedelta
+from datetime import datetime, date
+
+def _serialize_row(row):
+    d = _serialize_row(row)
+    for k, v in d.items():
+        if isinstance(v, (datetime, date)):
+            d[k] = v.isoformat()
+    return d
+
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 try:
@@ -101,7 +110,7 @@ def list_exams():
     ).fetchall()
     result = []
     for r in rows:
-        e = dict(r)
+        e = _serialize_row(r)
         sub = db.execute("""
             SELECT score, submitted_at, started_at, status, review_status, progress_count, last_activity_at, passed
             FROM exam_submissions
@@ -347,7 +356,7 @@ def get_results(eid):
         passing_mark = float(exam['passing_score'] if exam['passing_score'] is not None else 60)
     except (TypeError, ValueError):
         passing_mark = 60.0
-    out = dict(row)
+    out = _serialize_row(row)
     out['passing_score'] = passing_mark
     pv = out.get('passed')
     out['passed'] = bool(pv) if pv is not None else (float(out.get('score') or 0) >= passing_mark)

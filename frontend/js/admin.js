@@ -1,6 +1,6 @@
-﻿// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// 
 // EPSA ADMIN DASHBOARD JS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// 
 
 let currentAdminSection = 'overview';
 let currentApplicantId  = null;
@@ -65,10 +65,15 @@ function runAdminSectionLoader(section) {
     analytics: () => { if (typeof window.loadAnalyticsDashboard === 'function') window.loadAnalyticsDashboard(); },
   };
   const loader = loaders[section];
-  if (typeof loader === 'function') loader();
+  if (typeof loader === 'function') {
+    Promise.resolve(loader()).catch((error) => {
+      console.error(`Admin section load failed for ${section}`, error);
+      showToast(error?.message || `Failed to load ${adminSectionTitle(section)}`, 'error');
+    });
+  }
 }
 
-// â”€â”€ INIT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── INIT ──────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   relocateDynamicAdminSections();
   const user = API.getUser();
@@ -86,7 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadApplicants('all');
 });
 
-// â”€â”€ CLOCK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── CLOCK ─────────────────────────────────────
 function startClock() {
   const el = document.getElementById('adminDateTime');
   const tick = () => {
@@ -97,7 +102,7 @@ function startClock() {
   tick(); setInterval(tick, 60000);
 }
 
-// â”€â”€ SECTION SWITCH â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── SECTION SWITCH ────────────────────────────
 function switchAdminSection(section) {
   document.querySelectorAll('.admin-section').forEach(s => s.style.display = 'none');
   const target = adminSectionTarget(section);
@@ -118,7 +123,7 @@ window.toggleAdminSidebar = toggleAdminSidebar;
 async function refreshCurrentSection() { await switchAdminSection(currentAdminSection); }
 window.refreshCurrentSection = refreshCurrentSection;
 
-// â”€â”€ STATS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── STATS ─────────────────────────────────────
 async function loadDashboardStats() {
   try {
     const data = await API.adminStats();
@@ -135,7 +140,7 @@ async function loadDashboardStats() {
   }
 }
 
-// â”€â”€ APPLICANTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── APPLICANTS ────────────────────────────────
 
 async function loadApplicants(status = 'pending', tabEl = null) {
   currentApplicantFilter = status;
@@ -191,16 +196,16 @@ function renderToTbody(tbody, applicants, compact) {
       </td>
       <td style="font-size:0.8rem;">${a.university}</td>
       ${!compact ? `<td><span class="badge badge-gray">${a.program_type}</span></td>` : ''}
-      <td style="font-size:0.8rem;">${a.academic_year ? `Year ${a.academic_year}` : '—'}</td>
+      <td style="font-size:0.8rem;">${a.academic_year ? `Year ${a.academic_year}` : ''}</td>
       <td style="font-size:0.78rem;color:var(--text-muted);">${formatDate(a.created_at)}</td>
       <td>${statusBadge(a.status)}</td>
       <td>
         <div class="table-actions">
           <button class="action-btn action-btn-view" onclick="viewApplicant(${a.id})">View</button>
           ${a.status === 'pending' ? `
-            <button class="action-btn action-btn-approve" onclick="quickApprove(${a.id}, this)">✅</button>
-            <button class="action-btn action-btn-reject"  onclick="openRejectModal(${a.id})">âŒ</button>` : ''}
-          <button type="button" class="action-btn action-btn-reject" title="Delete record" onclick="adminDeleteApplicant(${a.id})">ðŸ—‘</button>
+            <button class="action-btn action-btn-approve" onclick="quickApprove(${a.id}, this)">Approve</button>
+            <button class="action-btn action-btn-reject"  onclick="openRejectModal(${a.id})">Reject</button>` : ''}
+          <button type="button" class="action-btn action-btn-reject" title="Delete record" onclick="adminDeleteApplicant(${a.id})">Delete</button>
         </div>
       </td>
     </tr>`).join('');
@@ -338,17 +343,17 @@ function viewApplicant(id) {
     <div style="width:90px;height:90px;border-radius:var(--radius-lg);background:linear-gradient(135deg,var(--epsa-green),var(--epsa-gold));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.8rem;flex-shrink:0;">${a.first_name[0]}${a.father_name[0]}</div>
     <div>
       <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.3rem;">${a.first_name} ${a.father_name}</h3>
-      <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">${a.email} Â· ${a.phone}</div>
+      <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">${a.email} · ${a.phone}</div>
       <div style="margin-top:8px;"><span class="badge ${a.status==='pending'?'status-pending':a.status==='approved'?'status-approved':'status-rejected'}">${a.status.toUpperCase()}</span></div>
     </div>`;
 
   const rows = [
-    ['ðŸ« University', a.university],
-    ['📝‹ Program',    a.program_type],
-    ['📝… Year',       a.academic_year ? `Year ${a.academic_year}` : '—'],
-    ['📝± Phone',      a.phone],
-    ['📝§ Email',      a.email],
-    ['ðŸ—“ï¸ Applied',    formatDate(a.created_at)],
+    [' University', a.university],
+    [' Program',    a.program_type],
+    [' Year',       a.academic_year ? `Year ${a.academic_year}` : ''],
+    [' Phone',      a.phone],
+    [' Email',      a.email],
+    ['🗓 Applied',    formatDate(a.created_at)],
   ];
 
   body.innerHTML = rows.map(([l,v]) => `
@@ -357,7 +362,7 @@ function viewApplicant(id) {
       <span style="font-weight:600;">${v}</span>
     </div>`).join('') +
     `<div style="margin-top:var(--space-4);">
-      <a class="doc-preview-link" href="#" onclick="viewDocument('slips', '${a.reg_slip}'); return false;">📝„ View Registration Slip</a>
+      <a class="doc-preview-link" href="#" onclick="viewDocument('slips', '${a.reg_slip}'); return false;"> View Registration Slip</a>
     </div>`;
 
   const approveBtn = document.getElementById('modalApproveBtn');
@@ -390,9 +395,9 @@ window.closeApplicantModal = closeApplicantModal;
 
 async function quickApprove(id, btn) {
   try { await API.approveApplicant(id); } catch(_) {}
-  if (btn) btn.closest('tr').querySelector('.badge').outerHTML = `<span class="badge status-approved">✅ Approved</span>`;
+  if (btn) btn.closest('tr').querySelector('.badge').outerHTML = `<span class="badge status-approved"> Approved</span>`;
   const a = allApplicants.find(x => x.id === id); if (a) a.status = 'approved';
-  showToast('✅ Student approved! They can now log in.', 'success');
+  showToast('Student approved. Admin should notify the student manually.', 'success');
 }
 window.quickApprove = quickApprove;
 
@@ -400,7 +405,7 @@ async function approveCurrentApplicant() {
   if (!currentApplicantId) return;
   try { await API.approveApplicant(currentApplicantId); } catch(_) {}
   closeApplicantModal();
-  showToast('✅ Student approved!', 'success');
+  showToast('Student approved. Admin should notify the student manually.', 'success');
   const a = allApplicants.find(x => x.id === currentApplicantId); if (a) a.status = 'approved';
   renderApplicantsTable(allApplicants);
   loadDashboardStats();
@@ -424,7 +429,7 @@ async function confirmReject() {
   document.getElementById('rejectModal').classList.remove('active');
   const a = allApplicants.find(x => x.id === id); if (a) a.status = 'rejected';
   renderApplicantsTable(allApplicants);
-  showToast('âŒ Application rejected. Student notified by email.', 'error');
+  showToast('Application rejected. Admin should notify the student manually.', 'error');
   loadDashboardStats();
 }
 window.confirmReject = confirmReject;
@@ -443,7 +448,7 @@ async function adminDeleteApplicant(id) {
 }
 window.adminDeleteApplicant = adminDeleteApplicant;
 
-// â”€â”€ ALL STUDENTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── ALL STUDENTS ──────────────────────────────
 async function loadAllStudents() {
   const tbody = document.getElementById('studentsTbody'); if (!tbody) return;
   let students = [];
@@ -460,13 +465,13 @@ async function loadAllStudents() {
         <div class="table-avatar">${s.first_name[0]}${s.father_name[0]}</div>
         <div><div class="table-primary">${s.first_name} ${s.father_name}</div><div class="table-secondary">${s.email}</div></div>
       </div></td>
-      <td style="font-family:monospace;font-size:0.78rem;">${s.student_id||'—'}</td>
+      <td style="font-family:monospace;font-size:0.78rem;">${s.student_id||''}</td>
       <td style="font-size:0.8rem;">${s.university}</td>
       <td><span class="badge badge-gray">${s.program_type}</span></td>
-      <td style="font-size:0.8rem;">${s.academic_year ? `Year ${s.academic_year}` : '—'}</td>
+      <td style="font-size:0.8rem;">${s.academic_year ? `Year ${s.academic_year}` : ''}</td>
       <td><span class="badge ${s.status==='approved'?'status-approved':s.status==='pending'?'status-pending':'status-rejected'}">${s.status}</span></td>
       <td style="font-size:0.78rem;color:var(--text-muted);">${formatDate(s.created_at)}</td>
-      <td><button type="button" class="action-btn action-btn-reject" onclick="adminDeleteRegisteredStudent(${s.id})">ðŸ—‘ Delete</button></td>
+      <td><button type="button" class="action-btn action-btn-reject" onclick="adminDeleteRegisteredStudent(${s.id})">🗑 Delete</button></td>
     </tr>`).join('');
 }
 
@@ -487,7 +492,7 @@ window.loadAllStudents = loadAllStudents;
 function filterStudentTable(q) { loadAllStudents(); } // simplified
 window.filterStudentTable = filterStudentTable;
 
-// â”€â”€ STUDENT MESSAGES (admin inbox) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── STUDENT MESSAGES (admin inbox) ────────────
 let adminMsgThreads = [];
 let adminMsgActiveId = null;
 
@@ -514,7 +519,7 @@ function renderAdminThreadList() {
       const initials = adminEsc(t.initials || '?');
       return `<button type="button" style="display:flex;width:100%;text-align:left;gap:10px;padding:14px 16px;border:none;border-bottom:1px solid var(--light-200);cursor:pointer;font:inherit;${active}" onclick="adminSelectThread(${t.id})">
         <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--epsa-green),var(--epsa-green-dark));color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:0.75rem;">${initials}</div>
-        <div style="flex:1;min-width:0;"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-weight:700;font-size:0.85rem;">${label}</span>${unread}</div><div style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${preview || '—'}</div></div>
+        <div style="flex:1;min-width:0;"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-weight:700;font-size:0.85rem;">${label}</span>${unread}</div><div style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${preview || ''}</div></div>
       </button>`;
     })
     .join('');
@@ -527,7 +532,7 @@ async function adminLoadThreadMessages(partnerId) {
   const body = document.getElementById('adminMsgBody');
   if (hdr) hdr.textContent = row ? row.full_name || row.name : 'Conversation';
   if (!body) return;
-  body.innerHTML = '<div style="color:var(--text-muted);">Loadingâ€¦</div>';
+  body.innerHTML = '<div style="color:var(--text-muted);">Loading…</div>';
   try {
     const msgs = await API.getMessages(partnerId);
     if (!msgs.length) {
@@ -604,7 +609,7 @@ async function sendAdminThreadMessage() {
 }
 window.sendAdminThreadMessage = sendAdminThreadMessage;
 
-// â”€â”€ TRAININGS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── TRAININGS ─────────────────────────────────
 
 async function loadAdminTrainings() {
   const tbody = document.getElementById('trainingsTbody'); if (!tbody) return;
@@ -617,15 +622,15 @@ async function loadAdminTrainings() {
     tbody.innerHTML = allTrainingsAdmin.map(t => `
     <tr style="opacity:${t.is_active ? 1 : 0.6};">
       <td><div class="table-primary">${t.title}</div>
-        ${!t.is_active ? '<div style="font-size:0.72rem;color:var(--epsa-red);">âš  Inactive</div>' : ''}
+        ${!t.is_active ? '<div style="font-size:0.72rem;color:var(--epsa-red);">⚠ Inactive</div>' : ''}
       </td>
-      <td><span class="badge ${t.format==='online'?'badge-blue':'badge-green'}">${t.format==='online'?'ðŸ’» Online':'📝 In-Person'}</span></td>
-      <td style="font-weight:700;color:var(--epsa-green);">${t.price===0?'🏆“ Free':'ETB '+t.price.toLocaleString()}</td>
+      <td><span class="badge ${t.format==='online'?'badge-blue':'badge-green'}">${t.format==='online'?'💻 Online':' In-Person'}</span></td>
+      <td style="font-weight:700;color:var(--epsa-green);">${t.price===0?' Free':'ETB '+t.price.toLocaleString()}</td>
       <td>${t.applicant_count || 0}</td>
       <td><span class="badge ${t.is_active ? 'status-approved' : 'status-rejected'}">${t.is_active ? 'Active' : 'Inactive'}</span></td>
       <td><div class="table-actions">
         <button class="action-btn action-btn-view" onclick="openEditTraining(${t.id})">Edit</button>
-        <button class="action-btn ${t.is_active ? 'action-btn-reject' : 'action-btn-approve'}" onclick="toggleTrainingStatus(${t.id})">${t.is_active ? 'Deactivate' : 'â–¶ Activate'}</button>
+        <button class="action-btn ${t.is_active ? 'action-btn-reject' : 'action-btn-approve'}" onclick="toggleTrainingStatus(${t.id})">${t.is_active ? 'Deactivate' : '▶ Activate'}</button>
       </div></td>
     </tr>`).join('');
   } catch(e) {
@@ -661,7 +666,7 @@ async function submitEditTraining() {
       price:  parseFloat(document.getElementById('et-price').value) || 0
     });
     document.getElementById('editTrainingModal').classList.remove('active');
-    showToast('🎓 Training updated!', 'success');
+    showToast(' Training updated!', 'success');
     loadAdminTrainings();
   } catch(e) { showToast('Error updating training', 'error'); }
 }
@@ -695,7 +700,7 @@ async function submitCreateTraining() {
       fd.append('description', desc);
       fd.append('format', document.getElementById('ct-format').value);
       fd.append('price', String(parseFloat(document.getElementById('ct-price').value) || 0));
-      fd.append('icon', document.getElementById('ct-icon').value || '🎓');
+      fd.append('icon', document.getElementById('ct-icon').value || '');
       fd.append('cert_title', document.getElementById('ct-cert').value || '');
       fd.append('content_url', document.getElementById('ct-url').value || '');
       fd.append('graphic_caption', (document.getElementById('ct-graphic-caption')?.value || '').trim());
@@ -707,13 +712,13 @@ async function submitCreateTraining() {
         title, description: desc,
         format: document.getElementById('ct-format').value,
         price: parseFloat(document.getElementById('ct-price').value) || 0,
-        icon: document.getElementById('ct-icon').value || '🎓',
+        icon: document.getElementById('ct-icon').value || '',
         cert_title: document.getElementById('ct-cert').value,
         content_url: document.getElementById('ct-url').value,
       });
     }
     document.getElementById('createTrainingModal').classList.remove('active');
-    showToast('🎓 Training program created!', 'success');
+    showToast(' Training program created!', 'success');
     loadAdminTrainings();
   } catch(err) {
     showToast(err.message || 'Failed to create training', 'error');
@@ -721,7 +726,7 @@ async function submitCreateTraining() {
 }
 window.submitCreateTraining = submitCreateTraining;
 
-// â”€â”€ RECEIPTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── RECEIPTS ──────────────────────────────────
 
 async function loadPendingReceipts() {
   const tbody = document.getElementById('receiptsTbody'); if (!tbody) return;
@@ -737,10 +742,10 @@ async function loadPendingReceipts() {
       <td>${r.training_title}</td>
       <td style="font-weight:700;color:var(--epsa-green);">Paid</td>
       <td style="font-size:0.78rem;color:var(--text-muted);">${formatDate(r.submitted_at)}</td>
-      <td><a class="doc-preview-link" href="#" style="font-size:0.8rem;" onclick="viewDocument('receipts', '${r.receipt_path}'); return false;">📝„ View Receipt</a></td>
+      <td><a class="doc-preview-link" href="#" style="font-size:0.8rem;" onclick="viewDocument('receipts', '${r.receipt_path}'); return false;"> View Receipt</a></td>
       <td><div class="table-actions">
-        <button class="action-btn action-btn-approve" onclick="verifyReceiptRow(${r.id},this)">✅ Verify</button>
-        <button class="action-btn action-btn-reject"  onclick="showToast('Receipt rejected','error')">âŒ Reject</button>
+        <button class="action-btn action-btn-approve" onclick="verifyReceiptRow(${r.id},this)"> Verify</button>
+        <button class="action-btn action-btn-reject"  onclick="showToast('Receipt rejected','error')"> Reject</button>
       </div></td>
     </tr>`).join('');
   } catch(err) {
@@ -752,11 +757,11 @@ window.loadPendingReceipts = loadPendingReceipts;
 async function verifyReceiptRow(id, btn) {
   try { await API.verifyReceipt(id); } catch(_) {}
   if (btn) btn.closest('tr').style.opacity = '0.4';
-  showToast('✅ Receipt verified! Student is now registered for the training.', 'success');
+  showToast(' Receipt verified! Student is now registered for the training.', 'success');
 }
 window.verifyReceiptRow = verifyReceiptRow;
 
-// â”€â”€ VOTING ADMIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── VOTING ADMIN ──────────────────────────────
 let _allNominations = [];
 let _nomFilter = 'all';
 let _analyticsRefreshTimer = null;
@@ -788,7 +793,7 @@ function ensureVotingWorkspaceShell() {
   if (controlPanel && !document.getElementById('votingLifecycleBoard')) {
     controlPanel.insertAdjacentHTML('afterbegin', `
       <div id="votingLifecycleBoard" class="governance-launchpad">
-        <div class="governance-loading">Loading election control workspaceâ€¦</div>
+        <div class="governance-loading">Loading election control workspace…</div>
       </div>
     `);
   }
@@ -802,7 +807,7 @@ function ensureVotingWorkspaceShell() {
           <p style="font-size:0.82rem;color:var(--text-muted);margin-top:4px;">Form the executive committee from election results, manage roles, vacancies, handovers, and long-term governance actions in one place.</p>
         </div>
         <div id="executiveDashboardRoot">
-          <div class="glass-inline-card" style="padding:24px;text-align:center;color:var(--text-muted);">Loading executive governance workspaceâ€¦</div>
+          <div class="glass-inline-card" style="padding:24px;text-align:center;color:var(--text-muted);">Loading executive governance workspace…</div>
         </div>
       </div>
       <div id="vpanel-nrc" class="voting-admin-panel" style="display:none;">
@@ -811,7 +816,7 @@ function ensureVotingWorkspaceShell() {
           <p style="font-size:0.82rem;color:var(--text-muted);margin-top:4px;">Sync university winners into the NRC, supervise representative status, and handle replacements and accountability actions without leaving the voting system.</p>
         </div>
         <div id="nrcDashboardRoot">
-          <div class="glass-inline-card" style="padding:24px;text-align:center;color:var(--text-muted);">Loading NRC management workspaceâ€¦</div>
+          <div class="glass-inline-card" style="padding:24px;text-align:center;color:var(--text-muted);">Loading NRC management workspace…</div>
         </div>
       </div>
     `);
@@ -835,7 +840,7 @@ function ensureExamMonitoringShell() {
   if (bodyContainer) {
     bodyContainer.innerHTML = `
       <div id="sub-summary-grid" class="exam-monitor-grid">
-        <div class="governance-loading">Loading exam summaryâ€¦</div>
+        <div class="governance-loading">Loading exam summary…</div>
       </div>
       <div class="exam-monitor-layout">
         <div class="exam-monitor-main">
@@ -845,7 +850,7 @@ function ensureExamMonitoringShell() {
               <div class="exam-monitor-caption">This feed updates while students are inside the exam.</div>
             </div>
             <div id="sub-live-feed" class="exam-live-feed">
-              <div class="governance-loading">Waiting for live exam activityâ€¦</div>
+              <div class="governance-loading">Waiting for live exam activity…</div>
             </div>
           </div>
 
@@ -857,7 +862,7 @@ function ensureExamMonitoringShell() {
             <div style="overflow-x:auto;">
               <table class="data-table">
                 <thead><tr><th>#</th><th>Student</th><th>Status</th><th>Progress</th><th>Score</th><th>Review</th><th>Last Activity</th><th>Submitted</th></tr></thead>
-                <tbody id="sub-tbody"><tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+                <tbody id="sub-tbody"><tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading…</td></tr></tbody>
               </table>
             </div>
           </div>
@@ -868,7 +873,7 @@ function ensureExamMonitoringShell() {
               <div class="exam-monitor-caption">Spot weak questions, popular options, and correctness trends instantly.</div>
             </div>
             <div id="sub-question-grid" class="exam-question-grid">
-              <div class="governance-loading">Building question analyticsâ€¦</div>
+              <div class="governance-loading">Building question analytics…</div>
             </div>
           </div>
         </div>
@@ -1010,7 +1015,7 @@ async function loadVotingAdmin() {
 }
 window.loadVotingAdmin = loadVotingAdmin;
 
-// â”€â”€ Voting Admin Tab Switch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Voting Admin Tab Switch ────────────────────
 function switchVotingTab(tab) {
   ensureVotingWorkspaceShell();
   _currentVotingTab = tab;
@@ -1027,11 +1032,11 @@ function switchVotingTab(tab) {
 }
 window.switchVotingTab = switchVotingTab;
 
-// â”€â”€ Nominations (Card View) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Nominations (Card View) ────────────────────
 async function loadNominationsAdmin() {
   const grid = document.getElementById('nominationCardsGrid');
   if (!grid) return;
-  grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:var(--space-8);">Loading nominationsâ€¦</div>`;
+  grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:var(--space-8);">Loading nominations…</div>`;
   try {
     _allNominations = await API.request('/admin/voting/nominations');
     renderNominationCards(_nomFilter);
@@ -1064,7 +1069,7 @@ function renderNominationCards(filter) {
 
   if (!noms.length) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:var(--space-10);background:white;border-radius:var(--radius-xl);border:1px dashed var(--light-300);">
-      <div style="font-size:2rem;margin-bottom:var(--space-3);">📝‹</div>
+      <div style="font-size:2rem;margin-bottom:var(--space-3);"></div>
       <div style="font-weight:700;color:var(--text-primary);">No nominations found</div>
       <div style="font-size:0.85rem;margin-top:var(--space-2);">No candidates match this filter</div>
     </div>`;
@@ -1072,37 +1077,37 @@ function renderNominationCards(filter) {
   }
 
   const statusBadge = (s) => {
-    if (s === 1)  return `<span class="nom-badge-approved">✅ Approved</span>`;
-    if (s === -1) return `<span class="nom-badge-rejected">âŒ Rejected</span>`;
-    return `<span class="nom-badge-pending">â³ Pending</span>`;
+    if (s === 1)  return `<span class="nom-badge-approved"> Approved</span>`;
+    if (s === -1) return `<span class="nom-badge-rejected"> Rejected</span>`;
+    return `<span class="nom-badge-pending"> Pending</span>`;
   };
 
   grid.innerHTML = noms.map(n => {
     const initials = n.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
-    const statementPreview = (n.statement || 'No statement provided').substring(0, 90) + (n.statement?.length > 90 ? 'â€¦' : '');
+    const statementPreview = (n.statement || 'No statement provided').substring(0, 90) + (n.statement?.length > 90 ? '…' : '');
     return `
     <div class="nomination-card">
       <div class="nomination-card-header">
         <div class="nom-avatar">${initials}</div>
         <div style="flex:1;min-width:0;">
           <div style="font-weight:700;font-size:0.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${n.name}</div>
-          <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">ðŸ« ${n.university}</div>
-          <div style="font-size:0.72rem;color:var(--epsa-gold-dark);margin-top:2px;font-weight:600;">Phase ${n.phase_id} Â· ${n.position || 'Representative'}</div>
+          <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;"> ${n.university}</div>
+          <div style="font-size:0.72rem;color:var(--epsa-gold-dark);margin-top:2px;font-weight:600;">Phase ${n.phase_id} · ${n.position || 'Representative'}</div>
         </div>
         <div>${statusBadge(n.is_approved)}</div>
       </div>
       <div class="nomination-card-body">
         <p style="font-size:0.8rem;color:var(--text-secondary);line-height:1.5;margin-bottom:var(--space-3);">${statementPreview}</p>
         <div style="display:flex;gap:var(--space-2);flex-wrap:wrap;">
-          ${n.manifesto_path ? `<a href="${API.resolveUploadUrl('manifestos', n.manifesto_path)}" target="_blank" style="font-size:0.75rem;padding:4px 10px;background:rgba(37,99,235,0.08);color:#2563eb;border-radius:var(--radius-full);text-decoration:none;font-weight:600;">📝„ Manifesto</a>` : ''}
-          ${n.video_url ? `<a href="${n.video_url}" target="_blank" style="font-size:0.75rem;padding:4px 10px;background:rgba(220,38,38,0.08);color:#dc2626;border-radius:var(--radius-full);text-decoration:none;font-weight:600;">â–¶ï¸ Video</a>` : ''}
+          ${n.manifesto_path ? `<a href="${API.resolveUploadUrl('manifestos', n.manifesto_path)}" target="_blank" style="font-size:0.75rem;padding:4px 10px;background:rgba(37,99,235,0.08);color:#2563eb;border-radius:var(--radius-full);text-decoration:none;font-weight:600;"> Manifesto</a>` : ''}
+          ${n.video_url ? `<a href="${n.video_url}" target="_blank" style="font-size:0.75rem;padding:4px 10px;background:rgba(220,38,38,0.08);color:#dc2626;border-radius:var(--radius-full);text-decoration:none;font-weight:600;">▶ Video</a>` : ''}
           <span style="font-size:0.72rem;color:var(--text-muted);align-self:center;margin-left:auto;">${formatDate(n.nominated_at)}</span>
         </div>
       </div>
       <div class="nomination-card-footer">
         ${n.is_approved === 0 ? `
-          <button class="action-btn action-btn-approve" onclick="approveNomination(${n.id},this)">✅ Approve</button>
-          <button class="action-btn action-btn-reject"  onclick="rejectNomination(${n.id},this)">âŒ Reject</button>
+          <button class="action-btn action-btn-approve" onclick="approveNomination(${n.id},this)"> Approve</button>
+          <button class="action-btn action-btn-reject"  onclick="rejectNomination(${n.id},this)"> Reject</button>
         ` : `<span style="font-size:0.75rem;color:var(--text-muted);">Decision recorded</span>`}
         <button class="action-btn action-btn-view" style="margin-left:auto;" onclick="viewNominationDetail(${n.id})">View Details</button>
       </div>
@@ -1122,7 +1127,7 @@ window.viewNominationDetail = viewNominationDetail;
 async function approveNomination(id, btn) {
   try {
     await API.request(`/admin/voting/nominations/${id}/approve`, {method: 'POST'});
-    showToast('✅ Nomination Approved — candidate is now visible to voters', 'success');
+    showToast(' Nomination Approved  candidate is now visible to voters', 'success');
     loadNominationsAdmin();
   } catch(err) { showToast(err.message, 'error'); }
 }
@@ -1131,13 +1136,13 @@ window.approveNomination = approveNomination;
 async function rejectNomination(id, btn) {
   try {
     await API.request(`/admin/voting/nominations/${id}/reject`, {method: 'POST'});
-    showToast('âŒ Nomination Rejected', 'success');
+    showToast(' Nomination Rejected', 'success');
     loadNominationsAdmin();
   } catch(err) { showToast(err.message, 'error'); }
 }
 window.rejectNomination = rejectNomination;
 
-// â”€â”€ Voting Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Voting Config ──────────────────────────────
 async function loadVotingConfig() {
   const div = document.getElementById('votingConfigForm'); if(!div) return;
   div.innerHTML = `<div style="text-align:center;color:var(--text-muted);padding:var(--space-4);">Loading phases...</div>`;
@@ -1210,7 +1215,7 @@ async function saveVotingConfig(silent = false) {
 window.saveVotingConfig = saveVotingConfig;
 
 async function resetElectionCycle() {
-  const confirm1 = confirm("âš ï¸ DANGER ZONE: Are you sure you want to completely RESET the election?");
+  const confirm1 = confirm("⚠ DANGER ZONE: Are you sure you want to completely RESET the election?");
   if (!confirm1) return;
   const confirm2 = prompt("Type 'RESET' to confirm deleting all votes and nominations:");
   if (confirm2 !== "RESET") {
@@ -1220,7 +1225,7 @@ async function resetElectionCycle() {
   
   try {
     await API.request('/admin/voting/reset', { method: 'POST' });
-    showToast("✅ Election cycle completely reset and cleared.", "success");
+    showToast(" Election cycle completely reset and cleared.", "success");
     loadVotingConfig();
     loadVotingAnalytics();
     if(window.loadNominationsAdmin) loadNominationsAdmin();
@@ -1230,7 +1235,7 @@ async function resetElectionCycle() {
 }
 window.resetElectionCycle = resetElectionCycle;
 
-// â”€â”€ Voting Analytics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Voting Analytics ───────────────────────────
 async function loadVotingAnalytics() {
   try {
     const stats = await API.request('/admin/voting/analytics');
@@ -1242,7 +1247,7 @@ async function loadVotingAnalytics() {
     s('vkpi-turnout', `${stats.turnout_pct}%`);
     s('vkpi-unis',    stats.uni_breakdown.length);
 
-    // Analytics tab — gauge
+    // Analytics tab  gauge
     const gaugePct = document.getElementById('analyticsGaugePct');
     const gaugeBar = document.getElementById('analyticsGaugeBar');
     const votesEl  = document.getElementById('analyticsVotes');
@@ -1250,7 +1255,7 @@ async function loadVotingAnalytics() {
     if (gaugePct) gaugePct.textContent = `${stats.turnout_pct}%`;
     if (gaugeBar) gaugeBar.style.width = `${Math.min(stats.turnout_pct, 100)}%`;
     if (votesEl)  votesEl.textContent  = stats.total_votes;
-    if (eligEl)   eligEl.textContent   = stats.total_students || '—';
+    if (eligEl)   eligEl.textContent   = stats.total_students || '';
 
     // University breakdown bars
     const breakdown = document.getElementById('analyticsUniBreakdown');
@@ -1291,7 +1296,7 @@ async function loadVotingAnalytics() {
 }
 window.loadVotingAnalytics = loadVotingAnalytics;
 
-// â”€â”€ Finalize Phases â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Finalize Phases ────────────────────────────
 async function triggerAutomationPhase(phaseNum) {
   if (!confirm(`Are you sure you want to finalize Phase ${phaseNum}?\n\nThis will:\n${phaseNum===1 ? '- Lock university winners and sync the NRC' : '- Lock the national ranking and build the executive committee'}\n\nThis step cannot be reopened automatically.`)) return;
   try {
@@ -1307,11 +1312,11 @@ async function triggerAutomationPhase(phaseNum) {
 }
 window.triggerAutomationPhase = triggerAutomationPhase;
 
-// â”€â”€ NEB Assignment â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── NEB Assignment ─────────────────────────────
 async function loadNEBCandidates() {
   const container = document.getElementById('nebCandidatesList');
   if (!container) return;
-  container.innerHTML = `<div style="text-align:center;color:var(--text-muted);padding:var(--space-4);">Loading candidatesâ€¦</div>`;
+  container.innerHTML = `<div style="text-align:center;color:var(--text-muted);padding:var(--space-4);">Loading candidates…</div>`;
   try {
     const res = await API.request('/voting/candidates?phase=2');
     const cands = res.candidates || [];
@@ -1335,10 +1340,10 @@ async function loadNEBCandidates() {
           <div style="font-size:0.72rem;color:var(--text-muted);">Director Position</div>
         </div>
         <select class="form-select" id="neb_assign_${idx}" style="font-size:0.85rem;">
-          <option value="">— Select Candidate —</option>
-          ${cands.map(c => `<option value="${c.user_id}">${c.name} (${c.university}) Â· ${c.vote_count} votes</option>`).join('')}
+          <option value=""> Select Candidate </option>
+          ${cands.map(c => `<option value="${c.user_id}">${c.name} (${c.university}) · ${c.vote_count} votes</option>`).join('')}
         </select>
-        <button class="btn btn-sm" style="background:var(--epsa-gold);color:white;border:none;white-space:nowrap;" onclick="assignNEBRole('${r.replace(/'/g,"\\'")}', 'neb_assign_${idx}')">Assign →</button>
+        <button class="btn btn-sm" style="background:var(--epsa-gold);color:white;border:none;white-space:nowrap;" onclick="assignNEBRole('${r.replace(/'/g,"\\'")}', 'neb_assign_${idx}')">Assign </button>
       </div>`).join('');
   } catch(e) {
     container.innerHTML = `<div style="color:red;padding:var(--space-4);">Error loading candidates: ${e.message}</div>`;
@@ -1354,14 +1359,14 @@ async function assignNEBRole(roleName, selectId) {
       method: 'POST',
       body: { user_id: userId, position: roleName, rank: 5 }
     });
-    showToast(`✅ ${roleName} assigned successfully!`, 'success');
+    showToast(` ${roleName} assigned successfully!`, 'success');
   } catch(e) {
     showToast(e.message, 'error');
   }
 }
 window.assignNEBRole = assignNEBRole;
 
-// â”€â”€ EXAMS ADMIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── EXAMS ADMIN ───────────────────────────────
 async function loadAdminExams() {
   const tbody = document.getElementById('examsTbody'); if (!tbody) return;
   try {
@@ -1373,11 +1378,11 @@ async function loadAdminExams() {
     tbody.innerHTML = allExamsAdmin.map(e => {
       let statusBadge, publishBtn;
       if (!e.is_active) {
-        statusBadge = `<span class="badge badge-gray">📝„ Draft</span>`;
-        publishBtn  = `<button class="action-btn action-btn-approve" onclick="publishExamSet(${e.id}, true)">ðŸš€ Publish</button>`;
+        statusBadge = `<span class="badge badge-gray"> Draft</span>`;
+        publishBtn  = `<button class="action-btn action-btn-approve" onclick="publishExamSet(${e.id}, true)">🚀 Publish</button>`;
       } else {
-        statusBadge = `<span class="badge status-approved">✅ Live</span>`;
-        publishBtn  = `<button class="action-btn action-btn-reject" onclick="publishExamSet(${e.id}, false)">â¸ Unpublish</button>`;
+        statusBadge = `<span class="badge status-approved"> Live</span>`;
+        publishBtn  = `<button class="action-btn action-btn-reject" onclick="publishExamSet(${e.id}, false)"> Unpublish</button>`;
       }
       return `
       <tr style="opacity:${e.is_active ? 1 : 0.7};">
@@ -1391,8 +1396,8 @@ async function loadAdminExams() {
         <td>${e.submission_count || 0}</td>
         <td><div class="table-actions" style="flex-wrap:wrap;gap:4px;">
           <button class="action-btn action-btn-view" onclick="openEditExam(${e.id})">Edit</button>
-          <button class="action-btn" style="background:#e8f4ff;color:#1d6fa4;" onclick="openQuestionBuilder(${e.id}, '${e.title.replace(/'/g, "\\'")}')">ðŸ—’ Questions</button>
-          <button class="action-btn" style="background:#f0faf5;color:#1a6b3c;" onclick="openSubmissionsModal(${e.id})">📊 Results</button>
+          <button class="action-btn" style="background:#e8f4ff;color:#1d6fa4;" onclick="openQuestionBuilder(${e.id}, '${e.title.replace(/'/g, "\\'")}')">🗒 Questions</button>
+          <button class="action-btn" style="background:#f0faf5;color:#1a6b3c;" onclick="openSubmissionsModal(${e.id})"> Results</button>
           ${publishBtn}
         </div></td>
       </tr>`;
@@ -1421,7 +1426,7 @@ async function submitCreateExam() {
       questions: [],
     });
     document.getElementById('createExamModal').classList.remove('active');
-    showToast('📝 Examination created!', 'success');
+    showToast(' Examination created!', 'success');
     loadAdminExams();
   } catch(err) { 
     showToast(err.message || 'Error creating exam', 'error'); 
@@ -1457,7 +1462,7 @@ async function submitEditExam() {
       passing_score: Number.isFinite(passing) ? passing : 60,
     });
     document.getElementById('editExamModal').classList.remove('active');
-    showToast('📝 Examination updated!', 'success');
+    showToast(' Examination updated!', 'success');
     loadAdminExams();
   } catch(e) { showToast('Error updating exam', 'error'); }
 }
@@ -1466,7 +1471,7 @@ window.submitEditExam = submitEditExam;
 async function publishExamSet(id, active) {
   try {
     const res = await API.publishExam(id, active);
-    showToast('📝 ' + res.message, res.is_active ? 'success' : 'gold');
+    showToast(' ' + res.message, res.is_active ? 'success' : 'gold');
     loadAdminExams();
   } catch (e) {
     showToast(e.message || 'Error updating exam status', 'error');
@@ -1484,7 +1489,7 @@ async function deactivateExam(id) {
 }
 window.deactivateExam = deactivateExam;
 
-// â”€â”€ QUESTION BUILDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── QUESTION BUILDER ──────────────────────────
 let currentQBExamId = null;
 
 function openQuestionBuilder(examId, examTitle) {
@@ -1512,7 +1517,7 @@ window.closeQuestionBuilder = closeQuestionBuilder;
 
 async function loadExamQuestions(examId) {
   const container = document.getElementById('qb-question-list');
-  container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:var(--space-4);">Loadingâ€¦</div>';
+  container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:var(--space-4);">Loading…</div>';
   try {
     const questions = await API.getExamQuestions(examId);
     if (!questions.length) {
@@ -1535,7 +1540,7 @@ async function loadExamQuestions(examId) {
               color:${q.correct_idx === idx ? '#1a6b3c' : 'inherit'};
               font-weight:${q.correct_idx === idx ? '700' : '400'};">
               <strong>${labels[idx]}.</strong> ${q[opt]}
-              ${q.correct_idx === idx ? ' <span style="font-size:0.7rem;">âœ“ Correct</span>' : ''}
+              ${q.correct_idx === idx ? ' <span style="font-size:0.7rem;">✓ Correct</span>' : ''}
             </div>`).join('')}
         </div>
       </div>`).join('');
@@ -1565,7 +1570,7 @@ async function saveNewQuestion() {
     document.getElementById('qb-opt-c').value = '';
     document.getElementById('qb-opt-d').value = '';
     document.querySelector('input[name="qb-correct"][value="0"]').checked = true;
-    showToast('✅ Question added!', 'success');
+    showToast(' Question added!', 'success');
     loadExamQuestions(eid);
   } catch(err) {
     showToast(err.message || 'Failed to add question', 'error');
@@ -1585,14 +1590,14 @@ async function deleteQuestion(qid) {
 }
 window.deleteQuestion = deleteQuestion;
 
-// â”€â”€ SUBMISSIONS MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── SUBMISSIONS MODAL ─────────────────────
 let currentSubExamId = null;
 
 async function openSubmissionsModal(examId) {
   currentSubExamId = examId;
   document.getElementById('submissionsModal').classList.add('active');
-  document.getElementById('sub-exam-title').textContent = 'Loadingâ€¦';
-  document.getElementById('sub-tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr>';
+  document.getElementById('sub-exam-title').textContent = 'Loading…';
+  document.getElementById('sub-tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading…</td></tr>';
   await loadExamSubmissions(examId);
 }
 window.openSubmissionsModal = openSubmissionsModal;
@@ -1610,14 +1615,14 @@ async function loadExamSubmissions(examId) {
     bar.innerHTML = `
       <div>
         <span style="font-weight:700;color:${released ? '#1a6b3c' : '#c0392b'};">
-          ${released ? 'ðŸŸ¢ Results Released to Students' : 'ðŸ”´ Results Hidden from Students'}
+          ${released ? '🟢 Results Released to Students' : '🔴 Results Hidden from Students'}
         </span>
         <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">
           ${released ? 'Students can now see their scores.' : 'Click to release when ready.'}
         </div>
       </div>
       <button class="btn ${released ? 'btn-ghost' : 'btn-primary'}" onclick="releaseExamResultsToggle(${examId})" style="flex-shrink:0;">
-        ${released ? '🔒 Hide Results' : 'ðŸš€ Release Results'}
+        ${released ? ' Hide Results' : '🚀 Release Results'}
       </button>`;
 
     // Submissions tbody
@@ -1627,13 +1632,13 @@ async function loadExamSubmissions(examId) {
       return;
     }
     tbody.innerHTML = data.submissions.map((s, i) => {
-      const score = s.score !== null ? s.score : '—';
-      const passed = s.score !== null ? (s.score >= 60 ? '<span class="badge status-approved">✅ Pass</span>' : '<span class="badge status-rejected">âŒ Fail</span>') : '<span class="badge badge-gray">—</span>';
+      const score = s.score !== null ? s.score : '';
+      const passed = s.score !== null ? (s.score >= 60 ? '<span class="badge status-approved"> Pass</span>' : '<span class="badge status-rejected"> Fail</span>') : '<span class="badge badge-gray"></span>';
       return `<tr>
         <td style="font-weight:700;color:var(--text-muted);">${i+1}</td>
         <td><div class="table-primary">${s.student_name}</div></td>
-        <td style="font-family:monospace;font-size:0.78rem;">${s.student_id||'—'}</td>
-        <td style="font-size:0.8rem;">${s.university||'—'}</td>
+        <td style="font-family:monospace;font-size:0.78rem;">${s.student_id||''}</td>
+        <td style="font-size:0.8rem;">${s.university||''}</td>
         <td><strong style="font-size:1rem;color:${s.score>=60?'#1a6b3c':'#c0392b'}">${score}%</strong></td>
         <td>${passed}</td>
         <td style="font-size:0.78rem;color:var(--text-muted);">${formatDate(s.submitted_at)}</td>
@@ -1655,7 +1660,7 @@ async function releaseExamResultsToggle(examId) {
     showToast(err.message || 'Failed to toggle result release', 'error');
   }
 }
-// â”€â”€ NEWS & EVENTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── NEWS & EVENTS ──────────────────────────────
 function openCreateNewsModal() {
   document.getElementById('newsForm').reset();
   document.getElementById('createNewsModal').classList.add('active');
@@ -1697,12 +1702,12 @@ async function loadAdminNews() {
     }
     tbody.innerHTML = news.map(n => `
       <tr>
-        <td>${n.image_path ? `<img src="/uploads/news/${n.image_path}" style="width:40px;height:40px;border-radius:var(--radius-sm);object-fit:cover;">` : '—'}</td>
+        <td>${n.image_path ? `<img src="/uploads/news/${n.image_path}" style="width:40px;height:40px;border-radius:var(--radius-sm);object-fit:cover;">` : ''}</td>
         <td><span class="badge" style="background:var(--light-100);color:var(--text-muted);">${n.category}</span></td>
         <td style="font-weight:700;">${n.title}</td>
         <td style="font-size:0.8rem;color:var(--text-muted);">${new Date(n.created_at).toLocaleDateString()}</td>
-        <td>${n.is_featured ? '<span class="badge" style="background:#fef08a;color:#854d0e;">â­ Featured</span>' : 'Standard'}</td>
-        <td><button class="btn btn-ghost btn-sm" style="color:#ef4444;" onclick="deleteNews(${n.id})">ðŸ—‘ï¸</button></td>
+        <td>${n.is_featured ? '<span class="badge" style="background:#fef08a;color:#854d0e;"> Featured</span>' : 'Standard'}</td>
+        <td><button class="btn btn-ghost btn-sm" style="color:#ef4444;" onclick="deleteNews(${n.id})">🗑</button></td>
       </tr>
     `).join('');
   } catch(err) {
@@ -1723,7 +1728,7 @@ async function deleteNews(id) {
 }
 window.deleteNews = deleteNews;
 
-// â”€â”€ LEADERSHIP PROFILES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── LEADERSHIP PROFILES ──────────────────────
 async function submitAddLeadership(e) {
   e.preventDefault();
   const form = new FormData();
@@ -1766,7 +1771,7 @@ async function loadAppointedLeadership() {
         </td>
         <td style="font-weight:600;color:var(--epsa-green);">${m.position}</td>
         <td><span class="badge" style="background:var(--light-100);">${m.hierarchy}</span></td>
-        <td><button class="btn btn-ghost btn-sm" style="color:#ef4444;" onclick="deleteAppointedLeadership(${m.id})">ðŸ—‘ï¸ Delete</button></td>
+        <td><button class="btn btn-ghost btn-sm" style="color:#ef4444;" onclick="deleteAppointedLeadership(${m.id})">🗑 Delete</button></td>
       </tr>
     `).join('');
   } catch(err) {
@@ -1795,7 +1800,7 @@ window.switchAdminSection = function(section) {
   if(section === 'voting') loadAppointedLeadership();
 };
 function formatDate(dateStr) {
-  if (!dateStr) return '—';
+  if (!dateStr) return '';
   const d = new Date(dateStr);
   return d.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
 }
@@ -1820,7 +1825,7 @@ function ensureVotingWorkspaceShell() {
   if (controlPanel && !document.getElementById('votingLifecycleBoard')) {
     controlPanel.insertAdjacentHTML('afterbegin', `
       <div id="votingLifecycleBoard" class="governance-launchpad">
-        <div class="governance-loading">Loading election control workspaceâ€¦</div>
+        <div class="governance-loading">Loading election control workspace…</div>
       </div>
     `);
   }
@@ -1852,7 +1857,7 @@ function ensureVotingWorkspaceShell() {
     } else if (!oldRoot) {
       executivePanel.insertAdjacentHTML('beforeend', `
         <div id="executiveDashboardRoot">
-          <div class="glass-inline-card" style="padding:24px;text-align:center;color:var(--text-muted);">Loading executive governance workspaceâ€¦</div>
+          <div class="glass-inline-card" style="padding:24px;text-align:center;color:var(--text-muted);">Loading executive governance workspace…</div>
         </div>
       `);
     }
@@ -1867,7 +1872,7 @@ function ensureVotingWorkspaceShell() {
     } else if (!oldRoot) {
       nrcPanel.insertAdjacentHTML('beforeend', `
         <div id="nrcDashboardRoot">
-          <div class="glass-inline-card" style="padding:24px;text-align:center;color:var(--text-muted);">Loading NRC management workspaceâ€¦</div>
+          <div class="glass-inline-card" style="padding:24px;text-align:center;color:var(--text-muted);">Loading NRC management workspace…</div>
         </div>
       `);
     }
@@ -1883,7 +1888,7 @@ function ensureExamMonitoringShell() {
   if (bodyContainer) {
     bodyContainer.innerHTML = `
       <div id="sub-summary-grid" class="exam-monitor-grid">
-        <div class="governance-loading">Loading exam summaryâ€¦</div>
+        <div class="governance-loading">Loading exam summary…</div>
       </div>
       <div class="exam-monitor-layout">
         <div class="exam-monitor-main">
@@ -1893,7 +1898,7 @@ function ensureExamMonitoringShell() {
               <div class="exam-monitor-caption">This feed updates while students are inside the exam.</div>
             </div>
             <div id="sub-live-feed" class="exam-live-feed">
-              <div class="governance-loading">Waiting for live exam activityâ€¦</div>
+              <div class="governance-loading">Waiting for live exam activity…</div>
             </div>
           </div>
 
@@ -1905,7 +1910,7 @@ function ensureExamMonitoringShell() {
             <div style="overflow-x:auto;">
               <table class="data-table">
                 <thead><tr><th>#</th><th>Student</th><th>Status</th><th>Progress</th><th>Score</th><th>Review</th><th>Last Activity</th><th>Submitted</th></tr></thead>
-                <tbody id="sub-tbody"><tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr></tbody>
+                <tbody id="sub-tbody"><tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading…</td></tr></tbody>
               </table>
             </div>
           </div>
@@ -1916,7 +1921,7 @@ function ensureExamMonitoringShell() {
               <div class="exam-monitor-caption">Spot weak questions, answer distribution, and correctness trends instantly.</div>
             </div>
             <div id="sub-question-grid" class="exam-question-grid">
-              <div class="governance-loading">Building question analyticsâ€¦</div>
+              <div class="governance-loading">Building question analytics…</div>
             </div>
           </div>
         </div>
@@ -1925,7 +1930,7 @@ function ensureExamMonitoringShell() {
           <div class="glass-inline-card exam-monitor-card">
             <div class="exam-monitor-header">
               <div class="table-title">Student Detail</div>
-              <div class="exam-monitor-caption">Select a row to inspect that studentâ€™s attempt.</div>
+              <div class="exam-monitor-caption">Select a row to inspect that student’s attempt.</div>
             </div>
             <div id="sub-detail-panel" class="exam-detail-panel">
               <div class="governance-loading">Choose a student attempt to view detailed analysis.</div>
@@ -1946,7 +1951,7 @@ function closeSubmissionsModal() {
 window.closeSubmissionsModal = closeSubmissionsModal;
 
 function formatExamTimestamp(value) {
-  if (!value) return '—';
+  if (!value) return '';
   return new Date(value).toLocaleString('en-GB', {
     day: '2-digit',
     month: 'short',
@@ -2004,7 +2009,7 @@ function renderExamSubmissionDetail() {
     <div class="exam-detail-hero">
       <div>
         <div class="exam-detail-name">${adminEsc(selected.student_name)}</div>
-        <div class="exam-detail-meta">${adminEsc(selected.student_id || 'No student ID')} â€¢ ${adminEsc(selected.university || 'University not set')}</div>
+        <div class="exam-detail-meta">${adminEsc(selected.student_id || 'No student ID')} • ${adminEsc(selected.university || 'University not set')}</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
         ${examStatusBadge(selected.status)}
@@ -2012,10 +2017,10 @@ function renderExamSubmissionDetail() {
       </div>
     </div>
     <div class="exam-detail-stats">
-      <div class="admin-detail-card"><div class="exam-detail-label">Score</div><div class="exam-detail-value">${selected.score ?? '—'}${selected.score !== null ? '%' : ''}</div></div>
+      <div class="admin-detail-card"><div class="exam-detail-label">Score</div><div class="exam-detail-value">${selected.score ?? ''}${selected.score !== null ? '%' : ''}</div></div>
       <div class="admin-detail-card"><div class="exam-detail-label">Correct</div><div class="exam-detail-value">${selected.correct_count}/${totalQuestions}</div></div>
       <div class="admin-detail-card"><div class="exam-detail-label">Progress</div><div class="exam-detail-value">${selected.progress_count}/${totalQuestions}</div></div>
-      <div class="admin-detail-card"><div class="exam-detail-label">Duration</div><div class="exam-detail-value">${selected.duration_mins != null ? `${selected.duration_mins} min` : '—'}</div></div>
+      <div class="admin-detail-card"><div class="exam-detail-label">Duration</div><div class="exam-detail-value">${selected.duration_mins != null ? `${selected.duration_mins} min` : ''}</div></div>
     </div>
     <div class="exam-detail-meta-grid">
       <div><strong>Started:</strong> ${formatExamTimestamp(selected.started_at)}</div>
@@ -2028,11 +2033,11 @@ function renderExamSubmissionDetail() {
         <div class="exam-answer-item ${item.is_correct ? 'correct' : 'incorrect'}">
           <div class="exam-answer-head">
             <strong>Q${index + 1}</strong>
-            <span>${item.is_correct ? 'Correct' : (item.selected_option === '—' ? 'Unanswered' : 'Needs review')}</span>
+            <span>${item.is_correct ? 'Correct' : (item.selected_option === '' ? 'Unanswered' : 'Needs review')}</span>
           </div>
           <div class="exam-answer-question">${adminEsc(item.question)}</div>
-          <div class="exam-answer-meta">Student: ${adminEsc(item.selected_option)} ${item.selected_text ? `â€¢ ${adminEsc(item.selected_text)}` : ''}</div>
-          <div class="exam-answer-meta">Correct: ${adminEsc(item.correct_option)} ${item.correct_text ? `â€¢ ${adminEsc(item.correct_text)}` : ''}</div>
+          <div class="exam-answer-meta">Student: ${adminEsc(item.selected_option)} ${item.selected_text ? `• ${adminEsc(item.selected_text)}` : ''}</div>
+          <div class="exam-answer-meta">Correct: ${adminEsc(item.correct_option)} ${item.correct_text ? `• ${adminEsc(item.correct_text)}` : ''}</div>
         </div>
       `).join('')}
     </div>
@@ -2064,7 +2069,7 @@ function renderExamLiveFeed(data) {
     <button class="exam-live-card" onclick="selectExamSubmission(${item.id})">
       <div>
         <div class="exam-live-name">${adminEsc(item.student_name)}</div>
-        <div class="exam-live-meta">${adminEsc(item.university || 'University')} â€¢ ${adminEsc(item.student_id || 'No ID')}</div>
+        <div class="exam-live-meta">${adminEsc(item.university || 'University')} • ${adminEsc(item.student_id || 'No ID')}</div>
       </div>
       <div style="text-align:right;">
         <div class="exam-live-progress">${item.progress_count}/${data.question_count}</div>
@@ -2112,8 +2117,8 @@ async function openSubmissionsModal(examId) {
   currentSubExamId = examId;
   _currentExamSubmissionId = null;
   document.getElementById('submissionsModal').classList.add('active');
-  document.getElementById('sub-exam-title').textContent = 'Loadingâ€¦';
-  document.getElementById('sub-tbody').innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loadingâ€¦</td></tr>';
+  document.getElementById('sub-exam-title').textContent = 'Loading…';
+  document.getElementById('sub-tbody').innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading…</td></tr>';
   await loadExamSubmissions(examId);
   _examSubmissionPoller = setInterval(() => {
     if (document.getElementById('submissionsModal')?.classList.contains('active')) {
@@ -2137,7 +2142,7 @@ async function loadExamSubmissions(examId) {
     bar.innerHTML = `
       <div>
         <span style="font-weight:700;color:${released ? '#1a6b3c' : '#c0392b'};">
-          ${released ? 'ðŸŸ¢ Results Released to Students' : 'ðŸ”´ Results Hidden from Students'}
+          ${released ? '🟢 Results Released to Students' : '🔴 Results Hidden from Students'}
         </span>
         <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">
           ${released ? 'Students can now see their scores and completion outcome.' : 'Students remain blocked from scores until you approve and release them.'}
@@ -2164,7 +2169,7 @@ async function loadExamSubmissions(examId) {
 
     tbody.innerHTML = data.submissions.map((s, i) => {
       const scoreTone = s.score !== null && s.score >= 60 ? '#1a6b3c' : '#c0392b';
-      const score = s.score !== null ? `${s.score}%` : '—';
+      const score = s.score !== null ? `${s.score}%` : '';
       return `<tr data-submission-id="${s.id}" onclick="selectExamSubmission(${s.id})">
         <td style="font-weight:700;color:var(--text-muted);">${i+1}</td>
         <td><div class="table-primary">${adminEsc(s.student_name)}</div><div class="table-secondary">${adminEsc(s.student_id || 'No ID')}</div></td>

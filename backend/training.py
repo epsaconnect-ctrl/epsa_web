@@ -1,5 +1,14 @@
 """EPSA Training Routes"""
 import secrets
+from datetime import datetime, date
+
+def _serialize_row(row):
+    d = _serialize_row(row)
+    for k, v in d.items():
+        if isinstance(v, (datetime, date)):
+            d[k] = v.isoformat()
+    return d
+
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
@@ -20,7 +29,7 @@ def list_trainings():
     rows = db.execute("SELECT * FROM trainings WHERE is_active=1 ORDER BY created_at DESC").fetchall()
     result = []
     for r in rows:
-        t = dict(r)
+        t = _serialize_row(r)
         app = db.execute("SELECT status FROM training_applications WHERE user_id=? AND training_id=?", (uid, r['id'])).fetchone()
         t['status'] = app['status'] if app else 'open'
         result.append(t)
@@ -34,7 +43,7 @@ def get_training(tid):
     row = db.execute("SELECT * FROM trainings WHERE id=?", (tid,)).fetchone()
     db.close()
     if not row: return jsonify({'error': 'Not found'}), 404
-    return jsonify(dict(row))
+    return jsonify(_serialize_row(row))
 
 @training_bp.route('/<int:tid>/apply', methods=['POST'])
 @jwt_required()
@@ -79,4 +88,4 @@ def my_trainings():
         WHERE ta.user_id=? ORDER BY ta.submitted_at DESC
     """, (uid,)).fetchall()
     db.close()
-    return jsonify([dict(r) for r in rows])
+    return jsonify([_serialize_row(r) for r in rows])

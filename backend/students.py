@@ -1,6 +1,15 @@
 """EPSA Students Routes"""
 import uuid
 
+from datetime import datetime, date
+
+def _serialize_row(row):
+    d = _serialize_row(row)
+    for k, v in d.items():
+        if isinstance(v, (datetime, date)):
+            d[k] = v.isoformat()
+    return d
+
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 try:
@@ -27,7 +36,7 @@ def get_profile():
     ).fetchone()
     db.close()
     if not row: return jsonify({'error': 'Not found'}), 404
-    u = dict(row); u.pop('password_hash', None)
+    u = _serialize_row(row); u.pop('password_hash', None)
     u['training_count']   = tc
     u['connection_count'] = cc
     u['exam_count']       = ec
@@ -77,7 +86,7 @@ def list_students():
     db.close()
     result = []
     for r in rows:
-        d = dict(r)
+        d = _serialize_row(r)
         if q:
             hay = f"{d['first_name']} {d['father_name']} {d['university']} {d.get('program_type') or ''} {d.get('bio') or ''}".lower()
             if q not in hay:
@@ -104,7 +113,7 @@ def get_student(sid):
     """, (sid,)).fetchall()
     db.close()
     if not row: return jsonify({'error': 'Not found'}), 404
-    data = dict(row)
+    data = _serialize_row(row)
     data['clubs'] = [dict(c) for c in clubs]
     return jsonify(data)
 
@@ -185,11 +194,11 @@ def nrc_portal():
     return jsonify({
         'active': member['status'] == 'active',
         'member': dict(member),
-        'students': [dict(r) for r in students],
-        'documents': [dict(r) for r in documents],
-        'peers': [dict(r) for r in peers],
-        'announcements': [dict(r) for r in announcements],
-        'cycles': [dict(r) for r in cycles],
+        'students': [_serialize_row(r) for r in students],
+        'documents': [_serialize_row(r) for r in documents],
+        'peers': [_serialize_row(r) for r in peers],
+        'announcements': [_serialize_row(r) for r in announcements],
+        'cycles': [_serialize_row(r) for r in cycles],
         'responsibilities': [
             'Represent psychology students from your university accurately and actively.',
             'Promote EPSA initiatives and participate in governance discussions.',

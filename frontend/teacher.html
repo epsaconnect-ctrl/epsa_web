@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Teacher Portal â€” EPSA</title>
-  <meta name="description" content="EPSA Teacher Portal â€” Contribute and manage psychology exam questions."/>
+  <title>Teacher Portal — EPSA</title>
+  <meta name="description" content="EPSA Teacher Portal — Contribute and manage psychology exam questions."/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="icon" href="assets/logo.png" type="image/png"/>
@@ -23,7 +23,7 @@
     html{scroll-behavior:smooth}
     body{font-family:'Outfit',sans-serif;background:var(--g1);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
 
-    /* â”€â”€ Sidebar â”€â”€ */
+    /* ── Sidebar ── */
     .sidebar{width:260px;min-height:100vh;background:var(--g2);border-right:1px solid var(--border);padding:24px 0;position:fixed;top:0;left:0;display:flex;flex-direction:column;z-index:100;transition:.25s}
     .sidebar-logo{padding:0 24px 24px;border-bottom:1px solid var(--border2)}
     .sidebar-logo .brand{font-size:1.4rem;font-weight:800;color:var(--text)}
@@ -44,7 +44,7 @@
     .logout-btn{width:100%;padding:9px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:10px;color:var(--red);font-family:inherit;font-size:.83rem;font-weight:600;cursor:pointer;transition:.18s}
     .logout-btn:hover{background:rgba(248,113,113,.15)}
 
-    /* â”€â”€ Main â”€â”€ */
+    /* ── Main ── */
     .main{margin-left:260px;flex:1;min-height:100vh;padding:32px 36px;transition:.25s}
     @media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0;padding:20px 16px}}
 
@@ -59,7 +59,7 @@
     .page-header h1 span{color:var(--accent)}
     .page-header p{color:var(--text-muted);margin-top:6px;font-size:.93rem}
 
-    /* â”€â”€ Stats grid â”€â”€ */
+    /* ── Stats grid ── */
     .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
     @media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:600px){.stats-grid{grid-template-columns:1fr}}
@@ -73,11 +73,11 @@
     .stat-card.blue .stat-value{color:var(--blue)}
     .stat-card.red .stat-value{color:var(--red)}
 
-    /* â”€â”€ Cards â”€â”€ */
+    /* ── Cards ── */
     .card{background:var(--glass);border:1px solid var(--border);border-radius:var(--radius);padding:28px}
     .card-title{font-size:1.05rem;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px}
 
-    /* â”€â”€ Form â”€â”€ */
+    /* ── Form ── */
     .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
     @media(max-width:700px){.form-grid{grid-template-columns:1fr}}
     .field{margin-bottom:16px}
@@ -91,7 +91,7 @@
     .field-err{font-size:.78rem;color:var(--red);margin-top:4px;display:none}
     .field-err.show{display:block}
 
-    /* â”€â”€ Table â”€â”€ */
+    /* ── Table ── */
     .table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border)}
     table{width:100%;border-collapse:collapse}
     th{background:rgba(0,0,0,.25);padding:11px 16px;font-size:.75rem;font-weight:700;color:var(--text-muted);text-align:left;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
@@ -226,7 +226,7 @@
 </head>
 <body>
 
-<!-- â”€â”€ Sidebar â”€â”€ -->
+<!-- ── Sidebar ── -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <div class="brand">EP<span>SA</span></div>
@@ -235,69 +235,69 @@
 
   <div class="nav-section">Main</div>
   <a class="nav-item active" id="nav-dashboard" onclick="showPage('dashboard')">
-    <span class="icon">ðŸ </span>Dashboard
+    <span class="icon">Home</span>Dashboard
   </a>
   <a class="nav-item" id="nav-submit" onclick="showPage('submit')">
-    <span class="icon">âž•</span>Submit Question
+    <span class="icon">Add</span>Submit Question
   </a>
   <a class="nav-item" id="nav-myquestions" onclick="showPage('myquestions')">
-    <span class="icon">ðŸ“ƒ</span>My Questions
+    <span class="icon">List</span>My Questions
   </a>
   <a class="nav-item" id="nav-bulk" onclick="showPage('bulk')">
-    <span class="icon">ðŸ“¦</span>Bulk Upload
+    <span class="icon">Upload</span>Bulk Upload
   </a>
 
   <div class="nav-section">Resources</div>
   <a class="nav-item" href="#" onclick="downloadTemplate()">
-    <span class="icon">â¬‡ï¸</span>CSV Template
+    <span class="icon">CSV</span>CSV Template
   </a>
   <a class="nav-item" href="#" id="nav-help" onclick="showPage('help')">
-    <span class="icon">â“</span>Help & Guidelines
+    <span class="icon">Info</span>Help & Guidelines
   </a>
 
   <div class="sidebar-footer">
     <div class="teacher-info">
       <div class="teacher-avatar" id="teacherInitial">T</div>
       <div class="info">
-        <div class="name" id="teacherName">Loadingâ€¦</div>
-        <div class="spec" id="teacherSpec">â€”</div>
+        <div class="name" id="teacherName">Loading...</div>
+        <div class="spec" id="teacherSpec">-</div>
       </div>
     </div>
     <button class="logout-btn" onclick="logout()">Sign Out</button>
   </div>
 </aside>
 
-<!-- â”€â”€ Main Content â”€â”€ -->
+<!-- ── Main Content ── -->
 <main class="main">
   <div class="mobile-header">
-    <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">â˜°</button>
+    <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">Menu</button>
     <span style="font-weight:800">EPSA <span style="color:var(--accent)">Teacher Portal</span></span>
   </div>
 
   <!-- DASHBOARD -->
   <section class="page-section active" id="page-dashboard">
     <div class="page-header">
-      <h1>Welcome back, <span id="greetName">Teacher</span> ðŸ‘‹</h1>
-      <p>Your question bank contribution dashboard â€” track submissions, approvals, and impact.</p>
+      <h1>Welcome back, <span id="greetName">Teacher</span></h1>
+      <p>Your question bank contribution dashboard - track submissions, approvals, and impact.</p>
     </div>
     <div class="stats-grid">
-      <div class="stat-card blue"><div class="stat-label">Total Submitted</div><div class="stat-value" id="statTotal">â€”</div><div class="stat-sub">Lifetime contributions</div></div>
-      <div class="stat-card gold"><div class="stat-label">Pending Review</div><div class="stat-value" id="statPending">â€”</div><div class="stat-sub">Awaiting admin decision</div></div>
-      <div class="stat-card green"><div class="stat-label">Approved</div><div class="stat-value" id="statApproved">â€”</div><div class="stat-sub">Live in question bank</div></div>
-      <div class="stat-card red"><div class="stat-label">Rejected</div><div class="stat-value" id="statRejected">â€”</div><div class="stat-sub">Needs revision</div></div>
+      <div class="stat-card blue"><div class="stat-label">Total Submitted</div><div class="stat-value" id="statTotal">-</div><div class="stat-sub">Lifetime contributions</div></div>
+      <div class="stat-card gold"><div class="stat-label">Pending Review</div><div class="stat-value" id="statPending">-</div><div class="stat-sub">Awaiting admin decision</div></div>
+      <div class="stat-card green"><div class="stat-label">Approved</div><div class="stat-value" id="statApproved">-</div><div class="stat-sub">Live in question bank</div></div>
+      <div class="stat-card red"><div class="stat-label">Rejected</div><div class="stat-value" id="statRejected">-</div><div class="stat-sub">Needs revision</div></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px" id="dashBottom">
       <div class="card">
-        <div class="card-title">ðŸ“Š Top Approved Categories</div>
+        <div class="card-title">Top Approved Categories</div>
         <div id="catChart"><div class="skeleton" style="height:12px"></div><div class="skeleton" style="height:12px;width:80%"></div><div class="skeleton" style="height:12px;width:60%"></div></div>
       </div>
       <div class="card">
-        <div class="card-title">ðŸ’¡ Quick Actions</div>
+        <div class="card-title">Quick Actions</div>
         <div style="display:flex;flex-direction:column;gap:10px">
-          <button class="btn btn-primary" style="justify-content:center" onclick="showPage('submit')">âž• Submit New Question</button>
-          <button class="btn btn-secondary" style="justify-content:center" onclick="showPage('myquestions')">ðŸ“ƒ View My Questions</button>
-          <button class="btn btn-secondary" style="justify-content:center" onclick="showPage('bulk')">ðŸ“¦ Bulk CSV Upload</button>
-          <button class="btn btn-secondary" style="justify-content:center" onclick="downloadTemplate()">â¬‡ï¸ Download CSV Template</button>
+          <button class="btn btn-primary" style="justify-content:center" onclick="showPage('submit')">Submit New Question</button>
+          <button class="btn btn-secondary" style="justify-content:center" onclick="showPage('myquestions')">View My Questions</button>
+          <button class="btn btn-secondary" style="justify-content:center" onclick="showPage('bulk')">Bulk CSV Upload</button>
+          <button class="btn btn-secondary" style="justify-content:center" onclick="downloadTemplate()">Download CSV Template</button>
         </div>
       </div>
     </div>
@@ -420,7 +420,7 @@
         </div>
         <div id="draftQueueList" class="draft-list">
           <div class="empty-state" style="padding:28px 12px">
-            <div class="icon">ðŸ§©</div>
+            <div class="icon">🧩</div>
             <h3>No draft questions yet</h3>
             <p>Add a question from the composer to build a batch for submission.</p>
           </div>
@@ -457,8 +457,8 @@
         <select id="filterCategory" onchange="loadMyQuestions()">
           <option value="">All Categories</option>
         </select>
-        <button class="btn btn-secondary" onclick="loadMyQuestions()">ðŸ”„ Refresh</button>
-        <button class="btn btn-primary" onclick="showPage('submit')">âž• New</button>
+        <button class="btn btn-secondary" onclick="loadMyQuestions()">🔄 Refresh</button>
+        <button class="btn btn-primary" onclick="showPage('submit')">➕ New</button>
       </div>
       <div class="table-wrap">
         <table>
@@ -476,7 +476,7 @@
             </tr>
           </thead>
           <tbody id="questionsTbody">
-            <tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:32px">Loadingâ€¦</td></tr>
+            <tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:32px">Loading...</td></tr>
           </tbody>
         </table>
       </div>
@@ -492,27 +492,27 @@
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
       <div class="card">
-        <div class="card-title">ðŸ“‹ CSV Format Requirements</div>
+        <div class="card-title">📋 CSV Format Requirements</div>
         <p style="font-size:.85rem;color:var(--text-muted);line-height:1.6;margin-bottom:14px">Your CSV must have the following columns in order:</p>
         <div style="font-size:.78rem;font-family:monospace;background:rgba(0,0,0,.3);border-radius:10px;padding:14px;color:#a7f3d0;line-height:2">
           subject_category<br>topic<br>subtopic<br>bloom_level<br>difficulty<br>question_text<br>option_a<br>option_b<br>option_c<br>option_d<br>correct_idx (0=A, 1=B, 2=C, 3=D)<br>explanation
         </div>
         <div style="margin-top:16px;padding:12px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:10px;font-size:.8rem;color:var(--gold)">
-          âš ï¸ Max 500 questions per batch. Duplicates (same question text) are automatically skipped.
+          ⚠ Max 500 questions per batch. Duplicates (same question text) are automatically skipped.
         </div>
-        <button class="btn btn-secondary" style="margin-top:16px;width:100%;justify-content:center" onclick="downloadTemplate()">â¬‡ï¸ Download Template CSV</button>
+        <button class="btn btn-secondary" style="margin-top:16px;width:100%;justify-content:center" onclick="downloadTemplate()">⬇ Download Template CSV</button>
       </div>
       <div class="card">
-        <div class="card-title">ðŸ“¦ Upload File</div>
+        <div class="card-title">📦 Upload File</div>
         <div class="drop-zone" id="dropZone" onclick="document.getElementById('csvInput').click()">
-          <div class="drop-icon">ðŸ“‚</div>
+          <div class="drop-icon">📂</div>
           <p><strong>Click to select</strong> or drag &amp; drop<br>your CSV file here</p>
           <p style="margin-top:8px;font-size:.75rem;opacity:.6">Accepts .csv files up to 10MB</p>
         </div>
         <input type="file" id="csvInput" accept=".csv" onchange="handleCsvFile(this)"/>
         <div id="csvPreview" style="margin-top:16px;display:none">
           <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(34,197,94,.08);border:1px solid var(--border);border-radius:10px;margin-bottom:12px">
-            <span style="font-size:1.2rem">ðŸ“„</span>
+            <span style="font-size:1.2rem">📄</span>
             <div>
               <div id="csvFileName" style="font-weight:700;font-size:.88rem"></div>
               <div id="csvRowCount" style="font-size:.78rem;color:var(--text-muted)"></div>
@@ -533,18 +533,18 @@
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
       <div class="card">
-        <div class="card-title">âœ… Writing Good Questions</div>
+        <div class="card-title">Writing Good Questions</div>
         <ul style="font-size:.87rem;color:var(--text-muted);line-height:2;list-style:none">
-          <li>ðŸ“Œ Write a single, clear, unambiguous stem</li>
-          <li>ðŸ“Œ Make all four options plausible to test comprehension</li>
-          <li>ðŸ“Œ Avoid double negatives and trick wording</li>
-          <li>ðŸ“Œ Match difficulty to the target Bloom's level</li>
-          <li>ðŸ“Œ Write a detailed explanation for the correct answer</li>
-          <li>ðŸ“Œ Specify why distractors are wrong â€” learners benefit</li>
+          <li>Write a single, clear, unambiguous stem</li>
+          <li>Make all four options plausible to test comprehension</li>
+          <li>Avoid double negatives and trick wording</li>
+          <li>Match difficulty to the target Bloom's level</li>
+          <li>Write a detailed explanation for the correct answer</li>
+          <li>Specify why distractors are wrong - learners benefit</li>
         </ul>
       </div>
       <div class="card">
-        <div class="card-title">ðŸ“š Bloom's Taxonomy Guide</div>
+        <div class="card-title">Bloom's Taxonomy Guide</div>
         <div style="font-size:.83rem;line-height:1.7">
           <div style="margin-bottom:8px"><span style="color:var(--accent);font-weight:700">Remembering:</span> <span style="color:var(--text-muted)">Recall of facts (define, list, recall)</span></div>
           <div style="margin-bottom:8px"><span style="color:var(--accent);font-weight:700">Understanding:</span> <span style="color:var(--text-muted)">Explain concepts in own words (describe, summarize)</span></div>
@@ -555,12 +555,12 @@
         </div>
       </div>
       <div class="card">
-        <div class="card-title">â±ï¸ Review Process</div>
+        <div class="card-title">Review Process</div>
         <p style="font-size:.87rem;color:var(--text-muted);line-height:1.7">Each question you submit enters a <strong style="color:var(--text)">pending review queue</strong>. EPSA admins will review for content accuracy, language clarity, and Bloom's alignment. Approved questions are added to the live question bank. Rejected questions are returned with admin notes so you can revise and resubmit.</p>
       </div>
       <div class="card">
-        <div class="card-title">ðŸ“Š Adaptive Difficulty</div>
-        <p style="font-size:.87rem;color:var(--text-muted);line-height:1.7">Once your questions are used in <strong style="color:var(--text)">Mock Exams</strong>, the system automatically tracks correctness rates and time-on-question. Questions with â‰¥70% correct rate are reclassified as <span style="color:var(--accent)">easy</span>, and those with â‰¤40% as <span style="color:var(--red)">hard</span>. This keeps the exam calibration accurate over time.</p>
+        <div class="card-title">Adaptive Difficulty</div>
+        <p style="font-size:.87rem;color:var(--text-muted);line-height:1.7">Once your questions are used in <strong style="color:var(--text)">Mock Exams</strong>, the system automatically tracks correctness rates and time-on-question. Questions with &gt;=70% correct rate are reclassified as <span style="color:var(--accent)">easy</span>, and those with &lt;=40% as <span style="color:var(--red)">hard</span>. This keeps the exam calibration accurate over time.</p>
       </div>
     </div>
   </section>
@@ -571,7 +571,7 @@
 
 <div class="overlay" id="questionDetailOverlay">
   <div class="modal" style="max-width:860px">
-    <button class="modal-close" onclick="closeQuestionDetail()">Ã—</button>
+    <button class="modal-close" onclick="closeQuestionDetail()">×</button>
     <div class="modal-title">Question Detail</div>
     <div id="questionDetailBody"></div>
   </div>
@@ -597,7 +597,7 @@ let questionDrafts = [];
 let draftEditIndex = null;
 const categories = [];
 
-// â”€â”€ Auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Auth ──────────────────────────────────────────────────────────────────────
 function getToken() { return localStorage.getItem('epsa_token') || localStorage.getItem('epsa_access_token'); }
 function authHdr() { return { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' }; }
 
@@ -653,7 +653,7 @@ function logout() {
   window.location.href = 'login.html';
 }
 
-// â”€â”€ Toast â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Toast ──────────────────────────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -662,7 +662,7 @@ function showToast(msg, type = 'success') {
   t._timer = setTimeout(() => t.className = '', 3500);
 }
 
-// â”€â”€ Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Navigation ────────────────────────────────────────────────────────────────
 function showPage(name) {
   document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -673,7 +673,7 @@ function showPage(name) {
   if (name === 'dashboard') loadStats();
 }
 
-// â”€â”€ Load profile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Load profile ──────────────────────────────────────────────────────────────
 async function loadProfile() {
   try {
     const stored = localStorage.getItem('epsa_user');
@@ -688,7 +688,7 @@ async function loadProfile() {
   } catch (e) {}
 }
 
-// â”€â”€ Load stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Load stats ────────────────────────────────────────────────────────────────
 async function loadStats() {
   try {
     const data = await apiGet('/teacher/stats');
@@ -704,7 +704,7 @@ async function loadStats() {
 
 function renderCatChart(cats) {
   const el = document.getElementById('catChart');
-  if (!cats.length) { el.innerHTML = '<div class="empty-state"><div class="icon">ðŸ“Š</div><h3>No data yet</h3><p>Submit and get questions approved to see category stats.</p></div>'; return; }
+  if (!cats.length) { el.innerHTML = '<div class="empty-state"><h3>No data yet</h3><p>Submit and get questions approved to see category stats.</p></div>'; return; }
   const max = Math.max(...cats.map(c => c.count));
   el.innerHTML = cats.map(c => `
     <div class="category-bar">
@@ -714,7 +714,7 @@ function renderCatChart(cats) {
   `).join('');
 }
 
-// â”€â”€ Load categories â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Load categories ───────────────────────────────────────────────────────────
 async function loadCategories() {
   try {
     const data = await apiGet('/teacher/categories');
@@ -729,7 +729,7 @@ async function loadCategories() {
   } catch (e) {}
 }
 
-// â”€â”€ Submit question â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Submit question ───────────────────────────────────────────────────────────
 async function submitQuestion() {
   const btn = document.getElementById('submitQBtn');
   let ok = true;
@@ -754,7 +754,7 @@ async function submitQuestion() {
   if (!ok) return showToast('Please fill all required fields', 'error');
 
   btn.disabled = true;
-  btn.textContent = 'Submittingâ€¦';
+  btn.textContent = 'Submitting...';
   try {
     await apiPost('/teacher/questions', {
       subject_category: document.getElementById('fCategory').value,
@@ -770,7 +770,7 @@ async function submitQuestion() {
       correct_idx: parseInt(document.getElementById('fCorrect').value),
       explanation: document.getElementById('fExplanation').value.trim(),
     });
-    showToast('Question submitted for review! âœ…');
+    showToast('Question submitted for review.', 'success');
     clearForm();
     loadStats();
   } catch (err) {
@@ -789,13 +789,13 @@ function clearForm() {
   document.querySelectorAll('.field-err').forEach(e => e.classList.remove('show'));
 }
 
-// â”€â”€ My questions table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── My questions table ────────────────────────────────────────────────────────
 async function loadMyQuestions(page = myQuestionsPage) {
   myQuestionsPage = page;
   const status = document.getElementById('filterStatus').value;
   const cat = document.getElementById('filterCategory').value;
   const tbody = document.getElementById('questionsTbody');
-  tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:32px">Loadingâ€¦</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:32px">Loading...</td></tr>`;
   try {
     const params = new URLSearchParams({ status, page });
     if (cat) params.append('category', cat);
@@ -810,7 +810,7 @@ async function loadMyQuestions(page = myQuestionsPage) {
 function renderQuestionsTable(questions) {
   const tbody = document.getElementById('questionsTbody');
   if (!questions.length) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px"><div class="empty-state" style="padding:0"><div class="icon">ðŸ“</div><h3>No questions yet</h3><p>Submit your first question to get started.</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px"><div class="empty-state" style="padding:0"><h3>No questions yet</h3><p>Submit your first question to get started.</p></div></td></tr>`;
     return;
   }
   tbody.innerHTML = questions.map((q, i) => `
@@ -818,26 +818,26 @@ function renderQuestionsTable(questions) {
       <td style="color:var(--text-muted)">${q.id}</td>
       <td><div class="q-text">${escHtml(q.question_text)}</div></td>
       <td style="color:var(--text-muted);font-size:.8rem">${q.subject_category}</td>
-      <td style="font-size:.8rem">${q.bloom_level || 'â€”'}</td>
+      <td style="font-size:.8rem">${q.bloom_level || '-'}</td>
       <td><span class="badge badge-${q.difficulty || 'medium'}">${q.difficulty || 'medium'}</span></td>
       <td><span class="badge badge-${q.status}">${q.status}</span></td>
       <td style="color:var(--text-muted);font-size:.78rem;white-space:nowrap">${formatDate(q.created_at)}</td>
-      <td style="font-size:.78rem;color:var(--text-muted);max-width:160px;overflow:hidden;text-overflow:ellipsis">${q.admin_notes ? escHtml(q.admin_notes) : 'â€”'}</td>
+      <td style="font-size:.78rem;color:var(--text-muted);max-width:160px;overflow:hidden;text-overflow:ellipsis">${q.admin_notes ? escHtml(q.admin_notes) : '-'}</td>
     </tr>`).join('');
 }
 
 function renderPagination(containerId, page, pages, callback) {
   const el = document.getElementById(containerId);
   if (!el || pages <= 1) { if (el) el.innerHTML = ''; return; }
-  let html = `<button class="page-btn" onclick="${callback.name}(${Math.max(1, page-1)})" ${page<=1?'disabled':''}>â€¹</button>`;
+  let html = `<button class="page-btn" onclick="${callback.name}(${Math.max(1, page-1)})" ${page<=1?'disabled':''}>&lt;</button>`;
   for (let p = Math.max(1, page-2); p <= Math.min(pages, page+2); p++) {
     html += `<button class="page-btn ${p===page?'active':''}" onclick="${callback.name}(${p})">${p}</button>`;
   }
-  html += `<button class="page-btn" onclick="${callback.name}(${Math.min(pages,page+1)})" ${page>=pages?'disabled':''}>â€º</button>`;
+  html += `<button class="page-btn" onclick="${callback.name}(${Math.min(pages,page+1)})" ${page>=pages?'disabled':''}>&gt;</button>`;
   el.innerHTML = html;
 }
 
-// â”€â”€ CSV Bulk upload â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── CSV Bulk upload ──────────────────────────────────────────────────────────
 // Enhanced teacher workflow
 function collectQuestionPayload(showErrors = true) {
   const checks = {
@@ -903,7 +903,7 @@ function renderDraftQueue() {
   const container = document.getElementById('draftQueueList');
   if (!container) return;
   if (!questionDrafts.length) {
-    container.innerHTML = `<div class="empty-state" style="padding:28px 12px"><div class="icon">ðŸ§©</div><h3>No draft questions yet</h3><p>Add a question from the composer to build a batch for submission.</p></div>`;
+    container.innerHTML = `<div class="empty-state" style="padding:28px 12px"><div class="icon">🧩</div><h3>No draft questions yet</h3><p>Add a question from the composer to build a batch for submission.</p></div>`;
     setDraftMetrics();
     return;
   }
@@ -1091,7 +1091,7 @@ function renderQuestionSummary(questions) {
 function renderQuestionsTable(questions) {
   const tbody = document.getElementById('questionsTbody');
   if (!questions.length) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px"><div class="empty-state" style="padding:0"><div class="icon">ðŸ“</div><h3>No questions yet</h3><p>Submit your first question to get started.</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px"><div class="empty-state" style="padding:0"><h3>No questions yet</h3><p>Submit your first question to get started.</p></div></td></tr>`;
     renderQuestionSummary([]);
     return;
   }
@@ -1100,14 +1100,14 @@ function renderQuestionsTable(questions) {
       <td style="color:var(--text-muted)">${q.id}</td>
       <td>
         <div class="q-text">${escHtml(q.question_text)}</div>
-        <div style="font-size:.74rem;color:var(--text-dim);margin-top:6px">${escHtml(q.topic || 'No topic')} â€¢ ${escHtml(q.subtopic || 'No subtopic')}</div>
+        <div style="font-size:.74rem;color:var(--text-dim);margin-top:6px">${escHtml(q.topic || 'No topic')} | ${escHtml(q.subtopic || 'No subtopic')}</div>
       </td>
-      <td style="color:var(--text-muted);font-size:.8rem">${escHtml(q.subject_category || 'â€”')}</td>
-      <td style="font-size:.8rem">${escHtml(q.bloom_level || 'â€”')}</td>
+      <td style="color:var(--text-muted);font-size:.8rem">${escHtml(q.subject_category || '-')}</td>
+      <td style="font-size:.8rem">${escHtml(q.bloom_level || '-')}</td>
       <td><span class="badge badge-${q.difficulty || 'medium'}">${escHtml(q.difficulty || 'medium')}</span></td>
       <td><span class="badge badge-${q.status}">${escHtml(q.status)}</span></td>
       <td style="color:var(--text-muted);font-size:.78rem;white-space:nowrap">${formatDate(q.created_at)}</td>
-      <td style="font-size:.78rem;color:var(--text-muted);max-width:180px;overflow:hidden;text-overflow:ellipsis">${q.admin_notes ? escHtml(q.admin_notes) : 'â€”'}</td>
+      <td style="font-size:.78rem;color:var(--text-muted);max-width:180px;overflow:hidden;text-overflow:ellipsis">${q.admin_notes ? escHtml(q.admin_notes) : '-'}</td>
       <td><button class="btn btn-secondary" style="padding:7px 12px;font-size:.8rem" onclick="openQuestionDetail(${q.id})">View</button></td>
     </tr>`).join('');
 }
@@ -1123,7 +1123,7 @@ function buildQuestionOptionCards(question) {
           <strong>Option ${labels[index]}</strong>
           ${isCorrect ? '<span>Correct</span>' : ''}
         </div>
-        <div style="font-size:.88rem;line-height:1.65;color:var(--text)">${escHtml(question[key] || 'â€”')}</div>
+        <div style="font-size:.88rem;line-height:1.65;color:var(--text)">${escHtml(question[key] || '-')}</div>
       </div>
     `;
   }).join('');
@@ -1145,12 +1145,12 @@ function openQuestionDetail(id) {
       </div>
     </div>
     <div class="review-grid">
-      <div class="cell"><div class="k">Category</div><div class="v">${escHtml(question.subject_category || 'â€”')}</div></div>
-      <div class="cell"><div class="k">Topic</div><div class="v">${escHtml(question.topic || 'â€”')}</div></div>
-      <div class="cell"><div class="k">Subtopic</div><div class="v">${escHtml(question.subtopic || 'â€”')}</div></div>
-      <div class="cell"><div class="k">Bloom Level</div><div class="v">${escHtml(question.bloom_level || 'â€”')}</div></div>
-      <div class="cell"><div class="k">Difficulty</div><div class="v">${escHtml(question.difficulty || 'â€”')}</div></div>
-      <div class="cell"><div class="k">Submitted</div><div class="v">${question.created_at ? new Date(question.created_at).toLocaleString() : 'â€”'}</div></div>
+      <div class="cell"><div class="k">Category</div><div class="v">${escHtml(question.subject_category || '-')}</div></div>
+      <div class="cell"><div class="k">Topic</div><div class="v">${escHtml(question.topic || '-')}</div></div>
+      <div class="cell"><div class="k">Subtopic</div><div class="v">${escHtml(question.subtopic || '-')}</div></div>
+      <div class="cell"><div class="k">Bloom Level</div><div class="v">${escHtml(question.bloom_level || '-')}</div></div>
+      <div class="cell"><div class="k">Difficulty</div><div class="v">${escHtml(question.difficulty || '-')}</div></div>
+      <div class="cell"><div class="k">Submitted</div><div class="v">${question.created_at ? new Date(question.created_at).toLocaleString() : '-'}</div></div>
     </div>
     <div style="font-size:.78rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Answer Options</div>
     <div class="question-option-grid">${buildQuestionOptionCards(question)}</div>
@@ -1172,11 +1172,11 @@ window.closeQuestionDetail = closeQuestionDetail;
 function renderPagination(containerId, page, pages, callback) {
   const el = document.getElementById(containerId);
   if (!el || pages <= 1) { if (el) el.innerHTML = ''; return; }
-  let html = `<button class="page-btn" onclick="${callback.name}(${Math.max(1, page-1)})" ${page<=1?'disabled':''}>â€¹</button>`;
+  let html = `<button class="page-btn" onclick="${callback.name}(${Math.max(1, page-1)})" ${page<=1?'disabled':''}>&lt;</button>`;
   for (let p = Math.max(1, page-2); p <= Math.min(pages, page+2); p++) {
     html += `<button class="page-btn ${p===page?'active':''}" onclick="${callback.name}(${p})">${p}</button>`;
   }
-  html += `<button class="page-btn" onclick="${callback.name}(${Math.min(pages,page+1)})" ${page>=pages?'disabled':''}>â€º</button>`;
+  html += `<button class="page-btn" onclick="${callback.name}(${Math.min(pages,page+1)})" ${page>=pages?'disabled':''}>&gt;</button>`;
   el.innerHTML = html;
 }
 
@@ -1227,14 +1227,14 @@ async function uploadCsv() {
   if (!csvParsed.length) return;
   const btn = document.getElementById('uploadBtn');
   btn.disabled = true;
-  btn.textContent = 'Uploadingâ€¦';
+  btn.textContent = 'Uploading...';
   try {
     const data = await apiPost('/teacher/questions/bulk', { questions: csvParsed });
     const resultEl = document.getElementById('uploadResult');
     resultEl.style.display = 'block';
     resultEl.innerHTML = `
       <div style="background:rgba(34,197,94,.08);border:1px solid var(--border);border-radius:10px;padding:16px">
-        <div style="color:var(--accent);font-weight:700;margin-bottom:8px">âœ… ${data.message}</div>
+        <div style="color:var(--accent);font-weight:700;margin-bottom:8px">${data.message}</div>
         ${data.errors.length ? `<div style="color:var(--red);font-size:.8rem;margin-top:8px">${data.errors.slice(0,5).join('<br>')}</div>` : ''}
       </div>`;
     showToast(`Uploaded: ${data.inserted} inserted, ${data.skipped} skipped`);
@@ -1249,7 +1249,7 @@ async function uploadCsv() {
 
 function downloadTemplate() {
   const headers = ['subject_category','topic','subtopic','bloom_level','difficulty','question_text','option_a','option_b','option_c','option_d','correct_idx','explanation'];
-  const example = ['Social Psychology','Conformity','Asch Experiment','Understanding','medium','Which factor MOST increases conformity according to Asch?','Presence of an ally','Group size of 3+','Unanimous group agreement','Physical proximity of experimenter','2','Asch found that unanimity of the group was the strongest factor â€” even one dissenter dramatically reduced conformity.'];
+  const example = ['Social Psychology','Conformity','Asch Experiment','Understanding','medium','Which factor MOST increases conformity according to Asch?','Presence of an ally','Group size of 3+','Unanimous group agreement','Physical proximity of experimenter','2','Asch found that unanimity of the group was the strongest factor — even one dissenter dramatically reduced conformity.'];
   const csv = [headers.join(','), example.join(',')].join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const a = document.createElement('a');
@@ -1259,16 +1259,16 @@ function downloadTemplate() {
   showToast('Template downloaded!');
 }
 
-// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Helpers ──────────────────────────────────────────────────────────────────
 function escHtml(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 function formatDate(dt) {
-  if (!dt) return 'â€”';
+  if (!dt) return '—';
   try { return new Date(dt).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'2-digit'}); } catch(e) { return dt; }
 }
 
-// â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
   if (!getToken()) { window.location.href = 'login.html'; return; }
   try {

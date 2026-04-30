@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="EPSA Partners â€” Collaborating clinics, NGOs, and universities building mental health impact across Ethiopia.">
-  <title>EPSA Partners â€” Collaborative Ecosystem</title>
+  <meta name="description" content="EPSA Partners — Collaborating clinics, NGOs, and universities building mental health impact across Ethiopia.">
+  <title>EPSA Partners — Collaborative Ecosystem</title>
   <link rel="icon" type="image/png" href="assets/logo.png">
   <link rel="stylesheet" href="css/globals.css">
   <link rel="stylesheet" href="css/ecosystem-enhancements.css">
@@ -340,8 +340,8 @@
 
 <div class="partners-stats">
   <div class="partners-stats-inner">
-    <div class="pstat"><div class="pstat-num" id="partnerCount">â€”</div><div class="pstat-label">Active Partners</div></div>
-    <div class="pstat"><div class="pstat-num" id="catCount">â€”</div><div class="pstat-label">Categories</div></div>
+    <div class="pstat"><div class="pstat-num" id="partnerCount">—</div><div class="pstat-label">Active Partners</div></div>
+    <div class="pstat"><div class="pstat-num" id="catCount">—</div><div class="pstat-label">Categories</div></div>
     <div class="pstat"><div class="pstat-num">5k+</div><div class="pstat-label">Beneficiaries</div></div>
     <div class="pstat"><div class="pstat-num">3</div><div class="pstat-label">Countries</div></div>
   </div>
@@ -365,7 +365,7 @@
 <!-- FILTER BAR -->
 <div class="filter-bar">
   <div class="filter-bar-inner">
-    <input type="text" class="filter-search" placeholder="ðŸ” Search partners by nameâ€¦" id="partnerSearch" oninput="applyFilters()">
+    <input type="text" class="filter-search" placeholder=" Search partners by name…" id="partnerSearch" oninput="applyFilters()">
     <div id="catFilters" style="display:flex;gap:8px;flex-wrap:wrap;">
       <button class="cat-filter-btn active" onclick="setCatFilter('',this)">All</button>
     </div>
@@ -379,7 +379,7 @@
     <div style="margin-left:auto;font-size:0.8rem;color:rgba(255,255,255,0.3);" id="partnerResultCount"></div>
   </div>
   <div class="partners-grid" id="partnersGrid">
-    <div class="empty-state"><div class="empty-icon">â³</div><p>Loading partnersâ€¦</p></div>
+    <div class="empty-state"><div class="empty-icon"></div><p>Loading partners…</p></div>
   </div>
 </div>
 
@@ -389,7 +389,7 @@
     <div style="padding:32px 32px 0;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
         <div style="display:flex;gap:16px;align-items:center;">
-          <div id="pmLogo" class="partner-logo">ðŸ¤</div>
+          <div id="pmLogo" class="partner-logo"></div>
           <div>
             <h2 id="pmName" style="font-family:var(--font-display);font-weight:900;font-size:1.6rem;margin-bottom:4px;">Partner</h2>
             <div style="display:flex;align-items:center;gap:8px;">
@@ -398,7 +398,7 @@
             </div>
           </div>
         </div>
-        <button onclick="closePartnerModal()" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);border-radius:10px;padding:8px 14px;cursor:pointer;">âœ•</button>
+        <button onclick="closePartnerModal()" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);border-radius:10px;padding:8px 14px;cursor:pointer;">✕</button>
       </div>
       <p id="pmDesc" style="color:rgba(255,255,255,0.55);font-size:0.9rem;line-height:1.7;margin-bottom:20px;"></p>
       <div id="pmWhatTheyDo" style="margin-bottom:24px;"></div>
@@ -427,8 +427,8 @@
       allPartners = await partnerRes.json();
       const categories = await catRes.json();
 
-      document.getElementById('partnerCount').textContent = allPartners.length || 'â€”';
-      document.getElementById('catCount').textContent = categories.length || 'â€”';
+      document.getElementById('partnerCount').textContent = allPartners.length || '—';
+      document.getElementById('catCount').textContent = categories.length || '—';
 
       // Build category filter buttons
       const catContainer = document.getElementById('catFilters');
@@ -442,7 +442,7 @@
 
       renderPartners(allPartners);
     } catch(e) {
-      document.getElementById('partnersGrid').innerHTML = `<div class="empty-state"><div class="empty-icon">ðŸŒ</div><p>Start the backend to see partners.</p></div>`;
+      document.getElementById('partnersGrid').innerHTML = `<div class="empty-state"><div class="empty-icon"></div><p>Start the backend to see partners.</p></div>`;
     }
   }
 
@@ -467,7 +467,7 @@
     const grid = document.getElementById('partnersGrid');
     document.getElementById('partnerResultCount').textContent = `${partners.length} partner${partners.length !== 1 ? 's' : ''}`;
     if (!partners.length) {
-      grid.innerHTML = `<div class="empty-state"><div class="empty-icon">ðŸ¤</div><p style="font-size:1rem;">No partners match your criteria.</p></div>`;
+      grid.innerHTML = `<div class="empty-state"><div class="empty-icon"></div><p style="font-size:1rem;">No partners match your criteria.</p></div>`;
       return;
     }
     grid.innerHTML = partners.map((p, i) => {
@@ -481,7 +481,7 @@
         <div class="partner-card" onclick="openPartner(${i})" style="animation-delay:${i*0.07}s">
           <div class="partner-card-header">
             <div class="partner-logo">
-              ${p.logo_url ? `<img src="${API}${p.logo_url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='ðŸ¤'">` : 'ðŸ¤'}
+              ${p.logo_url ? `<img src="${API}${p.logo_url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML=''">` : ''}
             </div>
             <div class="partner-info">
               <div class="partner-name">${p.name}</div>
@@ -491,12 +491,12 @@
           </div>
           <div class="partner-card-body">
             <p class="partner-desc">${p.description || 'Building mental health impact in Ethiopia.'}</p>
-            ${p.what_they_do ? `<div class="partner-what-they-do">ðŸ’¡ ${p.what_they_do}</div>` : ''}
+            ${p.what_they_do ? `<div class="partner-what-they-do">💡 ${p.what_they_do}</div>` : ''}
             ${galleryStrip ? `<div class="partner-gallery-strip">${galleryStrip}</div>` : ''}
           </div>
           <div class="partner-card-footer">
-            ${p.website ? `<a href="${p.website}" target="_blank" class="partner-site-link" onclick="event.stopPropagation()">ðŸ”— Visit Website</a>` : '<span></span>'}
-            <span style="font-size:0.78rem;color:rgba(255,255,255,0.3);">View Details â†’</span>
+            ${p.website ? `<a href="${p.website}" target="_blank" class="partner-site-link" onclick="event.stopPropagation()">🔗 Visit Website</a>` : '<span></span>'}
+            <span style="font-size:0.78rem;color:rgba(255,255,255,0.3);">View Details →</span>
           </div>
         </div>`;
     }).join('');
@@ -514,7 +514,7 @@
     const pType = p.partnership_type || 'Strategic';
     document.getElementById('pmLogo').innerHTML = p.logo_url
       ? `<img src="${API}${p.logo_url}" style="width:100%;height:100%;border-radius:14px;object-fit:cover;">`
-      : 'ðŸ¤';
+      : '';
     document.getElementById('pmName').textContent = p.name;
     document.getElementById('pmCat').textContent  = p.category;
     document.getElementById('pmCat').style.color  = color;
@@ -532,7 +532,7 @@
       ? gallery.map(g => `<img src="${API}${g.image_url}" alt="${g.caption||''}" onerror="this.style.display='none'">`).join('')
       : `<div style="grid-column:1/-1;text-align:center;color:rgba(255,255,255,0.2);font-size:0.85rem;padding:20px;">No gallery images.</div>`;
     document.getElementById('pmWebsite').innerHTML = p.website
-      ? `<a href="${p.website}" target="_blank" class="btn btn-primary" style="margin-top:20px;display:inline-flex;gap:8px;align-items:center;">ðŸ”— Visit Partner Website</a>` : '';
+      ? `<a href="${p.website}" target="_blank" class="btn btn-primary" style="margin-top:20px;display:inline-flex;gap:8px;align-items:center;">🔗 Visit Partner Website</a>` : '';
     document.getElementById('partnerModal').classList.add('active');
   }
 

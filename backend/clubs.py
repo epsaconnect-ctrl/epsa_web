@@ -1,4 +1,13 @@
 """EPSA Clubs & Grants Routes"""
+from datetime import datetime, date
+
+def _serialize_row(row):
+    d = _serialize_row(row)
+    for k, v in d.items():
+        if isinstance(v, (datetime, date)):
+            d[k] = v.isoformat()
+    return d
+
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import uuid
@@ -26,7 +35,7 @@ def list_clubs():
     """).fetchall()
     result = []
     for r in rows:
-        d = dict(r)
+        d = _serialize_row(r)
         if d['logo_path']:
             d['logo_url'] = upload_url('clubs', d['logo_path'])
         preview = db.execute("""
@@ -133,7 +142,7 @@ def my_clubs():
     db.close()
     result = []
     for r in rows:
-        d = dict(r)
+        d = _serialize_row(r)
         if d['logo_path']: d['logo_url'] = upload_url('clubs', d['logo_path'])
         result.append(d)
     return jsonify(result)
@@ -185,7 +194,7 @@ def list_proposals(cid):
     db  = get_db()
     rows = db.execute("SELECT * FROM proposals WHERE club_id=? ORDER BY submitted_at DESC", (cid,)).fetchall()
     db.close()
-    return jsonify([dict(r) for r in rows])
+    return jsonify([_serialize_row(r) for r in rows])
 
 @clubs_bp.route('/<int:cid>/proposals', methods=['POST'])
 @jwt_required()
@@ -242,7 +251,7 @@ def get_leadership(cid):
         WHERE cl.club_id=? ORDER BY cl.role
     """, (cid,)).fetchall()
     db.close()
-    return jsonify([dict(r) for r in rows])
+    return jsonify([_serialize_row(r) for r in rows])
 
 @clubs_bp.route('/<int:cid>/leadership', methods=['POST'])
 @jwt_required()
@@ -329,7 +338,7 @@ def list_activities(cid):
     db.close()
     result = []
     for r in rows:
-        d = dict(r)
+        d = _serialize_row(r)
         if d['image_path']: d['image_url'] = upload_url('club_activities', d['image_path'])
         result.append(d)
     return jsonify(result)
@@ -417,8 +426,8 @@ def funding_overview():
             'verified_spend': 'Portion of awarded money that has been checked and verified through submitted financial reports.',
             'available_balance': 'Amount still available for future allocations after existing funding decisions.'
         },
-        'funded_projects': [dict(r) for r in funded],
-        'grant_sources': [dict(r) for r in sources]
+        'funded_projects': [_serialize_row(r) for r in funded],
+        'grant_sources': [_serialize_row(r) for r in sources]
     })
 
 # ─── CLUB JOIN REQUESTS ──────────────────────────────────────────
@@ -467,7 +476,7 @@ def list_join_requests(cid):
         WHERE jr.club_id=? AND jr.status='pending' ORDER BY jr.requested_at DESC
     """, (cid,)).fetchall()
     db.close()
-    return jsonify([dict(r) for r in rows])
+    return jsonify([_serialize_row(r) for r in rows])
 
 @clubs_bp.route('/<int:cid>/join-requests/<int:jid>/approve', methods=['POST'])
 @jwt_required()
@@ -526,7 +535,7 @@ def list_support_requests(cid):
         db.close(); return jsonify({'error': 'Only club leadership can view support requests'}), 403
     rows = db.execute("SELECT * FROM support_requests WHERE club_id=? ORDER BY submitted_at DESC", (cid,)).fetchall()
     db.close()
-    return jsonify([dict(r) for r in rows])
+    return jsonify([_serialize_row(r) for r in rows])
 
 @clubs_bp.route('/<int:cid>/support-request', methods=['POST'])
 @clubs_bp.route('/<int:cid>/support-requests', methods=['POST'])
