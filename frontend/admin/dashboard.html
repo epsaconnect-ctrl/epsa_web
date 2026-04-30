@@ -1586,7 +1586,9 @@ function showAdminToast(msg, type='success') {
           ${q.status==='pending' ? `
             <button onclick="approveQuestion(${q.id})" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;padding:5px 11px;border-radius:8px;font-family:inherit;font-size:.75rem;font-weight:700;cursor:pointer;margin-right:5px">Approve</button>
             <button onclick="rejectQuestion(${q.id})" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:5px 11px;border-radius:8px;font-family:inherit;font-size:.75rem;font-weight:700;cursor:pointer">Reject</button>
-          ` : `<span style="color:#94a3b8;font-size:.75rem">${q.status}</span>`}
+          ` : `
+            <button onclick="deleteQuestion(${q.id})" style="background:#ffffff;color:#94a3b8;border:1px solid #f1f5f9;padding:5px 11px;border-radius:8px;font-family:inherit;font-size:.75rem;font-weight:700;cursor:pointer" onmouseover="this.style.color='#ef4444';this.style.borderColor='#fecaca'" onmouseout="this.style.color='#94a3b8';this.style.borderColor='#f1f5f9'">Delete</button>
+          `}
         </td>
       </tr>`;
     }).join('');
@@ -1927,18 +1929,26 @@ function showAdminToast(msg, type='success') {
     }
     if (isActive && !resultsOut) {
       actions.push(`<button onclick="releaseResults(${e.id})" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 20px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:white;border:none;border-radius:14px;cursor:pointer;font-family:inherit;min-width:110px;box-shadow:0 6px 18px rgba(37,99,235,.3);transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
-        <span style="font-size:1.3rem"></span>
+        <span style="font-size:1.3rem">🏁</span>
         <span style="font-size:.8rem;font-weight:800">Release Results</span>
         <span style="font-size:.68rem;opacity:.85">Notify students</span>
+      </button>`);
+      actions.push(`<button onclick="stopExam(${e.id})" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 20px;background:#fee2e2;color:#dc2626;border:1.5px solid #fecaca;border-radius:14px;cursor:pointer;font-family:inherit;min-width:110px;transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+        <span style="font-size:1.1rem">🛑</span>
+        <span style="font-size:.75rem;font-weight:800">Emergency Stop</span>
       </button>`);
     }
     if (subs > 0) {
       actions.push(`<button onclick="viewExamReport(${e.id})" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 20px;background:white;color:#475569;border:1.5px solid #e2e8f0;border-radius:14px;cursor:pointer;font-family:inherit;min-width:110px;box-shadow:0 4px 12px rgba(0,0,0,.06);transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
-        <span style="font-size:1.3rem"></span>
+        <span style="font-size:1.3rem">📊</span>
         <span style="font-size:.8rem;font-weight:700">Analytics</span>
         <span style="font-size:.68rem;color:#94a3b8">View report</span>
       </button>`);
     }
+    actions.push(`<button onclick="deleteExam(${e.id})" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 20px;background:white;color:#94a3b8;border:1.5px solid #f1f5f9;border-radius:14px;cursor:pointer;font-family:inherit;min-width:110px;transition:all .15s" onmouseover="this.style.color='#ef4444';this.style.borderColor='#fecaca';this.style.transform='translateY(-2px)'" onmouseout="this.style.color='#94a3b8';this.style.borderColor='#f1f5f9';this.style.transform=''">
+      <span style="font-size:1.1rem">🗑️</span>
+      <span style="font-size:.7rem;font-weight:700">Delete Exam</span>
+    </button>`);
 
     return `<article style="background:white;border:1.5px solid ${statusCfg.border};border-radius:24px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,.07)">
 
@@ -2231,6 +2241,36 @@ function showAdminToast(msg, type='success') {
     }
   }
   window.viewExamReport = viewExamReport;
+
+  async function stopExam(id) {
+    if (!confirm('EMERGENCY STOP: This will deactivate the exam immediately. Students currently taking the exam will be unable to continue. Proceed?')) return;
+    try {
+      await API.adminStopMockExam(id);
+      showToast('Exam stopped successfully.', 'warning');
+      loadAdminMockExams();
+    } catch(e) { showToast(e.message, 'error'); }
+  }
+  window.stopExam = stopExam;
+
+  async function deleteExam(id) {
+    if (!confirm('Permanently DELETE this exam and all student submissions? This action is IRREVERSIBLE.')) return;
+    try {
+      await API.adminDeleteMockExam(id);
+      showToast('Exam deleted successfully.', 'success');
+      loadAdminMockExams();
+    } catch(e) { showToast(e.message, 'error'); }
+  }
+  window.deleteExam = deleteExam;
+
+  async function deleteQuestion(id) {
+    if (!confirm('Are you sure you want to delete this question from the bank? This will remove it for both admins and teachers.')) return;
+    try {
+      await API.adminDeleteQuestion(id);
+      showToast('Question deleted successfully.', 'success');
+      loadAdminQuestions();
+    } catch(e) { showToast(e.message, 'error'); }
+  }
+  window.deleteQuestion = deleteQuestion;
 
   // Helpers
   function escAdminHtml(s) {

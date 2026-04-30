@@ -872,3 +872,20 @@ def admin_live_analytics():
         "total_active": total_active,
         "exams": [_serialize_row(r) for r in active_counts]
     })
+
+
+@mock_exams_bp.route("/admin/questions/<int:qid>", methods=["DELETE"])
+@jwt_required()
+def admin_delete_question(qid):
+    uid = get_jwt_identity()
+    db = get_db()
+    try:
+        _require_admin(db, uid)
+        # Delete question from bank
+        db.execute("DELETE FROM question_bank WHERE id=?", (qid,))
+        # Also clean up any analytics for this question
+        db.execute("DELETE FROM question_analytics WHERE question_id=?", (qid,))
+        db.commit()
+    finally:
+        db.close()
+    return jsonify({"message": "Question deleted successfully"})
