@@ -56,9 +56,15 @@ function populateUserUI(user) {
   s('profileYear', user.academic_year ? `Year ${user.academic_year}` : '—');
   s('profileEmail', user.email       || '—');
   if (user.profile_photo) {
-    ['sidebarAvatar','profileAvatarImg'].forEach(id => {
-      const img = document.getElementById(id);
-      if (img) img.src = API.resolveUploadUrl('profiles', user.profile_photo);
+    const pUrl = API.resolveUploadUrl('profiles', user.profile_photo);
+    const avatars = [document.getElementById('sidebarAvatar'), document.getElementById('profileAvatarImg')];
+    avatars.forEach(img => {
+      if (!img) return;
+      img.src = pUrl;
+      img.onerror = () => {
+        img.src = 'assets/president.jpg'; // Fallback to default
+        img.onerror = null;
+      };
     });
   }
 }

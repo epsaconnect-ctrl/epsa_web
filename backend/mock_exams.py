@@ -3,7 +3,16 @@ import json
 import math
 import random
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
+
+def _serialize_row(row):
+    if not row: return None
+    d = dict(row)
+    for k, v in d.items():
+        if isinstance(v, (datetime, date)):
+            d[k] = v.isoformat()
+    return d
+
 
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
@@ -152,12 +161,11 @@ def list_mock_exams():
 
     result = []
     for e in exams:
-        row = dict(e)
+        row = _serialize_row(e)
         scheduled = _parse_dt(row.get("scheduled_at"))
         ends = _parse_dt(row.get("ends_at"))
 
         now_naive = _now_utc()
-        # Keep the open-state resilient to mixed datetime formats/timezones.
         is_open = bool(row["is_active"] == 1 and (ends is None or ends > now_naive))
         if is_open and scheduled is not None and scheduled > now_naive:
             is_open = False
@@ -169,6 +177,7 @@ def list_mock_exams():
         result.append(row)
 
     return jsonify({"exams": result})
+
 
 
 @mock_exams_bp.route("/<int:exam_id>/start", methods=["POST"])
@@ -531,13 +540,16 @@ def get_my_results(exam_id):
     finally:
         db.close()
 
+    s_exam = _serialize_row(exam)
+    s_sub = _serialize_row(sub)
+
     return jsonify({
-        "exam_title": exam["title"],
-        "score": sub["score"],
-        "total": sub["total_questions"],
+        "exam_title": s_exam["title"],
+        "score": s_sub["score"],
+        "total": s_sub["total_questions"],
         "correct": sum(1 for b in breakdown if b["correct"]),
-        "status": sub["status"],
-        "submitted_at": sub["submitted_at"],
+        "status": s_sub["status"],
+        "submitted_at": s_sub["submitted_at"],
         "breakdown": breakdown,
     })
 
@@ -653,7 +665,8 @@ def admin_list_exams():
         ).fetchall()
     finally:
         db.close()
-    return jsonify({"exams": [dict(e) for e in exams]})
+    return jsonify({"exams": [_serialize_row(e) for e in exams]})
+
 
 
 @mock_exams_bp.route("/admin/<int:exam_id>/report", methods=["GET"])
@@ -739,7 +752,8 @@ def admin_exam_report(exam_id):
         db.close()
 
     return jsonify({
-        "exam": dict(exam),
+        "exam": _serialize_row(exam),
+
         "overview": {
             "total_submissions": total_subs,
             "avg_score": round(sum(scores) / len(scores), 2) if scores else 0,

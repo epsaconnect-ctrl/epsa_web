@@ -248,12 +248,13 @@ def start_exam(eid):
     remaining_secs = max(0, duration_secs - int(elapsed_since_open))
 
     return jsonify({
-        'exam':          dict(exam),
-        'questions':     [dict(q) for q in questions],
+        'exam':          _serialize_row(exam),
+        'questions':     [_serialize_row(q) for q in questions],
         'server_time':   datetime.now().isoformat(),
         'remaining_secs': remaining_secs,
         'preview': preview_mode,
     })
+
 
 
 @exams_bp.route('/<int:eid>/progress', methods=['POST'])
