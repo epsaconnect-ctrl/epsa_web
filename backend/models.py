@@ -906,6 +906,8 @@ def migrate_db():
         """ALTER TABLE leadership_profiles ADD COLUMN linked_user_id INTEGER""",
         """ALTER TABLE leadership_profiles ADD COLUMN term_start DATETIME""",
         """ALTER TABLE leadership_profiles ADD COLUMN term_end DATETIME""",
+        """ALTER TABLE leadership_profiles ADD COLUMN is_active INTEGER DEFAULT 1""",
+        """ALTER TABLE leadership_profiles ADD COLUMN order_num INTEGER DEFAULT 0""",
         """CREATE TABLE IF NOT EXISTS grant_sources (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
