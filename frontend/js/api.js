@@ -436,7 +436,7 @@ const API = {
   async adminRejectQuestion(id, notes)          { return this.request(`/teacher/admin/questions/${id}/reject`, { method: 'POST', body: { notes } }); },
 
   // ── Mock Exams (Student) ──
-  async listMockExams()                         { return this.request('/mock-exams/'); },
+  async listMockExams()                         { return this.request('/mock-exams'); },
   async startMockExam(id)                       { return this.request(`/mock-exams/${id}/start`, { method: 'POST' }); },
   async saveMockProgress(id, body)              { return this.request(`/mock-exams/${id}/progress`, { method: 'POST', body }); },
   async submitMockExam(id, body)                { return this.request(`/mock-exams/${id}/submit`, { method: 'POST', body }); },

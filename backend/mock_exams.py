@@ -135,6 +135,7 @@ def _randomize_options(question_ids, db):
 
 # ── Public / Student Endpoints ────────────────────────────────────────────────
 
+@mock_exams_bp.route("", methods=["GET"])
 @mock_exams_bp.route("/", methods=["GET"])
 @jwt_required()
 def list_mock_exams():
