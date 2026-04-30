@@ -247,79 +247,85 @@ def public_leadership():
         pass
     if _runtime_init_error and not _runtime_initialized:
         return jsonify({'status': 'error', 'message': 'DB not ready'}), 503
+    result = {'nec': [], 'nrc': [], 'neb_appointed': []}
     db = get_db()
-    executives = db.execute('''
-        SELECT e.id, e.vote_rank, e.vote_count, e.assigned_role as position, e.status, e.term_start, e.term_end,
-               u.id as user_id, u.first_name||' '||u.father_name as name, u.university, u.profile_photo
-        FROM executive_committee_members e
-        JOIN users u ON u.id = e.user_id
-        WHERE e.status IN ('active','reassigned','standby')
-          AND e.assigned_role IS NOT NULL
-        ORDER BY CASE
-            WHEN e.assigned_role='President' THEN 1
-            WHEN e.assigned_role='Vice President' THEN 2
-            WHEN e.assigned_role='Secretary General' THEN 3
-            ELSE 10
-        END, e.vote_rank ASC, e.id ASC
-    ''').fetchall()
-    nrc_rows = db.execute('''
-        SELECT n.id, n.status, n.term_start, n.term_end, n.eligibility_status,
-               u.id as user_id, u.first_name||' '||u.father_name as name, u.university, u.profile_photo
-        FROM nrc_members n
-        JOIN users u ON u.id = n.user_id
-        WHERE n.status IN ('active','inactive','suspended') AND n.is_primary=1
-        ORDER BY u.university ASC
-    ''').fetchall()
-    if not nrc_rows:
-        nrc_rows = db.execute('''
-            SELECT er.id, 'active' as status, NULL as term_start, NULL as term_end, 'eligible' as eligibility_status,
+    try:
+        executives = db.execute('''
+            SELECT e.id, e.vote_rank, e.vote_count, e.assigned_role as position, e.status, e.term_start, e.term_end,
                    u.id as user_id, u.first_name||' '||u.father_name as name, u.university, u.profile_photo
-            FROM users u JOIN election_results er ON u.id = er.user_id
-            WHERE er.is_active = 1 AND LOWER(er.position) LIKE '%representative%'
+            FROM executive_committee_members e
+            JOIN users u ON u.id = e.user_id
+            WHERE e.status IN (\'active\',\'reassigned\',\'standby\')
+              AND e.assigned_role IS NOT NULL
+            ORDER BY CASE
+                WHEN e.assigned_role=\'President\' THEN 1
+                WHEN e.assigned_role=\'Vice President\' THEN 2
+                WHEN e.assigned_role=\'Secretary General\' THEN 3
+                ELSE 10
+            END, e.vote_rank ASC, e.id ASC
+        ''').fetchall()
+        for e in executives:
+            result['nec'].append({
+                'id': e['id'], 'name': e['name'], 'university': e['university'],
+                'position': e['position'], 'photo': upload_url('profiles', e['profile_photo']),
+                'rank': e['vote_rank'], 'vote_count': e['vote_count'],
+                'status': e['status'], 'term_start': e['term_start'], 'term_end': e['term_end']
+            })
+    except Exception as exc:
+        logger.warning('public_leadership: executives query failed: %s', exc)
+
+    try:
+        nrc_rows = db.execute('''
+            SELECT n.id, n.status, n.term_start, n.term_end, n.eligibility_status,
+                   u.id as user_id, u.first_name||' '||u.father_name as name, u.university, u.profile_photo
+            FROM nrc_members n
+            JOIN users u ON u.id = n.user_id
+            WHERE n.status IN (\'active\',\'inactive\',\'suspended\') AND n.is_primary=1
             ORDER BY u.university ASC
         ''').fetchall()
-    appointed = db.execute('''
-        SELECT id, name, position, hierarchy, profile_photo, bio, order_num
-        FROM leadership_profiles
-        WHERE is_active = 1
-        ORDER BY order_num ASC
-    ''').fetchall()
-    
+        if not nrc_rows:
+            nrc_rows = db.execute('''
+                SELECT er.id, \'active\' as status, NULL as term_start, NULL as term_end, \'eligible\' as eligibility_status,
+                       u.id as user_id, u.first_name||\' \'||u.father_name as name, u.university, u.profile_photo
+                FROM users u JOIN election_results er ON u.id = er.user_id
+                WHERE er.is_active = 1 AND LOWER(er.position) LIKE \'%representative%\'
+                ORDER BY u.university ASC
+            ''').fetchall()
+        for r in nrc_rows:
+            result['nrc'].append({
+                'name': r['name'], 'university': r['university'],
+                'position': 'University Representative',
+                'photo': upload_url('profiles', r['profile_photo']),
+                'status': r['status'], 'eligibility_status': r['eligibility_status'],
+                'term_start': r['term_start'], 'term_end': r['term_end']
+            })
+    except Exception as exc:
+        logger.warning('public_leadership: nrc query failed: %s', exc)
+
+    # Try with is_active filter; fallback to unfiltered for legacy DB schemas
+    try:
+        try:
+            appointed = db.execute(
+                'SELECT id, name, position, hierarchy, profile_photo, bio, order_num '
+                'FROM leadership_profiles WHERE is_active = 1 ORDER BY order_num ASC'
+            ).fetchall()
+        except Exception:
+            appointed = db.execute(
+                'SELECT id, name, position, hierarchy, profile_photo, bio, 0 as order_num '
+                'FROM leadership_profiles ORDER BY id ASC'
+            ).fetchall()
+        for a in appointed:
+            result['neb_appointed'].append({
+                'id': a['id'], 'name': a['name'], 'position': a['position'],
+                'hierarchy': a['hierarchy'], 'bio': a['bio'],
+                'photo': upload_url('appointees', a['profile_photo'])
+            })
+    except Exception as exc:
+        logger.warning('public_leadership: appointed query failed: %s', exc)
+
     db.close()
-    
-    result = {'nec': [], 'nrc': [], 'neb_appointed': []}
-    
-    for e in executives:
-        result['nec'].append({
-            'id': e['id'],
-            'name': e['name'],
-            'university': e['university'],
-            'position': e['position'],
-            'photo': upload_url('profiles', e['profile_photo']),
-            'rank': e['vote_rank'],
-            'vote_count': e['vote_count'],
-            'status': e['status'],
-            'term_start': e['term_start'],
-            'term_end': e['term_end']
-        })
-    for r in nrc_rows:
-        result['nrc'].append({
-            'name': r['name'],
-            'university': r['university'],
-            'position': 'University Representative',
-            'photo': upload_url('profiles', r['profile_photo']),
-            'status': r['status'],
-            'eligibility_status': r['eligibility_status'],
-            'term_start': r['term_start'],
-            'term_end': r['term_end']
-        })
-    for a in appointed:
-        result['neb_appointed'].append({
-            'id': a['id'], 'name': a['name'], 'position': a['position'], 'hierarchy': a['hierarchy'], 'bio': a['bio'],
-            'photo': upload_url('appointees', a['profile_photo'])
-        })
-        
     return jsonify(result)
+
 
 @app.route('/api/history/public')
 def public_history():

@@ -442,58 +442,61 @@ def bulk_submit_questions():
     skipped = 0
     errors = []
 
-    try:
-        for i, q in enumerate(questions[:500]):   # max 500 per batch
-            row_num = i + 1
+    for i, q in enumerate(questions[:500]):   # max 500 per batch
+        row_num = i + 1
+        try:
+            required = ["subject_category", "question_text", "option_a", "option_b", "option_c", "option_d", "correct_idx"]
+            for field in required:
+                if not q.get(field) and q.get(field) != 0:
+                    raise ValueError(f"Missing {field}")
+            if q["subject_category"] not in PSYCHOLOGY_CATEGORIES:
+                raise ValueError(f"Invalid category: {q['subject_category']}")
+            correct_idx = int(q["correct_idx"])
+            if correct_idx not in (0, 1, 2, 3):
+                raise ValueError("correct_idx must be 0-3")
+            existing = db.execute(
+                "SELECT id FROM question_bank WHERE submitted_by=? AND LOWER(question_text)=LOWER(?)",
+                (uid, str(q["question_text"]).strip())
+            ).fetchone()
+            if existing:
+                skipped += 1
+                continue
+            db.execute(
+                """
+                INSERT INTO question_bank (
+                    submitted_by, subject_category, topic, subtopic, bloom_level, difficulty,
+                    question_text, option_a, option_b, option_c, option_d, correct_idx, explanation,
+                    status, created_at, updated_at
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,DATETIME('now'),DATETIME('now'))
+                """,
+                (
+                    uid,
+                    q["subject_category"],
+                    q.get("topic", ""),
+                    q.get("subtopic", ""),
+                    q.get("bloom_level", "Remembering"),
+                    q.get("difficulty", "medium"),
+                    str(q["question_text"]).strip(),
+                    str(q["option_a"]).strip(),
+                    str(q["option_b"]).strip(),
+                    str(q["option_c"]).strip(),
+                    str(q["option_d"]).strip(),
+                    correct_idx,
+                    str(q.get("explanation", "")).strip(),
+                    "pending",
+                ),
+            )
+            # Commit each row individually so Postgres doesn't abort the whole transaction
+            db.commit()
+            inserted += 1
+        except Exception as exc:
             try:
-                required = ["subject_category", "question_text", "option_a", "option_b", "option_c", "option_d", "correct_idx"]
-                for field in required:
-                    if not q.get(field):
-                        raise ValueError(f"Missing {field}")
-                if q["subject_category"] not in PSYCHOLOGY_CATEGORIES:
-                    raise ValueError(f"Invalid category: {q['subject_category']}")
-                correct_idx = int(q["correct_idx"])
-                if correct_idx not in (0, 1, 2, 3):
-                    raise ValueError("correct_idx must be 0-3")
-                existing = db.execute(
-                    "SELECT id FROM question_bank WHERE submitted_by=? AND LOWER(question_text)=LOWER(?)",
-                    (uid, q["question_text"].strip())
-                ).fetchone()
-                if existing:
-                    skipped += 1
-                    continue
-                db.execute(
-                    """
-                    INSERT INTO question_bank (
-                        submitted_by, subject_category, topic, subtopic, bloom_level, difficulty,
-                        question_text, option_a, option_b, option_c, option_d, correct_idx, explanation,
-                        status, created_at, updated_at
-                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,DATETIME('now'),DATETIME('now'))
-                    """,
-                    (
-                        uid,
-                        q["subject_category"],
-                        q.get("topic", ""),
-                        q.get("subtopic", ""),
-                        q.get("bloom_level", "Remembering"),
-                        q.get("difficulty", "medium"),
-                        q["question_text"].strip(),
-                        q["option_a"].strip(),
-                        q["option_b"].strip(),
-                        q["option_c"].strip(),
-                        q["option_d"].strip(),
-                        correct_idx,
-                        q.get("explanation", "").strip(),
-                        "pending",
-                    ),
-                )
-                inserted += 1
-            except Exception as exc:
-                errors.append(f"Row {row_num}: {exc}")
+                db.rollback()
+            except Exception:
+                pass
+            errors.append(f"Row {row_num}: {exc}")
 
-        db.commit()
-    finally:
-        db.close()
+    db.close()
 
     return jsonify({
         "message": f"Bulk upload complete: {inserted} inserted, {skipped} duplicates skipped, {len(errors)} errors.",

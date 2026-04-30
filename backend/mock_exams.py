@@ -881,16 +881,26 @@ def admin_delete_question(qid):
     db = get_db()
     try:
         _require_admin(db, uid)
-        db.execute("DELETE FROM question_bank WHERE id=?", (qid,))
+        # Delete FK children first to avoid FK constraint violations (Postgres)
         try:
             db.execute("DELETE FROM question_analytics WHERE question_id=?", (qid,))
         except Exception:
             pass
+        db.execute("DELETE FROM question_bank WHERE id=?", (qid,))
         db.commit()
     except ValueError as e:
+        db.close()
         return jsonify({"error": str(e)}), 403
     except Exception as e:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        db.close()
         return jsonify({"error": "Failed to delete question: " + str(e)}), 500
     finally:
-        db.close()
+        try:
+            db.close()
+        except Exception:
+            pass
     return jsonify({"message": "Question deleted successfully"})
