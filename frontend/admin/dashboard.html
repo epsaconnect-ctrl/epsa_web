@@ -1048,7 +1048,7 @@
   </div>
 </div>
 
-<script src="../js/api.js"></script>
+<script src="../js/api.js?v=2.1"></script>
 <script src="../js/admin.js"></script>
 <script>
 // 
@@ -1896,7 +1896,13 @@ function showAdminToast(msg, type='success') {
         : { label:' Scheduled', color:'#d97706', bg:'#fef3c7', border:'#fcd34d' };
 
     // Dates
-    const fmtDate = d => d ? new Date(d).toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
+    const fmtDate = d => {
+      if (!d) return '';
+      let sd = d;
+      if (!sd.includes('T')) sd = sd.replace(' ', 'T');
+      if (!sd.endsWith('Z')) sd += 'Z';
+      return new Date(sd).toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    };
     const createdAt   = fmtDate(e.created_at);
     const scheduledAt = fmtDate(e.scheduled_at);
     const endsAt      = fmtDate(e.ends_at);
@@ -2245,7 +2251,11 @@ function showAdminToast(msg, type='success') {
   async function stopExam(id) {
     if (!confirm('EMERGENCY STOP: This will deactivate the exam immediately. Students currently taking the exam will be unable to continue. Proceed?')) return;
     try {
-      await API.adminStopMockExam(id);
+      if (window.API && typeof window.API.adminStopMockExam === 'function') {
+        await API.adminStopMockExam(id);
+      } else {
+        await adminFetch(`/api/admin/mock-exams/${id}/stop`, { method: 'POST' });
+      }
       showToast('Exam stopped successfully.', 'warning');
       loadAdminMockExams();
     } catch(e) { showToast(e.message, 'error'); }
@@ -2255,7 +2265,11 @@ function showAdminToast(msg, type='success') {
   async function deleteExam(id) {
     if (!confirm('Permanently DELETE this exam and all student submissions? This action is IRREVERSIBLE.')) return;
     try {
-      await API.adminDeleteMockExam(id);
+      if (window.API && typeof window.API.adminDeleteMockExam === 'function') {
+        await API.adminDeleteMockExam(id);
+      } else {
+        await adminFetch(`/api/admin/mock-exams/${id}`, { method: 'DELETE' });
+      }
       showToast('Exam deleted successfully.', 'success');
       loadAdminMockExams();
     } catch(e) { showToast(e.message, 'error'); }
@@ -2265,7 +2279,11 @@ function showAdminToast(msg, type='success') {
   async function deleteQuestion(id) {
     if (!confirm('Are you sure you want to delete this question from the bank? This will remove it for both admins and teachers.')) return;
     try {
-      await API.adminDeleteQuestion(id);
+      if (window.API && typeof window.API.adminDeleteQuestion === 'function') {
+        await API.adminDeleteQuestion(id);
+      } else {
+        await adminFetch(`/api/admin/mock-exams/questions/${id}`, { method: 'DELETE' });
+      }
       showToast('Question deleted successfully.', 'success');
       loadAdminQuestions();
     } catch(e) { showToast(e.message, 'error'); }

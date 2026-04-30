@@ -692,25 +692,25 @@
 </div>
 
 <!-- ── EXAM PLAYER OVERLAY ── -->
-<div id="examOverlay" style="display:none;position:fixed;inset:0;background:white;z-index:9999;overflow-y:auto;">
-  <div style="max-width:800px;margin:0 auto;padding:var(--space-8);">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-6);padding:var(--space-4) var(--space-6);background:var(--dark-800);border-radius:var(--radius-xl);color:white;">
+<div id="examOverlay" style="display:none;position:fixed;inset:0;background:radial-gradient(circle at top right, rgba(13, 31, 18, 0.98), #050e07);z-index:9999;overflow-y:auto;backdrop-filter:blur(24px);">
+  <div style="max-width:900px;margin:0 auto;padding:var(--space-8);min-height:100vh;display:flex;flex-direction:column;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-6);padding:var(--space-4) var(--space-6);background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-xl);color:white;box-shadow:0 12px 40px rgba(0,0,0,0.3);backdrop-filter:blur(12px);">
       <div>
-        <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);font-weight:600;">EPSA EXAM</div>
-        <div style="font-family:var(--font-display);font-weight:800;" id="examPlayerTitle"></div>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">EPSA EXAM</div>
+        <div style="font-family:var(--font-display);font-weight:800;font-size:1.1rem;color:#bbf7d0;" id="examPlayerTitle"></div>
       </div>
       <div style="text-align:center;">
-        <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);">TIME REMAINING</div>
-        <div style="font-family:var(--font-display);font-size:1.8rem;font-weight:900;color:var(--epsa-gold-light);" id="examTimerDisplay">00:00</div>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);letter-spacing:0.1em;">TIME REMAINING</div>
+        <div style="font-family:var(--font-display);font-size:2rem;font-weight:900;color:var(--epsa-gold-light);text-shadow:0 0 20px rgba(232,192,96,0.4);" id="examTimerDisplay">00:00</div>
       </div>
       <div style="text-align:right;">
-        <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);">PROGRESS</div>
-        <div style="font-family:var(--font-display);font-weight:700;" id="examProgress">0/0</div>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);letter-spacing:0.1em;">PROGRESS</div>
+        <div style="font-family:var(--font-display);font-weight:700;font-size:1.2rem;color:white;" id="examProgress">0/0</div>
       </div>
     </div>
     <div id="examQuestions" style="display:flex;flex-direction:column;gap:var(--space-6);"></div>
-    <div style="margin-top:var(--space-8);text-align:center;">
-      <button class="btn btn-gold btn-lg" onclick="submitExam()"> Submit Exam</button>
+    <div style="margin-top:var(--space-8);text-align:center;padding-bottom:var(--space-8);">
+      <button class="btn btn-gold btn-lg" onclick="submitExam()" style="padding:16px 48px;font-size:1.2rem;box-shadow:0 12px 36px rgba(200,163,64,0.3);"> Submit Exam</button>
     </div>
   </div>
 </div>

@@ -96,7 +96,12 @@ function renderExamPreview(isLockedPreview, scheduledAt) {
   const display = document.getElementById('examTimerDisplay');
   if (display) display.textContent = '--:--';
 
-  const scheduledDate = scheduledAt ? new Date(scheduledAt) : null;
+  let safeDateStr = scheduledAt;
+  if (safeDateStr) {
+      if (!safeDateStr.includes('T')) safeDateStr = safeDateStr.replace(' ', 'T');
+      if (!safeDateStr.endsWith('Z')) safeDateStr += 'Z';
+  }
+  const scheduledDate = safeDateStr ? new Date(safeDateStr) : null;
   const formattedDate = scheduledDate ? scheduledDate.toLocaleString(undefined, {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     hour: '2-digit', minute: '2-digit'
@@ -223,19 +228,19 @@ function renderExamQuestions() {
 function buildQuestionsHTML(isPreview) {
   const secureCls = isPreview ? 'exam-secure-preview' : 'exam-secure-live';
   return examState.questions.map((q, qi) => `
-    <div class="question-block ${secureCls}" id="qblock-${q.id}" style="background:white;border-radius:var(--radius-xl);padding:var(--space-7);border:1px solid var(--light-200);box-shadow:var(--shadow-sm);user-select:none;-webkit-user-select:none;">
+    <div class="question-block ${secureCls}" id="qblock-${q.id}" style="background:rgba(255,255,255,0.02);border-radius:var(--radius-xl);padding:var(--space-7);border:1px solid rgba(255,255,255,0.06);box-shadow:0 8px 32px rgba(0,0,0,0.15);user-select:none;-webkit-user-select:none;backdrop-filter:blur(12px);">
       <div style="display:flex;align-items:flex-start;gap:var(--space-4);margin-bottom:var(--space-6);">
-        <span style="width:32px;height:32px;border-radius:50%;background:var(--epsa-green);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;">${qi+1}</span>
-        <p class="exam-qtext" style="font-size:1rem;font-weight:600;color:var(--text-primary);line-height:1.6;margin:0;">${isPreview ? '— Question text hidden until exam start —' : q.question}</p>
+        <span style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg, var(--epsa-green), var(--epsa-green-light));color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;flex-shrink:0;box-shadow:0 4px 12px rgba(26,107,60,0.3);">${qi+1}</span>
+        <p class="exam-qtext" style="font-size:1.1rem;font-weight:600;color:var(--off-white);line-height:1.7;margin:0;">${isPreview ? '— Question text hidden until exam start —' : q.question}</p>
       </div>
       <div style="display:flex;flex-direction:column;gap:var(--space-3);">
         ${q.shuffledOptions.map((opt, oi) => `
           <div class="exam-option" id="opt-${q.id}-${oi}"
-               style="padding:14px 18px;border:2px solid var(--light-200);border-radius:var(--radius-lg);cursor:${isPreview ? 'not-allowed' : 'pointer'};transition:all 0.15s;position:relative;user-select:none;-webkit-user-select:none;"
+               style="padding:16px 20px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-lg);cursor:${isPreview ? 'not-allowed' : 'pointer'};transition:all 0.2s cubic-bezier(0.4,0,0.2,1);position:relative;user-select:none;-webkit-user-select:none;color:#e2e8f0;"
                ${!isPreview ? `onmouseenter="revealOption(this)" onmouseleave="blurOption(this,'${q.id}','${opt.origIdx}')" onclick="selectAnswer('${q.id}',${oi},${opt.origIdx},this)"` : ''}>
-            <div style="display:flex;align-items:center;gap:var(--space-3);">
-              <span style="width:28px;height:28px;border-radius:50%;background:var(--light-100);border:1.5px solid var(--light-200);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;flex-shrink:0;">${String.fromCharCode(65+oi)}</span>
-              <span class="option-text" style="font-size:0.9rem;">${isPreview ? '— Hidden until start —' : opt.text}</span>
+            <div style="display:flex;align-items:center;gap:var(--space-4);">
+              <span style="width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;color:rgba(255,255,255,0.6);transition:all 0.2s;">${String.fromCharCode(65+oi)}</span>
+              <span class="option-text" style="font-size:1rem;">${isPreview ? '— Hidden until start —' : opt.text}</span>
             </div>
           </div>`).join('')}
       </div>
@@ -250,7 +255,7 @@ function revealOption(el) {
 function blurOption(el, qid, origIdx) {
   if (!examState.hasStarted) return;
   if (examState.answers[qid] !== undefined && examState.answers[qid] == origIdx) return;
-  if (!el.classList.contains('selected')) el.style.borderColor = 'var(--light-200)';
+  if (!el.classList.contains('selected')) el.style.borderColor = 'rgba(255,255,255,0.08)';
 }
 
 function selectAnswer(qid, uiIdx, origIdx, el) {
@@ -262,13 +267,17 @@ function selectAnswer(qid, uiIdx, origIdx, el) {
       const opt = document.getElementById(`opt-${qid}-${i}`);
       if (!opt) return;
       opt.classList.remove('selected');
-      opt.style.borderColor = 'var(--light-200)';
-      opt.style.background  = 'white';
+      opt.style.borderColor = 'rgba(255,255,255,0.08)';
+      opt.style.background  = 'rgba(255,255,255,0.03)';
+      const badge = opt.querySelector('span');
+      if(badge) { badge.style.background = 'rgba(255,255,255,0.05)'; badge.style.borderColor = 'rgba(255,255,255,0.1)'; badge.style.color = 'rgba(255,255,255,0.6)'; }
     });
   });
   el.classList.add('selected');
   el.style.borderColor = 'var(--epsa-green)';
-  el.style.background  = 'rgba(26,107,60,0.05)';
+  el.style.background  = 'rgba(26,107,60,0.15)';
+  const badge = el.querySelector('span');
+  if(badge) { badge.style.background = 'var(--epsa-green)'; badge.style.borderColor = 'var(--epsa-green)'; badge.style.color = 'white'; }
   const answered = Object.keys(examState.answers).length;
   const prog = document.getElementById('examProgress');
   if (prog) prog.textContent = `${answered}/${examState.questions.length}`;
@@ -427,7 +436,7 @@ function showTabSwitchWarning(count, max) {
     display:flex;align-items:center;justify-content:center;flex-direction:column;
     color:white;text-align:center;padding:var(--space-8);
   `;
-  let secs = 19;
+  let secs = 10;
   warn.innerHTML = getTabWarnHTML(count, max, secs);
   document.body.appendChild(warn);
 
@@ -449,23 +458,23 @@ function showTabSwitchWarning(count, max) {
 
 function getTabWarnHTML(count, max, secs) {
   return `
-    <div style="background:rgba(200,60,60,0.12);border:2px solid rgba(200,60,60,0.4);
-      border-radius:var(--radius-xl);padding:var(--space-10) var(--space-8);max-width:480px;width:100%;">
-      <div style="font-size:3rem;margin-bottom:var(--space-4);">⚠️</div>
-      <h2 style="font-family:var(--font-display);font-size:1.8rem;font-weight:900;color:#f87171;margin-bottom:var(--space-3);">
-        Focus Violation!
+    <div style="background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);backdrop-filter:blur(16px);
+      border-radius:var(--radius-xl);padding:var(--space-10) var(--space-8);max-width:520px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,0.4);">
+      <div style="font-size:4rem;margin-bottom:var(--space-4);animation: examGlowPulse 1s infinite;">⚠️</div>
+      <h2 style="font-family:var(--font-display);font-size:2rem;font-weight:900;color:#fca5a5;margin-bottom:var(--space-3);letter-spacing:0.05em;text-transform:uppercase;">
+        Focus Violation
       </h2>
-      <p style="color:rgba(255,255,255,0.75);font-size:1rem;line-height:1.7;margin-bottom:var(--space-5);">
-        You left the exam window.<br>
-        <strong style="color:white;">Warning ${count} of ${max}</strong> — return immediately or your exam will be cancelled.
+      <p style="color:rgba(255,255,255,0.85);font-size:1.1rem;line-height:1.7;margin-bottom:var(--space-5);">
+        You left the secure exam window.<br>
+        <span style="display:inline-block;margin-top:12px;padding:6px 16px;background:rgba(220,38,38,0.2);border-radius:20px;font-weight:800;color:#fecaca;letter-spacing:0.05em;">Warning ${count} of ${max}</span>
       </p>
-      <div style="font-size:3.5rem;font-family:var(--font-display);font-weight:900;color:#f87171;margin-bottom:var(--space-3);" id="tabWarnCountdown">${secs}</div>
-      <p style="font-size:0.8rem;color:rgba(255,255,255,0.45);margin-bottom:var(--space-6);">seconds to return</p>
+      <div style="font-size:4.5rem;font-family:var(--font-display);font-weight:900;color:#f87171;margin-bottom:var(--space-2);text-shadow:0 0 24px rgba(248,113,113,0.5);" id="tabWarnCountdown">${secs}</div>
+      <p style="font-size:0.9rem;color:rgba(255,255,255,0.5);margin-bottom:var(--space-8);letter-spacing:0.1em;text-transform:uppercase;">seconds to return</p>
       <button onclick="dismissTabWarning()" style="
-        padding:12px 36px;background:var(--epsa-green);color:white;border:none;
-        border-radius:9999px;font-weight:700;cursor:pointer;font-size:1rem;
-        box-shadow:0 4px 16px rgba(26,107,60,0.4);">
-        ✅ I'm Back — Continue Exam
+        padding:16px 40px;background:linear-gradient(135deg, var(--epsa-green), var(--epsa-green-light));color:white;border:none;
+        border-radius:9999px;font-weight:800;cursor:pointer;font-size:1.1rem;
+        box-shadow:0 8px 24px rgba(26,107,60,0.5);transition:transform 0.2s;">
+        ✅ I'm Back — Resume Exam
       </button>
     </div>`;
 }
