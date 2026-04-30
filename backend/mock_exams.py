@@ -527,6 +527,7 @@ def get_my_results(exam_id):
         q_map = {q["id"]: q for q in questions}
 
         breakdown = []
+        category_stats = {}
         for qid in qids:
             q = q_map.get(qid)
             if not q:
@@ -535,11 +536,6 @@ def get_my_results(exam_id):
             student_choice = answers.get(qid_str)
             perm = opt_order.get(qid_str, [0, 1, 2, 3])
             original_correct_idx = q["correct_idx"]
-            # Map correct_idx back to shuffled position for display
-            try:
-                display_correct_idx = perm.index(original_correct_idx)
-            except ValueError:
-                display_correct_idx = original_correct_idx
 
             was_correct = False
             if student_choice is not None:
@@ -549,21 +545,25 @@ def get_my_results(exam_id):
                 except (IndexError, ValueError, TypeError):
                     pass
 
-            opts_raw = [q["option_a"], q["option_b"], q["option_c"], q["option_d"]]
-            shuffled_opts = [opts_raw[i] for i in perm]
+            cat = q["subject_category"]
+            if cat not in category_stats:
+                category_stats[cat] = {"correct": 0, "total": 0, "time_spent": 0}
+            
+            category_stats[cat]["total"] += 1
+            if was_correct:
+                category_stats[cat]["correct"] += 1
+            category_stats[cat]["time_spent"] += times.get(qid_str, 0)
 
+            # Do NOT expose question text, options, or correct answers to the student
             breakdown.append({
                 "id": qid,
-                "question_text": q["question_text"],
-                "options": shuffled_opts,
-                "student_answer": int(student_choice) if student_choice is not None else None,
-                "correct_answer": display_correct_idx,
                 "correct": was_correct,
-                "explanation": q["explanation"],
-                "category": q["subject_category"],
+                "category": cat,
                 "bloom_level": q["bloom_level"],
                 "time_spent": times.get(qid_str, 0),
             })
+            
+        category_performance = [{"category": k, **v} for k, v in category_stats.items()]
     finally:
         db.close()
 
@@ -578,6 +578,7 @@ def get_my_results(exam_id):
         "status": s_sub["status"],
         "submitted_at": s_sub["submitted_at"],
         "breakdown": breakdown,
+        "category_performance": category_performance
     })
 
 

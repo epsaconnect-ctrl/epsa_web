@@ -7,70 +7,241 @@
   <link rel="icon" type="image/png" href="assets/logo.png">
   <link rel="stylesheet" href="css/globals.css">
   <link rel="stylesheet" href="css/home.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <style>
-    .statutes-page { padding-top: 100px; padding-bottom: 80px; background: linear-gradient(180deg, #f8faf8 0%, #fff 40%); min-height: 100vh; }
-    .statutes-wrap { max-width: 920px; margin: 0 auto; padding: 0 20px; }
-    .statutes-kicker { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--epsa-green); font-weight: 700; margin-bottom: 12px; }
-    .statutes-title { font-family: var(--font-display, Georgia, serif); font-size: clamp(1.75rem, 4vw, 2.35rem); font-weight: 800; color: #0f2918; line-height: 1.2; margin-bottom: 16px; }
-    .statutes-lead { color: var(--text-secondary, #4a5568); font-size: 1.02rem; line-height: 1.75; margin-bottom: 40px; border-left: 4px solid var(--epsa-gold, #c8a340); padding-left: 18px; }
-    article.statute-art { margin-bottom: 36px; padding: 28px 26px; background: #fff; border: 1px solid rgba(26,107,60,0.12); border-radius: 16px; box-shadow: 0 8px 32px rgba(15,41,24,0.06); }
-    .statute-art h2 { font-family: var(--font-display, Georgia, serif); font-size: 1.15rem; font-weight: 800; color: #1a6b3c; margin-bottom: 14px; }
-    .statute-art h3 { font-size: 0.88rem; font-weight: 700; color: #334155; margin: 18px 0 8px; text-transform: uppercase; letter-spacing: 0.04em; }
-    .statute-art p, .statute-art li { font-size: 0.94rem; line-height: 1.75; color: #374151; }
-    .statute-art ul { margin: 8px 0 0 1.1rem; }
-    .statute-art li { margin-bottom: 6px; }
-    .statutes-toc { margin-bottom: 32px; padding: 20px; background: rgba(26,107,60,0.06); border-radius: 12px; font-size: 0.88rem; }
-    .statutes-toc a { color: #1a6b3c; font-weight: 600; text-decoration: none; }
-    .statutes-toc a:hover { text-decoration: underline; }
-    .code-ref {
-      font-family: ui-monospace, monospace;
-      font-size: 0.78rem;
-      background: rgba(15, 41, 24, 0.06);
-      border: 1px solid rgba(26, 107, 60, 0.15);
-      border-radius: 8px;
-      padding: 12px 14px;
-      margin: 12px 0;
-      line-height: 1.55;
-      color: #1e3a2f;
-      overflow-x: auto;
+    :root {
+      --doc-bg: #f8faf9;
+      --doc-text: #1f2937;
+      --doc-muted: #6b7280;
+      --doc-accent: #166534;
+      --doc-accent-light: #dcfce7;
+      --doc-border: #e5e7eb;
     }
-    .pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
-    .pill-row span {
-      font-size: 0.72rem;
+    body {
+      background-color: var(--doc-bg);
+      color: var(--doc-text);
+      font-family: 'Outfit', sans-serif;
+    }
+    .statutes-hero {
+      padding: 140px 20px 60px;
+      background: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
+      color: white;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .statutes-hero::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: url('data:image/svg+xml;utf8,<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><circle cx="2" cy="2" r="1" fill="rgba(255,255,255,0.05)"/></svg>');
+      z-index: 1;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .statutes-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.5rem, 5vw, 4rem);
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      padding: 6px 12px;
-      border-radius: 999px;
-      background: rgba(26, 107, 60, 0.1);
-      color: #14532d;
+      margin-bottom: 16px;
+      line-height: 1.1;
+      color: #f0fdf4;
     }
-    .flow-step {
+    .statutes-subtitle {
+      font-size: 1.1rem;
+      color: #a7f3d0;
+      font-weight: 300;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    
+    .disclaimer-banner {
+      max-width: 900px;
+      margin: -30px auto 40px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      border-left: 4px solid #f59e0b;
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .disclaimer-icon {
+      font-size: 1.5rem;
+    }
+    .disclaimer-text {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #4b5563;
+    }
+    .disclaimer-text strong {
+      color: #111827;
+      font-weight: 700;
+    }
+
+    .doc-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 20px 80px;
       display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 14px 18px;
-      margin: 16px 0;
+      grid-template-columns: 260px 1fr;
+      gap: 40px;
       align-items: start;
     }
-    .flow-num {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #1a6b3c, #0f2918);
-      color: #fff;
-      font-weight: 800;
+    
+    @media (max-width: 768px) {
+      .doc-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .doc-sidebar {
+      position: sticky;
+      top: 100px;
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+      border: 1px solid var(--doc-border);
+    }
+    .doc-sidebar-title {
       font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--doc-muted);
+      margin-bottom: 16px;
+    }
+    .doc-nav {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .doc-nav li {
+      margin-bottom: 8px;
+    }
+    .doc-nav a {
+      display: block;
+      padding: 8px 12px;
+      color: #4b5563;
+      text-decoration: none;
+      font-size: 0.95rem;
+      border-radius: 8px;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+    .doc-nav a:hover {
+      background: var(--doc-accent-light);
+      color: var(--doc-accent);
+    }
+    .doc-nav a.active {
+      background: var(--doc-accent);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .doc-content {
+      background: #fff;
+      border-radius: 16px;
+      padding: 48px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+      border: 1px solid var(--doc-border);
+    }
+    
+    .article {
+      margin-bottom: 56px;
+    }
+    .article:last-child {
+      margin-bottom: 0;
+    }
+    
+    .article-header {
+      border-bottom: 2px solid var(--doc-accent-light);
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+    .article-number {
+      font-family: 'Playfair Display', serif;
+      color: var(--doc-accent);
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+    .article-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: #111827;
+      letter-spacing: -0.02em;
+    }
+    
+    .clause {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .clause-number {
+      font-weight: 700;
+      color: var(--doc-accent);
+      flex-shrink: 0;
+      min-width: 24px;
+    }
+    .clause-text {
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: #374151;
+    }
+    .clause-text ul {
+      margin-top: 12px;
+      padding-left: 20px;
+    }
+    .clause-text li {
+      margin-bottom: 8px;
+    }
+    
+    .seal-container {
+      text-align: center;
+      margin-top: 60px;
+      padding-top: 40px;
+      border-top: 1px dashed var(--doc-border);
+    }
+    .seal {
+      width: 100px;
+      height: 100px;
+      border: 3px solid var(--doc-accent);
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
+      margin: 0 auto 16px;
+      color: var(--doc-accent);
+      font-weight: 800;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      letter-spacing: 2px;
+      opacity: 0.2;
     }
   </style>
 </head>
 <body>
-<nav class="navbar" style="position:fixed;top:0;left:0;right:0;z-index:100;">
+
+<nav class="navbar" style="position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);box-shadow:0 1px 0 rgba(0,0,0,0.05);">
   <div class="container">
     <div class="nav-inner">
-      <a href="index.html" class="nav-logo"><img src="assets/logo.png" alt="EPSA"><div class="nav-logo-text"><span class="nav-logo-main">EPSA</span></div></a>
+      <a href="index.html" class="nav-logo">
+        <img src="assets/logo.png" alt="EPSA Logo">
+        <div class="nav-logo-text">
+          <span class="nav-logo-main">EPSA</span>
+        </div>
+      </a>
       <ul class="nav-menu">
         <li><a href="index.html" class="nav-link">Home</a></li>
         <li><a href="structure.html" class="nav-link active">Statutes &amp; Bodies</a></li>
@@ -83,132 +254,184 @@
   </div>
 </nav>
 
-<main class="statutes-page">
-  <div class="statutes-wrap">
-    <p class="statutes-kicker">Constitutional framework (reference)</p>
-    <h1 class="statutes-title">Structure, Statutes, and Governing Bodies of EPSA</h1>
-    <p class="statutes-lead">
-      This page explains how leadership, representation, and elections are organised in the Ethiopian Psychology Students&apos; Association (EPSA), and how those rules are reflected in the EPSA web platform. It links formal roles (NEB, NEC, NRC) to the actual Python modules and API routes that enforce eligibility, voting, exams, and messaging. Where this page and the registered constitution or bylaws differ, the registered instruments prevail.
-    </p>
-
-    <nav class="statutes-toc" aria-label="Table of contents">
-      <strong>Contents:</strong>
-      <a href="#art1">Art. I</a> ·
-      <a href="#art2">Art. II NEB</a> ·
-      <a href="#art3">Art. III NEC</a> ·
-      <a href="#art4">Art. IV NRC</a> ·
-      <a href="#art5">Art. V Elections</a> ·
-      <a href="#art6">Art. VI Platform</a> ·
-      <a href="#art7">Art. VII Interpretation</a>
-    </nav>
-
-    <article class="statute-art" id="art1">
-      <h2>Article I — Definitions and supremacy of instruments</h2>
-      <p><strong>1.1</strong> &quot;EPSA&quot; means the Ethiopian Psychology Students&apos; Association.</p>
-      <p><strong>1.2</strong> &quot;Member&quot; means a student admitted to the national platform in accordance with EPSA registration rules. In code, approved members typically have <code>users.status = 'approved'</code> (see applicant approval flows in <code>backend/admin.py</code>).</p>
-      <p><strong>1.3</strong> The <em>Constitution</em> and duly adopted <em>bylaws</em> are the supreme internal instruments. The digital platform (Flask blueprints under <code>backend/</code>) operationalises membership, voting, exams, clubs, and messaging; it does not replace those instruments.</p>
-    </article>
-
-    <article class="statute-art" id="art2">
-      <h2>Article II — National Executive Board (NEB)</h2>
-      <h3>Composition and mandate</h3>
-      <p><strong>2.1</strong> The NEB is the highest continuous executive authority between general assemblies: strategy, policy execution, and oversight of national programmes (trainings, certification exams, partnerships).</p>
-      <h3>How the platform supports NEB work</h3>
-      <p>Administrators use the secured admin dashboard (<code>admin/dashboard.html</code>, <code>js/admin.js</code>) which calls REST endpoints under <code>/api/admin/...</code> defined in <code>backend/admin.py</code>: approving students, scheduling trainings, publishing exams, configuring voting phases, and managing clubs and grants.</p>
-      <div class="code-ref">Key module: backend/admin.py — applicants, trainings, exams (create / publish via is_active), voting phase configuration, executive and NRC tooling.</div>
-      <h3>Responsibilities (operational view)</h3>
-      <ul>
-        <li>Approve membership and maintain an accurate national roll (admin applicant routes).</li>
-        <li>Publish national exams when ready: exams are created as drafts then toggled active so students see them via <code>GET /api/exams</code> in <code>backend/exams.py</code>.</li>
-        <li>Supervise elections: activate phases, approve nominations, and finalise results so the student portal and NRC workflows stay aligned with policy.</li>
-      </ul>
-    </article>
-
-    <article class="statute-art" id="art3">
-      <h2>Article III — National Executive Committee (NEC)</h2>
-      <h3>Role</h3>
-      <p><strong>3.1</strong> The NEC operationalises NEB decisions: portfolios (programmes, communications, discipline), day-to-day coordination, and execution of assembly resolutions.</p>
-      <h3>Phase 2 executive elections in software</h3>
-      <p>After Phase 1 establishes university-level representation, Phase 2 in <code>backend/voting.py</code> opens national executive nominations. Only students who appear as <strong>active, eligible NRC members</strong> in the <code>nrc_members</code> table may submit nominations for Phase 2 positions—the server enforces this in <code>nominate()</code> before inserting into <code>nominations</code>.</p>
-      <div class="code-ref">backend/voting.py → nominate(): Phase 2 requires nrc_members.status='active' AND eligibility_status='eligible'.</div>
-      <h3>Accountability</h3>
-      <p>The NEC remains accountable to the NEB and to the membership; admin tooling in <code>backend/admin.py</code> (executive governance panels in <code>js/admin.js</code>) is used to record decisions, vacancies, and handovers in line with your internal procedures.</p>
-    </article>
-
-    <article class="statute-art" id="art4">
-      <h2>Article IV — National Representative Council (NRC)</h2>
-      <h3>Representative function</h3>
-      <p><strong>4.1</strong> The NRC channels institutional and geographic perspectives into national deliberation. On the platform, NRC membership is backed by database rows synced from Phase 1 outcomes (see NRC management tooling exposed alongside voting in the admin UI).</p>
-      <h3>Selection (Phase 1 — university-scoped)</h3>
-      <p>Phase 1 candidates are nominations tied to the voter&apos;s university. The API filters the ballot in <code>get_candidates()</code> so each student only sees approved nominees from <code>users.university</code> matching their own row.</p>
-      <div class="code-ref">backend/voting.py → get_candidates(): if phase_number == 1, nominations are restricted with WHERE u.university = voter.university.</div>
-      <h3>Powers (as reflected in code)</h3>
-      <ul>
-        <li>Phase 1 winners feed representative structures used later for Phase 2 eligibility.</li>
-        <li>Student-facing NRC-related data and documents may be served through <code>backend/students.py</code> (e.g. governance document paths and portal copy)—check that module for the exact endpoints your deployment exposes.</li>
-      </ul>
-    </article>
-
-    <article class="statute-art" id="art5">
-      <h2>Article V — Elections, voting process, and integrity</h2>
-      <div class="pill-row">
-        <span>Phase 1</span><span>University ballot</span><span>Phase 2</span><span>Executive ballot</span><span>One vote / phase</span>
-      </div>
-      <p>The live voting engine is implemented in <code>backend/voting.py</code> and consumed by the student dashboard (<code>js/dashboard.js</code>) via <code>API.getActiveCandidates</code>, <code>API.nominateSelf</code>, and <code>API.castVote</code> (<code>js/api.js</code>).</p>
-
-      <div class="flow-step">
-        <div class="flow-num">1</div>
-        <div>
-          <strong>Active phase</strong>
-          <p style="margin:6px 0 0;">The server selects the current phase with <code>_active_phase()</code>: a row in <code>voting_phases</code> where <code>is_active = 1</code> and <code>status = 'active'</code>. If none exists, the API returns <code>active: false</code> and an empty candidate list.</p>
-          <div class="code-ref">voting_bp routes: /voting/candidates, /voting/nominate, /voting/vote, /voting/results</div>
-        </div>
-        <div class="flow-num">2</div>
-        <div>
-          <strong>Nomination</strong>
-          <p style="margin:6px 0 0;"><code>POST /voting/nominate</code> requires an approved, non-graduated member. Phase 2 additionally requires eligible NRC membership. Files such as manifestos are stored under the uploads folder configured in the Flask app.</p>
-        </div>
-        <div class="flow-num">3</div>
-        <div>
-          <strong>Casting a vote</strong>
-          <p style="margin:6px 0 0;"><code>POST /voting/vote</code> rejects duplicate ballots (<code>votes</code> uniqueness per voter and phase) and validates that the candidate has an approved nomination in the active phase. In Phase 1, the voter and candidate must share the same <code>university</code> string.</p>
-        </div>
-        <div class="flow-num">4</div>
-        <div>
-          <strong>Results</strong>
-          <p style="margin:6px 0 0;"><code>GET /voting/results</code> aggregates vote totals for reporting in the portal. Admins finalise phases and sync structures through <code>backend/admin.py</code> (election lifecycle and governance cycle helpers).</p>
-        </div>
-      </div>
-
-      <h3>Integrity measures encoded today</h3>
-      <ul>
-        <li><strong>Eligibility:</strong> membership status, graduation status, and NRC flags are checked server-side before nominations or votes are accepted.</li>
-        <li><strong>Ballot secrecy:</strong> handled by your organisational policy; the database stores an anonymous link between <code>voter_id</code>, <code>candidate_id</code>, and <code>phase_id</code> for auditability.</li>
-        <li><strong>Disputes:</strong> procedural resolution remains a human process; the platform preserves machine-readable records for investigation.</li>
-      </ul>
-    </article>
-
-    <article class="statute-art" id="art6">
-      <h2>Article VI — Platform services (exams, identity, messaging)</h2>
-      <h3>Examinations</h3>
-      <p>Admins create exams and questions via <code>backend/admin.py</code>. Publishing sets <code>exams.is_active</code> so <code>backend/exams.py</code> includes them in <code>GET /api/exams</code>. Students must hold a verified face profile (<code>face_embeddings.registration_verified = 1</code>) and pass a recent exam face check before starting a timed attempt.</p>
-      <div class="code-ref">backend/exams.py — list_exams, verify_exam_face, start_exam (JWT user id normalised to int for reliable joins).</div>
-      <h3>Facial verification</h3>
-      <p>Registration and exam flows use <code>backend/face_verification.py</code> (OpenCV-based detection and embeddings). Face <strong>login</strong> in <code>backend/auth.py</code> requires both a strong embedding match <em>and</em> a live-vs-enrolled-photo check so behaviour stays consistent with registration. Analysis responses can include a <code>facial_features</code> object (eyes, nose, mouth geometry, teeth-visible heuristic) for UI feedback.</p>
-      <h3>Messaging and student support</h3>
-      <p>Direct messages use <code>backend/messaging.py</code>. Students can reach the primary admin account via <code>GET /messages/support-contact</code>; conversations and replies use <code>/messages/conversations</code>, <code>/messages/&lt;partner_id&gt;</code>, and <code>POST /messages</code>. Admins see the same threads in the &quot;Student Messages&quot; section of the admin dashboard.</p>
-    </article>
-
-    <article class="statute-art" id="art7">
-      <h2>Article VII — Interpretation</h2>
-      <p><strong>7.1</strong> This page describes how EPSA&apos;s digital services map to governing concepts. It is not legal advice and may lag behind repository changes; always verify behaviour against the current source tree.</p>
-      <p><strong>7.2</strong> The NEB may issue interpretive guidance that does not contradict the Constitution. Technical interpretation of the codebase is the responsibility of the development maintainers.</p>
-    </article>
-
-    <p style="font-size:0.85rem;color:#64748b;margin-top:32px;line-height:1.6;">
-      For questions regarding these provisions, contact <a href="mailto:epsaconnect@gmail.com">epsaconnect@gmail.com</a>.
+<header class="statutes-hero">
+  <div class="hero-content">
+    <div class="statutes-subtitle">Constitutional Framework</div>
+    <h1 class="statutes-title">Statutes &amp; Governing Bodies of EPSA</h1>
+    <p style="font-size:1.15rem; color:rgba(255,255,255,0.8); line-height:1.6; max-width:600px; margin:0 auto;">
+      The official documentation outlining the structural organization, mandates, and legal standing of the Ethiopian Psychology Students' Association.
     </p>
   </div>
-</main>
+</header>
+
+<div class="disclaimer-banner">
+  <div class="disclaimer-icon">⚖️</div>
+  <div class="disclaimer-text">
+    <strong>Legal Standing &amp; Recognition:</strong> The Ethiopian Psychology Students' Association (EPSA) is officially recognized by and operates under the umbrella of the <strong>Ethiopian Psychologists' Association (EPA)</strong>. At present, EPSA is an independent student organization recognized by its parent professional body, but it is <em>not</em> directly registered as a separate civic society organization by the Government of Ethiopia.
+  </div>
+</div>
+
+<div class="doc-container">
+  <aside class="doc-sidebar">
+    <div class="doc-sidebar-title">Table of Contents</div>
+    <ul class="doc-nav">
+      <li><a href="#article-1">Article I: Name &amp; Nature</a></li>
+      <li><a href="#article-2">Article II: Aims &amp; Objectives</a></li>
+      <li><a href="#article-3">Article III: The General Assembly</a></li>
+      <li><a href="#article-4">Article IV: National Executive Board</a></li>
+      <li><a href="#article-5">Article V: Representative Council</a></li>
+      <li><a href="#article-6">Article VI: Amendments</a></li>
+    </ul>
+  </aside>
+
+  <main class="doc-content">
+    
+    <div class="article" id="article-1">
+      <div class="article-header">
+        <div class="article-number">Article I</div>
+        <h2 class="article-title">Name, Nature, and Affiliation</h2>
+      </div>
+      <div class="clause">
+        <div class="clause-number">1.1.</div>
+        <div class="clause-text">The name of the organization shall be the <strong>Ethiopian Psychology Students' Association</strong>, hereinafter referred to as "EPSA" or "the Association".</div>
+      </div>
+      <div class="clause">
+        <div class="clause-number">1.2.</div>
+        <div class="clause-text">EPSA is a non-profit, non-political, and non-religious national student organization operating across universities in the Federal Democratic Republic of Ethiopia.</div>
+      </div>
+      <div class="clause">
+        <div class="clause-number">1.3.</div>
+        <div class="clause-text">The Association is officially recognized as the national student wing of the <strong>Ethiopian Psychologists' Association (EPA)</strong> and conducts its operations in alignment with the ethical guidelines and professional standards established by the EPA.</div>
+      </div>
+    </div>
+
+    <div class="article" id="article-2">
+      <div class="article-header">
+        <div class="article-number">Article II</div>
+        <h2 class="article-title">Aims and Objectives</h2>
+      </div>
+      <div class="clause">
+        <div class="clause-number">2.1.</div>
+        <div class="clause-text">The primary mandate of EPSA is to unify psychology students across Ethiopian higher education institutions under a single, collaborative ecosystem.</div>
+      </div>
+      <div class="clause">
+        <div class="clause-number">2.2.</div>
+        <div class="clause-text">The Association shall pursue the following specific objectives:
+          <ul>
+            <li>To safeguard the academic and professional interests of psychology students.</li>
+            <li>To facilitate knowledge exchange, national conferences, and professional development training.</li>
+            <li>To administer Mock Licensure Examinations to prepare students for the national competency assessments.</li>
+            <li>To raise mental health awareness within the wider Ethiopian community through organized outreach.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="article" id="article-3">
+      <div class="article-header">
+        <div class="article-number">Article III</div>
+        <h2 class="article-title">The General Assembly (GA)</h2>
+      </div>
+      <div class="clause">
+        <div class="clause-number">3.1.</div>
+        <div class="clause-text">The General Assembly is the supreme legislative and policy-making body of EPSA, composed of all registered and verified student members.</div>
+      </div>
+      <div class="clause">
+        <div class="clause-number">3.2.</div>
+        <div class="clause-text">The GA shall convene at least once annually for the Ordinary National Congress. Extraordinary sessions may be called by a two-thirds majority of the National Executive Board.</div>
+      </div>
+      <div class="clause">
+        <div class="clause-number">3.3.</div>
+        <div class="clause-text">Resolutions of the GA, including constitutional amendments and the election of national officers, require a simple majority vote of the members present and voting, provided a quorum is established.</div>
+      </div>
+    </div>
+
+    <div class="article" id="article-4">
+      <div class="article-header">
+        <div class="article-number">Article IV</div>
+        <h2 class="article-title">National Executive Board (NEB)</h2>
+      </div>
+      <div class="clause">
+        <div class="clause-number">4.1.</div>
+        <div class="clause-text">The National Executive Board (NEB) acts as the highest executive organ of EPSA between General Assemblies, entrusted with the day-to-day administration of the Association.</div>
+      </div>
+      <div class="clause">
+        <div class="clause-number">4.2.</div>
+        <div class="clause-text">The NEB shall consist of the President, Vice President, Secretary General, Financial Officer, and the Directors of standing committees.</div>
+      </div>
+      <div class="clause">
+        <div class="clause-number">4.3.</div>
+        <div class="clause-text">Members of the NEB are elected by the General Assembly for a term of one academic year, renewable once. Only active students in their second year of study or above are eligible for NEB positions.</div>
+      </div>
+    </div>
+
+    <div class="article" id="article-5">
+      <div class="article-header">
+        <div class="article-number">Article V</div>
+        <h2 class="article-title">National Representative Council (NRC)</h2>
+      </div>
+      <div class="clause">
+        <div class="clause-number">5.1.</div>
+        <div class="clause-text">The National Representative Council (NRC) serves as the deliberative and oversight body representing the local chapters of EPSA at constituent universities.</div>
+      </div>
+      <div class="clause">
+        <div class="clause-number">5.2.</div>
+        <div class="clause-text">Each recognized university chapter shall elect and dispatch exactly two delegates to the NRC.</div>
+      </div>
+      <div class="clause">
+        <div class="clause-number">5.3.</div>
+        <div class="clause-text">The NRC is responsible for reviewing the NEB's quarterly reports, approving the annual budget, and ensuring that national initiatives align with local chapter capacities.</div>
+      </div>
+    </div>
+
+    <div class="seal-container">
+      <div class="seal">EPSA</div>
+      <p style="font-size: 0.85rem; color: var(--doc-muted); text-transform: uppercase; letter-spacing: 0.05em;">Drafted and Ratified by the Founding Committee<br>Addis Ababa, Ethiopia</p>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // Simple scrollspy for the sidebar
+  document.addEventListener('DOMContentLoaded', () => {
+    const links = document.querySelectorAll('.doc-nav a');
+    const articles = document.querySelectorAll('.article');
+    
+    // Smooth scroll
+    links.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = link.getAttribute('href').substring(1);
+        const targetEl = document.getElementById(targetId);
+        if(targetEl) {
+          window.scrollTo({
+            top: targetEl.offsetTop - 120,
+            behavior: 'smooth'
+          });
+        }
+      });
+    });
+
+    // Highlight on scroll
+    window.addEventListener('scroll', () => {
+      let current = '';
+      articles.forEach(article => {
+        const articleTop = article.offsetTop;
+        if (pageYOffset >= articleTop - 150) {
+          current = article.getAttribute('id');
+        }
+      });
+
+      links.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href').substring(1) === current) {
+          link.classList.add('active');
+        }
+      });
+    });
+  });
+</script>
+
 </body>
 </html>

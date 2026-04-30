@@ -20,7 +20,7 @@ const API_BASE_CANDIDATES = (() => {
 
 const API = {
   _apiBase: API_BASE_CANDIDATES[0],
-  _requestTimeoutMs: 12000,
+  _requestTimeoutMs: 60000,
   getApiBases() {
     return [this._apiBase, ...API_BASE_CANDIDATES.filter((base) => base !== this._apiBase)];
   },
@@ -73,15 +73,17 @@ const API = {
     const token = this.getToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
+    let isMultipart = false;
     if (options.body && options.body instanceof FormData) {
       delete headers['Content-Type']; // Let browser set multipart/form-data with boundary
+      isMultipart = true;
     }
 
     const requestOptions = {
       ...options,
       credentials: 'include',
       headers,
-      body: options.body && !(options.body instanceof FormData)
+      body: options.body && !isMultipart
         ? JSON.stringify(options.body)
         : options.body,
     };
@@ -90,7 +92,9 @@ const API = {
     for (const base of this.getApiBases()) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), this._requestTimeoutMs);
+        // Do not enforce strict timeouts for file uploads to allow for slower connections
+        const timeoutMs = isMultipart ? 300000 : this._requestTimeoutMs; 
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
         resp = await fetch(`${base}${path}`, { ...requestOptions, signal: controller.signal });
         clearTimeout(timeoutId);
         this._apiBase = base;

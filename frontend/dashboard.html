@@ -1471,6 +1471,19 @@ window.switchSection = function(sec) {
     </div>
   </div>
 
+  <!-- EXAM SUBMIT CONFIRM MODAL -->
+  <div id="mockSubmitConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9600;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#0a2e18;border:1px solid rgba(34,197,94,.3);border-radius:24px;padding:32px;max-width:400px;width:100%;text-align:center;">
+      <div style="font-size:2.5rem;margin-bottom:16px">🎯</div>
+      <h3 style="color:#f0fdf4;font-size:1.4rem;font-weight:800;margin-bottom:12px;">Submit Exam?</h3>
+      <p style="color:#86efac;font-size:.95rem;line-height:1.6;margin-bottom:24px;">Are you sure you want to submit your exam now? You cannot change your answers after submission.</p>
+      <div style="display:flex;gap:12px;justify-content:center;">
+        <button onclick="document.getElementById('mockSubmitConfirmModal').style.display='none'" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:12px 24px;border-radius:12px;font-weight:700;cursor:pointer;flex:1;">Cancel</button>
+        <button onclick="executeSubmitExam()" style="background:linear-gradient(135deg,#16a34a,#22c55e);border:none;color:#fff;padding:12px 24px;border-radius:12px;font-weight:800;cursor:pointer;flex:1;">Yes, Submit</button>
+      </div>
+    </div>
+  </div>
+
   <script>
   // 
   //   MOCK EXAM ENGINE
@@ -1482,7 +1495,7 @@ window.switchSection = function(sec) {
     // Anti-cheat & Layout
     viewMode: 'one-by-one', theme: 'dark', tabSwitchCount: 0, maxTabSwitches: 3,
     lastCheatWarning: 0, submitted: false, hasStarted: false,
-    startTime: null,
+    startTime: null, markedForReview: {},
   };
 
   // Load and render exam cards
@@ -1503,18 +1516,21 @@ window.switchSection = function(sec) {
   }
 
   function renderMockExamCard(e) {
-    const statusColor = e.is_open ? '#16a34a' : (e.is_submitted ? '#2563eb' : '#d97706');
+    const statusColor = e.is_open ? '#22c55e' : (e.is_submitted ? '#3b82f6' : '#f59e0b');
     const statusLabel = e.is_submitted ? 'Submitted' : (e.is_open ? 'Open Now' : 'Scheduled');
     const action = e.can_start
-      ? `<button onclick="startMockExam(${e.id})" style="background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:none;padding:12px 18px;border-radius:14px;font-family:Outfit,sans-serif;font-weight:800;cursor:pointer;width:100%;margin-top:18px;box-shadow:0 16px 24px rgba(22,163,74,.22)">Start Exam</button>`
+      ? `<button onclick="startMockExam(${e.id})" style="background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:none;padding:12px 18px;border-radius:14px;font-family:Outfit,sans-serif;font-weight:800;cursor:pointer;width:100%;margin-top:18px;box-shadow:0 16px 24px rgba(22,163,74,.22), inset 0 1px 0 rgba(255,255,255,0.2);transition:transform 0.2s; " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">Start Exam</button>`
       : e.can_continue
-      ? `<button onclick="startMockExam(${e.id})" style="background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;border:none;padding:12px 18px;border-radius:14px;font-family:Outfit,sans-serif;font-weight:800;cursor:pointer;width:100%;margin-top:18px;box-shadow:0 16px 24px rgba(217,119,6,.20)">Continue Exam</button>`
+      ? `<button onclick="startMockExam(${e.id})" style="background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;border:none;padding:12px 18px;border-radius:14px;font-family:Outfit,sans-serif;font-weight:800;cursor:pointer;width:100%;margin-top:18px;box-shadow:0 16px 24px rgba(217,119,6,.20), inset 0 1px 0 rgba(255,255,255,0.2);transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">Continue Exam</button>`
       : e.results_viewable
-      ? `<button onclick="viewMockResults(${e.id})" style="background:rgba(37,99,235,.10);color:#1d4ed8;border:1px solid rgba(37,99,235,.18);padding:12px 18px;border-radius:14px;font-family:Outfit,sans-serif;font-weight:800;cursor:pointer;width:100%;margin-top:18px">View My Results</button>`
+      ? `<button onclick="viewMockResults(${e.id})" style="background:rgba(37,99,235,.10);color:#1d4ed8;border:1px solid rgba(37,99,235,.18);padding:12px 18px;border-radius:14px;font-family:Outfit,sans-serif;font-weight:800;cursor:pointer;width:100%;margin-top:18px;transition:background 0.2s;" onmouseover="this.style.background='rgba(37,99,235,.15)'" onmouseout="this.style.background='rgba(37,99,235,.10)'">View My Results</button>`
       : `<div style="text-align:center;color:#92400e;margin-top:18px;font-size:.84rem;font-weight:700;background:rgba(245,158,11,.10);border-radius:14px;padding:12px 14px;border:1px solid rgba(245,158,11,.18)">Exam window not yet open.</div>`;
 
-    return `<article style="background:var(--me-card-bg, #ffffff);border:1.5px solid rgba(26,107,60,.12);border-radius:28px;padding:24px;box-shadow:0 24px 48px rgba(15,23,42,.06);display:flex;flex-direction:column;min-height:100%;transition:transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 32px 64px rgba(15,23,42,.12)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 24px 48px rgba(15,23,42,.06)'">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px">
+    return `<article style="background:var(--me-card-bg, rgba(255,255,255,0.85));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(26,107,60,.1);border-radius:28px;padding:28px;box-shadow:0 12px 32px rgba(15,23,42,.04), inset 0 1px 0 rgba(255,255,255,0.6);display:flex;flex-direction:column;min-height:100%;transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);position:relative;overflow:hidden;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 24px 64px rgba(22,163,74,.12), inset 0 1px 0 rgba(255,255,255,0.8)';this.style.borderColor='rgba(34,197,94,0.3)';" onmouseout="this.style.transform='none';this.style.boxShadow='0 12px 32px rgba(15,23,42,.04), inset 0 1px 0 rgba(255,255,255,0.6)';this.style.borderColor='rgba(26,107,60,.1)';">
+      <!-- Decorative gradient blob -->
+      <div style="position:absolute;top:-40px;right:-40px;width:140px;height:140px;background:radial-gradient(circle, ${statusColor}22 0%, transparent 70%);border-radius:50%;z-index:0;pointer-events:none;"></div>
+      
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px;position:relative;z-index:1;">
         <div>
           <div style="font-size:.75rem;color:#185c35;font-weight:900;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;opacity:0.8">EPSA Official Practice</div>
           <h3 style="font-size:1.15rem;font-weight:900;color:#0f172a;line-height:1.3">${escHtml(e.title)}</h3>
@@ -1656,7 +1672,24 @@ window.switchSection = function(sec) {
     const nav = document.getElementById('meQNav');
     nav.innerHTML = ME.questions.map((q, i) => {
       const answered = ME.answers[String(q.id)] !== undefined;
-      return `<button id="meQBtn${i}" onclick="meGoTo(${i})" style="width:32px;height:32px;border-radius:6px;border:1px solid rgba(34,197,94,${answered?'.5':'.15'});background:${answered?'rgba(34,197,94,.2)':'rgba(255,255,255,.04)'};color:${answered?'#22c55e':'#86efac'};font-size:.78rem;font-weight:700;cursor:pointer;transition:.15s">${i+1}</button>`;
+      const flagged = ME.markedForReview[String(q.id)];
+      let bg = 'rgba(255,255,255,.04)';
+      let border = 'rgba(255,255,255,.15)';
+      let color = '#86efac';
+      
+      if (flagged) {
+        bg = 'rgba(245,158,11,.2)';
+        border = 'rgba(245,158,11,.5)';
+        color = '#fcd34d';
+      } else if (answered) {
+        bg = 'rgba(34,197,94,.2)';
+        border = 'rgba(34,197,94,.5)';
+        color = '#22c55e';
+      }
+      return `<button id="meQBtn${i}" onclick="meGoTo(${i})" title="${flagged?'Marked for Review':answered?'Answered':'Unanswered'}" style="width:32px;height:32px;border-radius:6px;border:1px solid ${border};background:${bg};color:${color};font-size:.78rem;font-weight:700;cursor:pointer;transition:.15s; position:relative;">
+        ${i+1}
+        ${flagged ? '<div style="position:absolute;top:-4px;right:-4px;width:10px;height:10px;background:#f59e0b;border-radius:50%;border:2px solid #050e07;"></div>' : ''}
+      </button>`;
     }).join('');
   }
 
@@ -1677,8 +1710,13 @@ window.switchSection = function(sec) {
     const isLight = ME.theme === 'light';
     
     document.getElementById('meQuestionArea').innerHTML = `
-      <div class="me-question-card" style="border-radius:14px;padding:24px;margin-bottom:20px">
-        <div style="font-size:.78rem;color:var(--me-text-muted);margin-bottom:10px;font-weight:600">QUESTION ${idx+1}</div>
+      <div class="me-question-card" style="border-radius:14px;padding:24px;margin-bottom:20px;position:relative;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-size:.78rem;color:var(--me-text-muted);font-weight:600">QUESTION ${idx+1}</div>
+          <button onclick="meToggleFlag(${q.id})" style="background:transparent;border:1px solid ${ME.markedForReview[q.id]?'#f59e0b':'var(--me-opt-border)'};color:${ME.markedForReview[q.id]?'#f59e0b':'var(--me-text-muted)'};padding:6px 12px;border-radius:8px;font-size:.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px;">
+            <span style="font-size:.9rem">${ME.markedForReview[q.id]?'🚩':'⛳'}</span> ${ME.markedForReview[q.id]?'Flagged for Review':'Mark for Review'}
+          </button>
+        </div>
         <div style="font-size:1.05rem;font-weight:600;line-height:1.6;color:var(--me-text);user-select:none">${escHtml(q.question_text)}</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
@@ -1712,7 +1750,12 @@ window.switchSection = function(sec) {
       html += `
         <div style="margin-bottom:40px">
           <div class="me-question-card" style="border-radius:14px;padding:24px;margin-bottom:16px">
-            <div style="font-size:.78rem;color:var(--me-text-muted);margin-bottom:10px;font-weight:600">QUESTION ${idx+1}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+              <div style="font-size:.78rem;color:var(--me-text-muted);font-weight:600">QUESTION ${idx+1}</div>
+              <button onclick="meToggleFlag(${q.id}, true)" id="flagBtnScroll${q.id}" style="background:transparent;border:1px solid ${ME.markedForReview[q.id]?'#f59e0b':'var(--me-opt-border)'};color:${ME.markedForReview[q.id]?'#f59e0b':'var(--me-text-muted)'};padding:6px 12px;border-radius:8px;font-size:.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px;">
+                <span style="font-size:.9rem">${ME.markedForReview[q.id]?'🚩':'⛳'}</span> <span class="flag-text">${ME.markedForReview[q.id]?'Flagged for Review':'Mark for Review'}</span>
+              </button>
+            </div>
             <div style="font-size:1.05rem;font-weight:600;line-height:1.6;color:var(--me-text);user-select:none">${escHtml(q.question_text)}</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:10px" id="meScrollQ${q.id}">
@@ -1784,6 +1827,22 @@ window.switchSection = function(sec) {
     });
   }
 
+  function meToggleFlag(qid, isScroll = false) {
+    ME.markedForReview[String(qid)] = !ME.markedForReview[String(qid)];
+    buildQNav();
+    if (isScroll) {
+      const btn = document.getElementById(`flagBtnScroll${qid}`);
+      if (btn) {
+        const flagged = ME.markedForReview[String(qid)];
+        btn.style.border = flagged ? '1px solid #f59e0b' : '1px solid var(--me-opt-border)';
+        btn.style.color = flagged ? '#f59e0b' : 'var(--me-text-muted)';
+        btn.innerHTML = `<span style="font-size:.9rem">${flagged?'🚩':'⛳'}</span> <span class="flag-text">${flagged?'Flagged for Review':'Mark for Review'}</span>`;
+      }
+    } else {
+      renderMeQuestion(ME.currentIdx);
+    }
+  }
+
   function meNavigate(dir) {
     const newIdx = ME.currentIdx + dir;
     if (newIdx >= 0 && newIdx < ME.questions.length) {
@@ -1836,7 +1895,10 @@ window.switchSection = function(sec) {
   }
 
   function confirmSubmitExam() {
-    if (!confirm('Submit your exam now? You cannot change answers after submission.')) return;
+    document.getElementById('mockSubmitConfirmModal').style.display = 'flex';
+  }
+  function executeSubmitExam() {
+    document.getElementById('mockSubmitConfirmModal').style.display = 'none';
     submitExam(false);
   }
   async function autoSubmitExam() {
@@ -2069,18 +2131,36 @@ window.switchSection = function(sec) {
       const pct = data.score || 0;
       const color = pct >= 70 ? '#22c55e' : pct >= 50 ? '#f59e0b' : '#f87171';
       content.innerHTML = `
-        <div style="text-align:center;margin-bottom:24px">
-          <div style="font-size:3rem;font-weight:800;color:${color}">${pct}%</div>
-          <div style="color:#86efac;font-size:.9rem;margin-top:6px">${data.correct} correct out of ${data.total} questions</div>
-          <div style="color:#86efac;font-size:.8rem;margin-top:4px">${data.exam_title}</div>
+        <div style="text-align:center;margin-bottom:32px">
+          <div style="font-size:3.5rem;font-weight:900;color:${color};text-shadow:0 0 20px ${color}40">${pct}%</div>
+          <div style="color:#86efac;font-size:1.05rem;font-weight:600;margin-top:8px">${data.correct} correct out of ${data.total} questions</div>
+          <div style="color:var(--me-text-muted);font-size:.85rem;margin-top:4px">${data.exam_title}</div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:10px;max-height:400px;overflow-y:auto">
-          ${(data.breakdown || []).map((b, i) => `
-            <div style="background:rgba(${b.correct?'34,197,94':'248,113,113'},.07);border:1px solid rgba(${b.correct?'34,197,94':'248,113,113'},.2);border-radius:10px;padding:14px">
-              <div style="font-size:.82rem;font-weight:600;color:#f0fdf4;margin-bottom:6px">${i+1}. ${escHtml(b.question_text)}</div>
-              <div style="font-size:.78rem;color:${b.correct?'#22c55e':'#f87171'}">${b.correct?'Correct':'Incorrect'}</div>
-              ${b.explanation ? `<div style="font-size:.75rem;color:#86efac;margin-top:6px;font-style:italic">${escHtml(b.explanation)}</div>` : ''}
-            </div>`).join('')}
+        
+        <h3 style="font-size:1.1rem;font-weight:800;color:#f0fdf4;margin-bottom:16px;border-bottom:1px solid rgba(34,197,94,.15);padding-bottom:10px;">Category Performance</h3>
+        <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:32px">
+          ${(data.category_performance || []).sort((a,b) => (b.correct/b.total) - (a.correct/a.total)).map((cat) => {
+            const catPct = Math.round((cat.correct / cat.total) * 100);
+            const barColor = catPct >= 70 ? '#22c55e' : catPct >= 50 ? '#f59e0b' : '#f87171';
+            return `
+              <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                  <div style="font-size:.9rem;font-weight:700;color:#f0fdf4">${escHtml(cat.category)}</div>
+                  <div style="font-size:.85rem;font-weight:800;color:${barColor}">${catPct}% <span style="font-weight:500;color:var(--me-text-muted);font-size:.75rem">(${cat.correct}/${cat.total})</span></div>
+                </div>
+                <div style="height:8px;background:rgba(0,0,0,.3);border-radius:999px;overflow:hidden;position:relative;">
+                  <div style="position:absolute;top:0;left:0;height:100%;width:${catPct}%;background:${barColor};border-radius:999px;transition:width 1s ease-out;"></div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+        
+        <h3 style="font-size:1.1rem;font-weight:800;color:#f0fdf4;margin-bottom:16px;border-bottom:1px solid rgba(34,197,94,.15);padding-bottom:10px;">Areas for Improvement</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;">
+          ${(data.category_performance || []).filter(cat => (cat.correct/cat.total) < 0.6).map(cat => 
+            `<span style="background:rgba(248,113,113,.15);color:#fca5a5;border:1px solid rgba(248,113,113,.3);padding:8px 16px;border-radius:999px;font-size:.8rem;font-weight:600;">⚠️ Review ${escHtml(cat.category)}</span>`
+          ).join('') || '<span style="color:#86efac;font-size:.9rem;">Great job! No major weak areas detected.</span>'}
         </div>`;
     } catch(err) {
       content.innerHTML = '<div style="color:#f87171;padding:40px;text-align:center">' + (err.message || 'Failed to load results') + '</div>';
