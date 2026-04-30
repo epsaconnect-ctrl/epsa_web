@@ -24,9 +24,17 @@ function dashboardSectionTarget(section) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   relocateDynamicDashboardSections();
-  if (!API.isLoggedIn()) { window.location.href = 'login.html'; return; }
+  // Strict check: BOTH a token AND a cached user must exist.
+  // getUser()-only means the token was cleared but user data wasn't — force re-login.
+  const hasToken = !!API.getToken();
+  const hasUser  = !!API.getUser();
+  if (!hasToken || !hasUser) {
+    API.clearToken(); // clean up any stale user data
+    window.location.href = 'login.html';
+    return;
+  }
   currentUser = API.getUser();
-  if (!currentUser) { API.logout(); return; }
+
   // Role guard — teachers have their own portal
   const role = currentUser.role;
   if (role === 'teacher') { window.location.href = 'teacher.html'; return; }
