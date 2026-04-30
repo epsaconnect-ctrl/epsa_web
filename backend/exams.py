@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from datetime import datetime, date
 
 def _serialize_row(row):
-    d = _serialize_row(row)
+    d = dict(row)
     for k, v in d.items():
         if isinstance(v, (datetime, date)):
             d[k] = v.isoformat()
