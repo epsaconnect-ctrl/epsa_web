@@ -2132,8 +2132,8 @@ function showAdminToast(msg, type='success') {
         description:   document.getElementById('newExamDesc').value.trim(),
         question_count: parseInt(document.getElementById('newExamCount').value) || 100,
         duration_mins:  parseInt(document.getElementById('newExamDuration').value) || 120,
-        scheduled_at:   document.getElementById('newExamStart').value || null,
-        ends_at:        document.getElementById('newExamEnd').value   || null,
+        scheduled_at:   document.getElementById('newExamStart').value ? new Date(document.getElementById('newExamStart').value).toISOString() : null,
+        ends_at:        document.getElementById('newExamEnd').value ? new Date(document.getElementById('newExamEnd').value).toISOString() : null,
       };
       if (!payload.title) { showToast('Exam title is required', 'error'); return; }
       await API.adminCreateMockExam(payload);

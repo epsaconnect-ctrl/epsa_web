@@ -68,8 +68,14 @@ function populateUserUI(user) {
     const avatars = [document.getElementById('sidebarAvatar'), document.getElementById('profileAvatarImg')];
     avatars.forEach(img => {
       if (!img) return;
+      // Prevent flicker by not re-assigning if already loaded or failed
+      if (img.dataset.currentSrc === pUrl || img.dataset.currentSrc === 'error') return;
+      
       img.src = pUrl;
+      img.dataset.currentSrc = pUrl;
+      
       img.onerror = () => {
+        img.dataset.currentSrc = 'error';
         img.src = 'assets/president.jpg'; // Fallback to default
         img.onerror = null;
       };
