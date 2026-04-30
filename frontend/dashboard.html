@@ -692,8 +692,9 @@
 </div>
 
 <!-- ── EXAM PLAYER OVERLAY ── -->
-<div id="examOverlay" style="display:none;position:fixed;inset:0;background:radial-gradient(circle at top right, rgba(13, 31, 18, 0.98), #050e07);z-index:9999;overflow-y:auto;backdrop-filter:blur(24px);">
-  <div style="max-width:900px;margin:0 auto;padding:var(--space-8);min-height:100vh;display:flex;flex-direction:column;">
+<div id="examOverlay" style="display:none;position:fixed;inset:0;background:radial-gradient(circle at top right, rgba(13, 31, 18, 0.99), #030a05);z-index:9999;overflow-y:auto;backdrop-filter:blur(28px);scrollbar-width:none;-ms-overflow-style:none;">
+  <style>#examOverlay::-webkit-scrollbar { display: none; }</style>
+  <div style="max-width:940px;margin:0 auto;padding:var(--space-8);min-height:100vh;display:flex;flex-direction:column;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-6);padding:var(--space-4) var(--space-6);background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-xl);color:white;box-shadow:0 12px 40px rgba(0,0,0,0.3);backdrop-filter:blur(12px);">
       <div>
         <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">EPSA EXAM</div>
@@ -1363,12 +1364,20 @@ window.switchSection = function(sec) {
       --me-text: #f0fdf4; --me-text-muted: #86efac; --me-card-bg: rgba(255,255,255,.04);
       --me-opt-bg: rgba(255,255,255,.035); --me-opt-border: rgba(34,197,94,.15);
     }
-    # mockExamFullscreen.me-theme-light {
+    #mockExamFullscreen.me-theme-light {
       --me-bg: #ffffff; --me-header: #f8fafc; --me-border: #cbd5e1;
       --me-text: #0f172a; --me-text-muted: #475569; --me-card-bg: #ffffff;
       --me-opt-bg: #f8fafc; --me-opt-border: #e2e8f0;
     }
-    #mockExamFullscreen { background: var(--me-bg) !important; color: var(--me-text) !important; transition: background 0.3s ease; }
+    #mockExamFullscreen { 
+      background: var(--me-bg) !important; 
+      color: var(--me-text) !important; 
+      transition: background 0.3s ease; 
+      overflow-y: auto;
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE/Edge */
+    }
+    #mockExamFullscreen::-webkit-scrollbar { display: none; } /* Chrome/Safari */
     #mockExamFullscreen .me-header-bar { background: var(--me-header); border-bottom: 1.5px solid var(--me-border); box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
     #mockExamFullscreen .me-question-card { background: var(--me-card-bg); border: 1.5px solid var(--me-border); box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
     
@@ -1408,7 +1417,8 @@ window.switchSection = function(sec) {
     </div>
 
     <!-- Question navigator -->
-    <div style="display:flex;gap:6px;flex-wrap:wrap;padding:12px 24px;background:rgba(0,0,0,.1);border-bottom:1px solid var(--me-border);flex-shrink:0;overflow-y:auto;max-height:90px" id="meQNav"></div>
+    <div style="display:flex;gap:8px;flex-wrap:nowrap;padding:12px 24px;background:rgba(0,0,0,.1);border-bottom:1px solid var(--me-border);flex-shrink:0;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;" id="meQNav"></div>
+    <style>#meQNav::-webkit-scrollbar { display: none; }</style>
 
     <!-- Question area -->
     <div style="flex:1;overflow-y:auto;padding:32px 24px;max-width:860px;margin:0 auto;width:100%">
@@ -1468,34 +1478,6 @@ window.switchSection = function(sec) {
   }
 
   function renderMockExamCard(e) {
-    const statusColor = e.is_open ? '#22c55e' : (e.is_submitted ? '#3b82f6' : '#f59e0b');
-    const statusLabel = e.is_submitted ? 'Submitted' : (e.is_open ? 'Open Now' : 'Scheduled');
-    const btnHtml = e.can_start
-      ? `<button onclick="startMockExam(${e.id})" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-weight:700;cursor:pointer;width:100%;margin-top:16px"> Start Exam</button>`
-      : e.can_continue
-      ? `<button onclick="startMockExam(${e.id})" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-weight:700;cursor:pointer;width:100%;margin-top:16px">Continue Exam</button>`
-      : e.results_viewable
-      ? `<button onclick="viewMockResults(${e.id})" style="background:rgba(59,130,246,.15);color:#3b82f6;border:1px solid rgba(59,130,246,.3);padding:10px 20px;border-radius:10px;font-family:Outfit,sans-serif;font-weight:700;cursor:pointer;width:100%;margin-top:16px"> View My Results</button>`
-      : e.is_submitted
-      ? `<div style="text-align:center;color:#86efac;margin-top:16px;font-size:.85rem"> Submitted  Results pending release</div>`
-      : `<div style="text-align:center;color:#86efac;margin-top:16px;font-size:.85rem">Exam not yet open</div>`;
-
-    return `<div style="background:rgba(255,255,255,.04);border:1px solid rgba(34,197,94,.16);border-radius:16px;padding:22px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
-        <h3 style="font-size:1rem;font-weight:700;color:#f0fdf4;line-height:1.3">${escHtml(e.title)}</h3>
-        <span style="background:rgba(0,0,0,.3);color:${statusColor};border:1px solid ${statusColor}44;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;margin-left:8px">${statusLabel}</span>
-      </div>
-      ${e.description ? `<p style="font-size:.83rem;color:#86efac;margin-bottom:12px">${escHtml(e.description)}</p>` : ''}
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.8rem;color:#86efac">
-        <div> ${e.question_count} questions</div>
-        <div> ${e.duration_mins} minutes</div>
-        ${e.my_score != null ? `<div style="grid-column:1/-1;color:#22c55e;font-weight:700">Your score: ${e.my_score}%</div>` : ''}
-      </div>
-      ${btnHtml}
-    </div>`;
-  }
-
-  function renderMockExamCard(e) {
     const statusColor = e.is_open ? '#16a34a' : (e.is_submitted ? '#2563eb' : '#d97706');
     const statusLabel = e.is_submitted ? 'Submitted' : (e.is_open ? 'Open Now' : 'Scheduled');
     const action = e.can_start
@@ -1504,32 +1486,55 @@ window.switchSection = function(sec) {
       ? `<button onclick="startMockExam(${e.id})" style="background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;border:none;padding:12px 18px;border-radius:14px;font-family:Outfit,sans-serif;font-weight:800;cursor:pointer;width:100%;margin-top:18px;box-shadow:0 16px 24px rgba(217,119,6,.20)">Continue Exam</button>`
       : e.results_viewable
       ? `<button onclick="viewMockResults(${e.id})" style="background:rgba(37,99,235,.10);color:#1d4ed8;border:1px solid rgba(37,99,235,.18);padding:12px 18px;border-radius:14px;font-family:Outfit,sans-serif;font-weight:800;cursor:pointer;width:100%;margin-top:18px">View My Results</button>`
-      : e.is_submitted
-      ? `<div style="text-align:center;color:#166534;margin-top:18px;font-size:.84rem;font-weight:700;background:rgba(22,163,74,.08);border-radius:14px;padding:12px 14px;border:1px solid rgba(22,163,74,.12)">Submitted. Results pending release.</div>`
       : `<div style="text-align:center;color:#92400e;margin-top:18px;font-size:.84rem;font-weight:700;background:rgba(245,158,11,.10);border-radius:14px;padding:12px 14px;border:1px solid rgba(245,158,11,.18)">Exam window not yet open.</div>`;
 
-    return `<article style="background:linear-gradient(180deg,#ffffff,#f8fbf9);border:1px solid rgba(26,107,60,.10);border-radius:24px;padding:22px;box-shadow:0 20px 42px rgba(15,23,42,.08);display:flex;flex-direction:column;min-height:100%">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px">
+    return `<article style="background:var(--me-card-bg, #ffffff);border:1.5px solid rgba(26,107,60,.12);border-radius:28px;padding:24px;box-shadow:0 24px 48px rgba(15,23,42,.06);display:flex;flex-direction:column;min-height:100%;transition:transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 32px 64px rgba(15,23,42,.12)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 24px 48px rgba(15,23,42,.06)'">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px">
         <div>
-          <div style="font-size:.73rem;color:#185c35;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">EPSA Practice</div>
-          <h3 style="font-size:1.02rem;font-weight:800;color:#0f172a;line-height:1.35">${escHtml(e.title)}</h3>
+          <div style="font-size:.75rem;color:#185c35;font-weight:900;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;opacity:0.8">EPSA Official Practice</div>
+          <h3 style="font-size:1.15rem;font-weight:900;color:#0f172a;line-height:1.3">${escHtml(e.title)}</h3>
         </div>
-        <span style="background:${statusColor}14;color:${statusColor};border:1px solid ${statusColor}22;font-size:.72rem;font-weight:800;padding:6px 10px;border-radius:999px;white-space:nowrap">${statusLabel}</span>
+        <span style="background:${statusColor}18;color:${statusColor};border:1.5px solid ${statusColor}33;font-size:.72rem;font-weight:900;padding:6px 14px;border-radius:999px;white-space:nowrap;letter-spacing:0.02em;">${statusLabel.toUpperCase()}</span>
       </div>
-      ${e.description ? `<p style="font-size:.84rem;color:#475569;line-height:1.7;margin-bottom:16px">${escHtml(e.description)}</p>` : '<p style="font-size:.84rem;color:#64748b;line-height:1.7;margin-bottom:16px">Timed mock assessment assembled from the reviewed national question bank.</p>'}
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-        <div style="padding:12px 14px;border-radius:16px;background:rgba(26,107,60,.06);border:1px solid rgba(26,107,60,.08)"><div style="font-size:.7rem;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Questions</div><div style="font-size:1rem;font-weight:800;color:#0f172a">${e.question_count}</div></div>
-        <div style="padding:12px 14px;border-radius:16px;background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.08)"><div style="font-size:.7rem;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Duration</div><div style="font-size:1rem;font-weight:800;color:#0f172a">${e.duration_mins} min</div></div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:.76rem;color:#475569;margin-top:auto;background:rgba(15,23,42,0.03);padding:10px;border-radius:14px;border:1px solid rgba(15,23,42,0.05);">
-        <div style="display:flex;align-items:center;gap:6px;">
-          <span style="font-size:1rem;">⏰</span>
-          <span style="font-weight:700;color:#0f172a;">${new Date(e.scheduled_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+      ${e.description ? `<p style="font-size:.88rem;color:#475569;line-height:1.75;margin-bottom:20px">${escHtml(e.description)}</p>` : '<p style="font-size:.88rem;color:#64748b;line-height:1.75;margin-bottom:20px">National licensure standard practice exam. Calibrated to current curriculum guidelines.</p>'}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+        <div style="padding:14px;border-radius:20px;background:rgba(26,107,60,.05);border:1.5px solid rgba(26,107,60,.08);display:flex;flex-direction:column;gap:4px">
+          <div style="font-size:.68rem;color:#64748b;text-transform:uppercase;letter-spacing:.1em;font-weight:700">Questions</div>
+          <div style="font-size:1.15rem;font-weight:900;color:#0f172a">${e.question_count} <span style="font-size:0.8rem;font-weight:500;color:#64748b">items</span></div>
         </div>
-        <div style="width:1px;height:14px;background:rgba(0,0,0,0.1);margin:0 4px;"></div>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <span style="font-size:1rem;">📅</span>
-          <span style="font-weight:700;color:#0f172a;">${new Date(e.scheduled_at).toLocaleDateString([], {month:'short', day:'numeric'})}</span>
+        <div style="padding:14px;border-radius:20px;background:rgba(200,163,64,.05);border:1.5px solid rgba(200,163,64,.08);display:flex;flex-direction:column;gap:4px">
+          <div style="font-size:.68rem;color:#64748b;text-transform:uppercase;letter-spacing:.1em;font-weight:700">Time Limit</div>
+          <div style="font-size:1.15rem;font-weight:900;color:#0f172a">${e.duration_mins} <span style="font-size:0.8rem;font-weight:500;color:#64748b">min</span></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:.8rem;color:#475569;margin-top:auto;background:#f8fafc;padding:12px 16px;border-radius:18px;border:1px solid #e2e8f0;align-items:center">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:1.1rem;filter:grayscale(1)">⏰</span>
+          <span style="font-weight:800;color:#0f172a;">${(() => {
+            let d = e.scheduled_at;
+            if (d && !d.includes('T')) d = d.replace(' ', 'T');
+            if (d && !d.endsWith('Z')) d += 'Z';
+            return new Date(d).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+          })()}</span>
+        </div>
+        <div style="width:1.5px;height:16px;background:#cbd5e1;"></div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:1.1rem;filter:grayscale(1)">📅</span>
+          <span style="font-weight:800;color:#0f172a;">${(() => {
+            let d = e.scheduled_at;
+            if (d && !d.includes('T')) d = d.replace(' ', 'T');
+            if (d && !d.endsWith('Z')) d += 'Z';
+            return new Date(d).toLocaleDateString([], {month:'short', day:'numeric'});
+          })()}</span>
+        </div>
+        ${e.my_score != null ? `<span style="margin-left:auto;padding:6px 14px;border-radius:999px;background:#dcfce7;color:#15803d;font-weight:900;font-size:0.75rem;box-shadow:0 4px 12px rgba(34,197,94,0.15)">SCORE: ${e.my_score}%</span>` : ''}
+      </div>
+      ${action}
+    </article>`;
+
+            if (d && !d.endsWith('Z')) d += 'Z';
+            return new Date(d).toLocaleDateString([], {month:'short', day:'numeric'});
+          })()}</span>
         </div>
         ${e.my_score != null ? `<span style="margin-left:auto;padding:4px 10px;border-radius:999px;background:rgba(22,163,74,.10);color:#166534;font-weight:800">Score ${e.my_score}%</span>` : ''}
       </div>

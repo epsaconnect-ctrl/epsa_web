@@ -389,7 +389,12 @@ async function loadExams() {
           <div class="exam-meta">
             <span>⏱ ${e.duration_mins} min</span>
             <span>📋 ${e.question_count} questions</span>
-            <span>📅 ${new Date(e.scheduled_at).toLocaleString()}</span>
+            <span>📅 ${(() => {
+              let d = e.scheduled_at;
+              if (d && !d.includes('T')) d = d.replace(' ', 'T');
+              if (d && !d.endsWith('Z')) d += 'Z';
+              return new Date(d).toLocaleString();
+            })()}</span>
           </div>
           <p style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">${e.description || 'No description provided.'}</p>
           <p style="font-size:0.74rem;color:${faceReady ? 'var(--epsa-green)' : '#b45309'};margin-top:6px;font-weight:700;">
