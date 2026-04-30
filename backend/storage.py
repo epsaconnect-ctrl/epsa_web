@@ -137,15 +137,19 @@ class S3StorageProvider:
         return response["Body"].read()
 
 
+import logging as _logging
+_storage_logger = _logging.getLogger("epsa.storage")
+
+
 class SupabaseStorageProvider:
     mode = "supabase"
 
     def __init__(self, settings):
         self.settings = settings
 
-    def _key(self, folder, filename, private=False):
-        prefix = self.settings.s3_private_prefix if private else self.settings.s3_public_prefix
-        return f"{prefix}/{folder}/{filename}"
+    def _key(self, folder, filename):
+        """Build storage key WITHOUT prefix — folder structure is sufficient."""
+        return f"{folder}/{filename}"
 
     def _base_headers(self, *, content_type=None):
         token = self.settings.supabase_service_role_key or self.settings.supabase_anon_key or ""
@@ -167,39 +171,55 @@ class SupabaseStorageProvider:
         return f"{self._storage_root()}/object/{self._bucket()}/{key}"
 
     def _public_url(self, folder, filename):
-        key = self._key(folder, filename, private=False)
+        key = self._key(folder, filename)
         return f"{self._storage_root()}/object/public/{self._bucket()}/{key}"
 
     def _signed_redirect(self, key, *, expires_in=300):
-        response = requests.post(
-            f"{self._storage_root()}/object/sign/{self._bucket()}/{key}",
-            headers={
-                **self._base_headers(content_type="application/json"),
-                "Accept": "application/json",
-            },
-            json={"expiresIn": expires_in},
-            timeout=30,
-        )
-        response.raise_for_status()
-        payload = response.json()
-        signed_path = payload.get("signedURL") or payload.get("signedUrl") or payload.get("url") or ""
-        if signed_path.startswith("http"):
-            return redirect(signed_path, code=302)
-        signed_path = signed_path if signed_path.startswith("/") else f"/{signed_path}"
-        return redirect(f"{self._storage_root()}{signed_path}", code=302)
+        try:
+            response = requests.post(
+                f"{self._storage_root()}/object/sign/{self._bucket()}/{key}",
+                headers={
+                    **self._base_headers(content_type="application/json"),
+                    "Accept": "application/json",
+                },
+                json={"expiresIn": expires_in},
+                timeout=30,
+            )
+            response.raise_for_status()
+            payload = response.json()
+            signed_path = payload.get("signedURL") or payload.get("signedUrl") or payload.get("url") or ""
+            if signed_path.startswith("http"):
+                return redirect(signed_path, code=302)
+            signed_path = signed_path if signed_path.startswith("/") else f"/{signed_path}"
+            return redirect(f"{self._storage_root()}{signed_path}", code=302)
+        except Exception as exc:
+            _storage_logger.error("[Supabase] Signed URL generation failed for key=%s: %s", key, exc)
+            raise
 
     def save_bytes(self, folder, payload, filename, private=False):
-        key = self._key(folder, filename, private=private)
-        response = requests.post(
-            self._object_url(key),
-            headers={
-                **self._base_headers(content_type=_guess_content_type(filename)),
-                "x-upsert": "true",
-            },
-            data=payload,
-            timeout=60,
-        )
-        response.raise_for_status()
+        key = self._key(folder, filename)
+        url = self._object_url(key)
+        _storage_logger.info("[Supabase] Uploading %s bytes to %s", len(payload) if payload else 0, url)
+        try:
+            response = requests.post(
+                url,
+                headers={
+                    **self._base_headers(content_type=_guess_content_type(filename)),
+                    "x-upsert": "true",
+                },
+                data=payload,
+                timeout=60,
+            )
+            if not response.ok:
+                _storage_logger.error(
+                    "[Supabase] Upload FAILED for %s: HTTP %s — %s",
+                    url, response.status_code, response.text[:300]
+                )
+            response.raise_for_status()
+            _storage_logger.info("[Supabase] Upload OK: %s/%s", folder, filename)
+        except Exception as exc:
+            _storage_logger.error("[Supabase] Upload exception for %s/%s: %s", folder, filename, exc)
+            raise
         return filename
 
     def save_file(self, folder, file_storage, filename, private=False):
@@ -208,24 +228,28 @@ class SupabaseStorageProvider:
         return self.save_bytes(folder, payload, filename, private=private)
 
     def public_response(self, folder, filename):
-        key = self._key(folder, filename, private=False)
-        return self._signed_redirect(key, expires_in=3600)
+        """For public folders, redirect to the direct public URL (no signing needed)."""
+        public_url = self._public_url(folder, filename)
+        return redirect(public_url, code=302)
 
     def private_response(self, folder, filename, download_name=None):
-        key = self._key(folder, filename, private=True)
+        key = self._key(folder, filename)
         return self._signed_redirect(key, expires_in=300)
 
     def read_bytes(self, folder, filename, private=None):
-        if private is None:
-            private = is_private_folder(folder)
-        key = self._key(folder, filename, private=private)
-        response = requests.get(
-            self._object_url(key),
-            headers=self._base_headers(),
-            timeout=60,
-        )
-        response.raise_for_status()
-        return response.content
+        key = self._key(folder, filename)
+        url = self._object_url(key)
+        try:
+            response = requests.get(
+                url,
+                headers=self._base_headers(),
+                timeout=60,
+            )
+            response.raise_for_status()
+            return response.content
+        except Exception as exc:
+            _storage_logger.error("[Supabase] read_bytes failed for %s/%s: %s", folder, filename, exc)
+            raise
 
 
 def get_storage():

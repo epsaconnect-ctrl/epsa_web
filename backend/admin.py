@@ -1,8 +1,9 @@
 """EPSA Admin Routes"""
 import json
+import logging
 import os
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, date, timedelta
 
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -14,11 +15,22 @@ except ImportError:
     from storage import save_upload, upload_url
 
 admin_bp = Blueprint('admin', __name__)
+logger = logging.getLogger(__name__)
 
 try:
     from .email_service import send_email
 except ImportError:
     from email_service import send_email
+
+
+def _serialize_row(row):
+    """Convert a DB row (sqlite3.Row or HybridRow) to a JSON-safe dict."""
+    d = dict(row)
+    for k, v in d.items():
+        if isinstance(v, (datetime, date)):
+            d[k] = v.isoformat()
+    return d
+
 
 def require_admin(f):
     from functools import wraps
@@ -33,6 +45,50 @@ def require_admin(f):
             return jsonify({'error': 'Admin access required'}), 403
         return f(*args, **kwargs)
     return decorated
+
+
+@admin_bp.route('/debug', methods=['GET'])
+@require_admin
+def admin_debug():
+    """Diagnostic endpoint — shows DB counts, storage mode, and env state."""
+    try:
+        from .config import get_settings
+    except ImportError:
+        from config import get_settings
+    settings = get_settings()
+    db = get_db()
+    try:
+        total   = db.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+        students = db.execute("SELECT COUNT(*) FROM users WHERE role='student'").fetchone()[0]
+        pending  = db.execute("SELECT COUNT(*) FROM users WHERE role='student' AND status='pending'").fetchone()[0]
+        approved = db.execute("SELECT COUNT(*) FROM users WHERE role='student' AND status='approved'").fetchone()[0]
+        admins   = db.execute("SELECT COUNT(*) FROM users WHERE role IN ('admin','super_admin')").fetchone()[0]
+        recent   = db.execute(
+            "SELECT id, first_name, father_name, email, status, is_verified, is_active, created_at "
+            "FROM users WHERE role='student' ORDER BY created_at DESC LIMIT 5"
+        ).fetchall()
+        recent_list = [_serialize_row(r) for r in recent]
+    except Exception as exc:
+        db.close()
+        return jsonify({'error': str(exc)}), 500
+    db.close()
+    return jsonify({
+        'db_engine': settings.db_engine,
+        'storage_mode': settings.storage_mode,
+        'supabase_url_set': bool(settings.supabase_url),
+        'supabase_bucket': settings.supabase_bucket,
+        'supabase_service_key_set': bool(settings.supabase_service_role_key),
+        'resend_api_key_set': bool(settings.resend_api_key and 'REPLACE' not in (settings.resend_api_key or '')),
+        'show_otp_in_response': settings.show_otp_in_response,
+        'users_total': total,
+        'users_students': students,
+        'students_pending': pending,
+        'students_approved': approved,
+        'admins': admins,
+        'recent_student_applications': recent_list,
+    })
+
+
 
 
 def _save_governance_document(file_storage):
@@ -84,6 +140,14 @@ def _duration_minutes(started_at, ended_at):
         return round(max((end_dt - start_dt).total_seconds(), 0) / 60, 1)
     except Exception:
         return None
+
+
+def _manual_notification_warning(email, context):
+    logger.warning(
+        "[Manual Notify] %s for email=%s",
+        context,
+        email or "unknown",
+    )
 
 
 def _ensure_handover_items(db, member_id):
@@ -464,17 +528,23 @@ def _serialize_voting_phases(db):
 @require_admin
 def stats():
     db = get_db()
+    def _count(sql):
+        try:
+            return db.execute(sql).fetchone()[0]
+        except Exception as exc:
+            logger.warning("[Admin/stats] query failed: %s — %s", sql[:80], exc)
+            return 0
     data = {
-        'total_students':   db.execute("SELECT COUNT(*) FROM users WHERE role='student'").fetchone()[0],
-        'pending':          db.execute("SELECT COUNT(*) FROM users WHERE status='pending'").fetchone()[0],
-        'approved':         db.execute("SELECT COUNT(*) FROM users WHERE status='approved'").fetchone()[0],
-        'rejected':         db.execute("SELECT COUNT(*) FROM users WHERE status='rejected'").fetchone()[0],
-        'active_trainings': db.execute("SELECT COUNT(*) FROM trainings WHERE is_active=1").fetchone()[0],
-        'training_apps':    db.execute("SELECT COUNT(*) FROM training_applications").fetchone()[0],
-        'pending_receipts': db.execute("SELECT COUNT(*) FROM training_applications WHERE status='receipt'").fetchone()[0],
-        'total_votes':      db.execute("SELECT COUNT(*) FROM votes").fetchone()[0],
-        'active_exams':     db.execute("SELECT COUNT(*) FROM exams WHERE is_active=1").fetchone()[0],
-        'messages_today':   db.execute("SELECT COUNT(*) FROM messages WHERE DATE(sent_at)=DATE('now')").fetchone()[0],
+        'total_students':   _count("SELECT COUNT(*) FROM users WHERE role='student'"),
+        'pending':          _count("SELECT COUNT(*) FROM users WHERE status='pending'"),
+        'approved':         _count("SELECT COUNT(*) FROM users WHERE status='approved'"),
+        'rejected':         _count("SELECT COUNT(*) FROM users WHERE status='rejected'"),
+        'active_trainings': _count("SELECT COUNT(*) FROM trainings WHERE is_active=1"),
+        'training_apps':    _count("SELECT COUNT(*) FROM training_applications"),
+        'pending_receipts': _count("SELECT COUNT(*) FROM training_applications WHERE status='receipt'"),
+        'total_votes':      _count("SELECT COUNT(*) FROM votes"),
+        'active_exams':     _count("SELECT COUNT(*) FROM exams WHERE is_active=1"),
+        'messages_today':   _count("SELECT COUNT(*) FROM messages WHERE DATE(sent_at)=DATE('now')"),
     }
     db.close()
     return jsonify(data)
@@ -482,22 +552,35 @@ def stats():
 @admin_bp.route('/applicants', methods=['GET'])
 @require_admin
 def list_applicants():
-    status = request.args.get('status','pending')
-    uni    = request.args.get('university','')
+    status = request.args.get('status', 'pending')
+    uni    = request.args.get('university', '')
     db     = get_db()
-    query  = "SELECT id,first_name,father_name,email,phone,university,program_type,academic_year,profile_photo,reg_slip,status,is_verified,is_active,created_at,rejection_reason FROM users WHERE role='student'"
+    query  = (
+        "SELECT id,first_name,father_name,email,phone,university,program_type,"
+        "academic_year,profile_photo,reg_slip,status,is_verified,is_active,"
+        "created_at,rejection_reason FROM users WHERE role='student'"
+    )
     params = []
     if status == 'pending':
-        query += " AND (status=? OR COALESCE(is_verified, 0)=0)"
-        params.append(status)
+        query += " AND status='pending'"
     elif status != 'all':
         query += ' AND status=?'
         params.append(status)
-    if uni:             query += ' AND university=?'; params.append(uni)
+    if uni:
+        query += ' AND university=?'
+        params.append(uni)
     query += ' ORDER BY created_at DESC'
-    rows = db.execute(query, params).fetchall()
+    try:
+        rows = db.execute(query, params).fetchall()
+        logger.info("[Admin] list_applicants status=%s found=%s", status, len(rows))
+        result = [_serialize_row(r) for r in rows]
+    except Exception as exc:
+        logger.error("[Admin] list_applicants ERROR: %s", exc, exc_info=True)
+        db.close()
+        return jsonify({'error': 'Failed to load applicants', 'detail': str(exc)}), 500
     db.close()
-    return jsonify([dict(r) for r in rows])
+    return jsonify(result)
+
 
 @admin_bp.route('/applicants/<int:uid>/approve', methods=['POST'])
 @require_admin
@@ -523,22 +606,7 @@ def approve(uid):
         (uid,),
     )
     db.commit()
-    name = user_data['first_name']
-    send_email(user_data['email'], 'EPSA Application Approved — Welcome!', f"""
-        <html><body style="font-family:Arial,sans-serif;color:#333;line-height:1.6;">
-        <div style="max-width:600px;margin:0 auto;padding:20px;border:1px solid #e8eaed;border-radius:8px;">
-          <h2 style="color:#1a6b3c;text-align:center;">&#127881; Congratulations, {name}!</h2>
-          <p>Your application to join the <strong>Ethiopian Psychology Students' Association (EPSA)</strong> has been <strong style="color:#1a6b3c;">approved</strong>.</p>
-          <p>You can now log in to the EPSA Digital Platform using your credentials below:</p>
-          <div style="background:#f4f9f6;border:1px solid #1a6b3c;border-radius:8px;padding:16px;margin:20px 0;">
-            <p style="margin:0 0 8px;"><strong>Username:</strong> <code style="background:#1a6b3c;color:white;padding:2px 8px;border-radius:4px;">{user_data['username']}</code></p>
-            <p style="margin:0;"><strong>Student ID:</strong> <code style="background:#1a6b3c;color:white;padding:2px 8px;border-radius:4px;">{user_data['student_id']}</code></p>
-          </div>
-          <p>Use the password you set during registration to log in to the EPSA Digital Platform.</p>
-          <p style="font-size:0.85rem;color:#777;margin-top:30px;text-align:center;">Ethiopian Psychology Students' Association &mdash; Empowering Minds, Transforming Lives</p>
-        </div>
-        </body></html>
-        """)
+    _manual_notification_warning(user_data['email'], 'Student approved; admin should notify manually')
     db.close()
     return jsonify({'message': 'Approved'})
 
@@ -552,22 +620,7 @@ def reject(uid):
     user = db.execute("SELECT first_name, email FROM users WHERE id=?", (uid,)).fetchone()
     db.close()
     if user:
-        name = user['first_name']
-        send_email(user['email'], 'EPSA Application Update', f"""
-        <html><body style="font-family:Arial,sans-serif;color:#333;line-height:1.6;">
-        <div style="max-width:600px;margin:0 auto;padding:20px;border:1px solid #e8eaed;border-radius:8px;">
-          <h2 style="color:#c0392b;text-align:center;">Application Status Update</h2>
-          <p>Dear {name},</p>
-          <p>Thank you for applying to the <strong>Ethiopian Psychology Students' Association (EPSA)</strong>.</p>
-          <p>After careful review, we regret to inform you that your application has not been approved at this time.</p>
-          <div style="background:#fdf2f2;border:1px solid #e74c3c;border-radius:8px;padding:16px;margin:20px 0;">
-            <strong>Reason:</strong> {reason}
-          </div>
-          <p>If you believe this is an error or would like to appeal, please contact the EPSA administration team directly.</p>
-          <p style="font-size:0.85rem;color:#777;margin-top:30px;text-align:center;">Ethiopian Psychology Students' Association</p>
-        </div>
-        </body></html>
-        """)
+        _manual_notification_warning(user['email'], 'Student rejected; admin should notify manually')
     return jsonify({'message': 'Rejected'})
 
 @admin_bp.route('/applicants/<int:uid>/delete', methods=['DELETE'])

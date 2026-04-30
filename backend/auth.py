@@ -83,20 +83,21 @@ def hash_password(password):
 
 def check_password(password, hashed):
     if not hashed:
+        logger.warning("[Auth] check_password: empty hash")
         return False
     try:
         if wz_check_password_hash(hashed, password):
             return True
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("[Auth] check_password werkzeug exception: %s", exc)
     if hashlib.sha256(password.encode()).hexdigest() == hashed:
         return True
     if hashed.startswith("$2"):
         try:
             import bcrypt
-
             return bcrypt.checkpw(password.encode(), hashed.encode())
-        except Exception:
+        except Exception as exc:
+            logger.warning("[Auth] check_password bcrypt exception: %s", exc)
             return False
     return False
 
@@ -808,7 +809,19 @@ def login():
             )
 
         row = _resolve_login_identifier(db, identifier)
-        if not row or not check_password(password, row["password_hash"]):
+        if not row:
+            logger.warning("[Auth/Login] Identifier not found: %s", _mask_email(identifier))
+            _record_failed_login(db, identifier_key, ip_address)
+            db.commit()
+            return jsonify({"error": "Invalid credentials"}), 401
+        if not check_password(password, row["password_hash"]):
+            logger.warning(
+                "[Auth/Login] Password mismatch for email=%s is_verified=%s is_active=%s status=%s",
+                _mask_email(identifier),
+                row.get("is_verified") if hasattr(row, 'get') else row["is_verified"],
+                row.get("is_active") if hasattr(row, 'get') else row["is_active"],
+                row.get("status") if hasattr(row, 'get') else row["status"],
+            )
             _record_failed_login(db, identifier_key, ip_address)
             db.commit()
             return jsonify({"error": "Invalid credentials"}), 401
@@ -829,6 +842,7 @@ def login():
     if row["status"] == "rejected":
         return jsonify({"error": f"Account rejected. Reason: {row['rejection_reason'] or 'Not specified'}"}), 403
 
+    logger.info("[Auth/Login] Success for email=%s role=%s status=%s", _mask_email(identifier), row["role"], row["status"])
     return _auth_response(row)
 
 
