@@ -9,6 +9,11 @@ let examState = {
   maxTabSwitches: 3, submitted: false, hasStarted: false,
   lastCheatWarning: 0, heartbeatInterval: null,
   previewActive: false,
+  // ── Analytics Engine additions ──
+  focusTimePerQuestion: {},  // qid → accumulated seconds cursor was over the block
+  answerChanges: {},         // qid → count of times answer was changed after first selection
+  _focusStart: null,         // timestamp when cursor entered current block
+  _focusCurrentQid: null,    // which qid the cursor is currently over
 };
 
 // ── START EXAM ────────────────────────────────
@@ -38,6 +43,8 @@ function startExamPlayer(examId, title, durationMins, questionsList, isLockedPre
     submitted: false, hasStarted: false,
     lastCheatWarning: 0, heartbeatInterval: null,
     previewActive: !startDirect && !isLockedPreview,
+    focusTimePerQuestion: {}, answerChanges: {}, confidenceLevels: {},
+    _focusStart: null, _focusCurrentQid: null,
   };
 
   const overlay = document.getElementById('examOverlay'); if (!overlay) return;
@@ -228,7 +235,8 @@ function renderExamQuestions() {
 function buildQuestionsHTML(isPreview) {
   const secureCls = isPreview ? 'exam-secure-preview' : 'exam-secure-live';
   return examState.questions.map((q, qi) => `
-    <div class="question-block ${secureCls}" id="qblock-${q.id}" style="background:rgba(255,255,255,0.02);border-radius:var(--radius-xl);padding:var(--space-7);border:1px solid rgba(255,255,255,0.06);box-shadow:0 8px 32px rgba(0,0,0,0.15);user-select:none;-webkit-user-select:none;backdrop-filter:blur(12px);">
+    <div class="question-block ${secureCls}" id="qblock-${q.id}" style="background:rgba(255,255,255,0.02);border-radius:var(--radius-xl);padding:var(--space-7);border:1px solid rgba(255,255,255,0.06);box-shadow:0 8px 32px rgba(0,0,0,0.15);user-select:none;-webkit-user-select:none;backdrop-filter:blur(12px);"
+      ${!isPreview ? `onmouseenter="_onQuestionFocusEnter('${q.id}')" onmouseleave="_onQuestionFocusLeave('${q.id}')"` : ''}>
       <div style="display:flex;align-items:flex-start;gap:var(--space-4);margin-bottom:var(--space-6);">
         <span style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg, var(--epsa-green), var(--epsa-green-light));color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;flex-shrink:0;box-shadow:0 4px 12px rgba(26,107,60,0.3);">${qi+1}</span>
         <p class="exam-qtext" style="font-size:1.1rem;font-weight:600;color:var(--off-white);line-height:1.7;margin:0;">${isPreview ? '— Question text hidden until exam start —' : q.question}</p>
@@ -243,9 +251,46 @@ function buildQuestionsHTML(isPreview) {
               <span class="option-text" style="font-size:1rem;">${isPreview ? '— Hidden until start —' : opt.text}</span>
             </div>
           </div>`).join('')}
+          <div style="margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:8px;">
+            <label style="display:flex;align-items:center;cursor:${isPreview?'not-allowed':'pointer'};color:rgba(255,255,255,0.7);font-size:0.9rem;user-select:none;">
+              <input type="checkbox" id="conf-${q.id}" ${isPreview?'disabled':''} onchange="toggleConfidence('${q.id}', this.checked)" style="margin-right:8px;width:16px;height:16px;cursor:pointer;accent-color:var(--epsa-green);">
+              I am confident in my answer
+            </label>
+          </div>
       </div>
     </div>`).join('');
 }
+
+window.toggleConfidence = function(qid, isConfident) {
+  if (!examState.hasStarted) return;
+  examState.confidenceLevels[qid] = isConfident;
+  syncExamProgress();
+};
+
+// ── FOCUS TRACKING ────────────────────────────────────────────────────────────
+function _onQuestionFocusEnter(qid) {
+  if (!examState.hasStarted || examState.submitted) return;
+  // If entering a new question, flush the old one first
+  if (examState._focusCurrentQid && examState._focusCurrentQid !== qid) {
+    _onQuestionFocusLeave(examState._focusCurrentQid);
+  }
+  examState._focusStart = performance.now();
+  examState._focusCurrentQid = qid;
+}
+window._onQuestionFocusEnter = _onQuestionFocusEnter;
+
+function _onQuestionFocusLeave(qid) {
+  if (!examState.hasStarted || examState.submitted || !examState._focusStart) return;
+  const elapsed = (performance.now() - examState._focusStart) / 1000;
+  if (elapsed > 0) {
+    examState.focusTimePerQuestion[qid] = (examState.focusTimePerQuestion[qid] || 0) + elapsed;
+  }
+  if (examState._focusCurrentQid === qid) {
+    examState._focusStart = null;
+    examState._focusCurrentQid = null;
+  }
+}
+window._onQuestionFocusLeave = _onQuestionFocusLeave;
 
 function revealOption(el) {
   if (!examState.hasStarted) return;
@@ -260,6 +305,10 @@ function blurOption(el, qid, origIdx) {
 
 function selectAnswer(qid, uiIdx, origIdx, el) {
   if (!examState.hasStarted) return;
+  // Track answer changes (increment if already answered)
+  if (examState.answers[qid] !== undefined && examState.answers[qid] !== origIdx) {
+    examState.answerChanges[qid] = (examState.answerChanges[qid] || 0) + 1;
+  }
   examState.answers[qid] = origIdx;
   examState.questions.forEach(q => {
     if (String(q.id) !== String(qid)) return;
@@ -287,7 +336,21 @@ window.selectAnswer = selectAnswer;
 
 function syncExamProgress() {
   if (!examState.examId || !examState.hasStarted || examState.submitted) return;
-  API.updateExamProgress(examState.examId, examState.answers, Object.keys(examState.answers).length).catch(() => {});
+  // Flush any active focus timer before syncing
+  if (examState._focusCurrentQid && examState._focusStart) {
+    const elapsed = (performance.now() - examState._focusStart) / 1000;
+    const qid = examState._focusCurrentQid;
+    examState.focusTimePerQuestion[qid] = (examState.focusTimePerQuestion[qid] || 0) + elapsed;
+    examState._focusStart = performance.now(); // reset so we don't double-count
+  }
+  // Use focus-tracked times as the authoritative time_per_question
+  const timeToSend = { ...examState.focusTimePerQuestion };
+  API.saveMockProgress(examState.examId, {
+    answers: examState.answers,
+    time_per_question: timeToSend,
+    answer_changes: examState.answerChanges,
+    confidence_levels: examState.confidenceLevels
+  }).catch(() => {});
 }
 
 function startExamHeartbeat() {
@@ -552,18 +615,168 @@ async function doSubmitExam() {
           📨
         </div>
         <h2 style="font-family:var(--font-display);font-size:2rem;font-weight:900;margin-bottom:var(--space-3);">Exam Submitted!</h2>
-        <div style="font-family:var(--font-display);font-size:2.3rem;font-weight:900;color:var(--epsa-green);margin-bottom:var(--space-3);">Awaiting Admin Review</div>
-        <p style="color:var(--text-muted);margin-bottom:var(--space-4);line-height:1.8;">
-          Your answers have been saved successfully.<br>
-          You answered <strong>${Object.keys(examState.answers).length}</strong> of <strong>${examState.questions.length}</strong> questions.
-        </p>
-        <p style="color:var(--text-secondary);font-weight:700;margin-bottom:var(--space-8);line-height:1.7;">
-          Results stay hidden until the EPSA admin approves and releases them to students.
-        </p>
-        <button class="btn btn-primary btn-lg" onclick="closeExam()">← Back to Dashboard</button>
+        <div style="color:var(--text-muted);margin-bottom:var(--space-6);">Generating Post-Exam Insights...</div>
+        <div style="display:inline-block;width:30px;height:30px;border:3px solid rgba(26,107,60,0.2);border-top-color:var(--epsa-green);border-radius:50%;animation:spin 1s linear infinite;"></div>
       </div>`;
+
+    try {
+      const insights = await API.getMockInsights(examState.examId);
+      if (insights.error) throw new Error(insights.error);
+      renderInsightsDashboard(insights, overlay);
+    } catch (e) {
+      overlay.innerHTML = `
+        <div style="max-width:500px;margin:100px auto;text-align:center;padding:var(--space-8);">
+          <div style="font-size:4rem;margin-bottom:var(--space-4);">🚫</div>
+          <h2 style="font-family:var(--font-display);font-size:2rem;font-weight:900;color:var(--text-base);margin-bottom:var(--space-3);">Insights Unavailable</h2>
+          <p style="color:var(--text-muted);margin-bottom:var(--space-6);">${e.message}</p>
+          <button class="btn btn-primary btn-lg" onclick="closeExam()">← Back to Dashboard</button>
+        </div>`;
+    }
   }
   document.body.style.overflow = '';
+}
+
+function renderInsightsDashboard(data, overlay) {
+  // CSS Spinner + Progress Bar animations
+  if (!document.getElementById('insightsStyles')) {
+    const s = document.createElement('style');
+    s.id = 'insightsStyles';
+    s.textContent = `
+      @keyframes spin { 100% { transform: rotate(360deg); } }
+      .insight-card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius-xl); padding:var(--space-6); }
+      .insight-hdr { font-size:1.1rem; font-weight:800; margin-bottom:var(--space-4); color:var(--epsa-gold-light); display:flex; align-items:center; gap:8px; }
+      .mastery-bar-bg { height:8px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden; margin:8px 0; }
+      .mastery-bar-fill { height:100%; background:linear-gradient(90deg, var(--epsa-green), #4ade80); border-radius:4px; }
+    `;
+    document.head.appendChild(s);
+  }
+
+  const { categorical, benchmarking, behavioral, metacognitive, study_path } = data;
+
+  overlay.innerHTML = `
+    <div style="max-width:1000px;margin:40px auto;padding:var(--space-6);color:white;overflow-y:auto;height:calc(100vh - 80px);">
+      <div style="text-align:center;margin-bottom:var(--space-8);">
+        <h1 style="font-family:var(--font-display);font-size:2.8rem;font-weight:900;color:var(--epsa-green);margin-bottom:var(--space-2);">Post-Exam Insights</h1>
+        <p style="color:rgba(255,255,255,0.6);font-size:1.1rem;max-width:600px;margin:0 auto;">
+          Detailed psychometric and behavioral feedback to guide your study strategy.
+        </p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-6);margin-bottom:var(--space-6);">
+        <!-- 1. Categorical Performance Profile -->
+        <div class="insight-card">
+          <div class="insight-hdr"><span>🧠</span> Categorical Performance Profile</div>
+          ${categorical.skill_gaps.map(c => `
+            <div style="margin-bottom:var(--space-4);">
+              <div style="display:flex;justify-content:space-between;font-size:0.9rem;">
+                <span style="font-weight:700;">${c.category}</span>
+                <span style="color:${c.mastery >= 65 ? '#4ade80' : c.mastery < 50 ? '#f87171' : '#fbbf24'};font-weight:700;">${c.mastery}% Mastery</span>
+              </div>
+              <div class="mastery-bar-bg"><div class="mastery-bar-fill" style="width:${c.mastery}%"></div></div>
+            </div>
+          `).join('') || '<div style="color:gray;font-size:0.9rem;">No data available</div>'}
+          
+          <div style="margin-top:var(--space-5);padding:12px;background:rgba(248,113,113,0.1);border-left:3px solid #f87171;border-radius:4px;">
+            <div style="font-size:0.85rem;color:#fca5a5;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Conceptual Weakness Alerts</div>
+            <ul style="margin:0;padding-left:16px;font-size:0.95rem;color:#fecaca;">
+              ${categorical.weak_concepts.map(wc => `<li>${wc}</li>`).join('') || '<li>No significant weak concepts detected!</li>'}
+            </ul>
+          </div>
+        </div>
+
+        <!-- 2. Relative Performance Benchmarking -->
+        <div class="insight-card">
+          <div class="insight-hdr"><span>📊</span> Relative Benchmarking</div>
+          <div style="font-size:3rem;font-weight:900;color:white;margin-bottom:var(--space-2);font-family:var(--font-display);">
+            Top ${100 - benchmarking.percentile}%
+          </div>
+          <p style="color:rgba(255,255,255,0.7);font-size:1rem;margin-bottom:var(--space-6);">
+            You performed better than <strong>${benchmarking.percentile}%</strong> of students nationally.
+          </p>
+
+          <div style="display:flex;gap:var(--space-4);">
+            <div style="flex:1;background:rgba(255,255,255,0.05);padding:16px;border-radius:12px;text-align:center;">
+              <div style="font-size:0.8rem;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:4px;">National Avg</div>
+              <div style="font-size:1.5rem;font-weight:800;color:white;">${benchmarking.national_avg}%</div>
+            </div>
+            <div style="flex:1;background:rgba(255,255,255,0.05);padding:16px;border-radius:12px;text-align:center;">
+              <div style="font-size:0.8rem;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:4px;">${benchmarking.university} Avg</div>
+              <div style="font-size:1.5rem;font-weight:800;color:white;">${benchmarking.university_avg}%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-6);margin-bottom:var(--space-6);">
+        <!-- 3. Behavioral & Pacing Insights -->
+        <div class="insight-card">
+          <div class="insight-hdr"><span>⏱️</span> Behavioral & Pacing</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:var(--space-4);">
+            <div>
+              <div style="font-size:2rem;font-weight:800;color:#fbbf24;">${behavioral.rushing_errors}</div>
+              <div style="font-size:0.85rem;color:rgba(255,255,255,0.5);text-transform:uppercase;">Rushing Errors</div>
+              <div style="font-size:0.8rem;color:rgba(255,255,255,0.4);">&lt; 10s & missed</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:2rem;font-weight:800;color:#f87171;">${behavioral.overthinking_errors}</div>
+              <div style="font-size:0.85rem;color:rgba(255,255,255,0.5);text-transform:uppercase;">Overthinking Errors</div>
+              <div style="font-size:0.8rem;color:rgba(255,255,255,0.4);">&gt; 3x avg time & missed</div>
+            </div>
+          </div>
+          ${behavioral.fatigue_drop_pct >= 10 ? `
+          <div style="background:rgba(248,113,113,0.1);border-radius:8px;padding:12px;display:flex;gap:12px;align-items:flex-start;">
+            <span style="font-size:1.2rem;">⚠️</span>
+            <div>
+              <div style="font-weight:700;color:#fca5a5;font-size:0.9rem;margin-bottom:4px;">Fatigue Detected</div>
+              <div style="font-size:0.85rem;color:rgba(255,255,255,0.6);line-height:1.4;">Your performance dropped by <strong>${behavioral.fatigue_drop_pct}%</strong> in the final 25% of the exam. Focus on endurance and pacing strategies.</div>
+            </div>
+          </div>` : `
+          <div style="background:rgba(74,222,128,0.1);border-radius:8px;padding:12px;display:flex;gap:12px;align-items:flex-start;">
+            <span style="font-size:1.2rem;">✅</span>
+            <div>
+              <div style="font-weight:700;color:#4ade80;font-size:0.9rem;margin-bottom:4px;">Excellent Endurance</div>
+              <div style="font-size:0.85rem;color:rgba(255,255,255,0.6);line-height:1.4;">Your performance remained steady through the final quarter of the exam.</div>
+            </div>
+          </div>`}
+        </div>
+
+        <!-- 4. Metacognitive Reflection Tool -->
+        <div class="insight-card">
+          <div class="insight-hdr"><span>🔍</span> Metacognitive Reflection</div>
+          <p style="font-size:0.9rem;color:rgba(255,255,255,0.6);margin-bottom:var(--space-4);line-height:1.5;">
+            In psychology, knowing what you don't know is crucial. We track your confidence against actual correctness.
+          </p>
+          <div style="display:flex;justify-content:space-between;margin-bottom:var(--space-3);padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.05);">
+            <div style="font-size:0.95rem;"><strong>False Confidence:</strong> <span style="font-size:0.8rem;color:rgba(255,255,255,0.5);">(Confident but wrong)</span></div>
+            <div style="font-weight:800;color:#f87171;">${metacognitive.false_confidence}</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;">
+            <div style="font-size:0.95rem;"><strong>Lucky Guesses:</strong> <span style="font-size:0.8rem;color:rgba(255,255,255,0.5);">(Uncertain but right)</span></div>
+            <div style="font-weight:800;color:#fbbf24;">${metacognitive.lucky_guesses}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Automated Study Path -->
+      <div class="insight-card" style="margin-bottom:var(--space-8);background:linear-gradient(135deg,rgba(26,107,60,0.15),rgba(26,107,60,0.05));border-color:rgba(26,107,60,0.4);">
+        <div class="insight-hdr" style="color:var(--epsa-green);"><span>🚀</span> Priority Study Path</div>
+        <p style="font-size:0.95rem;color:rgba(255,255,255,0.7);margin-bottom:var(--space-4);">Based on your categorical skill gaps, focus your upcoming study sessions on:</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          ${study_path.map(s => `
+            <a href="#" style="background:var(--epsa-green);color:white;padding:10px 16px;border-radius:20px;font-weight:700;font-size:0.9rem;text-decoration:none;box-shadow:0 4px 12px rgba(26,107,60,0.3);">
+              📘 ${s}
+            </a>
+          `).join('') || '<span style="color:gray;">No specific recommendations yet.</span>'}
+        </div>
+      </div>
+
+      <div style="text-align:center;">
+        <button class="btn btn-lg" onclick="closeExam()" style="background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.2);padding:14px 40px;border-radius:30px;font-weight:800;">
+          ← Return to Dashboard
+        </button>
+      </div>
+    </div>
+  `;
 }
 
 function closeExam() {

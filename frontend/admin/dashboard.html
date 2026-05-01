@@ -685,60 +685,95 @@
           </div>
         </div>
 
-        <!-- Sub-tabs -->
+        <!-- Sub-tabs: existing -->
         <div style="display:flex;gap:0;background:white;border-radius:var(--radius-xl);padding:var(--space-2);border:1px solid var(--light-200);margin-bottom:22px;width:fit-content;flex-wrap:wrap">
-          <button class="ata-tab voting-admin-tab active" data-tab="cohort"    onclick="switchAnalyticsTab('cohort')"> Cohort Insights</button>
-          <button class="ata-tab voting-admin-tab"         data-tab="bloom"    onclick="switchAnalyticsTab('bloom')"> Bloom's Taxonomy</button>
-          <button class="ata-tab voting-admin-tab"         data-tab="atrisk"   onclick="switchAnalyticsTab('atrisk')">⚠ At-Risk Students</button>
-          <button class="ata-tab voting-admin-tab"         data-tab="questions" onclick="switchAnalyticsTab('questions')"> Question Quality</button>
+          <button class="ata-tab voting-admin-tab active" data-tab="cohort"    onclick="switchAnalyticsTab('cohort')">📊 Cohort Insights</button>
+          <button class="ata-tab voting-admin-tab"        data-tab="bloom"     onclick="switchAnalyticsTab('bloom')">🎓 Bloom's Taxonomy</button>
+          <button class="ata-tab voting-admin-tab"        data-tab="atrisk"    onclick="switchAnalyticsTab('atrisk')">⚠ At-Risk Students</button>
+          <button class="ata-tab voting-admin-tab"        data-tab="questions" onclick="switchAnalyticsTab('questions')">📋 Question Quality</button>
         </div>
 
         <!-- Cohort Panel -->
         <div class="ata-panel" id="ata-panel-cohort">
           <div id="analyticsCohortPanel"><div style="text-align:center;padding:40px;color:var(--text-muted)">Click Refresh to load cohort data.</div></div>
         </div>
-
         <!-- Bloom Panel -->
         <div class="ata-panel" id="ata-panel-bloom" style="display:none">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
             <div style="background:white;border:1px solid var(--light-200);border-radius:18px;padding:22px;box-shadow:0 4px 12px rgba(0,0,0,0.04)">
-              <div style="font-weight:800;margin-bottom:14px;font-size:0.95rem"> Bloom's Taxonomy Coverage</div>
+              <div style="font-weight:800;margin-bottom:14px;font-size:0.95rem">📚 Bloom's Taxonomy Coverage</div>
               <div id="analyticsBloomPanel"><div style="color:var(--text-muted);text-align:center;padding:24px">Loading…</div></div>
             </div>
             <div style="background:linear-gradient(135deg,#0f172a,#1a3a2e);border-radius:18px;padding:22px;color:white">
               <div style="font-size:0.75rem;letter-spacing:0.1em;color:rgba(255,255,255,0.5);text-transform:uppercase;margin-bottom:12px">Cognitive Depth Legend</div>
               <div style="display:flex;flex-direction:column;gap:10px;font-size:0.85rem">
-                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#dbeafe"></div><span>Remembering  Recall facts</span></div>
-                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#bfdbfe"></div><span>Understanding  Interpret meaning</span></div>
-                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#93c5fd"></div><span>Applying  Use knowledge</span></div>
-                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#60a5fa"></div><span>Analyzing  Break down components</span></div>
-                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#3b82f6"></div><span>Evaluating  Judge and assess</span></div>
-                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#1d4ed8"></div><span>Creating  Produce new ideas</span></div>
-              </div>
-              <div style="margin-top:20px;background:rgba(255,255,255,0.06);border-radius:12px;padding:14px">
-                <div style="font-size:0.8rem;color:rgba(255,255,255,0.7);line-height:1.7">
-                  Aim for <strong>20–40% high-order</strong> questions (Analyzing, Evaluating, Creating) for a psychologically rigorous exam aligned with clinical training standards.
-                </div>
+                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#dbeafe"></div><span>Remembering — Recall facts</span></div>
+                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#bfdbfe"></div><span>Understanding — Interpret meaning</span></div>
+                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#93c5fd"></div><span>Applying — Use knowledge</span></div>
+                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#60a5fa"></div><span>Analyzing — Break down components</span></div>
+                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#3b82f6"></div><span>Evaluating — Judge and assess</span></div>
+                <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#1d4ed8"></div><span>Creating — Produce new ideas</span></div>
               </div>
             </div>
           </div>
         </div>
-
         <!-- At-Risk Panel -->
         <div class="ata-panel" id="ata-panel-atrisk" style="display:none">
-          <div style="background:white;border:1px solid var(--light-200);border-radius:18px;padding:22px;box-shadow:0 4px 12px rgba(0,0,0,0.04)">
+          <div style="background:white;border:1px solid var(--light-200);border-radius:18px;padding:22px">
             <div id="analyticsAtRiskPanel"><div style="color:var(--text-muted);text-align:center;padding:24px">Loading…</div></div>
           </div>
         </div>
-
         <!-- Questions Panel -->
         <div class="ata-panel" id="ata-panel-questions" style="display:none">
-          <div style="background:white;border:1px solid var(--light-200);border-radius:18px;padding:22px;box-shadow:0 4px 12px rgba(0,0,0,0.04)">
-            <div style="font-weight:800;margin-bottom:16px"> Question Performance (Bottom 50 by Correctness)</div>
+          <div style="background:white;border:1px solid var(--light-200);border-radius:18px;padding:22px">
+            <div style="font-weight:800;margin-bottom:16px">📋 Question Performance (Bottom 50 by Correctness)</div>
             <div id="analyticsQuestionsPanel"><div style="color:var(--text-muted);text-align:center;padding:24px">Loading…</div></div>
           </div>
         </div>
+
+        <!-- ════ DYNAMIC ANALYTIC ENGINE (new) ════ -->
+        <div style="margin-top:36px;border-top:2px dashed rgba(26,107,60,0.15);padding-top:28px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+            <div>
+              <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.25rem">⚡ Dynamic Analytic Engine</h3>
+              <p style="font-size:0.82rem;color:var(--text-muted);margin-top:3px">Auto-calibration · Difficulty scoring · Fatigue detection · University benchmarking</p>
+            </div>
+            <select id="engineExamSelect" class="form-select" style="width:auto;font-size:0.85rem" onchange="loadUniversityBenchmarking()">
+              <option value="">— Select Exam —</option>
+            </select>
+          </div>
+
+          <!-- Engine Tabs -->
+          <div style="display:flex;gap:0;background:white;border-radius:var(--radius-xl);padding:var(--space-2);border:1px solid var(--light-200);margin-bottom:20px;width:fit-content;flex-wrap:wrap">
+            <button class="engine-tab voting-admin-tab active" data-tab="global"  onclick="switchEngineTab('global')">🔴🟢 Top / Missed</button>
+            <button class="engine-tab voting-admin-tab"        data-tab="uni"     onclick="switchEngineTab('uni')">🏫 University Bench.</button>
+            <button class="engine-tab voting-admin-tab"        data-tab="fatigue" onclick="switchEngineTab('fatigue')">📉 Fatigue Alert</button>
+            <button class="engine-tab voting-admin-tab"        data-tab="calib"   onclick="switchEngineTab('calib')">🔄 Auto-Calibration</button>
+          </div>
+
+          <!-- Engine Panels -->
+          <div class="engine-panel" id="engine-panel-global">
+            <div id="engineGlobalPanel"><div style="text-align:center;padding:40px;color:var(--text-muted)">Loading question intelligence…</div></div>
+          </div>
+          <div class="engine-panel" id="engine-panel-uni" style="display:none">
+            <div id="engineUniPanel"><div style="text-align:center;padding:40px;color:var(--text-muted)">Select an exam or load all universities.</div></div>
+          </div>
+          <div class="engine-panel" id="engine-panel-fatigue" style="display:none">
+            <div style="margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+              <label style="font-size:0.85rem;font-weight:700;color:var(--text-muted)">Exam:</label>
+              <select id="engineFatigueSelect" class="form-select" style="width:auto;font-size:0.85rem" onchange="loadFatigueAlert()">
+                <option value="">— Select Exam —</option>
+              </select>
+            </div>
+            <div id="engineFatiguePanel"><div style="text-align:center;padding:40px;color:var(--text-muted)">Select an exam above.</div></div>
+          </div>
+          <div class="engine-panel" id="engine-panel-calib" style="display:none">
+            <div id="engineCalibPanel"><div style="text-align:center;padding:40px;color:var(--text-muted)">Loading calibration data…</div></div>
+          </div>
+        </div>
+
       </section>
+
 
     </div>
   </div>

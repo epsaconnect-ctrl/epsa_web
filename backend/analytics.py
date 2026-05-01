@@ -505,3 +505,429 @@ def exams_overview():
             for e in exams
         ]
     })
+
+
+# ── GLOBAL QUESTION STATS ─────────────────────────────────────────────────────
+@analytics_bp.route("/global-question-stats", methods=["GET"])
+@jwt_required()
+def global_question_stats():
+    uid = get_jwt_identity()
+    db  = get_db()
+    try:
+        _require_admin(db, uid)
+
+        rows = db.execute("""
+            SELECT qa.question_id,
+                   SUM(qa.times_presented)  as total_presented,
+                   SUM(qa.times_correct)    as total_correct,
+                   AVG(qa.correctness_rate) as avg_correctness,
+                   AVG(qa.avg_time_seconds) as avg_time,
+                   AVG(qa.avg_time_correct)   as avg_time_correct,
+                   AVG(qa.avg_time_incorrect) as avg_time_incorrect,
+                   SUM(qa.doubt_count)      as total_doubt,
+                   MAX(qa.high_variance_flag) as is_high_variance,
+                   AVG(qa.difficulty_score)   as diff_score,
+                   qb.question_text, qb.subject_category, qb.bloom_level,
+                   qb.difficulty, qb.difficulty_auto, qb.submitted_by
+            FROM question_analytics qa
+            JOIN question_bank qb ON qb.id = qa.question_id
+            GROUP BY qa.question_id
+            HAVING SUM(qa.times_presented) > 0
+            ORDER BY avg_correctness ASC
+        """).fetchall()
+
+    finally:
+        db.close()
+
+    def fmt(r):
+        rate = r["avg_correctness"] or 0
+        return {
+            "question_id":         r["question_id"],
+            "question_text":       (r["question_text"] or "")[:120],
+            "category":            r["subject_category"],
+            "bloom_level":         r["bloom_level"],
+            "difficulty_original": r["difficulty"],
+            "difficulty_auto":     r["difficulty_auto"],
+            "times_presented":     r["total_presented"] or 0,
+            "times_correct":       r["total_correct"] or 0,
+            "correctness_rate":    round(rate, 4),
+            "avg_time_secs":       round(r["avg_time"] or 0, 1),
+            "avg_time_correct":    round(r["avg_time_correct"] or 0, 1),
+            "avg_time_incorrect":  round(r["avg_time_incorrect"] or 0, 1),
+            "doubt_count":         r["total_doubt"] or 0,
+            "is_high_variance":    bool(r["is_high_variance"]),
+            "difficulty_score":    round(r["diff_score"] or 0, 4),
+            "data_adjusted":       r["difficulty_auto"] and r["difficulty_auto"] != r["difficulty"],
+        }
+
+    all_q = [fmt(r) for r in rows]
+    top10_missed  = sorted(all_q, key=lambda x: x["correctness_rate"])[:10]
+    top10_correct = sorted(all_q, key=lambda x: -x["correctness_rate"])[:10]
+    high_variance = [q for q in all_q if q["is_high_variance"]]
+    high_doubt    = sorted(
+        [q for q in all_q if q["doubt_count"] >= 3],
+        key=lambda x: -x["doubt_count"]
+    )[:20]
+
+    # Accuracy correlation: avg time on correct vs incorrect answers
+    accuracy_correlation = [
+        {
+            "question_id":        q["question_id"],
+            "question_text":      q["question_text"],
+            "avg_time_correct":   q["avg_time_correct"],
+            "avg_time_incorrect": q["avg_time_incorrect"],
+            "correctness_rate":   q["correctness_rate"],
+        }
+        for q in sorted(all_q, key=lambda x: -x["times_presented"])[:30]
+    ]
+
+    return jsonify({
+        "top10_missed":         top10_missed,
+        "top10_correct":        top10_correct,
+        "high_variance":        high_variance,
+        "high_doubt":           high_doubt,
+        "accuracy_correlation": accuracy_correlation,
+        "total_questions":      len(all_q),
+    })
+
+
+# ── UNIVERSITY BENCHMARKING ───────────────────────────────────────────────────
+@analytics_bp.route("/university-benchmarking", methods=["GET"])
+@jwt_required()
+def university_benchmarking():
+    uid = get_jwt_identity()
+    db  = get_db()
+    try:
+        _require_admin(db, uid)
+        exam_id = request.args.get("exam_id")
+
+        if exam_id:
+            subs = db.execute("""
+                SELECT ms.score, u.university
+                FROM mock_exam_submissions ms
+                JOIN users u ON u.id = ms.user_id
+                WHERE ms.exam_id=? AND ms.status IN ('submitted','auto_submitted') AND ms.score IS NOT NULL
+            """, (exam_id,)).fetchall()
+            
+            cat_stats = db.execute("""
+                SELECT university, category, SUM(attempts) as attempts, SUM(correct_count) as correct_count
+                FROM university_stats
+                WHERE exam_id=?
+                GROUP BY university, category
+            """, (exam_id,)).fetchall()
+        else:
+            subs = db.execute("""
+                SELECT ms.score, u.university
+                FROM mock_exam_submissions ms
+                JOIN users u ON u.id = ms.user_id
+                WHERE ms.status IN ('submitted','auto_submitted') AND ms.score IS NOT NULL
+            """).fetchall()
+            
+            cat_stats = db.execute("""
+                SELECT university, category, SUM(attempts) as attempts, SUM(correct_count) as correct_count
+                FROM university_stats
+                GROUP BY university, category
+            """).fetchall()
+
+        # Build university map
+        uni_map = {}
+        for s in subs:
+            uni = s["university"] or "Unknown"
+            if uni not in uni_map:
+                uni_map[uni] = {"scores": [], "categories": {}}
+            uni_map[uni]["scores"].append(s["score"])
+            
+        for c in cat_stats:
+            uni = c["university"] or "Unknown"
+            if uni not in uni_map:
+                uni_map[uni] = {"scores": [], "categories": {}}
+            uni_map[uni]["categories"][c["category"]] = {
+                "total": c["attempts"] or 0,
+                "correct": c["correct_count"] or 0
+            }
+
+        result = []
+        for uni, data in uni_map.items():
+            scores = data["scores"]
+            cat_perf = []
+            for cat, cdata in data["categories"].items():
+                total = cdata["total"]
+                correct = cdata["correct"]
+                rate = round(correct / total, 4) if total else 0
+                cat_perf.append({
+                    "category": cat, "total": total, "correct": correct,
+                    "rate": rate,
+                    "status": "strength" if rate >= 0.65 else ("weakness" if rate < 0.45 else "moderate"),
+                })
+            cat_perf.sort(key=lambda x: x["rate"])
+            result.append({
+                "university":     uni,
+                "student_count":  len(scores),
+                "avg_score":      round(sum(scores)/len(scores), 2) if scores else 0,
+                "pass_rate":      round(sum(1 for s in scores if s >= 50)/len(scores)*100, 1) if scores else 0,
+                "max_score":      max(scores) if scores else 0,
+                "min_score":      min(scores) if scores else 0,
+                "category_performance": cat_perf,
+                "top_strength":   cat_perf[-1]["category"] if cat_perf else None,
+                "top_weakness":   cat_perf[0]["category"] if cat_perf else None,
+            })
+
+        result.sort(key=lambda x: -x["avg_score"])
+    finally:
+        db.close()
+
+    return jsonify({"universities": result, "count": len(result)})
+
+
+# ── EXAM DRILL-DOWN ───────────────────────────────────────────────────────────
+@analytics_bp.route("/exam-drilldown/<int:exam_id>", methods=["GET"])
+@jwt_required()
+def exam_drilldown(exam_id):
+    uid = get_jwt_identity()
+    db  = get_db()
+    try:
+        _require_admin(db, uid)
+        exam = db.execute("SELECT * FROM mock_exams WHERE id=?", (exam_id,)).fetchone()
+        if not exam:
+            return jsonify({"error": "Exam not found"}), 404
+
+        analytics = db.execute("""
+            SELECT qa.question_id, qa.times_presented, qa.times_correct,
+                   qa.correctness_rate, qa.avg_time_seconds,
+                   qa.avg_time_correct, qa.avg_time_incorrect,
+                   qa.doubt_count, qa.difficulty_score,
+                   qa.high_variance_flag, qa.top_group_correct, qa.bottom_group_correct,
+                   qb.question_text, qb.subject_category, qb.bloom_level,
+                   qb.difficulty, qb.difficulty_auto, qb.submitted_by
+            FROM question_analytics qa
+            JOIN question_bank qb ON qb.id = qa.question_id
+            WHERE qa.mock_exam_id=?
+            ORDER BY qa.correctness_rate ASC
+        """, (exam_id,)).fetchall()
+
+        questions = []
+        for a in analytics:
+            rate = a["correctness_rate"] or 0
+            d = round((a["top_group_correct"] or 0) - (a["bottom_group_correct"] or 0), 4)
+            questions.append({
+                "question_id":         a["question_id"],
+                "question_text":       (a["question_text"] or "")[:150],
+                "category":            a["subject_category"],
+                "bloom_level":         a["bloom_level"],
+                "difficulty_original": a["difficulty"],
+                "difficulty_auto":     a["difficulty_auto"],
+                "data_adjusted":       a["difficulty_auto"] and a["difficulty_auto"] != a["difficulty"],
+                "times_presented":     a["times_presented"] or 0,
+                "times_correct":       a["times_correct"] or 0,
+                "correctness_rate":    round(rate, 4),
+                "avg_time_secs":       round(a["avg_time_seconds"] or 0, 1),
+                "avg_time_correct":    round(a["avg_time_correct"] or 0, 1),
+                "avg_time_incorrect":  round(a["avg_time_incorrect"] or 0, 1),
+                "doubt_count":         a["doubt_count"] or 0,
+                "difficulty_score":    round(a["difficulty_score"] or 0, 4),
+                "is_high_variance":    bool(a["high_variance_flag"]),
+                "discrimination_index": d,
+            })
+    finally:
+        db.close()
+
+    return jsonify({
+        "exam_id":   exam_id,
+        "exam_title": exam["title"],
+        "questions": questions,
+        "count":     len(questions),
+    })
+
+
+# ── FATIGUE ALERT ─────────────────────────────────────────────────────────────
+@analytics_bp.route("/fatigue-alert/<int:exam_id>", methods=["GET"])
+@jwt_required()
+def fatigue_alert(exam_id):
+    uid = get_jwt_identity()
+    db  = get_db()
+    try:
+        _require_admin(db, uid)
+        exam = db.execute("SELECT * FROM mock_exams WHERE id=?", (exam_id,)).fetchone()
+        if not exam:
+            return jsonify({"error": "Exam not found"}), 404
+
+        subs = db.execute("""
+            SELECT ms.answers, ms.time_per_question, ms.option_order, ms.question_ids, ms.score
+            FROM mock_exam_submissions ms
+            WHERE ms.exam_id=? AND ms.status IN ('submitted','auto_submitted')
+        """, (exam_id,)).fetchall()
+
+        if not subs:
+            return jsonify({"buckets": [], "alert": False, "message": "No submissions yet"})
+
+        # For each submission, compute accuracy by question position bucket (every 20 questions)
+        bucket_size = 20
+        bucket_data = {}
+
+        for sub in subs:
+            try:
+                qids = json.loads(sub["question_ids"] or "[]")
+                answers = json.loads(sub["answers"] or "{}")
+                opt_order = json.loads(sub["option_order"] or "{}")
+                times = json.loads(sub["time_per_question"] or "{}")
+
+                if not qids:
+                    continue
+
+                ph = ",".join("?" * len(qids))
+                qs = db.execute(
+                    f"SELECT id, correct_idx FROM question_bank WHERE id IN ({ph})", qids
+                ).fetchall()
+                q_map = {str(q["id"]): q["correct_idx"] for q in qs}
+
+                for idx, qid in enumerate(qids):
+                    bucket = (idx // bucket_size) * bucket_size
+                    key = f"{bucket+1}-{bucket+bucket_size}"
+                    if key not in bucket_data:
+                        bucket_data[key] = {"correct": 0, "total": 0, "time": 0, "start": bucket}
+
+                    qid_str = str(qid)
+                    ans = answers.get(qid_str)
+                    bucket_data[key]["total"] += 1
+
+                    if ans is not None and qid_str in q_map:
+                        try:
+                            perm = opt_order.get(qid_str, [0,1,2,3])
+                            if perm[int(ans)] == q_map[qid_str]:
+                                bucket_data[key]["correct"] += 1
+                        except Exception:
+                            pass
+                    bucket_data[key]["time"] += float(times.get(qid_str, 0) or 0)
+
+            except Exception:
+                pass
+
+        buckets = []
+        for key, data in sorted(bucket_data.items(), key=lambda x: x[1]["start"]):
+            rate = round(data["correct"] / data["total"], 4) if data["total"] else 0
+            avg_t = round(data["time"] / data["total"], 1) if data["total"] else 0
+            buckets.append({
+                "label": key,
+                "start": data["start"],
+                "correctness_rate": rate,
+                "avg_time_secs": avg_t,
+                "total_answers": data["total"],
+            })
+
+        # Detect predictive fatigue: drop in accuracy & time spent after Question #40
+        alert = False
+        drop_pct = 0
+        recommendation = ""
+        if len(buckets) >= 3:
+            early_rate = sum(b["correctness_rate"] for b in buckets[:2]) / 2 # Q1-40
+            early_time = sum(b["avg_time_secs"] for b in buckets[:2]) / 2
+            
+            late_buckets = buckets[2:] # Q41+
+            late_rate = sum(b["correctness_rate"] for b in late_buckets) / len(late_buckets)
+            late_time = sum(b["avg_time_secs"] for b in late_buckets) / len(late_buckets)
+            
+            drop_pct = round((early_rate - late_rate) * 100, 1)
+            time_drop = round(early_time - late_time, 1)
+            
+            # Fatigue triggers if accuracy drops by 10%+ and time spent drops
+            if drop_pct >= 10.0 and time_drop > 0:
+                alert = True
+                recommendation = (
+                    f"Predictive Fatigue Alert: After question #40, student accuracy drops by {drop_pct}% "
+                    f"and focus time decreases by {time_drop}s per question. This suggests exam length is compromising validity."
+                )
+
+    finally:
+        db.close()
+
+    return jsonify({
+        "exam_id":        exam_id,
+        "exam_title":     exam["title"],
+        "buckets":        buckets,
+        "alert":          alert,
+        "drop_pct":       drop_pct,
+        "recommendation": recommendation,
+    })
+
+
+# ── TEACHER QUESTION PERFORMANCE ──────────────────────────────────────────────
+@analytics_bp.route("/teacher-question-performance", methods=["GET"])
+@jwt_required()
+def teacher_question_performance():
+    uid = get_jwt_identity()
+    db  = get_db()
+    try:
+        user = db.execute("SELECT role FROM users WHERE id=?", (uid,)).fetchone()
+        if not user or user["role"] not in ("teacher", "admin", "super_admin"):
+            return jsonify({"error": "Teacher access required"}), 403
+
+        rows = db.execute("""
+            SELECT qa.question_id,
+                   SUM(qa.times_presented)    as total_presented,
+                   SUM(qa.times_correct)      as total_correct,
+                   AVG(qa.correctness_rate)   as avg_correctness,
+                   AVG(qa.avg_time_seconds)   as avg_time,
+                   AVG(qa.avg_time_correct)   as avg_time_correct,
+                   AVG(qa.avg_time_incorrect) as avg_time_incorrect,
+                   SUM(qa.doubt_count)        as total_doubt,
+                   MAX(qa.high_variance_flag) as is_high_variance,
+                   AVG(qa.difficulty_score)   as diff_score,
+                   qb.question_text, qb.subject_category, qb.bloom_level,
+                   qb.difficulty, qb.difficulty_auto, qb.status as q_status
+            FROM question_analytics qa
+            JOIN question_bank qb ON qb.id = qa.question_id
+            WHERE qb.submitted_by=?
+            GROUP BY qa.question_id
+            ORDER BY avg_correctness ASC
+        """, (uid,)).fetchall()
+
+        questions = []
+        for r in rows:
+            rate = r["avg_correctness"] or 0
+            questions.append({
+                "question_id":         r["question_id"],
+                "question_text":       (r["question_text"] or "")[:120],
+                "category":            r["subject_category"],
+                "bloom_level":         r["bloom_level"],
+                "q_status":            r["q_status"],
+                "difficulty_original": r["difficulty"],
+                "difficulty_auto":     r["difficulty_auto"],
+                "data_adjusted":       r["difficulty_auto"] and r["difficulty_auto"] != r["difficulty"],
+                "times_presented":     r["total_presented"] or 0,
+                "times_correct":       r["total_correct"] or 0,
+                "correctness_rate":    round(rate, 4),
+                "avg_time_secs":       round(r["avg_time"] or 0, 1),
+                "avg_time_correct":    round(r["avg_time_correct"] or 0, 1),
+                "avg_time_incorrect":  round(r["avg_time_incorrect"] or 0, 1),
+                "doubt_count":         r["total_doubt"] or 0,
+                "is_high_variance":    bool(r["is_high_variance"]),
+                "difficulty_score":    round(r["diff_score"] or 0, 4),
+            })
+
+        # Category skill gap for this teacher's questions
+        cat_map = {}
+        for q in questions:
+            cat = q["category"] or "Other"
+            if cat not in cat_map:
+                cat_map[cat] = {"total": 0, "correct": 0}
+            cat_map[cat]["total"] += q["times_presented"]
+            cat_map[cat]["correct"] += q["times_correct"]
+
+        cat_performance = []
+        for cat, data in cat_map.items():
+            rate = round(data["correct"] / data["total"], 4) if data["total"] else 0
+            cat_performance.append({
+                "category": cat, "total": data["total"], "correct": data["correct"],
+                "rate": rate,
+                "status": "strength" if rate >= 0.65 else ("weakness" if rate < 0.45 else "moderate"),
+            })
+        cat_performance.sort(key=lambda x: x["rate"])
+
+    finally:
+        db.close()
+
+    return jsonify({
+        "questions":          questions,
+        "total_questions":    len(questions),
+        "category_performance": cat_performance,
+    })

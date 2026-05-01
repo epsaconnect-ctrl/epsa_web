@@ -1168,6 +1168,30 @@ def migrate_db():
         """CREATE INDEX IF NOT EXISTS idx_question_bank_status ON question_bank(status, subject_category)""",
         """CREATE INDEX IF NOT EXISTS idx_question_bank_submitter ON question_bank(submitted_by)""",
         """CREATE INDEX IF NOT EXISTS idx_mock_exam_submissions ON mock_exam_submissions(exam_id, user_id)""",
+        # ── ANALYTIC ENGINE PHASE 1 ─────────────────────────────────────────────────
+        """ALTER TABLE mock_exam_submissions ADD COLUMN answer_changes TEXT DEFAULT '{}'""",
+        """ALTER TABLE mock_exam_submissions ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP""",
+        """ALTER TABLE mock_exam_submissions ADD COLUMN confidence_levels TEXT DEFAULT '{}'""",
+        """ALTER TABLE question_analytics ADD COLUMN avg_time_correct REAL DEFAULT 0""",
+        """ALTER TABLE question_analytics ADD COLUMN avg_time_incorrect REAL DEFAULT 0""",
+        """ALTER TABLE question_analytics ADD COLUMN doubt_count INTEGER DEFAULT 0""",
+        """ALTER TABLE question_analytics ADD COLUMN difficulty_score REAL""",
+        """ALTER TABLE question_analytics ADD COLUMN high_variance_flag INTEGER DEFAULT 0""",
+        """ALTER TABLE question_analytics ADD COLUMN top_group_correct REAL DEFAULT 0""",
+        """ALTER TABLE question_analytics ADD COLUMN bottom_group_correct REAL DEFAULT 0""",
+        """CREATE INDEX IF NOT EXISTS idx_question_analytics_qid ON question_analytics(question_id)""",
+        """CREATE INDEX IF NOT EXISTS idx_mock_exam_subs_status ON mock_exam_submissions(status, submitted_at)""",
+        # ── PRO ANALYTICS (Supabase Optimization & Skill Gaps) ───────────────────────
+        """CREATE TABLE IF NOT EXISTS university_stats (
+            id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+            exam_id             INTEGER NOT NULL REFERENCES mock_exams(id),
+            university          TEXT NOT NULL,
+            category            TEXT NOT NULL,
+            attempts            INTEGER DEFAULT 0,
+            correct_count       INTEGER DEFAULT 0,
+            avg_time            REAL DEFAULT 0,
+            UNIQUE(exam_id, university, category)
+        )"""
     ]
     for sql in migrations:
         try:
@@ -1175,20 +1199,47 @@ def migrate_db():
             db.commit()
             print(f'[DB Migration] Applied: {sql[:80].strip()}...')
         except Exception as exc:
-            # CRITICAL for Postgres: a failed statement aborts the whole transaction.
-            # We MUST rollback before attempting the next statement, otherwise every
-            # subsequent migration (including CREATE TABLE epsa_settings) also fails
-            # silently with "current transaction is aborted".
             try:
                 db.rollback()
             except Exception:
                 pass
-            # Suppress expected errors (column/table already exists, etc.)
             err_str = str(exc).lower()
             if any(k in err_str for k in ('already exists', 'duplicate column', 'already been added')):
-                pass  # expected on re-run
+                pass
             else:
                 print(f'[DB Migration Warning] {sql[:60].strip()}: {exc}')
+
+    # Supabase RPC Function (PostgreSQL only)
+    if getattr(db, 'engine', 'sqlite') == 'postgres':
+        try:
+            rpc_sql = """
+            CREATE OR REPLACE FUNCTION update_pro_analytics(sub_id INTEGER)
+            RETURNS VOID AS $$
+            DECLARE
+                sub_row RECORD;
+                q_id_str TEXT;
+                q_id INTEGER;
+                q_cat TEXT;
+                is_correct BOOLEAN;
+                t_spent REAL;
+                ans_chg INTEGER;
+                diff_sc REAL;
+                eff_max REAL;
+            BEGIN
+                -- Note: Full JSON parsing inside Postgres is complex.
+                -- For the EPSA platform, we will use Python's fast JSON parser
+                -- as a fallback. If a pure Supabase Edge Function is needed,
+                -- it should be implemented in Deno. For now, this is a placeholder
+                -- that allows the DB to accept the RPC call without crashing.
+            END;
+            $$ LANGUAGE plpgsql;
+            """
+            db.execute(rpc_sql)
+            db.commit()
+        except Exception as exc:
+            try: db.rollback()
+            except: pass
+            print(f'[DB Migration Warning] RPC creation failed: {exc}')
     try:
         db.execute("""
             UPDATE exam_submissions

@@ -243,6 +243,9 @@
   <a class="nav-item" id="nav-myquestions" onclick="showPage('myquestions')">
     <span class="icon">📂</span>My Questions
   </a>
+  <a class="nav-item" id="nav-analytics" onclick="showPage('analytics')">
+    <span class="icon">📊</span>Question Analytics
+  </a>
   <a class="nav-item" id="nav-bulk" onclick="showPage('bulk')">
     <span class="icon">☁️</span>Bulk Upload
   </a>
@@ -525,6 +528,58 @@
     </div>
   </section>
 
+  <!-- QUESTION ANALYTICS -->
+  <section class="page-section" id="page-analytics">
+    <div class="page-header">
+      <h1>Question <span>Analytics</span></h1>
+      <p>Live performance data for your approved questions — auto-calibration status, focus time, and category skill gaps.</p>
+    </div>
+
+    <!-- Summary stats -->
+    <div class="stats-grid" id="qaStatGrid">
+      <div class="stat-card blue"><div class="stat-label">Questions Tracked</div><div class="stat-value" id="qaStatTotal">—</div><div class="stat-sub">In live exams</div></div>
+      <div class="stat-card green"><div class="stat-label">Avg Accuracy</div><div class="stat-value" id="qaStatAccuracy">—</div><div class="stat-sub">Across all your questions</div></div>
+      <div class="stat-card gold"><div class="stat-label">Auto-Reclassified</div><div class="stat-value" id="qaStatAdjusted">—</div><div class="stat-sub">System changed difficulty</div></div>
+      <div class="stat-card red"><div class="stat-label">High Variance</div><div class="stat-value" id="qaStatVariance">—</div><div class="stat-sub">IDI &lt; 0.2 questions</div></div>
+    </div>
+
+    <!-- Category skill gap -->
+    <div id="qaCatSection" style="margin-bottom:24px;display:none">
+      <div class="card">
+        <div class="card-title">📚 Category Skill Gap (Student Performance on Your Questions)</div>
+        <div id="qaCatChart"></div>
+      </div>
+    </div>
+
+    <!-- Question table -->
+    <div class="card">
+      <div class="myq-toolbar">
+        <div class="card-title" style="margin-bottom:0">Your Question Performance</div>
+        <button class="btn btn-secondary" onclick="loadTeacherAnalytics()">🔄 Refresh</button>
+      </div>
+      <div class="table-wrap" style="margin-top:16px">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Question</th>
+              <th>Category</th>
+              <th>Shown</th>
+              <th>Accuracy</th>
+              <th>⏱ Correct</th>
+              <th>⏱ Wrong</th>
+              <th>Difficulty</th>
+              <th>Flags</th>
+            </tr>
+          </thead>
+          <tbody id="qaTableBody">
+            <tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:32px">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
   <!-- HELP -->
   <section class="page-section" id="page-help">
     <div class="page-header">
@@ -671,6 +726,7 @@ function showPage(name) {
   document.getElementById('sidebar').classList.remove('open');
   if (name === 'myquestions') loadMyQuestions();
   if (name === 'dashboard') loadStats();
+  if (name === 'analytics') loadTeacherAnalytics();
 }
 
 // ── Load profile ──────────────────────────────────────────────────────────────
@@ -1284,7 +1340,96 @@ function formatDate(dt) {
   try { return new Date(dt).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'2-digit'}); } catch(e) { return dt; }
 }
 
+// ── Teacher Analytics ─────────────────────────────────────────────────────────
+async function loadTeacherAnalytics() {
+  const tbody = document.getElementById('qaTableBody');
+  if (tbody) tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:32px">Loading analytics…</td></tr>`;
+  try {
+    const data = await apiGet('/analytics/teacher-question-performance');
+    const questions = data.questions || [];
+    const catPerf   = data.category_performance || [];
+
+    // Summary stats
+    const total    = questions.length;
+    const adjusted = questions.filter(q => q.data_adjusted).length;
+    const variance = questions.filter(q => q.is_high_variance).length;
+    const avgAcc   = total > 0
+      ? Math.round(questions.reduce((s,q) => s + (q.correctness_rate||0), 0) / total * 100)
+      : 0;
+
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('qaStatTotal', total);
+    set('qaStatAccuracy', avgAcc + '%');
+    set('qaStatAdjusted', adjusted);
+    set('qaStatVariance', variance);
+
+    // Category skill gap chart
+    const catSection = document.getElementById('qaCatSection');
+    const catChart   = document.getElementById('qaCatChart');
+    if (catPerf.length > 0 && catSection && catChart) {
+      catSection.style.display = '';
+      const maxRate = Math.max(...catPerf.map(c => c.rate), 0.01);
+      catChart.innerHTML = catPerf.map(c => {
+        const w   = Math.round(c.rate / maxRate * 100);
+        const col = c.status === 'strength' ? 'var(--accent)' : c.status === 'weakness' ? 'var(--red)' : 'var(--gold)';
+        const badge = c.status === 'strength'
+          ? '<span class="badge badge-approved">Strength</span>'
+          : c.status === 'weakness'
+          ? '<span class="badge badge-rejected">Weakness</span>'
+          : '<span class="badge badge-pending">Moderate</span>';
+        return `<div class="category-bar">
+          <div class="cat-label">
+            <span>${c.category} ${badge}</span>
+            <span style="color:${col}">${Math.round(c.rate*100)}% (${c.correct}/${c.total})</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${col}"></div></div>
+        </div>`;
+      }).join('');
+    }
+
+    // Question table
+    if (!tbody) return;
+    if (questions.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:32px">No analytics yet — your questions need to appear in a mock exam first.</td></tr>`;
+      return;
+    }
+
+    const diffColor = { easy: 'badge-approved', medium: 'badge-pending', hard: 'badge-rejected' };
+    tbody.innerHTML = questions.map((q, i) => {
+      const rate    = Math.round((q.correctness_rate||0) * 100);
+      const rateCol = rate >= 60 ? 'var(--accent)' : rate >= 40 ? 'var(--gold)' : 'var(--red)';
+
+      const diffLabel = q.data_adjusted
+        ? `<span class="badge badge-pending" title="Auto-adjusted from ${q.difficulty_original}">📊 ${q.difficulty_auto}</span>`
+        : `<span class="badge ${diffColor[q.difficulty_original]||'badge-pending'}">${q.difficulty_original}</span>`;
+
+      const flags = [
+        q.data_adjusted  ? '<span class="badge badge-pending" title="System reclassified difficulty">Data-Adjusted</span>' : '',
+        q.is_high_variance ? '<span class="badge badge-rejected" title="IDI < 0.2">⚠ Variance</span>' : '',
+        q.doubt_count >= 3 ? '<span class="badge" style="background:rgba(99,102,241,.1);color:#6366f1">🤔 Doubt</span>' : '',
+      ].filter(Boolean).join(' ');
+
+      return `<tr>
+        <td>${i+1}</td>
+        <td class="q-text" title="${(q.question_text||'').replace(/"/g,'&quot;')}">${q.question_text||'—'}</td>
+        <td>${q.category||'—'}</td>
+        <td>${q.times_presented}</td>
+        <td style="font-weight:800;color:${rateCol}">${rate}%</td>
+        <td style="color:var(--accent)">${q.avg_time_correct}s</td>
+        <td style="color:var(--red)">${q.avg_time_incorrect}s</td>
+        <td>${diffLabel}</td>
+        <td>${flags||'—'}</td>
+      </tr>`;
+    }).join('');
+
+  } catch(e) {
+    const tbody = document.getElementById('qaTableBody');
+    if (tbody) tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--red);padding:32px">${e.message}</td></tr>`;
+  }
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
+
 async function init() {
   if (!getToken()) { window.location.href = 'login.html'; return; }
   try {

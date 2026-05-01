@@ -445,6 +445,7 @@ const API = {
   async saveMockProgress(id, body)              { return this.request(`/mock-exams/${id}/progress`, { method: 'POST', body }); },
   async submitMockExam(id, body)                { return this.request(`/mock-exams/${id}/submit`, { method: 'POST', body }); },
   async getMockResults(id)                      { return this.request(`/mock-exams/${id}/results`); },
+  async getMockInsights(id)                     { return this.request(`/mock-exams/${id}/insights`); },
 
   // ── Mock Exams (Admin) ──
   async adminListMockExams()                    { return this.request('/mock-exams/admin'); },
@@ -488,6 +489,42 @@ const API = {
     }
   },
 };
+
+// ── ANALYTIC ENGINE API EXTENSIONS ───────────────────────────────────────────
+Object.assign(API, {
+  /** Save exam progress including focus-time and answer-change data */
+  async saveMockProgress(examId, payload) {
+    return API.post(`/mock-exams/${examId}/progress`, payload);
+  },
+
+  /** Submit mock exam with focus-time and answer-change data */
+  async submitMockExam(examId, payload) {
+    return API.post(`/mock-exams/${examId}/submit`, payload);
+  },
+
+  // Analytics endpoints (admin)
+  async getGlobalQuestionStats() {
+    return API.get('/analytics/global-question-stats');
+  },
+
+  async getUniversityBenchmarking(examId = null) {
+    const qs = examId ? `?exam_id=${examId}` : '';
+    return API.get(`/analytics/university-benchmarking${qs}`);
+  },
+
+  async getExamDrilldown(examId) {
+    return API.get(`/analytics/exam-drilldown/${examId}`);
+  },
+
+  async getFatigueAlert(examId) {
+    return API.get(`/analytics/fatigue-alert/${examId}`);
+  },
+
+  // Teacher analytics endpoint
+  async getTeacherQuestionPerformance() {
+    return API.get('/analytics/teacher-question-performance');
+  },
+});
 
 window.API = API;
 

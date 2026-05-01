@@ -341,16 +341,24 @@ def save_progress(exam_id):
         # Merge answers
         current_answers = json.loads(sub["answers"] or "{}")
         current_times = json.loads(sub["time_per_question"] or "{}")
+        current_changes = json.loads(sub["answer_changes"] if sub["answer_changes"] else "{}")
+        current_conf = json.loads(sub["confidence_levels"] if getattr(sub, "confidence_levels", None) or "confidence_levels" in sub.keys() and sub["confidence_levels"] else "{}")
 
         new_answers = data.get("answers", {})
         new_times = data.get("time_per_question", {})
+        new_changes = data.get("answer_changes", {})
+        new_conf = data.get("confidence_levels", {})
 
         current_answers.update({str(k): v for k, v in new_answers.items()})
         current_times.update({str(k): v for k, v in new_times.items()})
+        current_conf.update({str(k): v for k, v in new_conf.items()})
+        # Merge answer change counts — take the max to avoid reset on resume
+        for k, v in new_changes.items():
+            current_changes[str(k)] = max(current_changes.get(str(k), 0), int(v))
 
         db.execute(
-            "UPDATE mock_exam_submissions SET answers=?, time_per_question=? WHERE id=?",
-            (json.dumps(current_answers), json.dumps(current_times), sub["id"])
+            "UPDATE mock_exam_submissions SET answers=?, time_per_question=?, answer_changes=?, confidence_levels=? WHERE id=?",
+            (json.dumps(current_answers), json.dumps(current_times), json.dumps(current_changes), json.dumps(current_conf), sub["id"])
         )
         db.commit()
     finally:
@@ -384,6 +392,16 @@ def submit_mock_exam(exam_id):
         new_times = data.get("time_per_question", {})
         current_times.update({str(k): v for k, v in new_times.items()})
 
+        # Merge final answer_changes
+        current_changes = json.loads(sub["answer_changes"] if sub["answer_changes"] else "{}")
+        new_changes = data.get("answer_changes", {})
+        for k, v in new_changes.items():
+            current_changes[str(k)] = max(current_changes.get(str(k), 0), int(v))
+            
+        current_conf = json.loads(sub["confidence_levels"] if getattr(sub, "confidence_levels", None) or "confidence_levels" in sub.keys() and sub["confidence_levels"] else "{}")
+        new_conf = data.get("confidence_levels", {})
+        current_conf.update({str(k): v for k, v in new_conf.items()})
+
         # Score the submission
         qids = json.loads(sub["question_ids"])
         opt_order = json.loads(sub["option_order"] or "{}")
@@ -400,7 +418,6 @@ def submit_mock_exam(exam_id):
             student_answer = current_answers.get(qid_str)
             if student_answer is None:
                 continue
-            # Remap student answer through option permutation to get original index
             perm = opt_order.get(qid_str, [0, 1, 2, 3])
             try:
                 original_idx = perm[int(student_answer)]
@@ -416,15 +433,24 @@ def submit_mock_exam(exam_id):
         db.execute(
             """
             UPDATE mock_exam_submissions
-            SET answers=?, time_per_question=?, score=?, status=?, submitted_at=DATETIME('now')
+            SET answers=?, time_per_question=?, answer_changes=?, confidence_levels=?, score=?, status=?, submitted_at=DATETIME('now')
             WHERE id=?
             """,
-            (json.dumps(current_answers), json.dumps(current_times), score, status, sub["id"])
+            (json.dumps(current_answers), json.dumps(current_times), json.dumps(current_changes), json.dumps(current_conf), score, status, sub["id"])
         )
         db.commit()
 
-        # Trigger async analytics update (lightweight; runs inline)
-        _update_question_analytics(db, exam_id, qids, current_answers, opt_order, sub["id"])
+        # Trigger analytics update inline (Pro Analytics Supabase Optimization)
+        if getattr(db, 'engine', 'sqlite') == 'postgres':
+            try:
+                db.execute("SELECT update_pro_analytics(?)", (sub["id"],))
+            except Exception as e:
+                print(f"[Supabase RPC Error] {e}")
+        else:
+            # Fallback for local SQLite
+            _update_question_analytics(db, exam_id, qids, current_answers, current_times, current_changes, opt_order, score)
+            _update_university_stats_fallback(db, sub["user_id"], exam_id, qids, current_answers, current_times, opt_order)
+            
         db.commit()
     finally:
         db.close()
@@ -438,18 +464,63 @@ def submit_mock_exam(exam_id):
     })
 
 
-def _update_question_analytics(db, exam_id, qids, answers, opt_order, sub_id):
-    """Update per-question analytics after a submission is scored."""
+# Difficulty formula weights
+_W1 = 0.6  # accuracy component weight
+_W2 = 0.4  # normalized time component weight
+_MIN_SAMPLE = 5  # minimum submissions before auto-calibration kicks in
+
+
+def _compute_difficulty_score(accuracy_rate, avg_time_secs, max_time_secs):
+    """Compute weighted difficulty score. Higher = harder."""
+    normalized_time = min(1.0, avg_time_secs / max_time_secs) if max_time_secs > 0 else 0.0
+    return round((_W1 * (1.0 - accuracy_rate)) + (_W2 * normalized_time), 4)
+
+
+def _auto_classify(difficulty_score):
+    """Map difficulty score to Easy/Medium/Hard label."""
+    if difficulty_score < 0.35:
+        return "easy"
+    elif difficulty_score < 0.65:
+        return "medium"
+    return "hard"
+
+
+def _update_question_analytics(db, exam_id, qids, answers, time_per_question, answer_changes, opt_order, submission_score):
+    """Update per-question analytics after a submission is scored.
+    
+    Computes:
+    - Correctness rate, avg time (correct vs incorrect)
+    - Doubt count (answer changed >= 3 times = high doubt)
+    - Difficulty score using weighted formula
+    - Auto-reclassification of difficulty
+    - High variance flag for Item Discrimination Index
+    """
+    if not qids:
+        return
+
     placeholders = ",".join("?" * len(qids))
     questions = db.execute(
         f"SELECT id, correct_idx, difficulty FROM question_bank WHERE id IN ({placeholders})",
         qids
     ).fetchall()
 
+    # Get global max avg time to normalize (across all analytics for this exam)
+    try:
+        max_time_row = db.execute(
+            "SELECT MAX(avg_time_seconds) as mt FROM question_analytics WHERE mock_exam_id=?",
+            (exam_id,)
+        ).fetchone()
+        max_global_time = float(max_time_row["mt"] or 120.0)
+    except Exception:
+        max_global_time = 120.0
+
     for q in questions:
         qid = q["id"]
         qid_str = str(qid)
         student_answer = answers.get(qid_str)
+        time_spent = float(time_per_question.get(qid_str, 0) or 0)
+        change_count = int(answer_changes.get(qid_str, 0) or 0)
+        is_high_doubt = 1 if change_count >= 3 else 0
 
         was_correct = 0
         if student_answer is not None:
@@ -469,29 +540,187 @@ def _update_question_analytics(db, exam_id, qids, answers, opt_order, sub_id):
             new_presented = existing["times_presented"] + 1
             new_correct = existing["times_correct"] + was_correct
             new_rate = round(new_correct / new_presented, 4)
+
+            # Update rolling avg time for correct / incorrect
+            prev_avg_t_correct = float(existing["avg_time_correct"] or 0)
+            prev_avg_t_incorrect = float(existing["avg_time_incorrect"] or 0)
+            prev_correct_cnt = existing["times_correct"]
+            prev_incorrect_cnt = existing["times_presented"] - existing["times_correct"]
+
+            if was_correct:
+                new_cnt_c = prev_correct_cnt + 1
+                new_avg_correct = round((prev_avg_t_correct * prev_correct_cnt + time_spent) / new_cnt_c, 2)
+                new_avg_incorrect = prev_avg_t_incorrect
+            else:
+                new_cnt_i = prev_incorrect_cnt + 1
+                new_avg_incorrect = round((prev_avg_t_incorrect * prev_incorrect_cnt + time_spent) / new_cnt_i, 2)
+                new_avg_correct = prev_avg_t_correct
+
+            # Update rolling avg_time_seconds (overall)
+            prev_avg = float(existing["avg_time_seconds"] or 0)
+            new_avg_time = round((prev_avg * (new_presented - 1) + time_spent) / new_presented, 2)
+
+            # Doubt count
+            new_doubt = (existing["doubt_count"] or 0) + is_high_doubt
+
+            # Difficulty score
+            effective_max = max(max_global_time, new_avg_time, 1.0)
+            diff_score = _compute_difficulty_score(new_rate, new_avg_time, effective_max)
+
             db.execute(
                 """
                 UPDATE question_analytics
-                SET times_presented=?, times_correct=?, correctness_rate=?, updated_at=DATETIME('now')
+                SET times_presented=?, times_correct=?, correctness_rate=?,
+                    avg_time_seconds=?, avg_time_correct=?, avg_time_incorrect=?,
+                    doubt_count=?, difficulty_score=?, updated_at=DATETIME('now')
                 WHERE question_id=? AND mock_exam_id=?
                 """,
-                (new_presented, new_correct, new_rate, qid, exam_id)
+                (new_presented, new_correct, new_rate,
+                 new_avg_time, new_avg_correct, new_avg_incorrect,
+                 new_doubt, diff_score, qid, exam_id)
             )
-            # Auto-reclassify difficulty
-            if new_presented >= 10:
-                auto_diff = "easy" if new_rate >= 0.70 else ("hard" if new_rate <= 0.40 else "medium")
+
+            # Auto-reclassify difficulty after enough samples
+            if new_presented >= _MIN_SAMPLE:
+                auto_diff = _auto_classify(diff_score)
                 db.execute(
                     "UPDATE question_bank SET difficulty_auto=? WHERE id=?",
                     (auto_diff, qid)
                 )
+
+            # Item Discrimination Index: update high_variance_flag
+            # Recompute based on stored top/bottom group correctness
+            _update_item_discrimination(db, exam_id, qid, new_presented)
+
         else:
+            # First time this question appears in this exam
+            avg_t_c = time_spent if was_correct else 0.0
+            avg_t_i = time_spent if not was_correct else 0.0
+            diff_score = _compute_difficulty_score(
+                float(was_correct), time_spent, max(time_spent, 1.0)
+            )
             db.execute(
                 """
-                INSERT INTO question_analytics (question_id, mock_exam_id, times_presented, times_correct, correctness_rate, updated_at)
-                VALUES (?,?,?,?,?,DATETIME('now'))
+                INSERT INTO question_analytics
+                    (question_id, mock_exam_id, times_presented, times_correct, correctness_rate,
+                     avg_time_seconds, avg_time_correct, avg_time_incorrect,
+                     doubt_count, difficulty_score, updated_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,DATETIME('now'))
                 """,
-                (qid, exam_id, 1, was_correct, float(was_correct))
+                (qid, exam_id, 1, was_correct, float(was_correct),
+                 time_spent, avg_t_c, avg_t_i,
+                 is_high_doubt, diff_score)
             )
+
+
+def _update_item_discrimination(db, exam_id, question_id, total_submissions):
+    """Compute Item Discrimination Index (IDI) for a question.
+    
+    Compares top 10% vs bottom 10% of students by total score.
+    D = P_top - P_bottom. D < 0.2 => High Variance flag.
+    Requires at least 15 submissions to be meaningful.
+    """
+    if total_submissions < 15:
+        return
+
+    try:
+        # Get all submissions for this exam, ordered by score
+        all_subs = db.execute(
+            """
+            SELECT ms.user_id, ms.score, ms.answers, ms.option_order
+            FROM mock_exam_submissions ms
+            WHERE ms.exam_id=? AND ms.status IN ('submitted','auto_submitted') AND ms.score IS NOT NULL
+            ORDER BY ms.score DESC
+            """,
+            (exam_id,)
+        ).fetchall()
+
+        n = len(all_subs)
+        if n < 6:
+            return
+
+        cut = max(1, int(n * 0.10))
+        top_subs = all_subs[:cut]
+        bottom_subs = all_subs[n - cut:]
+
+        qid_str = str(question_id)
+
+        # Get correct_idx for this question
+        q_row = db.execute(
+            "SELECT correct_idx FROM question_bank WHERE id=?", (question_id,)
+        ).fetchone()
+        if not q_row:
+            return
+        correct_idx = q_row["correct_idx"]
+
+        def group_correctness(group):
+            correct = 0
+            for sub in group:
+                try:
+                    answers = json.loads(sub["answers"] or "{}")
+                    opt_order = json.loads(sub["option_order"] or "{}")
+                    ans = answers.get(qid_str)
+                    if ans is None:
+                        continue
+                    perm = opt_order.get(qid_str, [0, 1, 2, 3])
+                    if perm[int(ans)] == correct_idx:
+                        correct += 1
+                except Exception:
+                    pass
+            return correct / len(group) if group else 0
+
+        p_top = group_correctness(top_subs)
+        p_bottom = group_correctness(bottom_subs)
+        d = round(p_top - p_bottom, 4)
+        high_variance = 1 if d < 0.2 else 0
+
+        db.execute(
+            """
+            UPDATE question_analytics
+            SET top_group_correct=?, bottom_group_correct=?, high_variance_flag=?
+            WHERE question_id=? AND mock_exam_id=?
+            """,
+            (round(p_top, 4), round(p_bottom, 4), high_variance, question_id, exam_id)
+        )
+    except Exception:
+        pass  # IDI is best-effort; never crash the submission flow
+
+def _update_university_stats_fallback(db, user_id, exam_id, qids, answers, time_per_question, opt_order):
+    """Python fallback to aggregate university performance across psychological domains."""
+    if not qids: return
+    # Get user's university
+    u_row = db.execute("SELECT university FROM users WHERE id=?", (user_id,)).fetchone()
+    if not u_row or not u_row["university"]: return
+    uni = u_row["university"]
+
+    placeholders = ",".join("?" * len(qids))
+    questions = db.execute(
+        f"SELECT id, subject_category, correct_idx FROM question_bank WHERE id IN ({placeholders})",
+        qids
+    ).fetchall()
+
+    for q in questions:
+        qid_str = str(q["id"])
+        cat = q["subject_category"] or "General"
+        ans = answers.get(qid_str)
+        if ans is None: continue
+
+        time_spent = float(time_per_question.get(qid_str, 0.0))
+        perm = opt_order.get(qid_str, [0, 1, 2, 3])
+        try:
+            is_correct = 1 if perm[int(ans)] == q["correct_idx"] else 0
+        except (IndexError, ValueError, TypeError):
+            is_correct = 0
+
+        # Upsert
+        db.execute("""
+            INSERT INTO university_stats (exam_id, university, category, attempts, correct_count, avg_time)
+            VALUES (?, ?, ?, 1, ?, ?)
+            ON CONFLICT(exam_id, university, category) DO UPDATE SET
+                attempts = attempts + 1,
+                correct_count = correct_count + excluded.correct_count,
+                avg_time = ((avg_time * attempts) + excluded.avg_time) / (attempts + 1)
+        """, (exam_id, uni, cat, is_correct, time_spent))
 
 
 @mock_exams_bp.route("/<int:exam_id>/results", methods=["GET"])
@@ -905,3 +1134,177 @@ def admin_delete_question(qid):
         except Exception:
             pass
     return jsonify({"message": "Question deleted successfully"})
+
+
+# ── POST-EXAM INSIGHTS ────────────────────────────────────────────────────────
+@mock_exams_bp.route("/<int:exam_id>/insights", methods=["GET"])
+@jwt_required()
+def get_post_exam_insights(exam_id):
+    uid = get_jwt_identity()
+    db = get_db()
+    try:
+        sub = db.execute(
+            "SELECT * FROM mock_exam_submissions WHERE exam_id=? AND user_id=? AND status IN ('submitted','auto_submitted')",
+            (exam_id, uid)
+        ).fetchone()
+        if not sub:
+            return jsonify({"error": "No completed submission found"}), 404
+
+        qids = json.loads(sub["question_ids"] or "[]")
+        answers = json.loads(sub["answers"] or "{}")
+        times = json.loads(sub["time_per_question"] or "{}")
+        conf_levels = json.loads(sub["confidence_levels"] if getattr(sub, "confidence_levels", None) or "confidence_levels" in sub.keys() and sub["confidence_levels"] else "{}")
+        opt_order = json.loads(sub["option_order"] or "{}")
+
+        if not qids:
+            return jsonify({"error": "Empty exam submission"}), 400
+
+        # Fetch question details
+        ph = ",".join("?" * len(qids))
+        questions = db.execute(
+            f"SELECT id, subject_category, topic, subtopic, correct_idx FROM question_bank WHERE id IN ({ph})",
+            qids
+        ).fetchall()
+
+        # 1. Categorical Performance Profile
+        cat_stats = {}
+        missed_concepts = {}
+        for q in questions:
+            cat = q["subject_category"] or "General"
+            topic = q["topic"] or q["subtopic"] or "General Psychology"
+            if cat not in cat_stats:
+                cat_stats[cat] = {"total": 0, "correct": 0}
+            
+            cat_stats[cat]["total"] += 1
+            qid_str = str(q["id"])
+            ans = answers.get(qid_str)
+            is_correct = False
+            
+            if ans is not None:
+                try:
+                    perm = opt_order.get(qid_str, [0,1,2,3])
+                    if perm[int(ans)] == q["correct_idx"]:
+                        cat_stats[cat]["correct"] += 1
+                        is_correct = True
+                except Exception:
+                    pass
+            
+            if not is_correct:
+                missed_concepts[topic] = missed_concepts.get(topic, 0) + 1
+
+        skill_gaps = []
+        for cat, data in cat_stats.items():
+            rate = int(round(data["correct"] / data["total"] * 100)) if data["total"] else 0
+            skill_gaps.append({"category": cat, "mastery": rate, "total": data["total"]})
+        
+        top_weaknesses = sorted(missed_concepts.items(), key=lambda x: -x[1])[:3]
+        weak_concepts = [w[0] for w in top_weaknesses]
+
+        # 2. Relative Performance Benchmarking
+        all_scores = db.execute(
+            "SELECT score FROM mock_exam_submissions WHERE exam_id=? AND status IN ('submitted','auto_submitted') AND score IS NOT NULL",
+            (exam_id,)
+        ).fetchall()
+        scores_list = [s["score"] for s in all_scores]
+        national_avg = sum(scores_list) / len(scores_list) if scores_list else 0
+        
+        my_score = sub["score"] or 0
+        better_than = sum(1 for s in scores_list if s < my_score)
+        percentile = int(round((better_than / len(scores_list)) * 100)) if scores_list else 100
+
+        u_row = db.execute("SELECT university FROM users WHERE id=?", (uid,)).fetchone()
+        my_uni = u_row["university"] if u_row and u_row["university"] else "Unknown"
+        
+        uni_scores = db.execute("""
+            SELECT ms.score FROM mock_exam_submissions ms
+            JOIN users u ON u.id = ms.user_id
+            WHERE ms.exam_id=? AND ms.status IN ('submitted','auto_submitted') AND u.university=? AND ms.score IS NOT NULL
+        """, (exam_id, my_uni)).fetchall()
+        u_scores_list = [s["score"] for s in uni_scores]
+        uni_avg = sum(u_scores_list) / len(u_scores_list) if u_scores_list else national_avg
+
+        # 3. Behavioral & Pacing Insights
+        rushing = 0
+        overthinking = 0
+        all_times = [float(v) for v in times.values()]
+        avg_time = sum(all_times)/len(all_times) if all_times else 30.0
+
+        fatigue_buckets = {"early": {"correct":0, "total":0}, "late": {"correct":0, "total":0}}
+        late_threshold = int(len(qids) * 0.75) # final 25%
+
+        # 4. Metacognitive Reflection Tool
+        false_confidence = 0
+        lucky_guesses = 0
+        total_confident = 0
+        total_uncertain = 0
+
+        for i, q in enumerate(questions):
+            qid_str = str(q["id"])
+            ans = answers.get(qid_str)
+            t = float(times.get(qid_str, 0.0))
+            conf = conf_levels.get(qid_str, False)
+            
+            is_correct = False
+            if ans is not None:
+                try:
+                    perm = opt_order.get(qid_str, [0,1,2,3])
+                    if perm[int(ans)] == q["correct_idx"]:
+                        is_correct = True
+                except Exception:
+                    pass
+
+            # Behavior
+            if not is_correct and t < 10.0: rushing += 1
+            if not is_correct and t > (avg_time * 3): overthinking += 1
+            
+            # Fatigue (Early vs Late)
+            if i < late_threshold:
+                fatigue_buckets["early"]["total"] += 1
+                if is_correct: fatigue_buckets["early"]["correct"] += 1
+            else:
+                fatigue_buckets["late"]["total"] += 1
+                if is_correct: fatigue_buckets["late"]["correct"] += 1
+
+            # Metacognitive
+            if conf:
+                total_confident += 1
+                if not is_correct: false_confidence += 1
+            else:
+                total_uncertain += 1
+                if is_correct: lucky_guesses += 1
+
+        early_rate = (fatigue_buckets["early"]["correct"] / fatigue_buckets["early"]["total"]) if fatigue_buckets["early"]["total"] else 0
+        late_rate = (fatigue_buckets["late"]["correct"] / fatigue_buckets["late"]["total"]) if fatigue_buckets["late"]["total"] else 0
+        fatigue_drop = max(0, early_rate - late_rate) * 100
+
+        # 5. Automated Study Path
+        weakest_cats = sorted(skill_gaps, key=lambda x: x["mastery"])[:2]
+        study_path = [w["category"] for w in weakest_cats]
+
+        return jsonify({
+            "score": my_score,
+            "categorical": {
+                "skill_gaps": skill_gaps,
+                "weak_concepts": weak_concepts
+            },
+            "benchmarking": {
+                "percentile": percentile,
+                "national_avg": round(national_avg, 1),
+                "university_avg": round(uni_avg, 1),
+                "university": my_uni
+            },
+            "behavioral": {
+                "rushing_errors": rushing,
+                "overthinking_errors": overthinking,
+                "fatigue_drop_pct": round(fatigue_drop, 1)
+            },
+            "metacognitive": {
+                "false_confidence": false_confidence,
+                "lucky_guesses": lucky_guesses,
+                "total_confident": total_confident,
+                "total_uncertain": total_uncertain
+            },
+            "study_path": study_path
+        })
+    finally:
+        db.close()

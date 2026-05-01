@@ -53,6 +53,8 @@
       await loadBloomAnalysis();
       await loadAtRiskStudents();
       await loadQuestionPerformance();
+      // Trigger Dynamic Engine load
+      await loadEngineSection();
     } catch (e) {
       console.error('[Analytics] Load error:', e);
     }
@@ -443,14 +445,323 @@
 
   /* ── REGISTER WITH ADMIN SECTION SWITCHER ───────────────── */
   document.addEventListener('DOMContentLoaded', () => {
-    // Register loader in admin.js's runAdminSectionLoader map
     if (window._adminSectionLoaders) {
       window._adminSectionLoaders['analytics'] = loadAnalyticsDashboard;
+      window._adminSectionLoaders['engine'] = loadEngineSection;
     }
-    // Also hook into the ecosystem switcher pattern
     if (window._ecoSections) {
       window._ecoSections['analytics'] = loadAnalyticsDashboard;
+      window._ecoSections['engine'] = loadEngineSection;
     }
   });
 
+  /* ═══════════════════════════════════════════════════════════
+     DYNAMIC ANALYTIC ENGINE — New rendering functions
+  ═══════════════════════════════════════════════════════════ */
+
+  let _engineExamId = '';
+  let _engineExams  = [];
+
+  async function loadEngineSection() {
+    try {
+      await loadEngineExamList();
+      await loadGlobalQuestionStats();
+    } catch(e) { console.error('[Engine]', e); }
+  }
+  window.loadEngineSection = loadEngineSection;
+
+  async function loadEngineExamList() {
+    try {
+      const res  = await afetch('/api/analytics/exams-overview');
+      const data = await res.json();
+      _engineExams = data.exams || [];
+      ['engineExamSelect','engineFatigueSelect','engineDrillSelect'].forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        sel.innerHTML = '<option value="">— Select Exam —</option>' +
+          _engineExams.map(e => `<option value="${e.id}">${e.title}</option>`).join('');
+      });
+    } catch(e) {}
+  }
+
+  /* ── GLOBAL QUESTION STATS ── */
+  async function loadGlobalQuestionStats() {
+    const el = document.getElementById('engineGlobalPanel');
+    if (!el) return;
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">Loading question intelligence…</div>';
+    try {
+      const res  = await afetch('/api/analytics/global-question-stats');
+      const data = await res.json();
+      el.innerHTML = renderGlobalQuestionStats(data);
+    } catch(e) {
+      el.innerHTML = `<div style="color:#dc2626;padding:20px">Failed: ${e.message}</div>`;
+    }
+  }
+  window.loadGlobalQuestionStats = loadGlobalQuestionStats;
+
+  function renderGlobalQuestionStats(data) {
+    const diffBadge = (orig, auto) => {
+      if (!auto || auto === orig) return `<span style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:12px;font-size:0.7rem">${orig}</span>`;
+      return `<span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:12px;font-size:0.7rem" title="Auto-adjusted from ${orig}">📊 ${auto}</span>`;
+    };
+    const qRow = (q, rankBg) => `
+      <tr style="border-bottom:1px solid #f1f5f9">
+        <td style="padding:9px 12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.83rem" title="${q.question_text}">${q.question_text}</td>
+        <td style="padding:9px 12px;font-size:0.78rem;color:#64748b">${q.category||'—'}</td>
+        <td style="padding:9px 12px;text-align:center;font-weight:800;color:${rankBg}">${Math.round((q.correctness_rate||0)*100)}%</td>
+        <td style="padding:9px 12px;text-align:center;font-size:0.8rem">${q.times_presented}</td>
+        <td style="padding:9px 12px;text-align:center;font-size:0.8rem">${q.avg_time_secs}s</td>
+        <td style="padding:9px 12px">${diffBadge(q.difficulty_original, q.difficulty_auto)}</td>
+        <td style="padding:9px 12px;text-align:center">${q.doubt_count>=3?'<span style="color:#d97706" title="High Doubt">🤔</span>':''}${q.is_high_variance?'<span style="color:#dc2626" title="High Variance">⚠️</span>':''}</td>
+      </tr>`;
+    const thead = `<thead><tr style="background:#f8fafc">
+      <th style="padding:9px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#64748b">Question</th>
+      <th style="padding:9px 12px;font-size:0.75rem;font-weight:700;color:#64748b">Category</th>
+      <th style="padding:9px 12px;text-align:center;font-size:0.75rem;font-weight:700;color:#64748b">Accuracy</th>
+      <th style="padding:9px 12px;text-align:center;font-size:0.75rem;font-weight:700;color:#64748b">Shown</th>
+      <th style="padding:9px 12px;text-align:center;font-size:0.75rem;font-weight:700;color:#64748b">Avg Time</th>
+      <th style="padding:9px 12px;font-size:0.75rem;font-weight:700;color:#64748b">Difficulty</th>
+      <th style="padding:9px 12px;text-align:center;font-size:0.75rem;font-weight:700;color:#64748b">Flags</th>
+    </tr></thead>`;
+
+    const corrData = data.accuracy_correlation || [];
+    const maxTime  = Math.max(...corrData.map(q => Math.max(q.avg_time_correct||0, q.avg_time_incorrect||0)), 1);
+
+    return `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px">
+        <!-- Top 10 Most Missed -->
+        <div style="background:white;border:1px solid #fee2e2;border-radius:16px;padding:20px">
+          <div style="font-weight:800;font-size:0.95rem;margin-bottom:14px;color:#dc2626">🔴 Top 10 Most Missed</div>
+          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">${thead}<tbody>
+            ${(data.top10_missed||[]).map(q => qRow(q,'#dc2626')).join('')}
+          </tbody></table></div>
+        </div>
+        <!-- Top 10 Most Correct -->
+        <div style="background:white;border:1px solid #dcfce7;border-radius:16px;padding:20px">
+          <div style="font-weight:800;font-size:0.95rem;margin-bottom:14px;color:#16a34a">🟢 Top 10 Most Correct</div>
+          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">${thead}<tbody>
+            ${(data.top10_correct||[]).map(q => qRow(q,'#16a34a')).join('')}
+          </tbody></table></div>
+        </div>
+      </div>
+
+      <!-- Accuracy Correlation Chart -->
+      <div style="background:white;border:1px solid #e2e8f0;border-radius:16px;padding:20px;margin-bottom:18px">
+        <div style="font-weight:800;font-size:0.95rem;margin-bottom:4px">⏱ Accuracy–Time Correlation</div>
+        <div style="font-size:0.8rem;color:#64748b;margin-bottom:16px">Average focus time: correct vs incorrect answers (top 30 questions by exposure)</div>
+        ${corrData.length === 0
+          ? '<div style="color:#64748b;padding:20px;text-align:center">No time data yet — run exams with focus tracking enabled.</div>'
+          : corrData.map(q => {
+              const c = Math.min(100, Math.round((q.avg_time_correct||0)/maxTime*100));
+              const i = Math.min(100, Math.round((q.avg_time_incorrect||0)/maxTime*100));
+              const rate = Math.round((q.correctness_rate||0)*100);
+              return `<div style="margin-bottom:10px">
+                <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:3px">
+                  <span style="font-weight:600;max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${q.question_text}</span>
+                  <span style="color:#64748b">${rate}% accuracy</span>
+                </div>
+                <div style="display:flex;gap:4px;align-items:center">
+                  <span style="font-size:0.7rem;width:52px;color:#16a34a;font-weight:700">✓ ${q.avg_time_correct||0}s</span>
+                  <div style="flex:1;height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden">
+                    <div style="height:100%;width:${c}%;background:linear-gradient(90deg,#22c55e,#16a34a);border-radius:4px"></div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:4px;align-items:center;margin-top:3px">
+                  <span style="font-size:0.7rem;width:52px;color:#dc2626;font-weight:700">✗ ${q.avg_time_incorrect||0}s</span>
+                  <div style="flex:1;height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden">
+                    <div style="height:100%;width:${i}%;background:linear-gradient(90deg,#f87171,#dc2626);border-radius:4px"></div>
+                  </div>
+                </div>
+              </div>`;
+            }).join('')}
+      </div>
+
+      <!-- High Variance / Doubt -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+        <div style="background:white;border:1px solid #fef3c7;border-radius:16px;padding:20px">
+          <div style="font-weight:800;font-size:0.95rem;margin-bottom:12px;color:#d97706">⚠️ High Variance Questions (IDI &lt; 0.2)</div>
+          ${(data.high_variance||[]).length === 0
+            ? '<div style="color:#64748b;text-align:center;padding:16px;font-size:0.85rem">No high-variance questions detected yet.</div>'
+            : (data.high_variance||[]).slice(0,10).map(q => `
+              <div style="padding:10px;border-radius:10px;background:#fffbeb;border:1px solid #fef3c7;margin-bottom:8px;font-size:0.83rem">
+                <div style="font-weight:700;margin-bottom:2px">${q.question_text}</div>
+                <div style="color:#64748b">${q.category||'—'} · ${Math.round((q.correctness_rate||0)*100)}% accuracy · Score: ${q.difficulty_score}</div>
+              </div>`).join('')}
+        </div>
+        <div style="background:white;border:1px solid #e0e7ff;border-radius:16px;padding:20px">
+          <div style="font-weight:800;font-size:0.95rem;margin-bottom:12px;color:#6366f1">🤔 High-Doubt Questions (≥3 answer changes)</div>
+          ${(data.high_doubt||[]).length === 0
+            ? '<div style="color:#64748b;text-align:center;padding:16px;font-size:0.85rem">No high-doubt patterns detected yet.</div>'
+            : (data.high_doubt||[]).slice(0,10).map(q => `
+              <div style="padding:10px;border-radius:10px;background:#eef2ff;border:1px solid #e0e7ff;margin-bottom:8px;font-size:0.83rem">
+                <div style="font-weight:700;margin-bottom:2px">${q.question_text}</div>
+                <div style="color:#64748b">${q.category||'—'} · ${q.doubt_count} doubt interactions · ${Math.round((q.correctness_rate||0)*100)}% accuracy</div>
+              </div>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  /* ── UNIVERSITY BENCHMARKING ── */
+  async function loadUniversityBenchmarking() {
+    const el = document.getElementById('engineUniPanel');
+    if (!el) return;
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">Loading university data…</div>';
+    try {
+      const examId = document.getElementById('engineExamSelect')?.value || '';
+      const res  = await afetch(`/api/analytics/university-benchmarking${examId ? '?exam_id='+examId : ''}`);
+      const data = await res.json();
+      const unis = data.universities || [];
+      if (!unis.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:#64748b">No submission data yet.</div>'; return; }
+      el.innerHTML = `
+        <div style="overflow-x:auto;margin-bottom:20px">
+          <table style="width:100%;border-collapse:collapse;font-size:0.83rem">
+            <thead><tr style="background:#f8fafc">
+              <th style="padding:10px 14px;text-align:left;font-weight:700;color:#64748b">University</th>
+              <th style="padding:10px 14px;text-align:center;font-weight:700;color:#64748b">Students</th>
+              <th style="padding:10px 14px;text-align:center;font-weight:700;color:#64748b">Avg Score</th>
+              <th style="padding:10px 14px;text-align:center;font-weight:700;color:#64748b">Pass Rate</th>
+              <th style="padding:10px 14px;text-align:left;font-weight:700;color:#64748b">Strength</th>
+              <th style="padding:10px 14px;text-align:left;font-weight:700;color:#64748b">Weakness</th>
+            </tr></thead>
+            <tbody>
+              ${unis.map((u,i) => `<tr style="border-bottom:1px solid #f1f5f9;cursor:pointer" onclick="toggleUniSkillGap('uni-sg-${i}')">
+                <td style="padding:10px 14px;font-weight:700">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'  '} ${u.university}</td>
+                <td style="padding:10px 14px;text-align:center">${u.student_count}</td>
+                <td style="padding:10px 14px;text-align:center;font-weight:800;color:${u.avg_score>=50?'#16a34a':'#dc2626'}">${u.avg_score}%</td>
+                <td style="padding:10px 14px;text-align:center;color:${u.pass_rate>=50?'#16a34a':'#dc2626'}">${u.pass_rate}%</td>
+                <td style="padding:10px 14px;font-size:0.78rem;color:#16a34a">${u.top_strength||'—'}</td>
+                <td style="padding:10px 14px;font-size:0.78rem;color:#dc2626">${u.top_weakness||'—'}</td>
+              </tr>
+              <tr id="uni-sg-${i}" style="display:none">
+                <td colspan="6" style="padding:0 14px 12px">
+                  <div style="background:#f8fafc;border-radius:10px;padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px">
+                    ${(u.category_performance||[]).map(c => `
+                      <div style="padding:8px 12px;border-radius:8px;background:white;border:1px solid #e2e8f0;font-size:0.78rem">
+                        <div style="font-weight:700;margin-bottom:4px">${c.category}</div>
+                        <div style="height:5px;background:#f1f5f9;border-radius:3px;overflow:hidden;margin-bottom:3px">
+                          <div style="height:100%;width:${Math.round(c.rate*100)}%;background:${c.status==='strength'?'#22c55e':c.status==='weakness'?'#ef4444':'#f59e0b'}"></div>
+                        </div>
+                        <span style="color:${c.status==='strength'?'#16a34a':c.status==='weakness'?'#dc2626':'#d97706'};font-weight:700">${Math.round(c.rate*100)}%</span>
+                      </div>`).join('')}
+                  </div>
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    } catch(e) { el.innerHTML = `<div style="color:#dc2626;padding:20px">Failed: ${e.message}</div>`; }
+  }
+  window.loadUniversityBenchmarking = loadUniversityBenchmarking;
+  window.toggleUniSkillGap = id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
+  };
+
+  /* ── FATIGUE ALERT ── */
+  async function loadFatigueAlert() {
+    const el = document.getElementById('engineFatiguePanel');
+    if (!el) return;
+    const examId = document.getElementById('engineFatigueSelect')?.value;
+    if (!examId) { el.innerHTML = '<div style="text-align:center;padding:40px;color:#64748b">Select an exam above to view fatigue data.</div>'; return; }
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">Analyzing performance patterns…</div>';
+    try {
+      const res  = await afetch(`/api/analytics/fatigue-alert/${examId}`);
+      const data = await res.json();
+      const buckets = data.buckets || [];
+      const maxRate = Math.max(...buckets.map(b => b.correctness_rate), 0.01);
+      el.innerHTML = `
+        ${data.alert ? `<div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:14px;padding:16px 20px;margin-bottom:18px;display:flex;gap:12px;align-items:flex-start">
+          <span style="font-size:1.4rem">⚠️</span>
+          <div><div style="font-weight:800;color:#dc2626;margin-bottom:4px">Fatigue Alert Detected — ${data.drop_pct}% accuracy drop</div>
+          <div style="font-size:0.85rem;color:#991b1b">${data.recommendation}</div></div>
+        </div>` : `<div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:14px;padding:14px 18px;margin-bottom:18px;color:#16a34a;font-weight:700">✅ No significant fatigue detected in ${data.exam_title}</div>`}
+        <div style="background:white;border:1px solid #e2e8f0;border-radius:16px;padding:20px">
+          <div style="font-weight:800;margin-bottom:16px">📉 Accuracy by Question Position</div>
+          ${buckets.length === 0 ? '<div style="color:#64748b;text-align:center;padding:20px">No data available.</div>' :
+            buckets.map(b => `<div style="margin-bottom:12px">
+              <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:4px">
+                <span style="font-weight:700">Questions ${b.label}</span>
+                <span style="font-weight:800;color:${b.correctness_rate>=0.6?'#16a34a':b.correctness_rate>=0.4?'#d97706':'#dc2626'}">${Math.round(b.correctness_rate*100)}%</span>
+              </div>
+              <div style="height:14px;background:#f1f5f9;border-radius:7px;overflow:hidden">
+                <div style="height:100%;width:${Math.round(b.correctness_rate/maxRate*100)}%;background:${b.correctness_rate>=0.6?'linear-gradient(90deg,#22c55e,#16a34a)':b.correctness_rate>=0.4?'linear-gradient(90deg,#fbbf24,#d97706)':'linear-gradient(90deg,#f87171,#dc2626)'};border-radius:7px;transition:width .6s ease"></div>
+              </div>
+              <div style="font-size:0.72rem;color:#94a3b8;margin-top:2px">Avg ${b.avg_time_secs}s/question · ${b.total_answers} answers</div>
+            </div>`).join('')}
+        </div>`;
+    } catch(e) { el.innerHTML = `<div style="color:#dc2626;padding:20px">Failed: ${e.message}</div>`; }
+  }
+  window.loadFatigueAlert = loadFatigueAlert;
+
+  /* ── AUTO-CALIBRATION STATUS ── */
+  async function loadAutocalibration() {
+    const el = document.getElementById('engineCalibPanel');
+    if (!el) return;
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">Loading calibration data…</div>';
+    try {
+      const res  = await afetch('/api/analytics/global-question-stats');
+      const data = await res.json();
+      const all  = [...(data.top10_missed||[]), ...(data.top10_correct||[]),
+                    ...(data.high_variance||[]), ...(data.high_doubt||[])];
+      const seen = new Set();
+      const uniq = all.filter(q => { if (seen.has(q.question_id)) return false; seen.add(q.question_id); return true; });
+      const adjusted = uniq.filter(q => q.data_adjusted);
+
+      el.innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px">
+          ${[['📊','Questions Analyzed',data.total_questions||0,'#1e40af'],
+             ['🔄','Auto-Reclassified',adjusted.length,'#d97706'],
+             ['⚠️','High Variance',( data.high_variance||[]).length,'#dc2626']
+            ].map(([icon,label,val,color]) => `
+            <div style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:18px;text-align:center">
+              <div style="font-size:1.5rem">${icon}</div>
+              <div style="font-size:1.6rem;font-weight:900;color:${color};line-height:1.1;margin:6px 0">${val}</div>
+              <div style="font-size:0.72rem;color:#64748b;text-transform:uppercase;font-weight:700">${label}</div>
+            </div>`).join('')}
+        </div>
+        ${adjusted.length === 0
+          ? '<div style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:32px;text-align:center;color:#64748b">No auto-reclassified questions yet. Needs ≥5 submissions per question.</div>'
+          : `<div style="background:white;border:1px solid #e2e8f0;border-radius:16px;padding:20px">
+              <div style="font-weight:800;margin-bottom:14px">🔄 Auto-Reclassified Questions</div>
+              <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:0.82rem">
+                <thead><tr style="background:#f8fafc">
+                  <th style="padding:9px 12px;text-align:left;font-weight:700;color:#64748b">Question</th>
+                  <th style="padding:9px 12px;text-align:center;font-weight:700;color:#64748b">Teacher Set</th>
+                  <th style="padding:9px 12px;text-align:center;font-weight:700;color:#64748b">System Score</th>
+                  <th style="padding:9px 12px;text-align:center;font-weight:700;color:#64748b">Auto-Adjusted To</th>
+                  <th style="padding:9px 12px;text-align:center;font-weight:700;color:#64748b">Accuracy</th>
+                  <th style="padding:9px 12px;text-align:center;font-weight:700;color:#64748b">Avg Time</th>
+                </tr></thead>
+                <tbody>${adjusted.map(q => {
+                  const dColor = {easy:'#16a34a',medium:'#d97706',hard:'#dc2626'};
+                  return `<tr style="border-bottom:1px solid #f1f5f9">
+                    <td style="padding:9px 12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${q.question_text}">${q.question_text}</td>
+                    <td style="padding:9px 12px;text-align:center"><span style="background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:10px;font-size:0.7rem;text-transform:capitalize">${q.difficulty_original}</span></td>
+                    <td style="padding:9px 12px;text-align:center;font-size:0.8rem;font-weight:700">${q.difficulty_score}</td>
+                    <td style="padding:9px 12px;text-align:center"><span style="background:${dColor[q.difficulty_auto]||'#f1f5f9'}18;color:${dColor[q.difficulty_auto]||'#475569'};border:1px solid ${dColor[q.difficulty_auto]||'#e2e8f0'}40;padding:2px 9px;border-radius:10px;font-size:0.72rem;font-weight:700;text-transform:capitalize">📊 ${q.difficulty_auto}</span></td>
+                    <td style="padding:9px 12px;text-align:center;font-weight:700;color:${q.correctness_rate>=0.6?'#16a34a':q.correctness_rate>=0.3?'#d97706':'#dc2626'}">${Math.round(q.correctness_rate*100)}%</td>
+                    <td style="padding:9px 12px;text-align:center;color:#64748b">${q.avg_time_secs}s</td>
+                  </tr>`;
+                }).join('')}</tbody>
+              </table></div>
+            </div>`}`;
+    } catch(e) { el.innerHTML = `<div style="color:#dc2626;padding:20px">Failed: ${e.message}</div>`; }
+  }
+  window.loadAutocalibration = loadAutocalibration;
+
+  /* ── ENGINE TAB SWITCHER ── */
+  window.switchEngineTab = function(tab) {
+    document.querySelectorAll('.engine-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.engine-panel').forEach(p => p.style.display = 'none');
+    const tabEl = document.querySelector(`.engine-tab[data-tab="${tab}"]`);
+    const panelEl = document.getElementById(`engine-panel-${tab}`);
+    if (tabEl) tabEl.classList.add('active');
+    if (panelEl) panelEl.style.display = '';
+    if (tab === 'global')  loadGlobalQuestionStats();
+    if (tab === 'uni')     loadUniversityBenchmarking();
+    if (tab === 'fatigue') loadFatigueAlert();
+    if (tab === 'calib')   loadAutocalibration();
+  };
+
 })();
+
