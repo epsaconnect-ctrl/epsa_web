@@ -27,6 +27,37 @@ def _now_utc():
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
+def _build_distractor_metrics(correct_idx, row):
+    labels = ["A", "B", "C", "D"]
+    counts = {
+        "A": int(row.get("option_a_selections", 0) or 0),
+        "B": int(row.get("option_b_selections", 0) or 0),
+        "C": int(row.get("option_c_selections", 0) or 0),
+        "D": int(row.get("option_d_selections", 0) or 0),
+    }
+    correct_label = labels[correct_idx] if correct_idx is not None and 0 <= correct_idx < len(labels) else None
+    distractor_counts = {label: value for label, value in counts.items() if label != correct_label}
+    total_incorrect_choices = sum(distractor_counts.values())
+    dominant_label = None
+    dominant_count = 0
+    dominant_rate = 0.0
+    warning = False
+
+    if distractor_counts:
+        dominant_label, dominant_count = max(distractor_counts.items(), key=lambda item: item[1])
+        dominant_rate = round(dominant_count / total_incorrect_choices, 4) if total_incorrect_choices else 0.0
+        warning = total_incorrect_choices >= 5 and dominant_rate >= 0.6
+
+    return {
+        "correct_option": correct_label,
+        "option_selection_counts": counts,
+        "dominant_distractor": dominant_label,
+        "dominant_distractor_count": dominant_count,
+        "dominant_distractor_rate": dominant_rate,
+        "distractor_warning": warning,
+    }
+
+
 # ── SERVER TIME (used by client exam timer sync) ──────────────────────────────
 @analytics_bp.route("/server-time", methods=["GET"])
 def server_time():
@@ -84,7 +115,11 @@ def cohort_summary():
                     JOIN question_bank qb ON qb.id = qa.question_id
                     WHERE qa.mock_exam_id = ?
                     GROUP BY qb.subject_category
-                    ORDER BY (SUM(qa.times_correct)*1.0/MAX(SUM(qa.times_presented),1)) ASC
+                    ORDER BY CASE
+                        WHEN SUM(qa.times_presented) > 0
+                            THEN (SUM(qa.times_correct) * 1.0 / SUM(qa.times_presented))
+                        ELSE 0
+                    END ASC
                 """, (exam_id,)).fetchall()
             else:
                 cat_rows = db.execute("""
@@ -94,7 +129,11 @@ def cohort_summary():
                     FROM question_analytics qa
                     JOIN question_bank qb ON qb.id = qa.question_id
                     GROUP BY qb.subject_category
-                    ORDER BY (SUM(qa.times_correct)*1.0/MAX(SUM(qa.times_presented),1)) ASC
+                    ORDER BY CASE
+                        WHEN SUM(qa.times_presented) > 0
+                            THEN (SUM(qa.times_correct) * 1.0 / SUM(qa.times_presented))
+                        ELSE 0
+                    END ASC
                 """).fetchall()
             category_perf = []
             for r in cat_rows:
@@ -177,7 +216,8 @@ def question_performance():
                        qb.difficulty, qb.difficulty_auto
                 FROM question_analytics qa
                 JOIN question_bank qb ON qb.id = qa.question_id
-                GROUP BY qa.question_id
+                GROUP BY qa.question_id, qb.question_text, qb.subject_category, qb.bloom_level,
+                         qb.difficulty, qb.difficulty_auto
                 ORDER BY AVG(qa.correctness_rate) ASC
                 LIMIT ?
             """, (limit,)).fetchall()
@@ -517,31 +557,33 @@ def global_question_stats():
         _require_admin(db, uid)
 
         rows = db.execute("""
-            SELECT qa.question_id,
-                   SUM(qa.times_presented)  as total_presented,
-                   SUM(qa.times_correct)    as total_correct,
-                   AVG(qa.correctness_rate) as avg_correctness,
-                   AVG(qa.avg_time_seconds) as avg_time,
-                   AVG(qa.avg_time_correct)   as avg_time_correct,
-                   AVG(qa.avg_time_incorrect) as avg_time_incorrect,
-                   SUM(qa.doubt_count)      as total_doubt,
-                   MAX(qa.high_variance_flag) as is_high_variance,
-                   AVG(qa.difficulty_score)   as diff_score,
+            SELECT qs.question_id,
+                   qs.times_presented  as total_presented,
+                   qs.times_correct    as total_correct,
+                   qs.correctness_rate as avg_correctness,
+                   qs.avg_time_seconds as avg_time,
+                   qs.avg_time_correct as avg_time_correct,
+                   qs.avg_time_incorrect as avg_time_incorrect,
+                   qs.doubt_count      as total_doubt,
+                   qs.high_variance_flag as is_high_variance,
+                   qs.difficulty_score   as diff_score,
+                   qs.top_group_correct, qs.bottom_group_correct,
+                   qs.option_a_selections, qs.option_b_selections, qs.option_c_selections, qs.option_d_selections,
                    qb.question_text, qb.subject_category, qb.bloom_level,
-                   qb.difficulty, qb.difficulty_auto, qb.submitted_by
-            FROM question_analytics qa
-            JOIN question_bank qb ON qb.id = qa.question_id
-            GROUP BY qa.question_id
-            HAVING SUM(qa.times_presented) > 0
-            ORDER BY avg_correctness ASC
+                   qb.difficulty, qb.difficulty_auto, qb.submitted_by, qb.correct_idx
+            FROM question_stats qs
+            JOIN question_bank qb ON qb.id = qs.question_id
+            WHERE qs.times_presented > 0
+            ORDER BY qs.correctness_rate ASC
         """).fetchall()
 
     finally:
         db.close()
 
     def fmt(r):
+        row = dict(r)
         rate = r["avg_correctness"] or 0
-        return {
+        payload = {
             "question_id":         r["question_id"],
             "question_text":       (r["question_text"] or "")[:120],
             "category":            r["subject_category"],
@@ -559,6 +601,9 @@ def global_question_stats():
             "difficulty_score":    round(r["diff_score"] or 0, 4),
             "data_adjusted":       r["difficulty_auto"] and r["difficulty_auto"] != r["difficulty"],
         }
+        payload.update(_build_distractor_metrics(r["correct_idx"], row))
+        payload["discrimination_index"] = round((r["top_group_correct"] or 0) - (r["bottom_group_correct"] or 0), 4)
+        return payload
 
     all_q = [fmt(r) for r in rows]
     top10_missed  = sorted(all_q, key=lambda x: x["correctness_rate"])[:10]
@@ -567,6 +612,10 @@ def global_question_stats():
     high_doubt    = sorted(
         [q for q in all_q if q["doubt_count"] >= 3],
         key=lambda x: -x["doubt_count"]
+    )[:20]
+    distractor_warnings = sorted(
+        [q for q in all_q if q["distractor_warning"]],
+        key=lambda x: (-x["dominant_distractor_rate"], -x["dominant_distractor_count"])
     )[:20]
 
     # Accuracy correlation: avg time on correct vs incorrect answers
@@ -586,6 +635,7 @@ def global_question_stats():
         "top10_correct":        top10_correct,
         "high_variance":        high_variance,
         "high_doubt":           high_doubt,
+        "distractor_warnings":  distractor_warnings,
         "accuracy_correlation": accuracy_correlation,
         "total_questions":      len(all_q),
     })
@@ -697,8 +747,9 @@ def exam_drilldown(exam_id):
                    qa.avg_time_correct, qa.avg_time_incorrect,
                    qa.doubt_count, qa.difficulty_score,
                    qa.high_variance_flag, qa.top_group_correct, qa.bottom_group_correct,
+                   qa.option_a_selections, qa.option_b_selections, qa.option_c_selections, qa.option_d_selections,
                    qb.question_text, qb.subject_category, qb.bloom_level,
-                   qb.difficulty, qb.difficulty_auto, qb.submitted_by
+                   qb.difficulty, qb.difficulty_auto, qb.submitted_by, qb.correct_idx
             FROM question_analytics qa
             JOIN question_bank qb ON qb.id = qa.question_id
             WHERE qa.mock_exam_id=?
@@ -707,9 +758,10 @@ def exam_drilldown(exam_id):
 
         questions = []
         for a in analytics:
+            row = dict(a)
             rate = a["correctness_rate"] or 0
             d = round((a["top_group_correct"] or 0) - (a["bottom_group_correct"] or 0), 4)
-            questions.append({
+            payload = {
                 "question_id":         a["question_id"],
                 "question_text":       (a["question_text"] or "")[:150],
                 "category":            a["subject_category"],
@@ -727,7 +779,9 @@ def exam_drilldown(exam_id):
                 "difficulty_score":    round(a["difficulty_score"] or 0, 4),
                 "is_high_variance":    bool(a["high_variance_flag"]),
                 "discrimination_index": d,
-            })
+            }
+            payload.update(_build_distractor_metrics(a["correct_idx"], row))
+            questions.append(payload)
     finally:
         db.close()
 
@@ -862,29 +916,30 @@ def teacher_question_performance():
             return jsonify({"error": "Teacher access required"}), 403
 
         rows = db.execute("""
-            SELECT qa.question_id,
-                   SUM(qa.times_presented)    as total_presented,
-                   SUM(qa.times_correct)      as total_correct,
-                   AVG(qa.correctness_rate)   as avg_correctness,
-                   AVG(qa.avg_time_seconds)   as avg_time,
-                   AVG(qa.avg_time_correct)   as avg_time_correct,
-                   AVG(qa.avg_time_incorrect) as avg_time_incorrect,
-                   SUM(qa.doubt_count)        as total_doubt,
-                   MAX(qa.high_variance_flag) as is_high_variance,
-                   AVG(qa.difficulty_score)   as diff_score,
+            SELECT qs.question_id,
+                   qs.times_presented    as total_presented,
+                   qs.times_correct      as total_correct,
+                   qs.correctness_rate   as avg_correctness,
+                   qs.avg_time_seconds   as avg_time,
+                   qs.avg_time_correct   as avg_time_correct,
+                   qs.avg_time_incorrect as avg_time_incorrect,
+                   qs.doubt_count        as total_doubt,
+                   qs.high_variance_flag as is_high_variance,
+                   qs.difficulty_score   as diff_score,
+                   qs.option_a_selections, qs.option_b_selections, qs.option_c_selections, qs.option_d_selections,
                    qb.question_text, qb.subject_category, qb.bloom_level,
-                   qb.difficulty, qb.difficulty_auto, qb.status as q_status
-            FROM question_analytics qa
-            JOIN question_bank qb ON qb.id = qa.question_id
-            WHERE qb.submitted_by=?
-            GROUP BY qa.question_id
-            ORDER BY avg_correctness ASC
+                   qb.difficulty, qb.difficulty_auto, qb.status as q_status, qb.correct_idx
+            FROM question_stats qs
+            JOIN question_bank qb ON qb.id = qs.question_id
+            WHERE qb.submitted_by=? AND qs.times_presented > 0
+            ORDER BY qs.correctness_rate ASC
         """, (uid,)).fetchall()
 
         questions = []
         for r in rows:
+            row = dict(r)
             rate = r["avg_correctness"] or 0
-            questions.append({
+            payload = {
                 "question_id":         r["question_id"],
                 "question_text":       (r["question_text"] or "")[:120],
                 "category":            r["subject_category"],
@@ -902,7 +957,9 @@ def teacher_question_performance():
                 "doubt_count":         r["total_doubt"] or 0,
                 "is_high_variance":    bool(r["is_high_variance"]),
                 "difficulty_score":    round(r["diff_score"] or 0, 4),
-            })
+            }
+            payload.update(_build_distractor_metrics(r["correct_idx"], row))
+            questions.append(payload)
 
         # Category skill gap for this teacher's questions
         cat_map = {}

@@ -512,7 +512,7 @@
         <td style="padding:9px 12px;text-align:center;font-size:0.8rem">${q.times_presented}</td>
         <td style="padding:9px 12px;text-align:center;font-size:0.8rem">${q.avg_time_secs}s</td>
         <td style="padding:9px 12px">${diffBadge(q.difficulty_original, q.difficulty_auto)}</td>
-        <td style="padding:9px 12px;text-align:center">${q.doubt_count>=3?'<span style="color:#d97706" title="High Doubt">🤔</span>':''}${q.is_high_variance?'<span style="color:#dc2626" title="High Variance">⚠️</span>':''}</td>
+        <td style="padding:9px 12px;text-align:center">${q.doubt_count>=3?'<span style="color:#d97706" title="High Doubt">🤔</span>':''}${q.is_high_variance?'<span style="color:#dc2626" title="High Variance">⚠️</span>':''}${q.distractor_warning?'<span style="color:#7c3aed" title="Dominant distractor attracting wrong answers">🎯</span>':''}</td>
       </tr>`;
     const thead = `<thead><tr style="background:#f8fafc">
       <th style="padding:9px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#64748b">Question</th>
@@ -596,6 +596,16 @@
               <div style="padding:10px;border-radius:10px;background:#eef2ff;border:1px solid #e0e7ff;margin-bottom:8px;font-size:0.83rem">
                 <div style="font-weight:700;margin-bottom:2px">${q.question_text}</div>
                 <div style="color:#64748b">${q.category||'—'} · ${q.doubt_count} doubt interactions · ${Math.round((q.correctness_rate||0)*100)}% accuracy</div>
+              </div>`).join('')}
+        </div>
+        <div style="background:white;border:1px solid #ede9fe;border-radius:16px;padding:20px">
+          <div style="font-weight:800;font-size:0.95rem;margin-bottom:12px;color:#7c3aed">🎯 Distractor Warnings</div>
+          ${(data.distractor_warnings||[]).length === 0
+            ? '<div style="color:#64748b;text-align:center;padding:16px;font-size:0.85rem">No dominant distractor patterns detected yet.</div>'
+            : (data.distractor_warnings||[]).slice(0,10).map(q => `
+              <div style="padding:10px;border-radius:10px;background:#f5f3ff;border:1px solid #ddd6fe;margin-bottom:8px;font-size:0.83rem">
+                <div style="font-weight:700;margin-bottom:2px">${q.question_text}</div>
+                <div style="color:#64748b">${q.category||'—'} · Option ${q.dominant_distractor} draws ${Math.round((q.dominant_distractor_rate||0)*100)}% of wrong answers</div>
               </div>`).join('')}
         </div>
       </div>`;
@@ -764,4 +774,3 @@
   };
 
 })();
-

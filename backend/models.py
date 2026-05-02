@@ -1179,9 +1179,35 @@ def migrate_db():
         """ALTER TABLE question_analytics ADD COLUMN high_variance_flag INTEGER DEFAULT 0""",
         """ALTER TABLE question_analytics ADD COLUMN top_group_correct REAL DEFAULT 0""",
         """ALTER TABLE question_analytics ADD COLUMN bottom_group_correct REAL DEFAULT 0""",
+        """ALTER TABLE question_analytics ADD COLUMN option_a_selections INTEGER DEFAULT 0""",
+        """ALTER TABLE question_analytics ADD COLUMN option_b_selections INTEGER DEFAULT 0""",
+        """ALTER TABLE question_analytics ADD COLUMN option_c_selections INTEGER DEFAULT 0""",
+        """ALTER TABLE question_analytics ADD COLUMN option_d_selections INTEGER DEFAULT 0""",
         """CREATE INDEX IF NOT EXISTS idx_question_analytics_qid ON question_analytics(question_id)""",
         """CREATE INDEX IF NOT EXISTS idx_mock_exam_subs_status ON mock_exam_submissions(status, submitted_at)""",
         # ── PRO ANALYTICS (Supabase Optimization & Skill Gaps) ───────────────────────
+        """CREATE TABLE IF NOT EXISTS question_stats (
+            id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+            question_id           INTEGER NOT NULL REFERENCES question_bank(id),
+            times_presented       INTEGER DEFAULT 0,
+            times_correct         INTEGER DEFAULT 0,
+            correctness_rate      REAL DEFAULT 0,
+            avg_time_seconds      REAL DEFAULT 0,
+            avg_time_correct      REAL DEFAULT 0,
+            avg_time_incorrect    REAL DEFAULT 0,
+            doubt_count           INTEGER DEFAULT 0,
+            difficulty_score      REAL,
+            high_variance_flag    INTEGER DEFAULT 0,
+            top_group_correct     REAL DEFAULT 0,
+            bottom_group_correct  REAL DEFAULT 0,
+            option_a_selections   INTEGER DEFAULT 0,
+            option_b_selections   INTEGER DEFAULT 0,
+            option_c_selections   INTEGER DEFAULT 0,
+            option_d_selections   INTEGER DEFAULT 0,
+            updated_at            DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(question_id)
+        )""",
+        """CREATE INDEX IF NOT EXISTS idx_question_stats_qid ON question_stats(question_id)""",
         """CREATE TABLE IF NOT EXISTS university_stats (
             id                  INTEGER PRIMARY KEY AUTOINCREMENT,
             exam_id             INTEGER NOT NULL REFERENCES mock_exams(id),
@@ -1215,22 +1241,11 @@ def migrate_db():
             rpc_sql = """
             CREATE OR REPLACE FUNCTION update_pro_analytics(sub_id INTEGER)
             RETURNS VOID AS $$
-            DECLARE
-                sub_row RECORD;
-                q_id_str TEXT;
-                q_id INTEGER;
-                q_cat TEXT;
-                is_correct BOOLEAN;
-                t_spent REAL;
-                ans_chg INTEGER;
-                diff_sc REAL;
-                eff_max REAL;
             BEGIN
-                -- Note: Full JSON parsing inside Postgres is complex.
-                -- For the EPSA platform, we will use Python's fast JSON parser
-                -- as a fallback. If a pure Supabase Edge Function is needed,
-                -- it should be implemented in Deno. For now, this is a placeholder
-                -- that allows the DB to accept the RPC call without crashing.
+                -- App-layer aggregation is the primary path for reliability across
+                -- SQLite and PostgreSQL. This RPC remains available for Supabase
+                -- integrations and future DB-native triggering without breaking callers.
+                RETURN;
             END;
             $$ LANGUAGE plpgsql;
             """
@@ -1240,6 +1255,61 @@ def migrate_db():
             try: db.rollback()
             except: pass
             print(f'[DB Migration Warning] RPC creation failed: {exc}')
+    try:
+        db.execute("""
+            INSERT INTO question_stats (
+                question_id, times_presented, times_correct, correctness_rate,
+                avg_time_seconds, avg_time_correct, avg_time_incorrect,
+                doubt_count, difficulty_score, high_variance_flag,
+                top_group_correct, bottom_group_correct,
+                option_a_selections, option_b_selections, option_c_selections, option_d_selections,
+                updated_at
+            )
+            SELECT
+                question_id,
+                SUM(times_presented) as times_presented,
+                SUM(times_correct) as times_correct,
+                CASE WHEN SUM(times_presented) > 0 THEN (SUM(times_correct) * 1.0 / SUM(times_presented)) ELSE 0 END as correctness_rate,
+                AVG(avg_time_seconds) as avg_time_seconds,
+                AVG(avg_time_correct) as avg_time_correct,
+                AVG(avg_time_incorrect) as avg_time_incorrect,
+                SUM(doubt_count) as doubt_count,
+                AVG(difficulty_score) as difficulty_score,
+                MAX(high_variance_flag) as high_variance_flag,
+                AVG(top_group_correct) as top_group_correct,
+                AVG(bottom_group_correct) as bottom_group_correct,
+                SUM(option_a_selections) as option_a_selections,
+                SUM(option_b_selections) as option_b_selections,
+                SUM(option_c_selections) as option_c_selections,
+                SUM(option_d_selections) as option_d_selections,
+                CURRENT_TIMESTAMP
+            FROM question_analytics
+            GROUP BY question_id
+            ON CONFLICT(question_id) DO UPDATE SET
+                times_presented=excluded.times_presented,
+                times_correct=excluded.times_correct,
+                correctness_rate=excluded.correctness_rate,
+                avg_time_seconds=excluded.avg_time_seconds,
+                avg_time_correct=excluded.avg_time_correct,
+                avg_time_incorrect=excluded.avg_time_incorrect,
+                doubt_count=excluded.doubt_count,
+                difficulty_score=excluded.difficulty_score,
+                high_variance_flag=excluded.high_variance_flag,
+                top_group_correct=excluded.top_group_correct,
+                bottom_group_correct=excluded.bottom_group_correct,
+                option_a_selections=excluded.option_a_selections,
+                option_b_selections=excluded.option_b_selections,
+                option_c_selections=excluded.option_c_selections,
+                option_d_selections=excluded.option_d_selections,
+                updated_at=CURRENT_TIMESTAMP
+        """)
+        db.commit()
+    except Exception as exc:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        print(f'[DB Migration Warning] question_stats backfill failed: {exc}')
     try:
         db.execute("""
             UPDATE exam_submissions
@@ -1283,5 +1353,3 @@ def migrate_db():
         try: db.rollback()
         except Exception: pass
     db.close()
-
-

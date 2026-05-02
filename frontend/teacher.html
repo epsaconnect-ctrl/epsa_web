@@ -569,11 +569,12 @@
               <th>⏱ Correct</th>
               <th>⏱ Wrong</th>
               <th>Difficulty</th>
+              <th>Distractor</th>
               <th>Flags</th>
             </tr>
           </thead>
           <tbody id="qaTableBody">
-            <tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:32px">Loading…</td></tr>
+            <tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:32px">Loading…</td></tr>
           </tbody>
         </table>
       </div>
@@ -650,6 +651,7 @@ let myQuestionsPage = 1;
 let myQuestionCache = [];
 let questionDrafts = [];
 let draftEditIndex = null;
+let questionEditId = null;
 const categories = [];
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -697,6 +699,24 @@ async function apiPost(url, body) {
     setTimeout(() => logout(), 1800);
     return;
   }
+  if (!r.ok) throw new Error(d.error || 'Request failed');
+  return d;
+}
+
+async function apiPut(url, body) {
+  let r = null;
+  for (const base of [activeApiBase, ...API_BASES.filter((candidate) => candidate !== activeApiBase)]) {
+    try {
+      r = await fetch(base + url, { method: 'PUT', headers: authHdr(), body: JSON.stringify(body) });
+      activeApiBase = base;
+      break;
+    } catch (_) {
+      r = null;
+    }
+  }
+  if (!r) throw new Error('EPSA backend is unreachable. Start the backend server on port 5000 and retry.');
+  if (r.status === 401) { logout(); return; }
+  const d = await r.json();
   if (!r.ok) throw new Error(d.error || 'Request failed');
   return d;
 }
@@ -999,29 +1019,56 @@ function fillFormFromPayload(payload) {
   document.getElementById('fExplanation').value = payload.explanation || '';
 }
 
+function syncQuestionComposerState() {
+  const btn = document.getElementById('submitQBtn');
+  if (btn) btn.textContent = questionEditId ? 'Save Approved Question' : 'Submit This Question';
+}
+
+function beginApprovedQuestionEdit(questionId) {
+  const question = myQuestionCache.find((item) => Number(item.id) === Number(questionId));
+  if (!question) return;
+  questionEditId = Number(questionId);
+  draftEditIndex = null;
+  fillFormFromPayload(question);
+  syncQuestionComposerState();
+  closeQuestionDetail();
+  showPage('submit');
+  showToast('Approved question loaded into the composer for editing.', 'gold');
+}
+window.beginApprovedQuestionEdit = beginApprovedQuestionEdit;
+
 async function submitQuestion() {
   const btn = document.getElementById('submitQBtn');
   const payload = collectQuestionPayload(true);
   if (!payload) return showToast('Please fill all required fields', 'error');
   btn.disabled = true;
-  btn.textContent = 'Submitting...';
+  btn.textContent = questionEditId ? 'Saving...' : 'Submitting...';
   try {
-    await apiPost('/teacher/questions', payload);
-    showToast('Question submitted for review!', 'success');
+    if (questionEditId) {
+      await apiPut(`/teacher/questions/${questionEditId}`, payload);
+      showToast('Approved question updated.', 'success');
+    } else {
+      await apiPost('/teacher/questions', payload);
+      showToast('Question submitted for review!', 'success');
+    }
     clearForm();
     loadStats();
-    if (document.getElementById('page-myquestions')?.classList.contains('active')) loadMyQuestions();
+    loadMyQuestions();
   } catch (err) {
     showToast(err.message || 'Submission failed', 'error');
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Submit This Question';
+    syncQuestionComposerState();
   }
 }
 
 function addQuestionDraft() {
   const payload = collectQuestionPayload(true);
   if (!payload) return showToast('Complete the required fields before adding to batch.', 'error');
+  if (questionEditId) {
+    questionEditId = null;
+    syncQuestionComposerState();
+  }
   const duplicateIndex = questionDrafts.findIndex((draft, index) => (
     draft.question_text.toLowerCase() === payload.question_text.toLowerCase() &&
     index !== draftEditIndex
@@ -1109,7 +1156,9 @@ function clearForm() {
     }
   });
   draftEditIndex = null;
+  questionEditId = null;
   document.querySelectorAll('.field-err').forEach(e => e.classList.remove('show'));
+  syncQuestionComposerState();
 }
 
 async function loadMyQuestions(page = myQuestionsPage) {
@@ -1164,7 +1213,10 @@ function renderQuestionsTable(questions) {
       <td><span class="badge badge-${q.status}">${escHtml(q.status)}</span></td>
       <td style="color:var(--text-muted);font-size:.78rem;white-space:nowrap">${formatDate(q.created_at)}</td>
       <td style="font-size:.78rem;color:var(--text-muted);max-width:180px;overflow:hidden;text-overflow:ellipsis">${q.admin_notes ? escHtml(q.admin_notes) : '-'}</td>
-      <td><button class="btn btn-secondary" style="padding:7px 12px;font-size:.8rem" onclick="openQuestionDetail(${q.id})">View</button></td>
+      <td style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-secondary" style="padding:7px 12px;font-size:.8rem" onclick="openQuestionDetail(${q.id})">View</button>
+        ${q.status === 'approved' ? `<button class="btn btn-primary" style="padding:7px 12px;font-size:.8rem" onclick="beginApprovedQuestionEdit(${q.id})">Edit</button>` : ''}
+      </td>
     </tr>`).join('');
 }
 
@@ -1214,6 +1266,7 @@ function openQuestionDetail(id) {
       <div style="font-size:.76rem;color:#bfdbfe;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Explanation / Rationale</div>
       <div style="font-size:.9rem;line-height:1.75;color:#e0f2fe;">${escHtml(question.explanation || 'No explanation provided.')}</div>
     </div>
+    ${question.status === 'approved' ? `<div style="display:flex;justify-content:flex-end;margin-top:18px"><button class="btn btn-primary" onclick="beginApprovedQuestionEdit(${question.id})">Edit Approved Question</button></div>` : ''}
     ${question.admin_notes ? `<div class="question-inline-note"><strong style="display:block;margin-bottom:6px;">Admin note</strong>${escHtml(question.admin_notes)}</div>` : ''}
   `;
   overlay.classList.add('open');
@@ -1343,7 +1396,7 @@ function formatDate(dt) {
 // ── Teacher Analytics ─────────────────────────────────────────────────────────
 async function loadTeacherAnalytics() {
   const tbody = document.getElementById('qaTableBody');
-  if (tbody) tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:32px">Loading analytics…</td></tr>`;
+  if (tbody) tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:32px">Loading analytics…</td></tr>`;
   try {
     const data = await apiGet('/analytics/teacher-question-performance');
     const questions = data.questions || [];
@@ -1390,7 +1443,7 @@ async function loadTeacherAnalytics() {
     // Question table
     if (!tbody) return;
     if (questions.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:32px">No analytics yet — your questions need to appear in a mock exam first.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:32px">No analytics yet — your questions need to appear in a mock exam first.</td></tr>`;
       return;
     }
 
@@ -1402,6 +1455,15 @@ async function loadTeacherAnalytics() {
       const diffLabel = q.data_adjusted
         ? `<span class="badge badge-pending" title="Auto-adjusted from ${q.difficulty_original}">📊 ${q.difficulty_auto}</span>`
         : `<span class="badge ${diffColor[q.difficulty_original]||'badge-pending'}">${q.difficulty_original}</span>`;
+
+      const distractorCell = q.distractor_warning
+        ? `<div style="display:flex;flex-direction:column;gap:4px">
+             <span class="badge badge-rejected" title="Students are converging on one wrong answer">Distractor Warning</span>
+             <span style="font-size:.74rem;color:var(--text-muted)">Review concept around Option ${q.dominant_distractor} (${Math.round((q.dominant_distractor_rate||0)*100)}% of wrong answers)</span>
+           </div>`
+        : q.dominant_distractor
+        ? `<span style="font-size:.78rem;color:var(--text-muted)">Option ${q.dominant_distractor} attracts ${Math.round((q.dominant_distractor_rate||0)*100)}% of wrong answers</span>`
+        : '—';
 
       const flags = [
         q.data_adjusted  ? '<span class="badge badge-pending" title="System reclassified difficulty">Data-Adjusted</span>' : '',
@@ -1418,13 +1480,14 @@ async function loadTeacherAnalytics() {
         <td style="color:var(--accent)">${q.avg_time_correct}s</td>
         <td style="color:var(--red)">${q.avg_time_incorrect}s</td>
         <td>${diffLabel}</td>
+        <td>${distractorCell}</td>
         <td>${flags||'—'}</td>
       </tr>`;
     }).join('');
 
   } catch(e) {
     const tbody = document.getElementById('qaTableBody');
-    if (tbody) tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--red);padding:32px">${e.message}</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--red);padding:32px">${e.message}</td></tr>`;
   }
 }
 
@@ -1448,6 +1511,7 @@ async function init() {
   await loadCategories();
   await loadStats();
   renderDraftQueue();
+  syncQuestionComposerState();
   document.getElementById('questionDetailOverlay')?.addEventListener('click', (event) => {
     if (event.target?.id === 'questionDetailOverlay') closeQuestionDetail();
   });

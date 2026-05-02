@@ -156,6 +156,14 @@ const API = {
     return data;
   },
 
+  get(path, options = {}) {
+    return this.request(path, { ...options, method: 'GET' });
+  },
+
+  post(path, body, options = {}) {
+    return this.request(path, { ...options, method: 'POST', body });
+  },
+
 
 
   // ── Auth endpoints ──
@@ -428,6 +436,7 @@ const API = {
   async getTeacherStats()               { return this.request('/teacher/stats'); },
   async getMyQuestions(params={})       { return this.request('/teacher/questions?' + new URLSearchParams(params)); },
   async submitQuestion(body)            { return this.request('/teacher/questions', { method: 'POST', body }); },
+  async updateQuestion(id, body)        { return this.request(`/teacher/questions/${id}`, { method: 'PUT', body }); },
   async bulkSubmitQuestions(questions)  { return this.request('/teacher/questions/bulk', { method: 'POST', body: { questions } }); },
   async teacherRegister(body)           { return this.request('/teacher/register', { method: 'POST', body }); },
 
@@ -438,6 +447,7 @@ const API = {
   async adminListQuestions(params={})           { return this.request('/teacher/admin/questions?' + new URLSearchParams(params)); },
   async adminApproveQuestion(id)                { return this.request(`/teacher/admin/questions/${id}/approve`, { method: 'POST' }); },
   async adminRejectQuestion(id, notes)          { return this.request(`/teacher/admin/questions/${id}/reject`, { method: 'POST', body: { notes } }); },
+  async adminUpdateQuestion(id, body)           { return this.request(`/teacher/admin/questions/${id}`, { method: 'PUT', body }); },
 
   // ── Mock Exams (Student) ──
   async listMockExams()                         { return this.request('/mock-exams'); },

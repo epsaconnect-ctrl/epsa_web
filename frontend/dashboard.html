@@ -834,7 +834,7 @@ const APIB = (() => {
   if (origin && /^https?:/i.test(origin) && !/^(file:|null)$/i.test(origin)) {
     return origin.replace(/\/$/, '');
   }
-  return (window.__EPSA_CONFIG__?.API_BASE_URL || localStorage.getItem('epsa_api_base') || ${window.location.origin}/api).replace(/\/api\/?$/, '');
+  return (window.__EPSA_CONFIG__?.API_BASE_URL || localStorage.getItem('epsa_api_base') || `${window.location.origin}/api`).replace(/\/api\/?$/, '');
 })();
 let _activeClubId = null;
 
@@ -1420,7 +1420,7 @@ window.switchSection = function(sec) {
   <div id="section-mock-exams" class="dash-section mock-shell" style="display:none">
     <div class="section-header">
       <h2> Mock Examinations</h2>
-      <p class="section-desc">Practice with randomized questions from the national question bank. Results are released after the exam window closes.</p>
+      <p class="section-desc">Practice with randomized questions from the national question bank, then review a private growth dashboard that shows your progress without exposing secure exam content.</p>
     </div>
 
     <!-- Exam cards list -->
@@ -1461,10 +1461,10 @@ window.switchSection = function(sec) {
   </div>
 
   <!--  MOCK EXAM RESULTS MODAL  -->
-  <div id="mockResultsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9500;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto">
-    <div style="background:#0a2e18;border:1px solid rgba(34,197,94,.2);border-radius:20px;padding:32px;width:100%;max-width:720px">
+  <div id="mockResultsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(12px);z-index:9500;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto">
+    <div style="background:linear-gradient(180deg,rgba(10,46,24,.98),rgba(6,24,14,.98));border:1px solid rgba(34,197,94,.2);border-radius:28px;padding:32px;width:100%;max-width:1040px;box-shadow:0 24px 80px rgba(0,0,0,.35)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-        <h2 style="font-size:1.3rem;font-weight:800;color:#f0fdf4"> Exam Results</h2>
+        <h2 style="font-size:1.3rem;font-weight:800;color:#f0fdf4"> Performance Dashboard</h2>
         <button onclick="document.getElementById('mockResultsModal').style.display='none'" style="background:rgba(255,255,255,.07);border:1px solid rgba(34,197,94,.15);color:#86efac;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.1rem">X</button>
       </div>
       <div id="mockResultsContent" style="color:#86efac;text-align:center;padding:40px">Loading...</div>
@@ -1492,6 +1492,8 @@ window.switchSection = function(sec) {
     examId: null, submissionId: null, questions: [], answers: {},
     timesPerQ: {}, currentIdx: 0, timerInterval: null, totalSecs: 0,
     elapsedSecs: 0, serverRemaining: 0, qStartTime: null, saveInterval: null,
+    answerChanges: {}, confidenceLevels: {},
+    focusCurrentQid: null, focusStart: null,
     // Anti-cheat & Layout
     viewMode: 'one-by-one', theme: 'dark', tabSwitchCount: 0, maxTabSwitches: 3,
     lastCheatWarning: 0, submitted: false, hasStarted: false,
@@ -1518,12 +1520,22 @@ window.switchSection = function(sec) {
   function renderMockExamCard(e) {
     const statusColor = e.is_open ? '#22c55e' : (e.is_submitted ? '#3b82f6' : '#f59e0b');
     const statusLabel = e.is_submitted ? 'Submitted' : (e.is_open ? 'Open Now' : 'Scheduled');
+    const score = Number(e.my_score || 0);
+    const performanceSummary = e.is_submitted
+      ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;padding:14px 16px;border-radius:18px;background:${score >= 50 ? 'rgba(34,197,94,.08)' : 'rgba(248,113,113,.08)'};border:1px solid ${score >= 50 ? 'rgba(34,197,94,.2)' : 'rgba(248,113,113,.18)'}">
+          <div>
+            <div style="font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:${score >= 50 ? '#15803d' : '#b91c1c'};font-weight:800">Latest Performance</div>
+            <div style="margin-top:4px;font-size:1rem;font-weight:800;color:${score >= 50 ? '#166534' : '#fca5a5'}">${score.toFixed(1)}% • ${score >= 50 ? 'Passed' : 'Below 50% pass mark'}</div>
+          </div>
+          <div style="padding:8px 12px;border-radius:999px;background:${score >= 50 ? 'rgba(34,197,94,.14)' : 'rgba(248,113,113,.14)'};color:${score >= 50 ? '#16a34a' : '#ef4444'};font-size:.75rem;font-weight:800">${score >= 50 ? 'PASS' : 'REVIEW'}</div>
+        </div>`
+      : '';
     const action = e.can_start
       ? `<button onclick="startMockExam(${e.id})" style="background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:none;padding:12px 18px;border-radius:14px;font-family:Outfit,sans-serif;font-weight:800;cursor:pointer;width:100%;margin-top:18px;box-shadow:0 16px 24px rgba(22,163,74,.22), inset 0 1px 0 rgba(255,255,255,0.2);transition:transform 0.2s; " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">Start Exam</button>`
       : e.can_continue
       ? `<button onclick="startMockExam(${e.id})" style="background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;border:none;padding:12px 18px;border-radius:14px;font-family:Outfit,sans-serif;font-weight:800;cursor:pointer;width:100%;margin-top:18px;box-shadow:0 16px 24px rgba(217,119,6,.20), inset 0 1px 0 rgba(255,255,255,0.2);transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">Continue Exam</button>`
-      : e.results_viewable
-      ? `<button onclick="viewMockResults(${e.id})" style="background:rgba(37,99,235,.10);color:#1d4ed8;border:1px solid rgba(37,99,235,.18);padding:12px 18px;border-radius:14px;font-family:Outfit,sans-serif;font-weight:800;cursor:pointer;width:100%;margin-top:18px;transition:background 0.2s;" onmouseover="this.style.background='rgba(37,99,235,.15)'" onmouseout="this.style.background='rgba(37,99,235,.10)'">View My Results</button>`
+      : e.is_submitted
+      ? `<button onclick="viewMockResults(${e.id})" style="background:linear-gradient(135deg,rgba(29,78,216,.92),rgba(56,189,248,.92));color:#fff;border:none;padding:12px 18px;border-radius:14px;font-family:Outfit,sans-serif;font-weight:800;cursor:pointer;width:100%;margin-top:18px;box-shadow:0 16px 28px rgba(29,78,216,.24), inset 0 1px 0 rgba(255,255,255,.2);transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">View Performance</button>`
       : `<div style="text-align:center;color:#92400e;margin-top:18px;font-size:.84rem;font-weight:700;background:rgba(245,158,11,.10);border-radius:14px;padding:12px 14px;border:1px solid rgba(245,158,11,.18)">Exam window not yet open.</div>`;
 
     return `<article style="background:var(--me-card-bg, rgba(255,255,255,0.85));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(26,107,60,.1);border-radius:28px;padding:28px;box-shadow:0 12px 32px rgba(15,23,42,.04), inset 0 1px 0 rgba(255,255,255,0.6);display:flex;flex-direction:column;min-height:100%;transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);position:relative;overflow:hidden;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 24px 64px rgba(22,163,74,.12), inset 0 1px 0 rgba(255,255,255,0.8)';this.style.borderColor='rgba(34,197,94,0.3)';" onmouseout="this.style.transform='none';this.style.boxShadow='0 12px 32px rgba(15,23,42,.04), inset 0 1px 0 rgba(255,255,255,0.6)';this.style.borderColor='rgba(26,107,60,.1)';">
@@ -1571,6 +1583,7 @@ window.switchSection = function(sec) {
         ${e.my_score != null ? `<span style="margin-left:auto;padding:6px 14px;border-radius:999px;background:#dcfce7;color:#15803d;font-weight:900;font-size:0.75rem;box-shadow:0 4px 12px rgba(34,197,94,0.15)">SCORE: ${e.my_score}%</span>` : ''}
       </div>
       ${action}
+      ${performanceSummary}
     </article>`;
   }
 
@@ -1585,7 +1598,9 @@ window.switchSection = function(sec) {
       ME.submissionId = data.submission_id;
       ME.questions = data.questions || [];
       ME.answers = data.answers || {};
-      ME.timesPerQ = {};
+      ME.timesPerQ = data.time_per_question || {};
+      ME.answerChanges = data.answer_changes || {};
+      ME.confidenceLevels = data.confidence_levels || {};
       ME.currentIdx = 0;
       ME.totalSecs = (data.duration_mins || 120) * 60;
       ME.elapsedSecs = data.elapsed_secs || 0;
@@ -1597,6 +1612,8 @@ window.switchSection = function(sec) {
       ME.tabSwitchCount = 0;
       ME.viewMode = 'one-by-one';
       ME.theme = 'dark'; // Start default dark
+      ME.focusCurrentQid = null;
+      ME.focusStart = null;
       openExamFullscreen(data);
     } catch(err) {
       showToast(err.message || 'Could not start exam', 'error');
@@ -1650,6 +1667,7 @@ window.switchSection = function(sec) {
   }
 
   function meToggleTheme() {
+    meFlushFocus(false);
     const fs = document.getElementById('mockExamFullscreen');
     const btn = document.getElementById('meThemeBtn');
     if (ME.theme === 'dark') {
@@ -1693,6 +1711,42 @@ window.switchSection = function(sec) {
     }).join('');
   }
 
+  function meFocusEnter(qid) {
+    if (!ME.hasStarted || ME.submitted) return;
+    const qidStr = String(qid);
+    if (ME.focusCurrentQid && ME.focusCurrentQid !== qidStr) {
+      meFocusLeave(ME.focusCurrentQid);
+    }
+    ME.focusCurrentQid = qidStr;
+    ME.focusStart = performance.now();
+  }
+
+  function meFocusLeave(qid) {
+    if (!ME.hasStarted || ME.submitted || !ME.focusStart) return;
+    const qidStr = String(qid);
+    if (ME.focusCurrentQid !== qidStr) return;
+    const elapsed = (performance.now() - ME.focusStart) / 1000;
+    if (elapsed > 0) {
+      ME.timesPerQ[qidStr] = (ME.timesPerQ[qidStr] || 0) + elapsed;
+    }
+    ME.focusCurrentQid = null;
+    ME.focusStart = null;
+  }
+
+  function meFlushFocus(keepActive = false) {
+    if (!ME.hasStarted || ME.submitted || !ME.focusCurrentQid || !ME.focusStart) return;
+    const elapsed = (performance.now() - ME.focusStart) / 1000;
+    if (elapsed > 0) {
+      ME.timesPerQ[ME.focusCurrentQid] = (ME.timesPerQ[ME.focusCurrentQid] || 0) + elapsed;
+    }
+    if (keepActive) {
+      ME.focusStart = performance.now();
+    } else {
+      ME.focusCurrentQid = null;
+      ME.focusStart = null;
+    }
+  }
+
   function renderMeQuestion(idx) {
     ME.currentIdx = idx;
     const q = ME.questions[idx];
@@ -1710,6 +1764,7 @@ window.switchSection = function(sec) {
     const isLight = ME.theme === 'light';
     
     document.getElementById('meQuestionArea').innerHTML = `
+      <div onmouseenter="meFocusEnter(${q.id})" onmouseleave="meFocusLeave(${q.id})">
       <div class="me-question-card" style="border-radius:14px;padding:24px;margin-bottom:20px;position:relative;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
           <div style="font-size:.78rem;color:var(--me-text-muted);font-weight:600">QUESTION ${idx+1}</div>
@@ -1719,6 +1774,10 @@ window.switchSection = function(sec) {
         </div>
         <div style="font-size:1.05rem;font-weight:600;line-height:1.6;color:var(--me-text);user-select:none">${escHtml(q.question_text)}</div>
       </div>
+      <label style="display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--me-border);font-size:.85rem;color:var(--me-text);cursor:pointer">
+        <input type="checkbox" ${ME.confidenceLevels[String(q.id)] ? 'checked' : ''} onchange="meToggleConfidence(${q.id}, this.checked)" style="width:18px;height:18px;accent-color:#22c55e;cursor:pointer">
+        <span><strong style="color:var(--me-text)">I am confident in this answer</strong><span style="display:block;color:var(--me-text-muted);font-size:.76rem;margin-top:2px">Used only for your private post-exam reflection.</span></span>
+      </label>
       <div style="display:flex;flex-direction:column;gap:10px">
         ${q.options.map((opt, oi) => {
           const isSel = selected === oi;
@@ -1732,6 +1791,7 @@ window.switchSection = function(sec) {
             <span class="me-opt-text ${blurCls}">${escHtml(opt)}</span>
           </button>`;
         }).join('')}
+      </div>
       </div>`;
     ME.qStartTime = Date.now();
   }
@@ -1748,7 +1808,7 @@ window.switchSection = function(sec) {
     ME.questions.forEach((q, idx) => {
       const selected = ME.answers[String(q.id)];
       html += `
-        <div style="margin-bottom:40px">
+        <div style="margin-bottom:40px" onmouseenter="meFocusEnter(${q.id})" onmouseleave="meFocusLeave(${q.id})">
           <div class="me-question-card" style="border-radius:14px;padding:24px;margin-bottom:16px">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
               <div style="font-size:.78rem;color:var(--me-text-muted);font-weight:600">QUESTION ${idx+1}</div>
@@ -1758,6 +1818,10 @@ window.switchSection = function(sec) {
             </div>
             <div style="font-size:1.05rem;font-weight:600;line-height:1.6;color:var(--me-text);user-select:none">${escHtml(q.question_text)}</div>
           </div>
+          <label style="display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--me-border);font-size:.85rem;color:var(--me-text);cursor:pointer">
+            <input type="checkbox" ${ME.confidenceLevels[String(q.id)] ? 'checked' : ''} onchange="meToggleConfidence(${q.id}, this.checked)" style="width:18px;height:18px;accent-color:#22c55e;cursor:pointer">
+            <span><strong style="color:var(--me-text)">I am confident in this answer</strong><span style="display:block;color:var(--me-text-muted);font-size:.76rem;margin-top:2px">Used only for your private post-exam reflection.</span></span>
+          </label>
           <div style="display:flex;flex-direction:column;gap:10px" id="meScrollQ${q.id}">
             ${q.options.map((opt, oi) => {
               const isSel = selected === oi;
@@ -1778,6 +1842,7 @@ window.switchSection = function(sec) {
   }
 
   function meToggleViewMode() {
+    meFlushFocus(false);
     const btn = document.getElementById('meViewToggleBtn');
     if (ME.viewMode === 'one-by-one') {
       ME.viewMode = 'scroll-all';
@@ -1793,17 +1858,24 @@ window.switchSection = function(sec) {
   }
 
   function meSelectAnswer(qid, optIdx) {
-    // Track time on question
-    const elapsed = Math.round((Date.now() - ME.qStartTime) / 1000);
-    ME.timesPerQ[String(qid)] = (ME.timesPerQ[String(qid)] || 0) + elapsed;
-    ME.answers[String(qid)] = optIdx;
+    meFlushFocus(true);
+    const qidStr = String(qid);
+    if (ME.answers[qidStr] !== undefined && ME.answers[qidStr] !== optIdx) {
+      ME.answerChanges[qidStr] = (ME.answerChanges[qidStr] || 0) + 1;
+    }
+    ME.answers[qidStr] = optIdx;
     ME.qStartTime = Date.now();
     buildQNav();
     renderMeQuestion(ME.currentIdx);
   }
 
   function meSelectAnswerScroll(qid, optIdx) {
-    ME.answers[String(qid)] = optIdx;
+    meFlushFocus(true);
+    const qidStr = String(qid);
+    if (ME.answers[qidStr] !== undefined && ME.answers[qidStr] !== optIdx) {
+      ME.answerChanges[qidStr] = (ME.answerChanges[qidStr] || 0) + 1;
+    }
+    ME.answers[qidStr] = optIdx;
     const total = ME.questions.length;
     const answeredCount = Object.keys(ME.answers).length;
     document.getElementById('meProgress').textContent = `Scroll View - ${answeredCount}/${total} answered`;
@@ -1827,6 +1899,10 @@ window.switchSection = function(sec) {
     });
   }
 
+  function meToggleConfidence(qid, checked) {
+    ME.confidenceLevels[String(qid)] = !!checked;
+  }
+
   function meToggleFlag(qid, isScroll = false) {
     ME.markedForReview[String(qid)] = !ME.markedForReview[String(qid)];
     buildQNav();
@@ -1846,12 +1922,14 @@ window.switchSection = function(sec) {
   function meNavigate(dir) {
     const newIdx = ME.currentIdx + dir;
     if (newIdx >= 0 && newIdx < ME.questions.length) {
+      meFlushFocus(false);
       ME.qStartTime = Date.now();
       renderMeQuestion(newIdx);
     }
   }
 
   function meGoTo(idx) {
+    meFlushFocus(false);
     ME.qStartTime = Date.now();
     renderMeQuestion(idx);
   }
@@ -1890,7 +1968,13 @@ window.switchSection = function(sec) {
   async function saveProgress() {
     if (!ME.examId) return;
     try {
-      await API.saveMockProgress(ME.examId, { answers: ME.answers, time_per_question: ME.timesPerQ });
+      meFlushFocus(true);
+      await API.saveMockProgress(ME.examId, {
+        answers: ME.answers,
+        time_per_question: ME.timesPerQ,
+        answer_changes: ME.answerChanges,
+        confidence_levels: ME.confidenceLevels
+      });
     } catch(e) {}
   }
 
@@ -1907,6 +1991,8 @@ window.switchSection = function(sec) {
   }
 
   async function submitExam(auto = false) {
+    const completedExamId = ME.examId;
+    meFlushFocus(false);
     clearInterval(ME.timerInterval);
     clearInterval(ME.saveInterval);
     ME.timerInterval = null;
@@ -1915,17 +2001,23 @@ window.switchSection = function(sec) {
       const result = await API.submitMockExam(ME.examId, {
         answers: ME.answers,
         time_per_question: ME.timesPerQ,
+        answer_changes: ME.answerChanges,
+        confidence_levels: ME.confidenceLevels,
         auto_submit: auto,
       });
       closeExamFullscreen();
       showToast(`Exam submitted! Score: ${result.score}% (${result.correct}/${result.total})`, 'success');
       loadMockExams();
+      if (!auto && completedExamId) {
+        viewMockResults(completedExamId);
+      }
     } catch(err) {
       showToast(err.message || 'Submit failed', 'error');
     }
   }
 
   function closeExamFullscreen() {
+    meFlushFocus(false);
     document.getElementById('mockExamFullscreen').style.display = 'none';
     document.body.style.overflow = '';
     meDisableAntiCheat();
@@ -1933,6 +2025,11 @@ window.switchSection = function(sec) {
     ME.examId = null;
     ME.questions = [];
     ME.answers = {};
+    ME.timesPerQ = {};
+    ME.answerChanges = {};
+    ME.confidenceLevels = {};
+    ME.focusCurrentQid = null;
+    ME.focusStart = null;
   }
 
   // ANTI-CHEAT FOR MOCK EXAM
@@ -2072,11 +2169,18 @@ window.switchSection = function(sec) {
   function meAutoDisqualify(reason) {
     if (ME.submitted) return;
     ME.submitted = true;
+    meFlushFocus(false);
     clearInterval(ME.timerInterval);
     clearInterval(ME.saveInterval);
     if (window._meTabWarningTimer) clearInterval(window._meTabWarningTimer);
     meDisableAntiCheat();
-    API.submitMockExam(ME.examId, { answers: ME.answers, time_per_question: ME.timesPerQ, auto_submit: true }).catch(()=>{});
+    API.submitMockExam(ME.examId, {
+      answers: ME.answers,
+      time_per_question: ME.timesPerQ,
+      answer_changes: ME.answerChanges,
+      confidence_levels: ME.confidenceLevels,
+      auto_submit: true
+    }).catch(()=>{});
     
     const fs = document.getElementById('mockExamFullscreen');
     if (fs) {
@@ -2164,6 +2268,88 @@ window.switchSection = function(sec) {
         </div>`;
     } catch(err) {
       content.innerHTML = '<div style="color:#f87171;padding:40px;text-align:center">' + (err.message || 'Failed to load results') + '</div>';
+    }
+  }
+
+  async function viewMockResults(examId) {
+    const modal = document.getElementById('mockResultsModal');
+    const content = document.getElementById('mockResultsContent');
+    modal.style.display = 'flex';
+    content.innerHTML = '<div style="color:#86efac;padding:40px;text-align:center">Loading performance dashboard...</div>';
+    try {
+      const [data, insights] = await Promise.all([
+        API.getMockResults(examId),
+        API.getMockInsights(examId),
+      ]);
+      const pct = Number(insights.score || data.score || 0);
+      const passed = !!insights.passed;
+      const benchmark = insights.benchmarking || {};
+      const behavior = insights.behavioral || {};
+      const meta = insights.metacognitive || {};
+      const skillGaps = insights.categorical?.skill_gaps || [];
+      const weakConcepts = insights.categorical?.weak_concepts || [];
+      const studyPath = insights.study_path || [];
+      content.innerHTML = `
+        <div style="position:relative;overflow:hidden;padding:28px;border-radius:26px;background:linear-gradient(135deg,rgba(34,197,94,.16),rgba(14,165,233,.14),rgba(37,99,235,.12));border:1px solid rgba(255,255,255,.08);margin-bottom:24px;text-align:left">
+          <div style="position:absolute;top:-40px;right:-20px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.12) 0%,transparent 70%);pointer-events:none"></div>
+          <div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,.9fr);gap:20px;align-items:center">
+            <div>
+              <div style="font-size:.76rem;letter-spacing:.16em;text-transform:uppercase;color:#bbf7d0;font-weight:800">Post-Exam Growth Dashboard</div>
+              <div style="font-size:1.75rem;font-weight:900;color:#f0fdf4;line-height:1.25;margin-top:10px">${escHtml(insights.exam_title || data.exam_title || 'Mock Exam')}</div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+                <div style="padding:9px 14px;border-radius:999px;background:rgba(255,255,255,.08);color:#f0fdf4;font-size:.82rem;font-weight:800">${pct.toFixed(1)}% score</div>
+                <div style="padding:9px 14px;border-radius:999px;background:${passed ? 'rgba(34,197,94,.16)' : 'rgba(248,113,113,.16)'};color:${passed ? '#86efac' : '#fecaca'};font-size:.82rem;font-weight:800">${passed ? 'Passed' : 'Below pass mark'} • Pass mark ${insights.pass_mark || 50}%</div>
+                <div style="padding:9px 14px;border-radius:999px;background:rgba(59,130,246,.14);color:#bfdbfe;font-size:.82rem;font-weight:800">Better than ${benchmark.percentile || 0}% nationally</div>
+              </div>
+              <div style="margin-top:16px;font-size:.9rem;line-height:1.7;color:#d1fae5">This dashboard stays private and never shows question wording or answer keys, so the mock exam remains secure for future use.</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div style="padding:16px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)"><div style="font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;color:#86efac">Correct</div><div style="font-size:1.65rem;font-weight:900;color:#f0fdf4;margin-top:6px">${data.correct || 0}</div><div style="font-size:.8rem;color:#bbf7d0;margin-top:4px">out of ${data.total || 0}</div></div>
+              <div style="padding:16px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)"><div style="font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;color:#86efac">Percentile</div><div style="font-size:1.65rem;font-weight:900;color:#f0fdf4;margin-top:6px">${benchmark.percentile || 0}th</div><div style="font-size:.8rem;color:#bbf7d0;margin-top:4px">national standing</div></div>
+              <div style="padding:16px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)"><div style="font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;color:#86efac">University Avg</div><div style="font-size:1.65rem;font-weight:900;color:#f0fdf4;margin-top:6px">${Number(benchmark.university_avg || 0).toFixed(1)}%</div><div style="font-size:.8rem;color:#bbf7d0;margin-top:4px">${escHtml(benchmark.university || 'Your university')}</div></div>
+              <div style="padding:16px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)"><div style="font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;color:#86efac">National Avg</div><div style="font-size:1.65rem;font-weight:900;color:#f0fdf4;margin-top:6px">${Number(benchmark.national_avg || 0).toFixed(1)}%</div><div style="font-size:.8rem;color:#bbf7d0;margin-top:4px">all institutions</div></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,.9fr);gap:20px;margin-bottom:20px">
+          <section style="padding:22px;border-radius:22px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);text-align:left">
+            <div style="font-size:1.05rem;font-weight:800;color:#f0fdf4;margin-bottom:16px">Category Skill Gap</div>
+            <div style="display:grid;gap:14px">
+              ${skillGaps.length ? skillGaps.map((item) => `
+                <div style="padding:18px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)">
+                  <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:10px">
+                    <div><div style="font-size:.95rem;font-weight:800;color:#f0fdf4">${escHtml(item.category)}</div><div style="font-size:.76rem;color:#86efac;margin-top:4px">${item.total} question${item.total === 1 ? '' : 's'} sampled</div></div>
+                    <div style="padding:7px 12px;border-radius:999px;background:${item.mastery >= 70 ? 'rgba(34,197,94,.14)' : item.mastery >= 50 ? 'rgba(245,158,11,.14)' : 'rgba(248,113,113,.14)'};color:${item.mastery >= 70 ? '#22c55e' : item.mastery >= 50 ? '#f59e0b' : '#f87171'};font-size:.78rem;font-weight:800">${item.mastery}% mastery</div>
+                  </div>
+                  <div style="height:10px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;margin-bottom:12px"><div style="height:100%;width:${item.mastery}%;background:linear-gradient(90deg,${item.mastery >= 70 ? '#16a34a,#22c55e' : item.mastery >= 50 ? '#d97706,#f59e0b' : '#dc2626,#fb7185'});border-radius:999px"></div></div>
+                  <div style="font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:#bbf7d0;margin-bottom:8px">Conceptual Weakness Alerts</div>
+                  ${(item.top_concepts && item.top_concepts.length) ? item.top_concepts.map(concept => `<div style="font-size:.82rem;color:#d1fae5;line-height:1.6;margin-bottom:4px">• ${escHtml(concept)}</div>`).join('') : '<div style="font-size:.8rem;color:#86efac">No repeated weak concept patterns detected here.</div>'}
+                </div>
+              `).join('') : '<div style="color:#86efac;text-align:center;padding:24px">No category performance data is available yet.</div>'}
+            </div>
+          </section>
+          <section style="padding:22px;border-radius:22px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);text-align:left">
+            <div style="font-size:1.05rem;font-weight:800;color:#f0fdf4;margin-bottom:16px">Benchmarking Snapshot</div>
+            <div style="padding:16px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);margin-bottom:14px">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:.88rem;color:#d1fae5;margin-bottom:10px"><span>Your Score</span><strong style="color:#f0fdf4">${pct.toFixed(1)}%</strong></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:.88rem;color:#d1fae5;margin-bottom:10px"><span>${escHtml(benchmark.university || 'Your University')}</span><strong style="color:#bfdbfe">${Number(benchmark.university_avg || 0).toFixed(1)}%</strong></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:.88rem;color:#d1fae5"><span>National Average</span><strong style="color:#86efac">${Number(benchmark.national_avg || 0).toFixed(1)}%</strong></div>
+            </div>
+            <div style="padding:16px;border-radius:18px;background:${passed ? 'rgba(34,197,94,.08)' : 'rgba(245,158,11,.08)'};border:1px solid ${passed ? 'rgba(34,197,94,.18)' : 'rgba(245,158,11,.18)'};font-size:.87rem;line-height:1.7;color:${passed ? '#d1fae5' : '#fde68a'}">${passed ? `You cleared the pass mark and performed better than ${benchmark.percentile || 0}% of students nationally.` : `You are below the ${insights.pass_mark || 50}% pass mark right now, but the dashboard below highlights the exact categories and concepts to prioritize next.`}</div>
+            ${weakConcepts.length ? `<div style="margin-top:16px"><div style="font-size:.76rem;letter-spacing:.1em;text-transform:uppercase;color:#bbf7d0;margin-bottom:8px">Top Concepts To Revisit</div>${weakConcepts.map(concept => `<div style="padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);font-size:.84rem;color:#f0fdf4;margin-bottom:8px">${escHtml(concept)}</div>`).join('')}</div>` : ''}
+          </section>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:20px;text-align:left">
+          <section style="padding:20px;border-radius:22px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)"><div style="font-size:1rem;font-weight:800;color:#f0fdf4;margin-bottom:14px">Behavioral Insights</div><div style="display:grid;gap:10px"><div style="padding:14px;border-radius:16px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.16)"><div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:#fbbf24">Rushing</div><div style="font-size:1.45rem;font-weight:900;color:#fef3c7;margin-top:6px">${behavior.rushing_errors || 0}</div><div style="font-size:.8rem;color:#fde68a;margin-top:4px">wrong answers with very low time spent</div></div><div style="padding:14px;border-radius:16px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.16)"><div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:#93c5fd">Overthinking</div><div style="font-size:1.45rem;font-weight:900;color:#dbeafe;margin-top:6px">${behavior.overthinking_errors || 0}</div><div style="font-size:.8rem;color:#bfdbfe;margin-top:4px">wrong answers despite spending far above your average time</div></div></div></section>
+          <section style="padding:20px;border-radius:22px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)"><div style="font-size:1rem;font-weight:800;color:#f0fdf4;margin-bottom:14px">Fatigue Analysis</div><div style="padding:16px;border-radius:18px;background:${(behavior.fatigue_drop_pct || 0) >= 10 ? 'rgba(248,113,113,.08)' : 'rgba(34,197,94,.08)'};border:1px solid ${(behavior.fatigue_drop_pct || 0) >= 10 ? 'rgba(248,113,113,.16)' : 'rgba(34,197,94,.16)'}"><div style="font-size:1.75rem;font-weight:900;color:${(behavior.fatigue_drop_pct || 0) >= 10 ? '#fca5a5' : '#86efac'}">${Number(behavior.fatigue_drop_pct || 0).toFixed(1)}%</div><div style="font-size:.82rem;line-height:1.7;color:${(behavior.fatigue_drop_pct || 0) >= 10 ? '#fecaca' : '#d1fae5'};margin-top:8px">${(behavior.fatigue_drop_pct || 0) >= 10 ? 'Your accuracy dipped in the final 25% of the exam. Build endurance with longer timed sets and short refocus routines.' : 'Your late-exam accuracy stayed relatively stable. Endurance was not a major limiting factor here.'}</div></div></section>
+          <section style="padding:20px;border-radius:22px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)"><div style="font-size:1rem;font-weight:800;color:#f0fdf4;margin-bottom:14px">Metacognitive Reflection</div><div style="display:grid;gap:10px"><div style="padding:14px;border-radius:16px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.16)"><div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:#fda4af">False Confidence</div><div style="font-size:1.45rem;font-weight:900;color:#fff1f2;margin-top:6px">${meta.false_confidence || 0}</div><div style="font-size:.8rem;color:#fecdd3;margin-top:4px">${meta.false_confidence_rate || 0}% of your confident answers were wrong</div></div><div style="padding:14px;border-radius:16px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.16)"><div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:#86efac">Uncertain But Right</div><div style="font-size:1.45rem;font-weight:900;color:#ecfdf5;margin-top:6px">${meta.lucky_guesses || 0}</div><div style="font-size:.8rem;color:#bbf7d0;margin-top:4px">${meta.lucky_guess_rate || 0}% of uncertain answers still landed correctly</div></div></div></section>
+        </div>
+        <section style="padding:22px;border-radius:22px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);text-align:left">
+          <div style="font-size:1.05rem;font-weight:800;color:#f0fdf4;margin-bottom:14px">Priority Study Path</div>
+          ${studyPath.length ? `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">${studyPath.map(item => `<div style="padding:18px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)"><div style="font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:#86efac;margin-bottom:8px">${escHtml(item.category)}</div><div style="font-size:1rem;font-weight:800;color:#f0fdf4;margin-bottom:8px">${escHtml(item.content_title)}</div><div style="font-size:.82rem;color:#bbf7d0;line-height:1.65;margin-bottom:12px">${escHtml(item.forum_prompt)}</div><div style="display:flex;gap:10px;flex-wrap:wrap"><a href="${item.content_url}" style="display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:12px;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;text-decoration:none;font-size:.82rem;font-weight:800">Open Learning Resource</a><button onclick="switchSection('network');document.getElementById('mockResultsModal').style.display='none'" style="padding:10px 14px;border-radius:12px;border:1px solid rgba(59,130,246,.22);background:rgba(59,130,246,.08);color:#bfdbfe;font-size:.82rem;font-weight:800;cursor:pointer">Discuss In Forums</button></div></div>`).join('')}</div>` : '<div style="font-size:.85rem;color:#d1fae5">No study priorities are available yet.</div>'}
+        </section>`;
+    } catch(err) {
+      content.innerHTML = '<div style="color:#f87171;padding:40px;text-align:center">' + (err.message || 'Failed to load performance dashboard') + '</div>';
     }
   }
 

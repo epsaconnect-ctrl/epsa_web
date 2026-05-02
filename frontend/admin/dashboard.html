@@ -1618,6 +1618,7 @@ function showAdminToast(msg, type='success') {
         </td>
         <td style="padding:13px 16px;white-space:nowrap">
           <button onclick="openQuestionReview(${q.id})" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:5px 11px;border-radius:8px;font-family:inherit;font-size:.75rem;font-weight:700;cursor:pointer;margin-right:5px">View</button>
+          ${q.status==='approved' ? `<button onclick="openQuestionEdit(${q.id})" style="background:#ecfdf5;color:#166534;border:1px solid #bbf7d0;padding:5px 11px;border-radius:8px;font-family:inherit;font-size:.75rem;font-weight:700;cursor:pointer;margin-right:5px">Edit</button>` : ''}
           ${q.status==='pending' ? `
             <button onclick="approveQuestion(${q.id})" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;padding:5px 11px;border-radius:8px;font-family:inherit;font-size:.75rem;font-weight:700;cursor:pointer;margin-right:5px">Approve</button>
             <button onclick="rejectQuestion(${q.id})" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:5px 11px;border-radius:8px;font-family:inherit;font-size:.75rem;font-weight:700;cursor:pointer">Reject</button>
@@ -1686,7 +1687,8 @@ function showAdminToast(msg, type='success') {
       ? `<button class="btn btn-ghost" onclick="closeQuestionReview()">Close</button>
          <button class="btn btn-primary" style="background:#dc2626;" onclick="rejectQuestionFromModal(${question.id})">Reject</button>
          <button class="btn btn-primary" onclick="approveQuestionFromModal(${question.id})">Approve</button>`
-      : `<button class="btn btn-primary" onclick="closeQuestionReview()">Close</button>`;
+      : `<button class="btn btn-ghost" onclick="closeQuestionReview()">Close</button>
+         <button class="btn btn-primary" onclick="openQuestionEdit(${question.id})">Edit Approved Question</button>`;
     modal.classList.add('active');
   }
   window.openQuestionReview = openQuestionReview;
@@ -1707,6 +1709,65 @@ function showAdminToast(msg, type='success') {
     closeQuestionReview();
   }
   window.rejectQuestionFromModal = rejectQuestionFromModal;
+
+  function openQuestionEdit(id) {
+    const question = findQuestionForReview(id);
+    const modal = document.getElementById('questionReviewModal');
+    const body = document.getElementById('questionReviewBody');
+    const footer = document.getElementById('questionReviewFooter');
+    if (!modal || !body || !footer || !question) return;
+    body.innerHTML = `
+      <div style="background:linear-gradient(135deg,rgba(34,197,94,.14),rgba(14,116,144,.12));border:1px solid rgba(34,197,94,.18);border-radius:18px;padding:22px;margin-bottom:18px;">
+        <div style="font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:#bbf7d0;margin-bottom:8px;">Approved Question Editor</div>
+        <div style="font-size:1.05rem;font-weight:800;line-height:1.6;color:#f0fdf4;">Update the category, topic, subtopic, or question content without leaving the review workspace.</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Category</label><input id="qe-category" value="${escAdminAttr(question.subject_category || '')}" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit"></div>
+        <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Bloom Level</label><input id="qe-bloom" value="${escAdminAttr(question.bloom_level || '')}" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit"></div>
+        <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Title / Topic</label><input id="qe-topic" value="${escAdminAttr(question.topic || '')}" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit"></div>
+        <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Sub-title / Subtopic</label><input id="qe-subtopic" value="${escAdminAttr(question.subtopic || '')}" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit"></div>
+        <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Difficulty</label><input id="qe-difficulty" value="${escAdminAttr(question.difficulty || '')}" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit"></div>
+        <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Correct Index</label><input id="qe-correct" type="number" min="0" max="3" value="${Number(question.correct_idx || 0)}" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit"></div>
+      </div>
+      <div style="margin-bottom:14px;"><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Question Text</label><textarea id="qe-question" rows="4" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit;resize:vertical">${escAdminHtml(question.question_text || '')}</textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Option A</label><textarea id="qe-opt-a" rows="3" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit;resize:vertical">${escAdminHtml(question.option_a || '')}</textarea></div>
+        <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Option B</label><textarea id="qe-opt-b" rows="3" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit;resize:vertical">${escAdminHtml(question.option_b || '')}</textarea></div>
+        <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Option C</label><textarea id="qe-opt-c" rows="3" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit;resize:vertical">${escAdminHtml(question.option_c || '')}</textarea></div>
+        <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Option D</label><textarea id="qe-opt-d" rows="3" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit;resize:vertical">${escAdminHtml(question.option_d || '')}</textarea></div>
+      </div>
+      <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Explanation</label><textarea id="qe-explanation" rows="4" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit;resize:vertical">${escAdminHtml(question.explanation || '')}</textarea></div>
+    `;
+    footer.innerHTML = `<button class="btn btn-ghost" onclick="openQuestionReview(${question.id})">Back</button><button class="btn btn-primary" onclick="saveQuestionEdit(${question.id})">Save Changes</button>`;
+    modal.classList.add('active');
+  }
+  window.openQuestionEdit = openQuestionEdit;
+
+  async function saveQuestionEdit(id) {
+    const payload = {
+      subject_category: document.getElementById('qe-category')?.value?.trim() || '',
+      topic: document.getElementById('qe-topic')?.value?.trim() || '',
+      subtopic: document.getElementById('qe-subtopic')?.value?.trim() || '',
+      bloom_level: document.getElementById('qe-bloom')?.value?.trim() || '',
+      difficulty: document.getElementById('qe-difficulty')?.value?.trim() || '',
+      question_text: document.getElementById('qe-question')?.value?.trim() || '',
+      option_a: document.getElementById('qe-opt-a')?.value?.trim() || '',
+      option_b: document.getElementById('qe-opt-b')?.value?.trim() || '',
+      option_c: document.getElementById('qe-opt-c')?.value?.trim() || '',
+      option_d: document.getElementById('qe-opt-d')?.value?.trim() || '',
+      correct_idx: Number(document.getElementById('qe-correct')?.value || 0),
+      explanation: document.getElementById('qe-explanation')?.value?.trim() || '',
+    };
+    try {
+      await API.adminUpdateQuestion(id, payload);
+      showToast('Approved question updated.', 'success');
+      await loadAdminQuestions();
+      openQuestionReview(id);
+    } catch (e) {
+      showToast(e.message, 'error');
+    }
+  }
+  window.saveQuestionEdit = saveQuestionEdit;
 
   async function approveQuestion(id) {
     try {
@@ -2328,6 +2389,10 @@ function showAdminToast(msg, type='success') {
   // Helpers
   function escAdminHtml(s) {
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function escAdminAttr(s) {
+    return escAdminHtml(s).replace(/"/g, '&quot;');
   }
 
   function renderAdminPagination(id, page, pages, cb) {

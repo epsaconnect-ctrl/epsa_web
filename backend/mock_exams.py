@@ -174,7 +174,9 @@ def list_mock_exams():
         row["can_start"] = is_open and not row["my_status"]
         row["can_continue"] = is_open and row["my_status"] == "in_progress"
         row["is_submitted"] = row["my_status"] in ("submitted", "auto_submitted")
-        row["results_viewable"] = row["is_submitted"] and row["results_released"] == 1
+        # Student performance insights should remain available immediately after
+        # submission without exposing item-level answer content.
+        row["results_viewable"] = bool(row["is_submitted"])
         result.append(row)
 
     return jsonify({"exams": result})
@@ -242,6 +244,9 @@ def start_mock_exam(exam_id):
                 "elapsed_secs": int(max(0, elapsed_secs)),
                 "remaining_secs": int(max(0, remaining_secs)),
                 "answers": json.loads(existing["answers"] or "{}"),
+                "time_per_question": json.loads(existing["time_per_question"] or "{}"),
+                "answer_changes": json.loads(existing["answer_changes"] or "{}"),
+                "confidence_levels": json.loads(existing["confidence_levels"] or "{}"),
                 "resuming": True,
             })
 
@@ -292,6 +297,9 @@ def start_mock_exam(exam_id):
         "elapsed_secs": 0,
         "remaining_secs": int(max(0, remaining_secs)),
         "answers": {},
+        "time_per_question": {},
+        "answer_changes": {},
+        "confidence_levels": {},
         "resuming": False,
     })
 
@@ -440,17 +448,10 @@ def submit_mock_exam(exam_id):
         )
         db.commit()
 
-        # Trigger analytics update inline (Pro Analytics Supabase Optimization)
-        if getattr(db, 'engine', 'sqlite') == 'postgres':
-            try:
-                db.execute("SELECT update_pro_analytics(?)", (sub["id"],))
-            except Exception as e:
-                print(f"[Supabase RPC Error] {e}")
-        else:
-            # Fallback for local SQLite
-            _update_question_analytics(db, exam_id, qids, current_answers, current_times, current_changes, opt_order, score)
-            _update_university_stats_fallback(db, sub["user_id"], exam_id, qids, current_answers, current_times, opt_order)
-            
+        # Update pre-aggregated analytics tables immediately on completion so
+        # dashboards do not have to scan raw submission logs.
+        _update_question_analytics(db, exam_id, qids, current_answers, current_times, current_changes, opt_order, score)
+        _update_university_stats_fallback(db, sub["user_id"], exam_id, qids, current_answers, current_times, opt_order)
         db.commit()
     finally:
         db.close()
@@ -483,6 +484,148 @@ def _auto_classify(difficulty_score):
     elif difficulty_score < 0.65:
         return "medium"
     return "hard"
+
+
+def _empty_option_counts():
+    return {"a": 0, "b": 0, "c": 0, "d": 0}
+
+
+def _count_selected_option(original_idx):
+    counts = _empty_option_counts()
+    mapping = {0: "a", 1: "b", 2: "c", 3: "d"}
+    key = mapping.get(original_idx)
+    if key:
+        counts[key] = 1
+    return counts
+
+
+def _safe_rate(numerator, denominator):
+    return round(numerator / denominator, 4) if denominator else 0.0
+
+
+def _refresh_question_stats(db, question_id):
+    rows = db.execute(
+        """
+        SELECT times_presented, times_correct, avg_time_seconds, avg_time_correct, avg_time_incorrect,
+               doubt_count, difficulty_score, high_variance_flag, top_group_correct, bottom_group_correct,
+               option_a_selections, option_b_selections, option_c_selections, option_d_selections
+        FROM question_analytics
+        WHERE question_id=?
+        """,
+        (question_id,)
+    ).fetchall()
+    if not rows:
+        return
+
+    total_presented = 0
+    total_correct = 0
+    total_doubt = 0
+    total_time = 0.0
+    total_time_correct = 0.0
+    total_time_incorrect = 0.0
+    total_correct_weight = 0
+    total_incorrect_weight = 0
+    diff_weight = 0
+    diff_total = 0.0
+    top_total = 0.0
+    bottom_total = 0.0
+    top_count = 0
+    bottom_count = 0
+    high_variance = 0
+    option_counts = _empty_option_counts()
+
+    for row in rows:
+        presented = int(row["times_presented"] or 0)
+        correct = int(row["times_correct"] or 0)
+        incorrect = max(0, presented - correct)
+        total_presented += presented
+        total_correct += correct
+        total_doubt += int(row["doubt_count"] or 0)
+        total_time += float(row["avg_time_seconds"] or 0) * presented
+        total_time_correct += float(row["avg_time_correct"] or 0) * correct
+        total_time_incorrect += float(row["avg_time_incorrect"] or 0) * incorrect
+        total_correct_weight += correct
+        total_incorrect_weight += incorrect
+        if row["difficulty_score"] is not None:
+            diff_total += float(row["difficulty_score"]) * max(presented, 1)
+            diff_weight += max(presented, 1)
+        if row["top_group_correct"] is not None:
+            top_total += float(row["top_group_correct"] or 0)
+            top_count += 1
+        if row["bottom_group_correct"] is not None:
+            bottom_total += float(row["bottom_group_correct"] or 0)
+            bottom_count += 1
+        high_variance = max(high_variance, int(row["high_variance_flag"] or 0))
+        option_counts["a"] += int(row["option_a_selections"] or 0)
+        option_counts["b"] += int(row["option_b_selections"] or 0)
+        option_counts["c"] += int(row["option_c_selections"] or 0)
+        option_counts["d"] += int(row["option_d_selections"] or 0)
+
+    payload = {
+        "times_presented": total_presented,
+        "times_correct": total_correct,
+        "correctness_rate": _safe_rate(total_correct, total_presented),
+        "avg_time_seconds": round(total_time / total_presented, 2) if total_presented else 0.0,
+        "avg_time_correct": round(total_time_correct / total_correct_weight, 2) if total_correct_weight else 0.0,
+        "avg_time_incorrect": round(total_time_incorrect / total_incorrect_weight, 2) if total_incorrect_weight else 0.0,
+        "doubt_count": total_doubt,
+        "difficulty_score": round(diff_total / diff_weight, 4) if diff_weight else None,
+        "high_variance_flag": high_variance,
+        "top_group_correct": round(top_total / top_count, 4) if top_count else 0.0,
+        "bottom_group_correct": round(bottom_total / bottom_count, 4) if bottom_count else 0.0,
+        "option_a_selections": option_counts["a"],
+        "option_b_selections": option_counts["b"],
+        "option_c_selections": option_counts["c"],
+        "option_d_selections": option_counts["d"],
+    }
+
+    db.execute(
+        """
+        INSERT INTO question_stats (
+            question_id, times_presented, times_correct, correctness_rate,
+            avg_time_seconds, avg_time_correct, avg_time_incorrect,
+            doubt_count, difficulty_score, high_variance_flag,
+            top_group_correct, bottom_group_correct,
+            option_a_selections, option_b_selections, option_c_selections, option_d_selections,
+            updated_at
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,DATETIME('now'))
+        ON CONFLICT(question_id) DO UPDATE SET
+            times_presented=excluded.times_presented,
+            times_correct=excluded.times_correct,
+            correctness_rate=excluded.correctness_rate,
+            avg_time_seconds=excluded.avg_time_seconds,
+            avg_time_correct=excluded.avg_time_correct,
+            avg_time_incorrect=excluded.avg_time_incorrect,
+            doubt_count=excluded.doubt_count,
+            difficulty_score=excluded.difficulty_score,
+            high_variance_flag=excluded.high_variance_flag,
+            top_group_correct=excluded.top_group_correct,
+            bottom_group_correct=excluded.bottom_group_correct,
+            option_a_selections=excluded.option_a_selections,
+            option_b_selections=excluded.option_b_selections,
+            option_c_selections=excluded.option_c_selections,
+            option_d_selections=excluded.option_d_selections,
+            updated_at=DATETIME('now')
+        """,
+        (
+            question_id,
+            payload["times_presented"],
+            payload["times_correct"],
+            payload["correctness_rate"],
+            payload["avg_time_seconds"],
+            payload["avg_time_correct"],
+            payload["avg_time_incorrect"],
+            payload["doubt_count"],
+            payload["difficulty_score"],
+            payload["high_variance_flag"],
+            payload["top_group_correct"],
+            payload["bottom_group_correct"],
+            payload["option_a_selections"],
+            payload["option_b_selections"],
+            payload["option_c_selections"],
+            payload["option_d_selections"],
+        )
+    )
 
 
 def _update_question_analytics(db, exam_id, qids, answers, time_per_question, answer_changes, opt_order, submission_score):
@@ -523,13 +666,15 @@ def _update_question_analytics(db, exam_id, qids, answers, time_per_question, an
         is_high_doubt = 1 if change_count >= 3 else 0
 
         was_correct = 0
+        selected_original_idx = None
         if student_answer is not None:
             perm = opt_order.get(qid_str, [0, 1, 2, 3])
             try:
-                original_idx = perm[int(student_answer)]
-                was_correct = 1 if original_idx == q["correct_idx"] else 0
+                selected_original_idx = perm[int(student_answer)]
+                was_correct = 1 if selected_original_idx == q["correct_idx"] else 0
             except (IndexError, ValueError, TypeError):
                 pass
+        option_bump = _count_selected_option(selected_original_idx)
 
         existing = db.execute(
             "SELECT * FROM question_analytics WHERE question_id=? AND mock_exam_id=?",
@@ -562,6 +707,10 @@ def _update_question_analytics(db, exam_id, qids, answers, time_per_question, an
 
             # Doubt count
             new_doubt = (existing["doubt_count"] or 0) + is_high_doubt
+            new_option_a = int(existing["option_a_selections"] or 0) + option_bump["a"]
+            new_option_b = int(existing["option_b_selections"] or 0) + option_bump["b"]
+            new_option_c = int(existing["option_c_selections"] or 0) + option_bump["c"]
+            new_option_d = int(existing["option_d_selections"] or 0) + option_bump["d"]
 
             # Difficulty score
             effective_max = max(max_global_time, new_avg_time, 1.0)
@@ -572,12 +721,16 @@ def _update_question_analytics(db, exam_id, qids, answers, time_per_question, an
                 UPDATE question_analytics
                 SET times_presented=?, times_correct=?, correctness_rate=?,
                     avg_time_seconds=?, avg_time_correct=?, avg_time_incorrect=?,
-                    doubt_count=?, difficulty_score=?, updated_at=DATETIME('now')
+                    doubt_count=?, difficulty_score=?,
+                    option_a_selections=?, option_b_selections=?, option_c_selections=?, option_d_selections=?,
+                    updated_at=DATETIME('now')
                 WHERE question_id=? AND mock_exam_id=?
                 """,
                 (new_presented, new_correct, new_rate,
                  new_avg_time, new_avg_correct, new_avg_incorrect,
-                 new_doubt, diff_score, qid, exam_id)
+                 new_doubt, diff_score,
+                 new_option_a, new_option_b, new_option_c, new_option_d,
+                 qid, exam_id)
             )
 
             # Auto-reclassify difficulty after enough samples
@@ -591,6 +744,7 @@ def _update_question_analytics(db, exam_id, qids, answers, time_per_question, an
             # Item Discrimination Index: update high_variance_flag
             # Recompute based on stored top/bottom group correctness
             _update_item_discrimination(db, exam_id, qid, new_presented)
+            _refresh_question_stats(db, qid)
 
         else:
             # First time this question appears in this exam
@@ -604,13 +758,17 @@ def _update_question_analytics(db, exam_id, qids, answers, time_per_question, an
                 INSERT INTO question_analytics
                     (question_id, mock_exam_id, times_presented, times_correct, correctness_rate,
                      avg_time_seconds, avg_time_correct, avg_time_incorrect,
-                     doubt_count, difficulty_score, updated_at)
-                VALUES (?,?,?,?,?,?,?,?,?,?,DATETIME('now'))
+                     doubt_count, difficulty_score,
+                     option_a_selections, option_b_selections, option_c_selections, option_d_selections,
+                     updated_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,DATETIME('now'))
                 """,
                 (qid, exam_id, 1, was_correct, float(was_correct),
                  time_spent, avg_t_c, avg_t_i,
-                 is_high_doubt, diff_score)
+                 is_high_doubt, diff_score,
+                 option_bump["a"], option_bump["b"], option_bump["c"], option_bump["d"])
             )
+            _refresh_question_stats(db, qid)
 
 
 def _update_item_discrimination(db, exam_id, question_id, total_submissions):
@@ -1165,15 +1323,19 @@ def get_post_exam_insights(exam_id):
             f"SELECT id, subject_category, topic, subtopic, correct_idx FROM question_bank WHERE id IN ({ph})",
             qids
         ).fetchall()
+        question_map = {q["id"]: q for q in questions}
+        ordered_questions = [question_map[qid] for qid in qids if qid in question_map]
+
+        exam = db.execute("SELECT id, title FROM mock_exams WHERE id=?", (exam_id,)).fetchone()
 
         # 1. Categorical Performance Profile
         cat_stats = {}
         missed_concepts = {}
-        for q in questions:
+        for q in ordered_questions:
             cat = q["subject_category"] or "General"
             topic = q["topic"] or q["subtopic"] or "General Psychology"
             if cat not in cat_stats:
-                cat_stats[cat] = {"total": 0, "correct": 0}
+                cat_stats[cat] = {"total": 0, "correct": 0, "missed_topics": {}}
             
             cat_stats[cat]["total"] += 1
             qid_str = str(q["id"])
@@ -1191,11 +1353,19 @@ def get_post_exam_insights(exam_id):
             
             if not is_correct:
                 missed_concepts[topic] = missed_concepts.get(topic, 0) + 1
+                cat_stats[cat]["missed_topics"][topic] = cat_stats[cat]["missed_topics"].get(topic, 0) + 1
 
         skill_gaps = []
         for cat, data in cat_stats.items():
             rate = int(round(data["correct"] / data["total"] * 100)) if data["total"] else 0
-            skill_gaps.append({"category": cat, "mastery": rate, "total": data["total"]})
+            top_topics = sorted(data["missed_topics"].items(), key=lambda item: (-item[1], item[0]))[:3]
+            skill_gaps.append({
+                "category": cat,
+                "mastery": rate,
+                "total": data["total"],
+                "top_concepts": [topic_name for topic_name, _ in top_topics],
+            })
+        skill_gaps.sort(key=lambda item: (item["mastery"], item["category"]))
         
         top_weaknesses = sorted(missed_concepts.items(), key=lambda x: -x[1])[:3]
         weak_concepts = [w[0] for w in top_weaknesses]
@@ -1238,7 +1408,7 @@ def get_post_exam_insights(exam_id):
         total_confident = 0
         total_uncertain = 0
 
-        for i, q in enumerate(questions):
+        for i, q in enumerate(ordered_questions):
             qid_str = str(q["id"])
             ans = answers.get(qid_str)
             t = float(times.get(qid_str, 0.0))
@@ -1279,10 +1449,29 @@ def get_post_exam_insights(exam_id):
 
         # 5. Automated Study Path
         weakest_cats = sorted(skill_gaps, key=lambda x: x["mastery"])[:2]
-        study_path = [w["category"] for w in weakest_cats]
+        content_links = {
+            "Clinical Psychology": {"title": "Clinical case formulation review", "url": "/ecosystem.html"},
+            "Developmental Psychology": {"title": "Developmental milestones primer", "url": "/history.html"},
+            "Research Methods & Statistics": {"title": "Research methods refresher", "url": "/ecosystem.html"},
+            "Ethics": {"title": "Ethical decision-making workshop", "url": "/get-involved.html"},
+            "General Psychology": {"title": "General psychology foundations", "url": "/index.html"},
+        }
+        study_path = []
+        for item in weakest_cats:
+            resource = content_links.get(item["category"], {"title": f"{item['category']} study guide", "url": "/ecosystem.html"})
+            study_path.append({
+                "category": item["category"],
+                "mastery": item["mastery"],
+                "content_title": resource["title"],
+                "content_url": resource["url"],
+                "forum_prompt": f"Peer-review discussion: clarify core ideas in {item['category']}",
+            })
 
         return jsonify({
+            "exam_title": exam["title"] if exam else "Mock Exam",
             "score": my_score,
+            "passed": bool(my_score >= 50),
+            "pass_mark": 50,
             "categorical": {
                 "skill_gaps": skill_gaps,
                 "weak_concepts": weak_concepts
@@ -1302,7 +1491,9 @@ def get_post_exam_insights(exam_id):
                 "false_confidence": false_confidence,
                 "lucky_guesses": lucky_guesses,
                 "total_confident": total_confident,
-                "total_uncertain": total_uncertain
+                "total_uncertain": total_uncertain,
+                "false_confidence_rate": round((false_confidence / total_confident) * 100, 1) if total_confident else 0,
+                "lucky_guess_rate": round((lucky_guesses / total_uncertain) * 100, 1) if total_uncertain else 0,
             },
             "study_path": study_path
         })

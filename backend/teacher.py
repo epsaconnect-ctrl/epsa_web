@@ -419,6 +419,64 @@ def submit_question():
     return jsonify({"message": "Question submitted for review", "id": qid}), 201
 
 
+@teacher_bp.route("/questions/<int:qid>", methods=["PUT"])
+@jwt_required()
+def update_my_question(qid):
+    uid = get_jwt_identity()
+    data = request.json or {}
+    fields = [
+        "subject_category", "topic", "subtopic", "bloom_level", "difficulty",
+        "question_text", "option_a", "option_b", "option_c", "option_d",
+        "correct_idx", "explanation",
+    ]
+    updates = {field: data[field] for field in fields if field in data}
+    if not updates:
+        return jsonify({"error": "No fields to update"}), 400
+
+    if "subject_category" in updates and updates["subject_category"] not in PSYCHOLOGY_CATEGORIES:
+        return jsonify({"error": "Invalid subject category"}), 400
+    if "bloom_level" in updates and updates["bloom_level"] not in BLOOM_LEVELS:
+        return jsonify({"error": "Invalid Bloom's level"}), 400
+    if "difficulty" in updates and updates["difficulty"] not in DIFFICULTY_LEVELS:
+        return jsonify({"error": "Invalid difficulty level"}), 400
+    if "correct_idx" in updates:
+        try:
+            updates["correct_idx"] = int(updates["correct_idx"])
+            if updates["correct_idx"] not in (0, 1, 2, 3):
+                raise ValueError
+        except (TypeError, ValueError):
+            return jsonify({"error": "correct_idx must be 0, 1, 2, or 3"}), 400
+
+    for key in ("question_text", "option_a", "option_b", "option_c", "option_d", "topic", "subtopic", "explanation"):
+        if key in updates and isinstance(updates[key], str):
+            updates[key] = updates[key].strip()
+
+    db = get_db()
+    try:
+        _require_teacher(db, uid)
+        row = db.execute(
+            "SELECT id, status FROM question_bank WHERE id=? AND submitted_by=?",
+            (qid, uid)
+        ).fetchone()
+        if not row:
+            return jsonify({"error": "Question not found"}), 404
+        if (row["status"] or "pending") != "approved":
+            return jsonify({"error": "Only approved questions can be edited from the teacher portal"}), 403
+
+        set_clause = ", ".join(f"{key}=?" for key in updates)
+        db.execute(
+            f"UPDATE question_bank SET {set_clause}, updated_at=DATETIME('now') WHERE id=?",
+            list(updates.values()) + [qid]
+        )
+        db.commit()
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 403
+    finally:
+        db.close()
+
+    return jsonify({"message": "Approved question updated"})
+
+
 # ── Teacher: bulk CSV upload ───────────────────────────────────────────────────
 
 @teacher_bp.route("/questions/bulk", methods=["POST"])
