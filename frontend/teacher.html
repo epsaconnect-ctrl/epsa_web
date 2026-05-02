@@ -475,7 +475,9 @@
             <tr>
               <th>#</th>
               <th>Question</th>
-              <th>Category</th>
+              <th>Theme</th>
+              <th>Course</th>
+              <th>Learning Outcome</th>
               <th>Bloom's</th>
               <th>Difficulty</th>
               <th>Status</th>
@@ -608,7 +610,7 @@ Repeat the same block for the next question.</div>
             <tr>
               <th>#</th>
               <th>Question</th>
-              <th>Category</th>
+              <th>Theme</th>
               <th>Shown</th>
               <th>Accuracy</th>
               <th>⏱ Correct</th>
@@ -1156,7 +1158,7 @@ async function loadMyQuestions(page = myQuestionsPage) {
   const status = document.getElementById('filterStatus').value;
   const cat = document.getElementById('filterCategory').value;
   const tbody = document.getElementById('questionsTbody');
-  tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:32px">Loading...</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:32px">Loading...</td></tr>`;
   try {
     const params = new URLSearchParams({ status, page });
     if (cat) params.append('category', cat);
@@ -1186,7 +1188,7 @@ function renderQuestionSummary(questions) {
 function renderQuestionsTable(questions) {
   const tbody = document.getElementById('questionsTbody');
   if (!questions.length) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px"><div class="empty-state" style="padding:0"><h3>No questions yet</h3><p>Submit your first question to get started.</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:40px"><div class="empty-state" style="padding:0"><h3>No questions yet</h3><p>Submit your first question to get started.</p></div></td></tr>`;
     renderQuestionSummary([]);
     return;
   }
@@ -1195,9 +1197,10 @@ function renderQuestionsTable(questions) {
       <td style="color:var(--text-muted)">${q.id}</td>
       <td>
         <div class="q-text">${escHtml(q.question_text)}</div>
-        <div style="font-size:.74rem;color:var(--text-dim);margin-top:6px">${escHtml(q.topic || 'No topic')} | ${escHtml(q.subtopic || 'No subtopic')}</div>
       </td>
       <td style="color:var(--text-muted);font-size:.8rem">${escHtml(q.subject_category || '-')}</td>
+      <td style="font-size:.8rem">${escHtml(q.topic || '-')}</td>
+      <td style="font-size:.8rem">${escHtml(q.subtopic || '-')}</td>
       <td style="font-size:.8rem">${escHtml(q.bloom_level || '-')}</td>
       <td><span class="badge badge-${q.difficulty || 'medium'}">${escHtml(q.difficulty || 'medium')}</span></td>
       <td><span class="badge badge-${q.status}">${escHtml(q.status)}</span></td>
@@ -1243,9 +1246,9 @@ function openQuestionDetail(id) {
       </div>
     </div>
     <div class="review-grid">
-      <div class="cell"><div class="k">Category</div><div class="v">${escHtml(question.subject_category || '-')}</div></div>
-      <div class="cell"><div class="k">Topic</div><div class="v">${escHtml(question.topic || '-')}</div></div>
-      <div class="cell"><div class="k">Subtopic</div><div class="v">${escHtml(question.subtopic || '-')}</div></div>
+      <div class="cell"><div class="k">Theme</div><div class="v">${escHtml(question.subject_category || '-')}</div></div>
+      <div class="cell"><div class="k">Course</div><div class="v">${escHtml(question.topic || '-')}</div></div>
+      <div class="cell"><div class="k">Learning Outcome</div><div class="v">${escHtml(question.subtopic || '-')}</div></div>
       <div class="cell"><div class="k">Bloom Level</div><div class="v">${escHtml(question.bloom_level || '-')}</div></div>
       <div class="cell"><div class="k">Difficulty</div><div class="v">${escHtml(question.difficulty || '-')}</div></div>
       <div class="cell"><div class="k">Submitted</div><div class="v">${question.created_at ? new Date(question.created_at).toLocaleString() : '-'}</div></div>
