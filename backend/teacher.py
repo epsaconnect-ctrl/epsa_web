@@ -73,7 +73,8 @@ MAX_DOCUMENT_UPLOAD_BYTES = 8 * 1024 * 1024
 
 
 def _normalize_bulk_question(raw):
-    q = {str(k).strip().lower(): v for k, v in (raw or {}).items()}
+    # Normalize keys to lowercase and strip whitespace
+    q = {str(k).strip().lower().replace(" ", "_"): v for k, v in (raw or {}).items()}
     
     # Map new names to old internal names if present
     if "theme" in q and "subject_category" not in q:
@@ -86,36 +87,104 @@ def _normalize_bulk_question(raw):
     required = ["subject_category", "question_text", "option_a", "option_b", "option_c", "option_d", "correct_idx"]
     for field in required:
         if not q.get(field) and q.get(field) != 0:
-            # Friendly error for required fields using new naming if possible
-            if field == "subject_category" and "theme" not in q:
-                raise ValueError("Missing 'Theme' column")
+            if field == "subject_category": raise ValueError("Missing 'Theme' or 'subject_category' column")
             raise ValueError(f"Missing {field}")
-            
-    course = str(q.get("topic", "")).strip()
-    outcome = str(q.get("subtopic", "")).strip()
-    is_valid, err = validate_taxonomy(str(q["subject_category"]).strip(), course, outcome)
+
+    # Robust Taxonomy Resolution
+    theme_in = str(q["subject_category"]).strip()
+    course_in = str(q.get("topic", "")).strip()
+    outcome_in = str(q.get("subtopic", "")).strip()
+
+    resolved_theme, resolved_course, resolved_outcome = theme_in, course_in, outcome_in
+    theme_match = None
+    
+    # 1. Case-insensitive Theme Match
+    for t in THEME_COURSE_OUTCOMES:
+        if t.lower() == theme_in.lower():
+            theme_match = t
+            break
+    
+    if not theme_match:
+        raise ValueError(f"Invalid theme: '{theme_in}'. Must be one of: {', '.join(THEME_COURSE_OUTCOMES.keys())}")
+    
+    resolved_theme = theme_match
+    
+    # 2. Try to find the outcome/course in this theme
+    found = False
+    # Check if 'outcome_in' matches any real outcome in this theme
+    for c, outcomes in THEME_COURSE_OUTCOMES[theme_match].items():
+        for o in outcomes:
+            if o.lower() == outcome_in.lower() or (outcome_in and outcome_in.lower() in o.lower()):
+                resolved_course = c
+                resolved_outcome = o
+                found = True
+                break
+        if found: break
+    
+    if not found:
+        # Check if 'course_in' matches any real outcome or course
+        for c, outcomes in THEME_COURSE_OUTCOMES[theme_match].items():
+            if c.lower() == course_in.lower() or (course_in and course_in.lower() in c.lower()):
+                resolved_course = c
+                # If outcome is invalid, pick the first one as a fallback or keep it if it's just a casing issue
+                found_o = False
+                for o in outcomes:
+                    if o.lower() == outcome_in.lower():
+                        resolved_outcome = o
+                        found_o = True
+                        break
+                if not found_o and outcomes:
+                    resolved_outcome = outcomes[0]
+                found = True
+                break
+    
+    if not found:
+        # Last ditch: check if course_in was actually the outcome
+        for c, outcomes in THEME_COURSE_OUTCOMES[theme_match].items():
+            for o in outcomes:
+                if o.lower() == course_in.lower():
+                    resolved_course = c
+                    resolved_outcome = o
+                    found = True
+                    break
+            if found: break
+
+    # Final validation check
+    is_valid, err = validate_taxonomy(resolved_theme, resolved_course, resolved_outcome)
     if not is_valid:
-        raise ValueError(err)
+        raise ValueError(f"{err} (Input: Theme='{theme_in}', Course='{course_in}', Outcome='{outcome_in}')")
+
+    # Finalize q
+    q["subject_category"] = resolved_theme
+    q["topic"] = resolved_course
+    q["subtopic"] = resolved_outcome
+    
     correct_idx = q["correct_idx"]
     if isinstance(correct_idx, str):
         cleaned = correct_idx.strip().upper()
         if cleaned in ("A", "B", "C", "D"):
             correct_idx = {"A": 0, "B": 1, "C": 2, "D": 3}[cleaned]
         else:
-            correct_idx = int(cleaned)
-    correct_idx = int(correct_idx)
-    if correct_idx not in (0, 1, 2, 3):
+            try: correct_idx = int(cleaned)
+            except: raise ValueError(f"Invalid correct_idx: {cleaned}")
+    q["correct_idx"] = int(correct_idx)
+    if q["correct_idx"] not in (0, 1, 2, 3):
         raise ValueError("correct_idx must be 0-3 or A-D")
-    q["correct_idx"] = correct_idx
-    q["bloom_level"] = q.get("bloom_level") or "Remembering"
+
+    q["bloom_level"] = str(q.get("bloom_level") or "Remembering").strip().capitalize()
     if q["bloom_level"] not in BLOOM_LEVELS:
-        raise ValueError(f"Invalid bloom_level: {q['bloom_level']}")
+        # Fuzzy match bloom level
+        for b in BLOOM_LEVELS:
+            if b.lower() == q["bloom_level"].lower():
+                q["bloom_level"] = b
+                break
+        else:
+            q["bloom_level"] = "Remembering"
+            
     q["difficulty"] = str(q.get("difficulty") or "medium").strip().lower()
     if q["difficulty"] not in DIFFICULTY_LEVELS:
-        raise ValueError(f"Invalid difficulty: {q['difficulty']}")
-    q["subject_category"] = str(q["subject_category"]).strip()
-    q["topic"] = course
-    q["subtopic"] = outcome
+        q["difficulty"] = "medium"
+        
     return q
 
 
