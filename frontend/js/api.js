@@ -448,6 +448,7 @@ const API = {
   async adminListQuestions(params={})           { return this.request('/teacher/admin/questions?' + new URLSearchParams(params)); },
   async adminGetQuestionBlueprintSummary()      { return this.request('/teacher/admin/question-blueprint-summary'); },
   async adminApproveQuestion(id)                { return this.request(`/teacher/admin/questions/${id}/approve`, { method: 'POST' }); },
+  async adminBulkApproveQuestions()             { return this.request('/teacher/admin/questions/bulk-approve', { method: 'POST' }); },
   async adminRejectQuestion(id, notes)          { return this.request(`/teacher/admin/questions/${id}/reject`, { method: 'POST', body: { notes } }); },
   async adminUpdateQuestion(id, body)           { return this.request(`/teacher/admin/questions/${id}`, { method: 'PUT', body }); },
 

@@ -965,6 +965,24 @@ def admin_approve_question(qid):
     return jsonify({"message": "Question approved"})
 
 
+@teacher_bp.route("/admin/questions/bulk-approve", methods=["POST"])
+@jwt_required()
+def admin_bulk_approve_questions():
+    uid = get_jwt_identity()
+    db = get_db()
+    try:
+        _require_admin(db, uid)
+        cur = db.execute(
+            "UPDATE question_bank SET status='approved', reviewed_by=?, reviewed_at=DATETIME('now'), updated_at=DATETIME('now') WHERE COALESCE(status, 'pending')='pending'",
+            (uid,)
+        )
+        approved_count = cur.rowcount
+        db.commit()
+    finally:
+        db.close()
+    return jsonify({"message": f"{approved_count} pending questions approved in bulk.", "count": approved_count})
+
+
 @teacher_bp.route("/admin/questions/<int:qid>/reject", methods=["POST"])
 @jwt_required()
 def admin_reject_question(qid):
