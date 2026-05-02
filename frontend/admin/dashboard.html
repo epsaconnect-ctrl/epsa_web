@@ -1083,7 +1083,7 @@
   </div>
 </div>
 
-<script src="../js/api.js?v=2.1"></script>
+<script src="../js/api.js?v=2.2"></script>
 <script src="../js/admin.js"></script>
 <script>
 // 
@@ -2279,7 +2279,7 @@ function showAdminToast(msg, type='success') {
   async function generateWizardBlueprint() {
     const container = document.getElementById('wz-blueprint-container');
     if (!container) return;
-    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">Fetching official blueprint and approved-question coverage…</div>';
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);font-weight:600;"><div class="spinner" style="margin:0 auto 16px;"></div>Fetching official blueprint and analyzing bank coverage...</div>';
     try {
       const [meta, summary] = await Promise.all([
         ensureAdminBlueprintMeta(),
@@ -2298,22 +2298,28 @@ function showAdminToast(msg, type='success') {
         const available = Number(availableThemes[theme] || 0);
         const shortage = Math.max(0, needed - available);
         const courses = (meta.hierarchy || []).find((entry) => entry.theme === theme)?.courses || [];
-        return `<div style="padding:18px;border-radius:14px;background:#ffffff;border:1px solid ${shortage ? '#fecaca' : '#bbf7d0'}">
-          <div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:12px">
+        
+        const cardBg = shortage > 0 ? 'linear-gradient(145deg, #fffafa, #fff0f0)' : 'linear-gradient(145deg, #f8fff9, #f0fdf4)';
+        const cardBorder = shortage > 0 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)';
+        const statusBadgeBg = shortage > 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)';
+        const statusBadgeColor = shortage > 0 ? '#dc2626' : '#16a34a';
+        
+        return `<div style="padding:20px;border-radius:18px;background:${cardBg};border:1px solid ${cardBorder};box-shadow:0 8px 24px rgba(0,0,0,0.03);transition:transform 0.2s ease;">
+          <div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:16px;">
             <div>
-              <div style="font-weight:800;color:#0f172a;font-size:.92rem;line-height:1.5">${escAdminHtml(theme)}</div>
-              <div style="font-size:.76rem;color:#64748b;margin-top:4px">Required ${needed} items • Available ${available}</div>
+              <div style="font-weight:800;color:#1e293b;font-size:1.05rem;line-height:1.4;">${escAdminHtml(theme)}</div>
+              <div style="font-size:.8rem;color:#64748b;margin-top:6px;font-weight:600;">Required: <span style="color:#0f172a;">${needed}</span> &bull; Available: <span style="color:#0f172a;">${available}</span></div>
             </div>
-            <span style="padding:5px 10px;border-radius:999px;background:${shortage ? '#fee2e2' : '#dcfce7'};color:${shortage ? '#b91c1c' : '#166534'};font-size:.72rem;font-weight:800">${shortage ? `${shortage} short` : 'Ready'}</span>
+            <span style="padding:6px 12px;border-radius:999px;background:${statusBadgeBg};color:${statusBadgeColor};font-size:.75rem;font-weight:800;box-shadow:0 2px 8px ${statusBadgeBg};">${shortage ? `⚠ ${shortage} short` : '✓ Ready'}</span>
           </div>
-          <div style="display:grid;gap:8px">
+          <div style="display:grid;gap:10px;">
             ${courses.map(({ course }) => {
               const required = Number(courseCounts[course] || 0);
               const available = Number(availableCourses[course] || 0);
-              const shortage = Math.max(0, required - available);
-              return `<div style="display:flex;justify-content:space-between;gap:10px;font-size:.8rem;padding:9px 10px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0">
-                <span style="color:#0f172a;font-weight:700">${escAdminHtml(course)}</span>
-                <span style="color:${shortage ? '#dc2626' : '#16a34a'};font-weight:800">${available}/${required}${shortage ? ` • short ${shortage}` : ''}</span>
+              const courseShortage = Math.max(0, required - available);
+              return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:.85rem;padding:12px 14px;border-radius:12px;background:#ffffff;border:1px solid rgba(0,0,0,0.04);box-shadow:0 2px 6px rgba(0,0,0,0.02);">
+                <span style="color:#334155;font-weight:700;line-height:1.3;max-width:70%;">${escAdminHtml(course)}</span>
+                <span style="color:${courseShortage ? '#ef4444' : '#10b981'};font-weight:800;background:${courseShortage ? '#fef2f2' : '#ecfdf5'};padding:4px 10px;border-radius:8px;">${available} / ${required}${courseShortage ? ` (-${courseShortage})` : ''}</span>
               </div>`;
             }).join('')}
           </div>
@@ -2323,9 +2329,9 @@ function showAdminToast(msg, type='success') {
       const bloomSummary = Object.entries(bloomCounts).map(([level, needed]) => {
         const available = Number(availableBloom[level] || 0);
         const shortage = Math.max(0, Number(needed) - available);
-        return `<div style="display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;font-size:.8rem">
-          <span style="font-weight:700;color:#0f172a">${escAdminHtml(level)}</span>
-          <span style="color:${shortage ? '#dc2626' : '#16a34a'};font-weight:800">${available}/${needed}${shortage ? ` • short ${shortage}` : ''}</span>
+        return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;background:#ffffff;border:1px solid rgba(0,0,0,0.05);box-shadow:0 4px 12px rgba(0,0,0,0.02);font-size:.85rem;">
+          <span style="font-weight:800;color:#475569;">${escAdminHtml(level)}</span>
+          <span style="color:${shortage ? '#ef4444' : '#3b82f6'};font-weight:800;background:${shortage ? '#fef2f2' : '#eff6ff'};padding:4px 10px;border-radius:8px;">${available} / ${needed}${shortage ? ` (-${shortage})` : ''}</span>
         </div>`;
       }).join('');
 
@@ -2333,17 +2339,20 @@ function showAdminToast(msg, type='success') {
         || Object.entries(bloomCounts).some(([level, needed]) => Number(availableBloom[level] || 0) < Number(needed || 0));
 
       container.innerHTML = `
-        <div style="padding:16px 18px;border-radius:14px;background:${hasShortage ? '#fff7ed' : '#f0fdf4'};border:1px solid ${hasShortage ? '#fed7aa' : '#bbf7d0'};margin-bottom:16px">
-          <div style="font-weight:800;color:${hasShortage ? '#9a3412' : '#166534'}">${hasShortage ? 'Blueprint gaps detected' : 'Official 100-item blueprint ready'}</div>
-          <div style="font-size:.82rem;color:${hasShortage ? '#9a3412' : '#166534'};margin-top:4px">The generator now follows the Ministry blueprint exactly: 100 items, fixed theme/course weights, and fixed overall Bloom distribution.</div>
+        <div style="padding:20px 24px;border-radius:18px;background:${hasShortage ? 'linear-gradient(135deg, #fff7ed, #ffedd5)' : 'linear-gradient(135deg, #f0fdf4, #dcfce7)'};border:1px solid ${hasShortage ? 'rgba(249, 115, 22, 0.3)' : 'rgba(34, 197, 94, 0.3)'};margin-bottom:24px;box-shadow:0 8px 24px ${hasShortage ? 'rgba(249, 115, 22, 0.08)' : 'rgba(34, 197, 94, 0.08)'};display:flex;align-items:center;gap:16px;">
+          <div style="font-size:2rem;">${hasShortage ? '⚠️' : '🎯'}</div>
+          <div>
+            <div style="font-weight:900;font-size:1.1rem;color:${hasShortage ? '#c2410c' : '#15803d'};letter-spacing:-0.02em;">${hasShortage ? 'Blueprint Gaps Detected' : 'Official 100-Item Blueprint Ready'}</div>
+            <div style="font-size:.85rem;color:${hasShortage ? '#9a3412' : '#166534'};margin-top:6px;font-weight:500;line-height:1.5;">The generator uses the Ministry of Education standard: 100 items, fixed theme/course weights, and cognitive domain distribution.</div>
+          </div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:16px">${themeCards}</div>
-        <div style="padding:16px;border-radius:14px;background:#ffffff;border:1px solid #dbeafe">
-          <div style="font-weight:800;color:#1e3a8a;margin-bottom:12px">Cognitive Domain Coverage</div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">${bloomSummary}</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;margin-bottom:24px;">${themeCards}</div>
+        <div style="padding:24px;border-radius:18px;background:linear-gradient(145deg, #f8fafc, #f1f5f9);border:1px solid rgba(148, 163, 184, 0.2);box-shadow:inset 0 2px 10px rgba(0,0,0,0.02);">
+          <div style="font-weight:900;color:#0f172a;margin-bottom:16px;font-size:1.1rem;display:flex;align-items:center;gap:8px;"><span>🧠</span> Cognitive Domain Coverage</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;">${bloomSummary}</div>
         </div>`;
     } catch(e) {
-      container.innerHTML = `<div style="color:#dc2626;padding:16px">Could not generate blueprint: ${e.message}</div>`;
+      container.innerHTML = `<div style="padding:24px;background:#fef2f2;border:1px solid #fca5a5;border-radius:16px;color:#dc2626;font-weight:600;display:flex;align-items:center;gap:12px;"><span style="font-size:1.5rem;">❌</span> Could not generate blueprint: ${e.message}</div>`;
     }
   }
   window.generateWizardBlueprint = generateWizardBlueprint;

@@ -73,11 +73,24 @@ MAX_DOCUMENT_UPLOAD_BYTES = 8 * 1024 * 1024
 
 
 def _normalize_bulk_question(raw):
-    q = {str(k).strip(): v for k, v in (raw or {}).items()}
+    q = {str(k).strip().lower(): v for k, v in (raw or {}).items()}
+    
+    # Map new names to old internal names if present
+    if "theme" in q and "subject_category" not in q:
+        q["subject_category"] = q["theme"]
+    if "course" in q and "topic" not in q:
+        q["topic"] = q["course"]
+    if "learning_outcome" in q and "subtopic" not in q:
+        q["subtopic"] = q["learning_outcome"]
+
     required = ["subject_category", "question_text", "option_a", "option_b", "option_c", "option_d", "correct_idx"]
     for field in required:
         if not q.get(field) and q.get(field) != 0:
+            # Friendly error for required fields using new naming if possible
+            if field == "subject_category" and "theme" not in q:
+                raise ValueError("Missing 'Theme' column")
             raise ValueError(f"Missing {field}")
+            
     course = str(q.get("topic", "")).strip()
     outcome = str(q.get("subtopic", "")).strip()
     is_valid, err = validate_taxonomy(str(q["subject_category"]).strip(), course, outcome)
