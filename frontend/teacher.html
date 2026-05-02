@@ -1346,7 +1346,7 @@ function processCsvFile(file) {
 }
 
 function parseCsv(text) {
-  const lines = text.trim().split(/\r?\n/);
+  const lines = text.trim().split(/\r\n|\n|\r/);
   const rows = [];
   if (lines.length < 1) return rows;
   const headers = parseCsvLine(lines[0]);
@@ -1442,7 +1442,8 @@ async function uploadQuestionDocument() {
 function downloadTemplate() {
   const headers = ['theme','course','learning_outcome','bloom_level','difficulty','question_text','option_a','option_b','option_c','option_d','correct_idx','explanation'];
   const example = ['Social Psychology','Introduction to Social Psychology','Social influence (conformity, compliance and obedience)','Understanding','medium','Which factor MOST increases conformity according to Asch?','Presence of an ally','Group size of 3+','Unanimous group agreement','Physical proximity of experimenter','2','Asch found that unanimity of the group was the strongest factor — even one dissenter dramatically reduced conformity.'];
-  const csv = [headers.join(','), example.join(',')].join('\n');
+  const mapCsv = row => row.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',');
+  const csv = [mapCsv(headers), mapCsv(example)].join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
