@@ -1071,7 +1071,7 @@ def admin_create_exam():
                                     blueprint, question_set, scheduled_at, ends_at, is_active,
                                     shuffle_questions, shuffle_options, confidence_enabled,
                                     instant_performance_view, created_by)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """,
             (
                 data["title"],
