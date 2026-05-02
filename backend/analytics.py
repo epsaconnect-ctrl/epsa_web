@@ -592,6 +592,7 @@ def global_question_stats():
             "difficulty_auto":     r["difficulty_auto"],
             "times_presented":     r["total_presented"] or 0,
             "times_correct":       r["total_correct"] or 0,
+            "times_incorrect":     max(0, (r["total_presented"] or 0) - (r["total_correct"] or 0)),
             "correctness_rate":    round(rate, 4),
             "avg_time_secs":       round(r["avg_time"] or 0, 1),
             "avg_time_correct":    round(r["avg_time_correct"] or 0, 1),

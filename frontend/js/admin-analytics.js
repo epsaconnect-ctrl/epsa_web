@@ -116,8 +116,8 @@
         </div>
 
         <!-- Score Distribution -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px">
-          <div style="background:white;border:1px solid var(--light-200);border-radius:18px;padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.04)">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;margin-bottom:20px">
+          <div style="background:white;border:1px solid var(--light-200);border-radius:18px;padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.04);min-width:0">
             <div style="font-weight:800;margin-bottom:16px;font-size:0.95rem">📈 Score Distribution</div>
             ${Object.entries(dist).map(([range, count]) => `
               <div style="margin-bottom:10px">
@@ -133,13 +133,13 @@
           </div>
 
           <!-- Category Performance -->
-          <div style="background:white;border:1px solid var(--light-200);border-radius:18px;padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.04)">
+          <div style="background:white;border:1px solid var(--light-200);border-radius:18px;padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.04);min-width:0">
             <div style="font-weight:800;margin-bottom:16px;font-size:0.95rem">📚 Category Performance</div>
             ${catPerf.length === 0 ? '<div style="color:var(--text-muted);text-align:center;padding:20px">No data yet — run exams first.</div>' :
               catPerf.map(c => `
                 <div style="margin-bottom:12px">
-                  <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.82rem;margin-bottom:3px">
-                    <span style="font-weight:600">${c.category}</span>
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:0.82rem;margin-bottom:3px">
+                    <span style="font-weight:600;min-width:0;overflow-wrap:anywhere">${c.category}</span>
                     ${statusBadge(c.status)}
                   </div>
                   ${bar(c.correctness_rate, c.status === 'strength' ? '#16a34a' : (c.status === 'weakness' ? '#dc2626' : '#d97706'))}
@@ -506,11 +506,16 @@
     };
     const qRow = (q, rankBg) => `
       <tr style="border-bottom:1px solid #f1f5f9">
-        <td style="padding:9px 12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.83rem" title="${q.question_text}">${q.question_text}</td>
-        <td style="padding:9px 12px;font-size:0.78rem;color:#64748b">${q.category||'—'}</td>
+        <td style="padding:9px 12px;min-width:220px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.83rem" title="${q.question_text}">${q.question_text}</td>
+        <td style="padding:9px 12px;min-width:140px;font-size:0.78rem;color:#64748b;overflow-wrap:anywhere">${q.category||'—'}</td>
         <td style="padding:9px 12px;text-align:center;font-weight:800;color:${rankBg}">${Math.round((q.correctness_rate||0)*100)}%</td>
         <td style="padding:9px 12px;text-align:center;font-size:0.8rem">${q.times_presented}</td>
-        <td style="padding:9px 12px;text-align:center;font-size:0.8rem">${q.avg_time_secs}s</td>
+        <td style="padding:9px 12px;text-align:center;font-size:0.8rem">${q.times_incorrect || 0}</td>
+        <td style="padding:9px 12px;min-width:170px;font-size:0.78rem;line-height:1.5">
+          <div><strong>${q.avg_time_secs}s</strong> overall</div>
+          <div style="color:#16a34a">✓ ${q.avg_time_correct}s</div>
+          <div style="color:#dc2626">✗ ${q.avg_time_incorrect}s</div>
+        </td>
         <td style="padding:9px 12px">${diffBadge(q.difficulty_original, q.difficulty_auto)}</td>
         <td style="padding:9px 12px;text-align:center">${q.doubt_count>=3?'<span style="color:#d97706" title="High Doubt">🤔</span>':''}${q.is_high_variance?'<span style="color:#dc2626" title="High Variance">⚠️</span>':''}${q.distractor_warning?'<span style="color:#7c3aed" title="Dominant distractor attracting wrong answers">🎯</span>':''}</td>
       </tr>`;
@@ -519,7 +524,8 @@
       <th style="padding:9px 12px;font-size:0.75rem;font-weight:700;color:#64748b">Category</th>
       <th style="padding:9px 12px;text-align:center;font-size:0.75rem;font-weight:700;color:#64748b">Accuracy</th>
       <th style="padding:9px 12px;text-align:center;font-size:0.75rem;font-weight:700;color:#64748b">Shown</th>
-      <th style="padding:9px 12px;text-align:center;font-size:0.75rem;font-weight:700;color:#64748b">Avg Time</th>
+      <th style="padding:9px 12px;text-align:center;font-size:0.75rem;font-weight:700;color:#64748b">Incorrect</th>
+      <th style="padding:9px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#64748b">Time Profile</th>
       <th style="padding:9px 12px;font-size:0.75rem;font-weight:700;color:#64748b">Difficulty</th>
       <th style="padding:9px 12px;text-align:center;font-size:0.75rem;font-weight:700;color:#64748b">Flags</th>
     </tr></thead>`;
@@ -528,18 +534,20 @@
     const maxTime  = Math.max(...corrData.map(q => Math.max(q.avg_time_correct||0, q.avg_time_incorrect||0)), 1);
 
     return `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:18px;margin-bottom:20px">
         <!-- Top 10 Most Missed -->
-        <div style="background:white;border:1px solid #fee2e2;border-radius:16px;padding:20px">
+        <div style="background:white;border:1px solid #fee2e2;border-radius:16px;padding:20px;min-width:0">
           <div style="font-weight:800;font-size:0.95rem;margin-bottom:14px;color:#dc2626">🔴 Top 10 Most Missed</div>
-          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">${thead}<tbody>
+          <div style="font-size:0.77rem;color:#64748b;margin-bottom:10px">Accuracy, wrong-attempt count, and split time for correct vs incorrect responses.</div>
+          <div style="overflow-x:auto"><table style="width:100%;min-width:860px;border-collapse:collapse">${thead}<tbody>
             ${(data.top10_missed||[]).map(q => qRow(q,'#dc2626')).join('')}
           </tbody></table></div>
         </div>
         <!-- Top 10 Most Correct -->
-        <div style="background:white;border:1px solid #dcfce7;border-radius:16px;padding:20px">
+        <div style="background:white;border:1px solid #dcfce7;border-radius:16px;padding:20px;min-width:0">
           <div style="font-weight:800;font-size:0.95rem;margin-bottom:14px;color:#16a34a">🟢 Top 10 Most Correct</div>
-          <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">${thead}<tbody>
+          <div style="font-size:0.77rem;color:#64748b;margin-bottom:10px">Use this table to spot questions that are both easy and fast, versus easy but unexpectedly time-consuming.</div>
+          <div style="overflow-x:auto"><table style="width:100%;min-width:860px;border-collapse:collapse">${thead}<tbody>
             ${(data.top10_correct||[]).map(q => qRow(q,'#16a34a')).join('')}
           </tbody></table></div>
         </div>
@@ -577,7 +585,7 @@
       </div>
 
       <!-- High Variance / Doubt -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px">
         <div style="background:white;border:1px solid #fef3c7;border-radius:16px;padding:20px">
           <div style="font-weight:800;font-size:0.95rem;margin-bottom:12px;color:#d97706">⚠️ High Variance Questions (IDI &lt; 0.2)</div>
           ${(data.high_variance||[]).length === 0

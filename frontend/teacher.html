@@ -299,7 +299,7 @@
         <div style="display:flex;flex-direction:column;gap:10px">
           <button class="btn btn-primary" style="justify-content:center" onclick="showPage('submit')">Submit New Question</button>
           <button class="btn btn-secondary" style="justify-content:center" onclick="showPage('myquestions')">View My Questions</button>
-          <button class="btn btn-secondary" style="justify-content:center" onclick="showPage('bulk')">Bulk CSV Upload</button>
+          <button class="btn btn-secondary" style="justify-content:center" onclick="showPage('bulk')">Bulk Upload</button>
           <button class="btn btn-secondary" style="justify-content:center" onclick="downloadTemplate()">Download CSV Template</button>
         </div>
       </div>
@@ -331,19 +331,25 @@
         </div>
         <div class="form-grid">
           <div class="field">
-            <label>Subject Category *</label>
-            <select id="fCategory"></select>
-            <div class="field-err" id="err-fCategory">Required</div>
+            <label>Theme *</label>
+            <select id="fCategory" onchange="handleThemeChange()">
+              <option value="">Select theme</option>
+            </select>
+            <div class="field-err" id="err-fCategory">Theme is required</div>
           </div>
           <div class="field">
-            <label>Topic *</label>
-            <input type="text" id="fTopic" placeholder="e.g. Milgram Obedience Studies"/>
-            <div class="field-err" id="err-fTopic">Topic is required</div>
+            <label>Course *</label>
+            <select id="fTopic" onchange="handleCourseChange()" disabled>
+              <option value="">Select course</option>
+            </select>
+            <div class="field-err" id="err-fTopic">Course is required</div>
           </div>
           <div class="field">
-            <label>Subtopic *</label>
-            <input type="text" id="fSubtopic" placeholder="e.g. Situational factors in obedience"/>
-            <div class="field-err" id="err-fSubtopic">Subtopic is required</div>
+            <label>Learning Outcome *</label>
+            <select id="fSubtopic" disabled>
+              <option value="">Select learning outcome</option>
+            </select>
+            <div class="field-err" id="err-fSubtopic">Learning outcome is required</div>
           </div>
           <div class="field">
             <label>Bloom's Taxonomy Level *</label>
@@ -491,9 +497,9 @@
   <section class="page-section" id="page-bulk">
     <div class="page-header">
       <h1>Bulk <span>Upload</span></h1>
-      <p>Upload hundreds of questions at once using a structured CSV or Excel file.</p>
+      <p>Upload hundreds of questions at once using either a structured CSV template or a formatted Word/PDF document.</p>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;align-items:start">
       <div class="card">
         <div class="card-title">📋 CSV Format Requirements</div>
         <p style="font-size:.85rem;color:var(--text-muted);line-height:1.6;margin-bottom:14px">Your CSV must have the following columns in order:</p>
@@ -504,6 +510,27 @@
           ⚠ Max 500 questions per batch. Duplicates (same question text) are automatically skipped.
         </div>
         <button class="btn btn-secondary" style="margin-top:16px;width:100%;justify-content:center" onclick="downloadTemplate()">⬇ Download Template CSV</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Structured Word / PDF Format</div>
+        <p style="font-size:.85rem;color:var(--text-muted);line-height:1.7;margin-bottom:14px">Use a <strong style="color:var(--accent)">.docx</strong> or <strong style="color:var(--accent)">.pdf</strong> when you want to write questions as readable blocks instead of spreadsheet rows.</p>
+        <div style="font-size:.78rem;font-family:monospace;background:rgba(0,0,0,.3);border-radius:10px;padding:14px;color:#a7f3d0;line-height:1.9;white-space:pre-line">Theme: Counseling, Health and Clinical Psychology
+Course: Psychopathology
+Learning Outcome: Criteria for Defining Abnormal Behaviours
+Bloom Level: Understanding
+Difficulty: medium
+Question: Which symptom profile best matches generalized anxiety disorder?
+A: ...
+B: ...
+C: ...
+D: ...
+Correct Answer: B
+Explanation: ...
+---
+Repeat the same block for the next question.</div>
+        <div style="margin-top:16px;padding:12px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:10px;font-size:.8rem;color:#bfdbfe;line-height:1.7">
+          Use the field labels exactly as shown, separate each question with <strong>---</strong>, keep one correct answer per block, and keep the file at or below <strong>8 MB</strong>.
+        </div>
       </div>
       <div class="card">
         <div class="card-title">📦 Upload File</div>
@@ -524,6 +551,24 @@
           <button class="btn btn-primary" id="uploadBtn" style="width:100%;justify-content:center" onclick="uploadCsv()">Upload &amp; Submit</button>
         </div>
         <div id="uploadResult" style="margin-top:14px;display:none;font-size:.85rem;line-height:1.6"></div>
+        <div style="height:18px"></div>
+        <div class="drop-zone" id="docDropZone" onclick="document.getElementById('docInput').click()">
+          <div class="drop-icon">📘</div>
+          <p><strong>Click to select</strong> or drag &amp; drop<br>your Word / PDF question document here</p>
+          <p style="margin-top:8px;font-size:.75rem;opacity:.6">Accepts .docx and .pdf files up to 8MB</p>
+        </div>
+        <input type="file" id="docInput" accept=".docx,.pdf" onchange="handleQuestionDocument(this)" style="display:none"/>
+        <div id="docPreview" style="margin-top:16px;display:none">
+          <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.18);border-radius:10px;margin-bottom:12px">
+            <span style="font-size:1.2rem">📄</span>
+            <div>
+              <div id="docFileName" style="font-weight:700;font-size:.88rem"></div>
+              <div id="docFileMeta" style="font-size:.78rem;color:var(--text-muted)"></div>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="uploadDocBtn" style="width:100%;justify-content:center" onclick="uploadQuestionDocument()">Upload Document &amp; Submit</button>
+        </div>
+        <div id="docUploadResult" style="margin-top:14px;display:none;font-size:.85rem;line-height:1.6"></div>
       </div>
     </div>
   </section>
@@ -647,12 +692,14 @@ const API_BASES = (() => {
 let activeApiBase = API_BASES[0];
 let teacherProfile = null;
 let csvParsed = [];
+let documentUploadFile = null;
 let myQuestionsPage = 1;
 let myQuestionCache = [];
 let questionDrafts = [];
 let draftEditIndex = null;
 let questionEditId = null;
 const categories = [];
+let blueprintHierarchy = [];
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 function getToken() { return localStorage.getItem('epsa_token') || localStorage.getItem('epsa_access_token'); }
@@ -794,132 +841,73 @@ function renderCatChart(cats) {
 async function loadCategories() {
   try {
     const data = await apiGet('/teacher/categories');
-    const cats = data.categories || [];
     const catSel = document.getElementById('fCategory');
     const filterCat = document.getElementById('filterCategory');
-    cats.forEach(c => {
-      catSel.innerHTML += `<option value="${c}">${c}</option>`;
-      filterCat.innerHTML += `<option value="${c}">${c}</option>`;
+    blueprintHierarchy = data.hierarchy || [];
+    categories.length = 0;
+    catSel.innerHTML = '<option value="">Select theme</option>';
+    filterCat.innerHTML = '<option value="">All Themes</option>';
+    (data.categories || []).forEach(c => {
+      catSel.innerHTML += `<option value="${escHtml(c)}">${escHtml(c)}</option>`;
+      filterCat.innerHTML += `<option value="${escHtml(c)}">${escHtml(c)}</option>`;
       categories.push(c);
     });
+    resetCourseSelect();
+    resetOutcomeSelect();
   } catch (e) {}
 }
 
-// ── Submit question ───────────────────────────────────────────────────────────
-async function submitQuestion() {
-  const btn = document.getElementById('submitQBtn');
-  let ok = true;
-  const checks = {
-    fCategory: 'Category is required',
-    fQuestion: 'Question text is required',
-    fOptA: 'Option A is required',
-    fOptB: 'Option B is required',
-    fOptC: 'Option C is required',
-    fOptD: 'Option D is required',
-  };
-  for (const [id, msg] of Object.entries(checks)) {
-    const el = document.getElementById(id);
-    const errEl = document.getElementById('err-' + id);
-    if (!el?.value.trim()) {
-      if (errEl) { errEl.textContent = msg; errEl.classList.add('show'); }
-      ok = false;
-    } else {
-      errEl?.classList.remove('show');
-    }
-  }
-  if (!ok) return showToast('Please fill all required fields', 'error');
-
-  btn.disabled = true;
-  btn.textContent = 'Submitting...';
-  try {
-    await apiPost('/teacher/questions', {
-      subject_category: document.getElementById('fCategory').value,
-      topic: document.getElementById('fTopic').value.trim(),
-      subtopic: document.getElementById('fSubtopic').value.trim(),
-      bloom_level: document.getElementById('fBloom').value,
-      difficulty: document.getElementById('fDifficulty').value,
-      question_text: document.getElementById('fQuestion').value.trim(),
-      option_a: document.getElementById('fOptA').value.trim(),
-      option_b: document.getElementById('fOptB').value.trim(),
-      option_c: document.getElementById('fOptC').value.trim(),
-      option_d: document.getElementById('fOptD').value.trim(),
-      correct_idx: parseInt(document.getElementById('fCorrect').value),
-      explanation: document.getElementById('fExplanation').value.trim(),
-    });
-    showToast('Question submitted for review.', 'success');
-    clearForm();
-    loadStats();
-  } catch (err) {
-    showToast(err.message || 'Submission failed', 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Submit Question';
-  }
+function getThemeEntry(theme) {
+  return blueprintHierarchy.find((entry) => entry.theme === theme);
 }
 
-function clearForm() {
-  ['fCategory','fTopic','fSubtopic','fBloom','fDifficulty','fQuestion','fOptA','fOptB','fOptC','fOptD','fCorrect','fExplanation'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = el.tagName === 'SELECT' ? el.options[0]?.value : '';
-  });
-  document.querySelectorAll('.field-err').forEach(e => e.classList.remove('show'));
+function resetCourseSelect() {
+  const courseSel = document.getElementById('fTopic');
+  if (!courseSel) return;
+  courseSel.innerHTML = '<option value="">Select course</option>';
+  courseSel.disabled = true;
 }
 
-// ── My questions table ────────────────────────────────────────────────────────
-async function loadMyQuestions(page = myQuestionsPage) {
-  myQuestionsPage = page;
-  const status = document.getElementById('filterStatus').value;
-  const cat = document.getElementById('filterCategory').value;
-  const tbody = document.getElementById('questionsTbody');
-  tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:32px">Loading...</td></tr>`;
-  try {
-    const params = new URLSearchParams({ status, page });
-    if (cat) params.append('category', cat);
-    const data = await apiGet(`/teacher/questions?${params}`);
-    renderQuestionsTable(data.questions || []);
-    renderPagination('questionPagination', data.page, data.pages, loadMyQuestions);
-  } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--red);padding:24px">${e.message}</td></tr>`;
-  }
+function resetOutcomeSelect() {
+  const outcomeSel = document.getElementById('fSubtopic');
+  if (!outcomeSel) return;
+  outcomeSel.innerHTML = '<option value="">Select learning outcome</option>';
+  outcomeSel.disabled = true;
 }
 
-function renderQuestionsTable(questions) {
-  const tbody = document.getElementById('questionsTbody');
-  if (!questions.length) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px"><div class="empty-state" style="padding:0"><h3>No questions yet</h3><p>Submit your first question to get started.</p></div></td></tr>`;
-    return;
-  }
-  tbody.innerHTML = questions.map((q, i) => `
-    <tr>
-      <td style="color:var(--text-muted)">${q.id}</td>
-      <td><div class="q-text">${escHtml(q.question_text)}</div></td>
-      <td style="color:var(--text-muted);font-size:.8rem">${q.subject_category}</td>
-      <td style="font-size:.8rem">${q.bloom_level || '-'}</td>
-      <td><span class="badge badge-${q.difficulty || 'medium'}">${q.difficulty || 'medium'}</span></td>
-      <td><span class="badge badge-${q.status}">${q.status}</span></td>
-      <td style="color:var(--text-muted);font-size:.78rem;white-space:nowrap">${formatDate(q.created_at)}</td>
-      <td style="font-size:.78rem;color:var(--text-muted);max-width:160px;overflow:hidden;text-overflow:ellipsis">${q.admin_notes ? escHtml(q.admin_notes) : '-'}</td>
-    </tr>`).join('');
+function handleThemeChange() {
+  const theme = document.getElementById('fCategory')?.value || '';
+  const courseSel = document.getElementById('fTopic');
+  resetCourseSelect();
+  resetOutcomeSelect();
+  if (!theme || !courseSel) return;
+  const themeEntry = getThemeEntry(theme);
+  const courses = themeEntry?.courses || [];
+  courseSel.disabled = false;
+  courseSel.innerHTML = '<option value="">Select course</option>' +
+    courses.map((item) => `<option value="${escHtml(item.course)}">${escHtml(item.course)}</option>`).join('');
 }
 
-function renderPagination(containerId, page, pages, callback) {
-  const el = document.getElementById(containerId);
-  if (!el || pages <= 1) { if (el) el.innerHTML = ''; return; }
-  let html = `<button class="page-btn" onclick="${callback.name}(${Math.max(1, page-1)})" ${page<=1?'disabled':''}>&lt;</button>`;
-  for (let p = Math.max(1, page-2); p <= Math.min(pages, page+2); p++) {
-    html += `<button class="page-btn ${p===page?'active':''}" onclick="${callback.name}(${p})">${p}</button>`;
-  }
-  html += `<button class="page-btn" onclick="${callback.name}(${Math.min(pages,page+1)})" ${page>=pages?'disabled':''}>&gt;</button>`;
-  el.innerHTML = html;
+function handleCourseChange() {
+  const theme = document.getElementById('fCategory')?.value || '';
+  const course = document.getElementById('fTopic')?.value || '';
+  const outcomeSel = document.getElementById('fSubtopic');
+  resetOutcomeSelect();
+  if (!theme || !course || !outcomeSel) return;
+  const themeEntry = getThemeEntry(theme);
+  const courseEntry = (themeEntry?.courses || []).find((item) => item.course === course);
+  outcomeSel.disabled = false;
+  outcomeSel.innerHTML = '<option value="">Select learning outcome</option>' +
+    (courseEntry?.outcomes || []).map((item) => `<option value="${escHtml(item)}">${escHtml(item)}</option>`).join('');
 }
 
 // ── CSV Bulk upload ──────────────────────────────────────────────────────────
 // Enhanced teacher workflow
 function collectQuestionPayload(showErrors = true) {
   const checks = {
-    fCategory: 'Category is required',
-    fTopic: 'Topic is required',
-    fSubtopic: 'Subtopic is required',
+    fCategory: 'Theme is required',
+    fTopic: 'Course is required',
+    fSubtopic: 'Learning outcome is required',
     fQuestion: 'Question text is required',
     fOptA: 'Option A is required',
     fOptB: 'Option B is required',
@@ -1006,7 +994,9 @@ function renderDraftQueue() {
 function fillFormFromPayload(payload) {
   if (!payload) return;
   document.getElementById('fCategory').value = payload.subject_category || '';
+  handleThemeChange();
   document.getElementById('fTopic').value = payload.topic || '';
+  handleCourseChange();
   document.getElementById('fSubtopic').value = payload.subtopic || '';
   document.getElementById('fBloom').value = payload.bloom_level || 'Remembering';
   document.getElementById('fDifficulty').value = payload.difficulty || 'medium';
@@ -1304,6 +1294,40 @@ function handleCsvFile(input) {
   if (file) processCsvFile(file);
 }
 
+const docDropZone = document.getElementById('docDropZone');
+if (docDropZone) {
+  docDropZone.addEventListener('dragover', e => { e.preventDefault(); docDropZone.classList.add('dragover'); });
+  docDropZone.addEventListener('dragleave', () => docDropZone.classList.remove('dragover'));
+  docDropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    docDropZone.classList.remove('dragover');
+    const file = e.dataTransfer?.files[0];
+    if (file) processQuestionDocument(file);
+  });
+}
+
+function handleQuestionDocument(input) {
+  const file = input.files[0];
+  if (file) processQuestionDocument(file);
+}
+
+function processQuestionDocument(file) {
+  const lower = (file.name || '').toLowerCase();
+  if (!(lower.endsWith('.docx') || lower.endsWith('.pdf'))) {
+    showToast('Please upload a .docx or .pdf file', 'error');
+    return;
+  }
+  if (file.size > 8 * 1024 * 1024) {
+    showToast('Document must be 8MB or smaller', 'error');
+    return;
+  }
+  documentUploadFile = file;
+  document.getElementById('docFileName').textContent = file.name;
+  document.getElementById('docFileMeta').textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB • Structured question document`;
+  document.getElementById('docPreview').style.display = 'block';
+  document.getElementById('docUploadResult').style.display = 'none';
+}
+
 function processCsvFile(file) {
   if (!file.name.endsWith('.csv')) { showToast('Please upload a .csv file', 'error'); return; }
   const reader = new FileReader();
@@ -1369,6 +1393,46 @@ async function uploadCsv() {
   } finally {
     btn.disabled = false;
     btn.textContent = 'Upload & Submit';
+  }
+}
+
+async function uploadQuestionDocument() {
+  if (!documentUploadFile) return;
+  const btn = document.getElementById('uploadDocBtn');
+  btn.disabled = true;
+  btn.textContent = 'Uploading...';
+  try {
+    const fd = new FormData();
+    fd.append('file', documentUploadFile);
+    // Use activeApiBase + token auth (no Content-Type header so browser sets multipart boundary)
+    let r = null;
+    for (const base of [activeApiBase, ...API_BASES.filter((b) => b !== activeApiBase)]) {
+      try {
+        const headers = { 'Authorization': 'Bearer ' + getToken() };
+        r = await fetch(base + '/teacher/questions/bulk-document', { method: 'POST', headers, body: fd });
+        activeApiBase = base;
+        break;
+      } catch (_) { r = null; }
+    }
+    if (!r) throw new Error('EPSA backend is unreachable.');
+    if (r.status === 401) { logout(); return; }
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Document upload failed');
+    const resultEl = document.getElementById('docUploadResult');
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = `
+      <div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.18);border-radius:10px;padding:16px">
+        <div style="color:#bfdbfe;font-weight:700;margin-bottom:8px">${data.message}</div>
+        <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:6px">${data.parsed || 0} question blocks detected from the document.</div>
+        ${(data.errors || []).length ? `<div style="color:var(--red);font-size:.8rem;margin-top:8px">${data.errors.slice(0,5).join('<br>')}</div>` : ''}
+      </div>`;
+    showToast(`Uploaded: ${data.inserted} inserted, ${data.skipped} skipped`);
+    loadStats();
+  } catch (err) {
+    showToast(err.message || 'Document upload failed', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Upload Document & Submit';
   }
 }
 

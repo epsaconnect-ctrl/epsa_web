@@ -1493,6 +1493,7 @@ window.switchSection = function(sec) {
     timesPerQ: {}, currentIdx: 0, timerInterval: null, totalSecs: 0,
     elapsedSecs: 0, serverRemaining: 0, qStartTime: null, saveInterval: null,
     answerChanges: {}, confidenceLevels: {},
+    confidenceEnabled: true, instantPerformanceView: true,
     focusCurrentQid: null, focusStart: null,
     // Anti-cheat & Layout
     viewMode: 'one-by-one', theme: 'dark', tabSwitchCount: 0, maxTabSwitches: 3,
@@ -1534,8 +1535,10 @@ window.switchSection = function(sec) {
       ? `<button onclick="startMockExam(${e.id})" style="background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:none;padding:12px 18px;border-radius:14px;font-family:Outfit,sans-serif;font-weight:800;cursor:pointer;width:100%;margin-top:18px;box-shadow:0 16px 24px rgba(22,163,74,.22), inset 0 1px 0 rgba(255,255,255,0.2);transition:transform 0.2s; " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">Start Exam</button>`
       : e.can_continue
       ? `<button onclick="startMockExam(${e.id})" style="background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;border:none;padding:12px 18px;border-radius:14px;font-family:Outfit,sans-serif;font-weight:800;cursor:pointer;width:100%;margin-top:18px;box-shadow:0 16px 24px rgba(217,119,6,.20), inset 0 1px 0 rgba(255,255,255,0.2);transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">Continue Exam</button>`
-      : e.is_submitted
+      : (e.is_submitted && e.results_viewable)
       ? `<button onclick="viewMockResults(${e.id})" style="background:linear-gradient(135deg,rgba(29,78,216,.92),rgba(56,189,248,.92));color:#fff;border:none;padding:12px 18px;border-radius:14px;font-family:Outfit,sans-serif;font-weight:800;cursor:pointer;width:100%;margin-top:18px;box-shadow:0 16px 28px rgba(29,78,216,.24), inset 0 1px 0 rgba(255,255,255,.2);transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">View Performance</button>`
+      : e.is_submitted
+      ? `<div style="text-align:center;color:#1e40af;margin-top:18px;font-size:.84rem;font-weight:700;background:rgba(59,130,246,.10);border-radius:14px;padding:12px 14px;border:1px solid rgba(59,130,246,.18)">${e.passed ? 'Passed' : 'Below pass mark'} • Performance dashboard will unlock when results are released.</div>`
       : `<div style="text-align:center;color:#92400e;margin-top:18px;font-size:.84rem;font-weight:700;background:rgba(245,158,11,.10);border-radius:14px;padding:12px 14px;border:1px solid rgba(245,158,11,.18)">Exam window not yet open.</div>`;
 
     return `<article style="background:var(--me-card-bg, rgba(255,255,255,0.85));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(26,107,60,.1);border-radius:28px;padding:28px;box-shadow:0 12px 32px rgba(15,23,42,.04), inset 0 1px 0 rgba(255,255,255,0.6);display:flex;flex-direction:column;min-height:100%;transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);position:relative;overflow:hidden;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 24px 64px rgba(22,163,74,.12), inset 0 1px 0 rgba(255,255,255,0.8)';this.style.borderColor='rgba(34,197,94,0.3)';" onmouseout="this.style.transform='none';this.style.boxShadow='0 12px 32px rgba(15,23,42,.04), inset 0 1px 0 rgba(255,255,255,0.6)';this.style.borderColor='rgba(26,107,60,.1)';">
@@ -1601,6 +1604,8 @@ window.switchSection = function(sec) {
       ME.timesPerQ = data.time_per_question || {};
       ME.answerChanges = data.answer_changes || {};
       ME.confidenceLevels = data.confidence_levels || {};
+      ME.confidenceEnabled = data.confidence_enabled !== false;
+      ME.instantPerformanceView = data.instant_performance_view !== false;
       ME.currentIdx = 0;
       ME.totalSecs = (data.duration_mins || 120) * 60;
       ME.elapsedSecs = data.elapsed_secs || 0;
@@ -1624,7 +1629,7 @@ window.switchSection = function(sec) {
     const fs = document.getElementById('mockExamFullscreen');
     fs.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    document.getElementById('meExamTitle').textContent = 'EPSA Mock Exam';
+    document.getElementById('meExamTitle').textContent = data.exam_title || 'EPSA Mock Exam';
     
     // Theme setup
     fs.classList.remove('me-theme-light');
@@ -1774,10 +1779,10 @@ window.switchSection = function(sec) {
         </div>
         <div style="font-size:1.05rem;font-weight:600;line-height:1.6;color:var(--me-text);user-select:none">${escHtml(q.question_text)}</div>
       </div>
-      <label style="display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--me-border);font-size:.85rem;color:var(--me-text);cursor:pointer">
+      ${ME.confidenceEnabled ? `<label style="display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--me-border);font-size:.85rem;color:var(--me-text);cursor:pointer">
         <input type="checkbox" ${ME.confidenceLevels[String(q.id)] ? 'checked' : ''} onchange="meToggleConfidence(${q.id}, this.checked)" style="width:18px;height:18px;accent-color:#22c55e;cursor:pointer">
         <span><strong style="color:var(--me-text)">I am confident in this answer</strong><span style="display:block;color:var(--me-text-muted);font-size:.76rem;margin-top:2px">Used only for your private post-exam reflection.</span></span>
-      </label>
+      </label>` : ''}
       <div style="display:flex;flex-direction:column;gap:10px">
         ${q.options.map((opt, oi) => {
           const isSel = selected === oi;
@@ -1818,10 +1823,10 @@ window.switchSection = function(sec) {
             </div>
             <div style="font-size:1.05rem;font-weight:600;line-height:1.6;color:var(--me-text);user-select:none">${escHtml(q.question_text)}</div>
           </div>
-          <label style="display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--me-border);font-size:.85rem;color:var(--me-text);cursor:pointer">
+          ${ME.confidenceEnabled ? `<label style="display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--me-border);font-size:.85rem;color:var(--me-text);cursor:pointer">
             <input type="checkbox" ${ME.confidenceLevels[String(q.id)] ? 'checked' : ''} onchange="meToggleConfidence(${q.id}, this.checked)" style="width:18px;height:18px;accent-color:#22c55e;cursor:pointer">
             <span><strong style="color:var(--me-text)">I am confident in this answer</strong><span style="display:block;color:var(--me-text-muted);font-size:.76rem;margin-top:2px">Used only for your private post-exam reflection.</span></span>
-          </label>
+          </label>` : ''}
           <div style="display:flex;flex-direction:column;gap:10px" id="meScrollQ${q.id}">
             ${q.options.map((opt, oi) => {
               const isSel = selected === oi;
@@ -2006,10 +2011,12 @@ window.switchSection = function(sec) {
         auto_submit: auto,
       });
       closeExamFullscreen();
-      showToast(`Exam submitted! Score: ${result.score}% (${result.correct}/${result.total})`, 'success');
+      showToast(`Exam submitted! ${result.passed ? 'Passed' : 'Below pass mark'} • ${result.score}% (${result.correct}/${result.total})`, result.passed ? 'success' : 'gold');
       loadMockExams();
-      if (!auto && completedExamId) {
+      if (!auto && completedExamId && result.can_view_performance) {
         viewMockResults(completedExamId);
+      } else if (!auto && completedExamId) {
+        showToast('Performance dashboard is locked until results are released for this exam.', 'info');
       }
     } catch(err) {
       showToast(err.message || 'Submit failed', 'error');
@@ -2028,6 +2035,8 @@ window.switchSection = function(sec) {
     ME.timesPerQ = {};
     ME.answerChanges = {};
     ME.confidenceLevels = {};
+    ME.confidenceEnabled = true;
+    ME.instantPerformanceView = true;
     ME.focusCurrentQid = null;
     ME.focusStart = null;
   }
@@ -2277,10 +2286,21 @@ window.switchSection = function(sec) {
     modal.style.display = 'flex';
     content.innerHTML = '<div style="color:#86efac;padding:40px;text-align:center">Loading performance dashboard...</div>';
     try {
-      const [data, insights] = await Promise.all([
-        API.getMockResults(examId),
-        API.getMockInsights(examId),
-      ]);
+      const data = await API.getMockResults(examId);
+      if (data.performance_locked) {
+        content.innerHTML = `
+          <div style="padding:28px;border-radius:24px;background:linear-gradient(135deg,rgba(59,130,246,.16),rgba(16,185,129,.12));border:1px solid rgba(255,255,255,.08);text-align:left">
+            <div style="font-size:.78rem;letter-spacing:.16em;text-transform:uppercase;color:#bfdbfe;font-weight:800">Results Locked</div>
+            <div style="font-size:1.6rem;font-weight:900;color:#f0fdf4;margin-top:10px">${escHtml(data.exam_title || 'Mock Exam')}</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+              <div style="padding:9px 14px;border-radius:999px;background:rgba(255,255,255,.08);color:#f0fdf4;font-size:.82rem;font-weight:800">${Number(data.score || 0).toFixed(1)}% score</div>
+              <div style="padding:9px 14px;border-radius:999px;background:${data.passed ? 'rgba(34,197,94,.16)' : 'rgba(248,113,113,.16)'};color:${data.passed ? '#86efac' : '#fecaca'};font-size:.82rem;font-weight:800">${data.passed ? 'Passed' : 'Below pass mark'} • Pass mark ${data.pass_mark || 50}%</div>
+            </div>
+            <div style="margin-top:18px;font-size:.9rem;line-height:1.7;color:#d1fae5">Your submission status is available right away, but the full performance dashboard for this mock exam has been held until the admin releases results.</div>
+          </div>`;
+        return;
+      }
+      const insights = await API.getMockInsights(examId);
       const pct = Number(insights.score || data.score || 0);
       const passed = !!insights.passed;
       const benchmark = insights.benchmarking || {};

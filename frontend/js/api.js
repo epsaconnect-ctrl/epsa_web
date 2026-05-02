@@ -438,6 +438,7 @@ const API = {
   async submitQuestion(body)            { return this.request('/teacher/questions', { method: 'POST', body }); },
   async updateQuestion(id, body)        { return this.request(`/teacher/questions/${id}`, { method: 'PUT', body }); },
   async bulkSubmitQuestions(questions)  { return this.request('/teacher/questions/bulk', { method: 'POST', body: { questions } }); },
+  async uploadQuestionDocument(fd)      { return this.request('/teacher/questions/bulk-document', { method: 'POST', body: fd }); },
   async teacherRegister(body)           { return this.request('/teacher/register', { method: 'POST', body }); },
 
   // ── Admin: Teacher & Question Bank ──
@@ -445,6 +446,7 @@ const API = {
   async adminApproveTeacher(id)                 { return this.request(`/teacher/admin/teachers/${id}/approve`, { method: 'POST' }); },
   async adminRejectTeacher(id, reason)          { return this.request(`/teacher/admin/teachers/${id}/reject`, { method: 'POST', body: { reason } }); },
   async adminListQuestions(params={})           { return this.request('/teacher/admin/questions?' + new URLSearchParams(params)); },
+  async adminGetQuestionBlueprintSummary()      { return this.request('/teacher/admin/question-blueprint-summary'); },
   async adminApproveQuestion(id)                { return this.request(`/teacher/admin/questions/${id}/approve`, { method: 'POST' }); },
   async adminRejectQuestion(id, notes)          { return this.request(`/teacher/admin/questions/${id}/reject`, { method: 'POST', body: { notes } }); },
   async adminUpdateQuestion(id, body)           { return this.request(`/teacher/admin/questions/${id}`, { method: 'PUT', body }); },

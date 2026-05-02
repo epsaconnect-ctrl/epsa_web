@@ -3,11 +3,16 @@ import csv
 import io
 import json
 import logging
+import os
+import sys
 import re
 import secrets
+import zipfile
 from datetime import datetime
 
 from datetime import datetime, date
+from pathlib import Path
+from xml.etree import ElementTree as ET
 
 def _serialize_row(row):
     d = dict(row)
@@ -22,34 +27,36 @@ from werkzeug.security import generate_password_hash
 
 try:
     from .models import get_db
+    from .psychology_blueprint import (
+        THEME_COURSE_OUTCOMES,
+        get_blueprint_payload,
+        validate_taxonomy,
+    )
 except ImportError:
     from models import get_db
+    from psychology_blueprint import (
+        THEME_COURSE_OUTCOMES,
+        get_blueprint_payload,
+        validate_taxonomy,
+    )
 
 teacher_bp = Blueprint("teacher", __name__)
 logger = logging.getLogger(__name__)
 
-PSYCHOLOGY_CATEGORIES = [
-    "Social Psychology",
-    "Developmental Psychology",
-    "Clinical Psychology",
-    "Counseling Psychology",
-    "Cognitive Psychology",
-    "Biological Psychology",
-    "Personality Psychology",
-    "Health Psychology",
-    "Educational Psychology",
-    "Industrial/Organizational Psychology",
-    "Sport Psychology",
-    "Forensic Psychology",
-    "Neuropsychology",
-    "Positive Psychology",
-    "Cross-Cultural Psychology",
-    "Research Methods & Statistics",
-    "History & Systems of Psychology",
-    "Abnormal Psychology",
-    "Community Psychology",
-    "General Psychology",
-]
+try:
+    from pypdf import PdfReader
+except Exception:
+    try:
+        bundled_python = Path.home() / ".cache" / "codex-runtimes" / "codex-primary-runtime" / "dependencies" / "python"
+        if bundled_python.exists():
+            sys.path.append(str(bundled_python / "Lib" / "site-packages"))
+            from pypdf import PdfReader
+        else:
+            PdfReader = None
+    except Exception:
+        PdfReader = None
+
+PSYCHOLOGY_CATEGORIES = list(THEME_COURSE_OUTCOMES.keys())
 
 BLOOM_LEVELS = [
     "Remembering",
@@ -61,6 +68,183 @@ BLOOM_LEVELS = [
 ]
 
 DIFFICULTY_LEVELS = ["easy", "medium", "hard"]
+MAX_BULK_QUESTIONS = 500
+MAX_DOCUMENT_UPLOAD_BYTES = 8 * 1024 * 1024
+
+
+def _normalize_bulk_question(raw):
+    q = {str(k).strip(): v for k, v in (raw or {}).items()}
+    required = ["subject_category", "question_text", "option_a", "option_b", "option_c", "option_d", "correct_idx"]
+    for field in required:
+        if not q.get(field) and q.get(field) != 0:
+            raise ValueError(f"Missing {field}")
+    course = str(q.get("topic", "")).strip()
+    outcome = str(q.get("subtopic", "")).strip()
+    is_valid, err = validate_taxonomy(str(q["subject_category"]).strip(), course, outcome)
+    if not is_valid:
+        raise ValueError(err)
+    correct_idx = q["correct_idx"]
+    if isinstance(correct_idx, str):
+        cleaned = correct_idx.strip().upper()
+        if cleaned in ("A", "B", "C", "D"):
+            correct_idx = {"A": 0, "B": 1, "C": 2, "D": 3}[cleaned]
+        else:
+            correct_idx = int(cleaned)
+    correct_idx = int(correct_idx)
+    if correct_idx not in (0, 1, 2, 3):
+        raise ValueError("correct_idx must be 0-3 or A-D")
+    q["correct_idx"] = correct_idx
+    q["bloom_level"] = q.get("bloom_level") or "Remembering"
+    if q["bloom_level"] not in BLOOM_LEVELS:
+        raise ValueError(f"Invalid bloom_level: {q['bloom_level']}")
+    q["difficulty"] = str(q.get("difficulty") or "medium").strip().lower()
+    if q["difficulty"] not in DIFFICULTY_LEVELS:
+        raise ValueError(f"Invalid difficulty: {q['difficulty']}")
+    q["subject_category"] = str(q["subject_category"]).strip()
+    q["topic"] = course
+    q["subtopic"] = outcome
+    return q
+
+
+def _insert_bulk_questions(db, uid, questions, source_label="bulk upload"):
+    if not questions or not isinstance(questions, list):
+        raise ValueError("Expected a list of questions")
+
+    inserted = 0
+    skipped = 0
+    errors = []
+
+    for i, raw in enumerate(questions[:MAX_BULK_QUESTIONS]):
+        row_num = i + 1
+        try:
+            q = _normalize_bulk_question(raw)
+            existing = db.execute(
+                "SELECT id FROM question_bank WHERE submitted_by=? AND LOWER(question_text)=LOWER(?)",
+                (uid, str(q["question_text"]).strip())
+            ).fetchone()
+            if existing:
+                skipped += 1
+                continue
+
+            db.execute(
+                """
+                INSERT INTO question_bank
+                    (submitted_by, subject_category, topic, subtopic, bloom_level,
+                     difficulty, question_text, option_a, option_b, option_c, option_d,
+                     correct_idx, explanation, status, created_at, updated_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,'pending',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
+                """,
+                (
+                    uid,
+                    q["subject_category"],
+                    q.get("topic", ""),
+                    q.get("subtopic", ""),
+                    q["bloom_level"],
+                    q["difficulty"],
+                    q["question_text"],
+                    q["option_a"],
+                    q["option_b"],
+                    q["option_c"],
+                    q["option_d"],
+                    q["correct_idx"],
+                    q.get("explanation", ""),
+                )
+            )
+            inserted += 1
+        except Exception as exc:
+            errors.append(f"{source_label} row {row_num}: {exc}")
+
+    db.commit()
+    return inserted, skipped, errors
+
+
+def _extract_docx_text(file_storage):
+    with zipfile.ZipFile(file_storage.stream) as zf:
+        xml_bytes = zf.read("word/document.xml")
+    root = ET.fromstring(xml_bytes)
+    ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+    paragraphs = []
+    for paragraph in root.findall(".//w:p", ns):
+        text_parts = [node.text for node in paragraph.findall(".//w:t", ns) if node.text]
+        if text_parts:
+            paragraphs.append("".join(text_parts).strip())
+    return "\n".join(p for p in paragraphs if p)
+
+
+def _extract_pdf_text(file_storage):
+    if PdfReader is None:
+        raise ValueError("PDF parsing is not available on this server yet. Please upload a Word .docx file or use CSV for now.")
+    reader = PdfReader(file_storage.stream)
+    pages = []
+    for page in reader.pages:
+        pages.append((page.extract_text() or "").strip())
+    return "\n".join(p for p in pages if p)
+
+
+def _parse_structured_question_document(raw_text):
+    if not raw_text or not raw_text.strip():
+        raise ValueError("The uploaded document is empty.")
+
+    blocks = [block.strip() for block in re.split(r"\n\s*---+\s*\n", raw_text.strip()) if block.strip()]
+    if not blocks:
+        raise ValueError("No question blocks were found. Separate each question with a line containing ---")
+
+    field_aliases = {
+        "theme": "subject_category",
+        "category": "subject_category",
+        "subject_category": "subject_category",
+        "course": "topic",
+        "topic": "topic",
+        "learning outcome": "subtopic",
+        "learning_outcome": "subtopic",
+        "subtopic": "subtopic",
+        "subtitle": "subtopic",
+        "sub-title": "subtopic",
+        "bloom level": "bloom_level",
+        "bloom_level": "bloom_level",
+        "difficulty": "difficulty",
+        "question": "question_text",
+        "question_text": "question_text",
+        "option a": "option_a",
+        "a": "option_a",
+        "option b": "option_b",
+        "b": "option_b",
+        "option c": "option_c",
+        "c": "option_c",
+        "option d": "option_d",
+        "d": "option_d",
+        "correct answer": "correct_idx",
+        "correct_answer": "correct_idx",
+        "correct idx": "correct_idx",
+        "correct_idx": "correct_idx",
+        "explanation": "explanation",
+    }
+
+    questions = []
+    for index, block in enumerate(blocks, start=1):
+        current_key = None
+        parsed = {}
+        for raw_line in block.splitlines():
+            line = raw_line.strip()
+            if not line:
+                continue
+            match = re.match(r"^([A-Za-z _-]+)\s*:\s*(.*)$", line)
+            if match:
+                label = match.group(1).strip().lower()
+                value = match.group(2).strip()
+                current_key = field_aliases.get(label)
+                if not current_key:
+                    continue
+                parsed[current_key] = value
+            elif current_key:
+                parsed[current_key] = f"{parsed.get(current_key, '')}\n{line}".strip()
+        if parsed:
+            parsed["_block_index"] = index
+            questions.append(parsed)
+
+    if not questions:
+        raise ValueError("No structured questions were recognized. Use field labels like Category:, Question:, A:, B:, C:, D:, Correct Answer:, Explanation:.")
+    return questions
 
 
 def _require_teacher(db, uid):
@@ -164,11 +348,13 @@ def _send_teacher_status_email(teacher_row, status, rejection_reason=""):
 
 @teacher_bp.route("/categories", methods=["GET"])
 def get_categories():
-    return jsonify({
+    payload = get_blueprint_payload()
+    payload.update({
         "categories": PSYCHOLOGY_CATEGORIES,
         "bloom_levels": BLOOM_LEVELS,
         "difficulty_levels": DIFFICULTY_LEVELS,
     })
+    return jsonify(payload)
 
 
 # ── Teacher registration ───────────────────────────────────────────────────────
@@ -360,8 +546,13 @@ def submit_question():
         if data.get(field) in (None, ""):
             return jsonify({"error": f"{field} is required"}), 400
 
-    if data["subject_category"] not in PSYCHOLOGY_CATEGORIES:
-        return jsonify({"error": "Invalid subject category"}), 400
+    is_valid, err = validate_taxonomy(
+        str(data["subject_category"]).strip(),
+        str(data.get("topic", "")).strip(),
+        str(data.get("subtopic", "")).strip(),
+    )
+    if not is_valid:
+        return jsonify({"error": err}), 400
     if data.get("bloom_level") and data["bloom_level"] not in BLOOM_LEVELS:
         return jsonify({"error": "Invalid Bloom's level"}), 400
     if data.get("difficulty") and data["difficulty"] not in DIFFICULTY_LEVELS:
@@ -433,8 +624,6 @@ def update_my_question(qid):
     if not updates:
         return jsonify({"error": "No fields to update"}), 400
 
-    if "subject_category" in updates and updates["subject_category"] not in PSYCHOLOGY_CATEGORIES:
-        return jsonify({"error": "Invalid subject category"}), 400
     if "bloom_level" in updates and updates["bloom_level"] not in BLOOM_LEVELS:
         return jsonify({"error": "Invalid Bloom's level"}), 400
     if "difficulty" in updates and updates["difficulty"] not in DIFFICULTY_LEVELS:
@@ -455,13 +644,19 @@ def update_my_question(qid):
     try:
         _require_teacher(db, uid)
         row = db.execute(
-            "SELECT id, status FROM question_bank WHERE id=? AND submitted_by=?",
+            "SELECT * FROM question_bank WHERE id=? AND submitted_by=?",
             (qid, uid)
         ).fetchone()
         if not row:
             return jsonify({"error": "Question not found"}), 404
         if (row["status"] or "pending") != "approved":
             return jsonify({"error": "Only approved questions can be edited from the teacher portal"}), 403
+        next_theme = str(updates.get("subject_category", row["subject_category"] or "")).strip()
+        next_course = str(updates.get("topic", row["topic"] or "")).strip()
+        next_outcome = str(updates.get("subtopic", row["subtopic"] or "")).strip()
+        is_valid, err = validate_taxonomy(next_theme, next_course, next_outcome)
+        if not is_valid:
+            return jsonify({"error": err}), 400
 
         set_clause = ", ".join(f"{key}=?" for key in updates)
         db.execute(
@@ -500,59 +695,14 @@ def bulk_submit_questions():
     skipped = 0
     errors = []
 
-    for i, q in enumerate(questions[:500]):   # max 500 per batch
-        row_num = i + 1
+    for i, q in enumerate(questions[:MAX_BULK_QUESTIONS]):
         try:
-            required = ["subject_category", "question_text", "option_a", "option_b", "option_c", "option_d", "correct_idx"]
-            for field in required:
-                if not q.get(field) and q.get(field) != 0:
-                    raise ValueError(f"Missing {field}")
-            if q["subject_category"] not in PSYCHOLOGY_CATEGORIES:
-                raise ValueError(f"Invalid category: {q['subject_category']}")
-            correct_idx = int(q["correct_idx"])
-            if correct_idx not in (0, 1, 2, 3):
-                raise ValueError("correct_idx must be 0-3")
-            existing = db.execute(
-                "SELECT id FROM question_bank WHERE submitted_by=? AND LOWER(question_text)=LOWER(?)",
-                (uid, str(q["question_text"]).strip())
-            ).fetchone()
-            if existing:
-                skipped += 1
-                continue
-            db.execute(
-                """
-                INSERT INTO question_bank (
-                    submitted_by, subject_category, topic, subtopic, bloom_level, difficulty,
-                    question_text, option_a, option_b, option_c, option_d, correct_idx, explanation,
-                    status, created_at, updated_at
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,DATETIME('now'),DATETIME('now'))
-                """,
-                (
-                    uid,
-                    q["subject_category"],
-                    q.get("topic", ""),
-                    q.get("subtopic", ""),
-                    q.get("bloom_level", "Remembering"),
-                    q.get("difficulty", "medium"),
-                    str(q["question_text"]).strip(),
-                    str(q["option_a"]).strip(),
-                    str(q["option_b"]).strip(),
-                    str(q["option_c"]).strip(),
-                    str(q["option_d"]).strip(),
-                    correct_idx,
-                    str(q.get("explanation", "")).strip(),
-                    "pending",
-                ),
-            )
-            # Commit each row individually so Postgres doesn't abort the whole transaction
-            db.commit()
-            inserted += 1
+            row_inserted, row_skipped, row_errors = _insert_bulk_questions(db, uid, [q], source_label="CSV")
+            inserted += row_inserted
+            skipped += row_skipped
+            errors.extend(row_errors)
         except Exception as exc:
-            try:
-                db.rollback()
-            except Exception:
-                pass
-            errors.append(f"Row {row_num}: {exc}")
+            errors.append(f"CSV row {i + 1}: {exc}")
 
     db.close()
 
@@ -561,6 +711,94 @@ def bulk_submit_questions():
         "inserted": inserted,
         "skipped": skipped,
         "errors": errors[:20],
+    })
+
+
+@teacher_bp.route("/questions/bulk-document", methods=["POST"])
+@jwt_required()
+def bulk_submit_question_document():
+    uid = get_jwt_identity()
+    db = get_db()
+    try:
+        _require_teacher(db, uid)
+    except ValueError as e:
+        db.close()
+        return jsonify({"error": str(e)}), 403
+
+    file = request.files.get("file")
+    if not file or not file.filename:
+        db.close()
+        return jsonify({"error": "Please choose a .docx or .pdf file."}), 400
+
+    _, ext = os.path.splitext(file.filename.lower())
+    if ext not in (".docx", ".pdf"):
+        db.close()
+        return jsonify({"error": "Only .docx and .pdf files are supported for document upload."}), 400
+
+    file.stream.seek(0, io.SEEK_END)
+    size = file.stream.tell()
+    file.stream.seek(0)
+    if size > MAX_DOCUMENT_UPLOAD_BYTES:
+        db.close()
+        return jsonify({"error": "Document is too large. Keep uploads at 8 MB or below."}), 400
+
+    try:
+        raw_text = _extract_docx_text(file) if ext == ".docx" else _extract_pdf_text(file)
+        questions = _parse_structured_question_document(raw_text)
+        inserted, skipped, errors = _insert_bulk_questions(db, uid, questions, source_label="Document")
+    except Exception as exc:
+        db.close()
+        return jsonify({"error": str(exc)}), 400
+
+    db.close()
+    return jsonify({
+        "message": f"Document upload complete: {inserted} inserted, {skipped} duplicates skipped, {len(errors)} errors.",
+        "inserted": inserted,
+        "skipped": skipped,
+        "parsed": min(len(questions), MAX_BULK_QUESTIONS),
+        "errors": errors[:20],
+    })
+
+
+@teacher_bp.route("/admin/question-blueprint-summary", methods=["GET"])
+@jwt_required()
+def admin_question_blueprint_summary():
+    uid = get_jwt_identity()
+    db = get_db()
+    try:
+        _require_admin(db, uid)
+        rows = db.execute(
+            """
+            SELECT subject_category, topic, subtopic, bloom_level, COUNT(*) as cnt
+            FROM question_bank
+            WHERE COALESCE(status, 'pending')='approved'
+            GROUP BY subject_category, topic, subtopic, bloom_level
+            """
+        ).fetchall()
+    finally:
+        db.close()
+
+    theme_counts = {}
+    course_counts = {}
+    outcome_counts = {}
+    bloom_counts = {}
+    for row in rows:
+        theme = row["subject_category"] or ""
+        course = row["topic"] or ""
+        outcome = row["subtopic"] or ""
+        bloom = row["bloom_level"] or ""
+        cnt = int(row["cnt"] or 0)
+        theme_counts[theme] = theme_counts.get(theme, 0) + cnt
+        course_counts[course] = course_counts.get(course, 0) + cnt
+        bloom_counts[bloom] = bloom_counts.get(bloom, 0) + cnt
+        key = f"{theme}|||{course}|||{outcome}"
+        outcome_counts[key] = outcome_counts.get(key, 0) + cnt
+
+    return jsonify({
+        "theme_counts": theme_counts,
+        "course_counts": course_counts,
+        "outcome_counts": outcome_counts,
+        "bloom_counts": bloom_counts,
     })
 
 
@@ -676,6 +914,15 @@ def admin_edit_question(qid):
         updates = {k: data[k] for k in fields if k in data}
         if not updates:
             return jsonify({"error": "No fields to update"}), 400
+        current = db.execute("SELECT * FROM question_bank WHERE id=?", (qid,)).fetchone()
+        if not current:
+            return jsonify({"error": "Question not found"}), 404
+        next_theme = str(updates.get("subject_category", current["subject_category"] or "")).strip()
+        next_course = str(updates.get("topic", current["topic"] or "")).strip()
+        next_outcome = str(updates.get("subtopic", current["subtopic"] or "")).strip()
+        is_valid, err = validate_taxonomy(next_theme, next_course, next_outcome)
+        if not is_valid:
+            return jsonify({"error": err}), 400
         set_clause = ", ".join(f"{k}=?" for k in updates)
         db.execute(
             f"UPDATE question_bank SET {set_clause}, updated_at=DATETIME('now') WHERE id=?",

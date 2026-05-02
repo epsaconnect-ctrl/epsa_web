@@ -19,21 +19,12 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 
 try:
     from .models import get_db
+    from .psychology_blueprint import build_official_exam_blueprint
 except ImportError:
     from models import get_db
+    from psychology_blueprint import build_official_exam_blueprint
 
 mock_exams_bp = Blueprint("mock_exams", __name__)
-
-PSYCHOLOGY_CATEGORIES = [
-    "Social Psychology", "Developmental Psychology", "Clinical Psychology",
-    "Counseling Psychology", "Cognitive Psychology", "Biological Psychology",
-    "Personality Psychology", "Health Psychology", "Educational Psychology",
-    "Industrial/Organizational Psychology", "Sport Psychology", "Forensic Psychology",
-    "Neuropsychology", "Positive Psychology", "Cross-Cultural Psychology",
-    "Research Methods & Statistics", "History & Systems of Psychology",
-    "Abnormal Psychology", "Community Psychology", "General Psychology",
-]
-
 
 def _require_admin(db, uid):
     row = db.execute("SELECT role FROM users WHERE id=?", (uid,)).fetchone()
@@ -76,6 +67,16 @@ def _parse_blueprint(blueprint_json, total_count):
     return [{"category": None, "count": total_count}]
 
 
+def _coerce_bool(value, default=True):
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return str(value).strip().lower() in ("1", "true", "yes", "on")
+
+
 def _draw_questions(db, blueprint, total_count):
     """Draw questions from approved question_bank according to blueprint."""
     selected_ids = []
@@ -83,6 +84,8 @@ def _draw_questions(db, blueprint, total_count):
 
     for slot in blueprint:
         category = slot.get("category")
+        course = slot.get("course")
+        bloom_level = slot.get("bloom_level")
         count = int(slot.get("count", 0))
         bloom_levels = slot.get("bloom_levels", [])
 
@@ -92,6 +95,12 @@ def _draw_questions(db, blueprint, total_count):
         if category:
             clauses.append("subject_category=?")
             params.append(category)
+        if course:
+            clauses.append("topic=?")
+            params.append(course)
+        if bloom_level:
+            clauses.append("bloom_level=?")
+            params.append(bloom_level)
 
         if bloom_levels:
             placeholders = ",".join("?" * len(bloom_levels))
@@ -123,14 +132,43 @@ def _draw_questions(db, blueprint, total_count):
     return selected_ids[:total_count]
 
 
-def _randomize_options(question_ids, db):
+def _randomize_options(question_ids, db, shuffle_options=True):
     """Return per-student shuffled option orders for each question."""
     option_order = {}
     for qid in question_ids:
         perm = [0, 1, 2, 3]
-        random.shuffle(perm)
+        if shuffle_options:
+            random.shuffle(perm)
         option_order[str(qid)] = perm
     return option_order
+
+
+def _get_or_create_exam_question_set(db, exam):
+    try:
+        existing = json.loads(exam["question_set"] or "[]")
+    except Exception:
+        existing = []
+    if existing:
+        return existing
+
+    blueprint = _parse_blueprint(exam["blueprint"], exam["question_count"])
+    question_ids = _draw_questions(db, blueprint, exam["question_count"])
+    if not question_ids:
+        return []
+    db.execute(
+        "UPDATE mock_exams SET question_set=? WHERE id=?",
+        (json.dumps(question_ids), exam["id"])
+    )
+    db.commit()
+    return question_ids
+
+
+def _can_view_performance(exam_row, submission_row):
+    if not exam_row or not submission_row:
+        return False
+    if submission_row["status"] not in ("submitted", "auto_submitted"):
+        return False
+    return _coerce_bool(exam_row["instant_performance_view"], True) or _coerce_bool(exam_row["results_released"], False)
 
 
 # ── Public / Student Endpoints ────────────────────────────────────────────────
@@ -174,9 +212,13 @@ def list_mock_exams():
         row["can_start"] = is_open and not row["my_status"]
         row["can_continue"] = is_open and row["my_status"] == "in_progress"
         row["is_submitted"] = row["my_status"] in ("submitted", "auto_submitted")
-        # Student performance insights should remain available immediately after
-        # submission without exposing item-level answer content.
-        row["results_viewable"] = bool(row["is_submitted"])
+        row["results_viewable"] = bool(
+            row["is_submitted"] and (
+                _coerce_bool(row.get("instant_performance_view"), True) or
+                _coerce_bool(row.get("results_released"), False)
+            )
+        )
+        row["passed"] = bool(row["is_submitted"] and row.get("my_score") is not None and float(row.get("my_score") or 0) >= 50)
         result.append(row)
 
     return jsonify({"exams": result})
@@ -247,17 +289,25 @@ def start_mock_exam(exam_id):
                 "time_per_question": json.loads(existing["time_per_question"] or "{}"),
                 "answer_changes": json.loads(existing["answer_changes"] or "{}"),
                 "confidence_levels": json.loads(existing["confidence_levels"] or "{}"),
+                "confidence_enabled": _coerce_bool(exam["confidence_enabled"], True),
+                "instant_performance_view": _coerce_bool(exam["instant_performance_view"], True),
+                "exam_title": exam["title"],
                 "resuming": True,
             })
 
-        # Draw questions
-        blueprint = _parse_blueprint(exam["blueprint"], exam["question_count"])
-        question_ids = _draw_questions(db, blueprint, exam["question_count"])
+        base_question_ids = _get_or_create_exam_question_set(db, exam)
+        question_ids = list(base_question_ids)
+        if _coerce_bool(exam["shuffle_questions"], True):
+            random.shuffle(question_ids)
 
         if not question_ids:
             return jsonify({"error": "Not enough approved questions in the bank to generate this exam"}), 500
 
-        option_order = _randomize_options(question_ids, db)
+        option_order = _randomize_options(
+            question_ids,
+            db,
+            shuffle_options=_coerce_bool(exam["shuffle_options"], True)
+        )
 
         cur = db.execute(
             """
@@ -300,6 +350,9 @@ def start_mock_exam(exam_id):
         "time_per_question": {},
         "answer_changes": {},
         "confidence_levels": {},
+        "confidence_enabled": _coerce_bool(exam["confidence_enabled"], True),
+        "instant_performance_view": _coerce_bool(exam["instant_performance_view"], True),
+        "exam_title": exam["title"],
         "resuming": False,
     })
 
@@ -453,6 +506,7 @@ def submit_mock_exam(exam_id):
         _update_question_analytics(db, exam_id, qids, current_answers, current_times, current_changes, opt_order, score)
         _update_university_stats_fallback(db, sub["user_id"], exam_id, qids, current_answers, current_times, opt_order)
         db.commit()
+        exam = db.execute("SELECT * FROM mock_exams WHERE id=?", (exam_id,)).fetchone()
     finally:
         db.close()
 
@@ -461,6 +515,9 @@ def submit_mock_exam(exam_id):
         "correct": correct,
         "total": len(qids),
         "status": status,
+        "passed": score >= 50,
+        "pass_mark": 50,
+        "can_view_performance": _can_view_performance(exam, {"status": status}),
         "message": "Exam submitted successfully",
     })
 
@@ -898,8 +955,26 @@ def get_my_results(exam_id):
         if not sub:
             return jsonify({"error": "No submission found"}), 404
 
-        if not exam["results_released"] and sub["status"] not in ("submitted", "auto_submitted"):
+        if sub["status"] not in ("submitted", "auto_submitted"):
             return jsonify({"error": "Results not yet released"}), 403
+
+        if not _can_view_performance(exam, sub):
+            s_exam = _serialize_row(exam)
+            s_sub = _serialize_row(sub)
+            return jsonify({
+                "exam_title": s_exam["title"],
+                "score": s_sub["score"],
+                "total": s_sub["total_questions"],
+                "correct": None,
+                "status": s_sub["status"],
+                "submitted_at": s_sub["submitted_at"],
+                "passed": float(s_sub["score"] or 0) >= 50,
+                "pass_mark": 50,
+                "performance_locked": True,
+                "can_view_performance": False,
+                "breakdown": [],
+                "category_performance": [],
+            })
 
         qids = json.loads(sub["question_ids"])
         opt_order = json.loads(sub["option_order"] or "{}")
@@ -981,21 +1056,37 @@ def admin_create_exam():
         _require_admin(db, uid)
         if not data.get("title"):
             return jsonify({"error": "Title is required"}), 400
+        blueprint = data.get("blueprint") or build_official_exam_blueprint()
+        question_count = sum(int(slot.get("count", 0)) for slot in blueprint) or 100
+        question_set = _draw_questions(
+            db,
+            _parse_blueprint(blueprint, question_count),
+            question_count
+        )
+        if len(question_set) < question_count:
+            return jsonify({"error": "Not enough approved questions to lock this exam set."}), 400
         cur = db.execute(
             """
             INSERT INTO mock_exams (title, description, question_count, duration_mins,
-                                    blueprint, scheduled_at, ends_at, is_active, created_by)
-            VALUES (?,?,?,?,?,?,?,?,?)
+                                    blueprint, question_set, scheduled_at, ends_at, is_active,
+                                    shuffle_questions, shuffle_options, confidence_enabled,
+                                    instant_performance_view, created_by)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
             """,
             (
                 data["title"],
                 data.get("description", ""),
-                int(data.get("question_count", 100)),
+                question_count,
                 int(data.get("duration_mins", 120)),
-                json.dumps(data.get("blueprint", [])),
+                json.dumps(blueprint),
+                json.dumps(question_set),
                 data.get("scheduled_at"),
                 data.get("ends_at"),
                 int(data.get("is_active", 0)),
+                int(_coerce_bool(data.get("shuffle_questions"), True)),
+                int(_coerce_bool(data.get("shuffle_options"), True)),
+                int(_coerce_bool(data.get("confidence_enabled"), True)),
+                int(_coerce_bool(data.get("instant_performance_view"), True)),
                 uid,
             )
         )
@@ -1015,13 +1106,34 @@ def admin_update_exam(exam_id):
     try:
         _require_admin(db, uid)
         fields = ["title", "description", "question_count", "duration_mins",
-                  "scheduled_at", "ends_at", "is_active", "results_released"]
+                  "scheduled_at", "ends_at", "is_active", "results_released",
+                  "shuffle_questions", "shuffle_options", "confidence_enabled",
+                  "instant_performance_view"]
         updates = {}
         for f in fields:
             if f in data:
                 updates[f] = data[f]
         if "blueprint" in data:
             updates["blueprint"] = json.dumps(data["blueprint"])
+        if "question_count" in data or "blueprint" in data:
+            current = db.execute("SELECT * FROM mock_exams WHERE id=?", (exam_id,)).fetchone()
+            if current:
+                blueprint = data.get("blueprint")
+                if blueprint is None:
+                    try:
+                        blueprint = json.loads(current["blueprint"] or "[]") or build_official_exam_blueprint()
+                    except Exception:
+                        blueprint = build_official_exam_blueprint()
+                question_count = sum(int(slot.get("count", 0)) for slot in blueprint) or int(data.get("question_count", current["question_count"]))
+                updates["question_count"] = question_count
+                question_set = _draw_questions(
+                    db,
+                    _parse_blueprint(blueprint, question_count),
+                    question_count
+                )
+                if len(question_set) < question_count:
+                    return jsonify({"error": "Not enough approved questions to refresh this exam set."}), 400
+                updates["question_set"] = json.dumps(question_set)
         if not updates:
             return jsonify({"error": "Nothing to update"}), 400
         set_clause = ", ".join(f"{k}=?" for k in updates)
@@ -1301,12 +1413,18 @@ def get_post_exam_insights(exam_id):
     uid = get_jwt_identity()
     db = get_db()
     try:
+        exam = db.execute("SELECT * FROM mock_exams WHERE id=?", (exam_id,)).fetchone()
+        if not exam:
+            return jsonify({"error": "Exam not found"}), 404
+
         sub = db.execute(
             "SELECT * FROM mock_exam_submissions WHERE exam_id=? AND user_id=? AND status IN ('submitted','auto_submitted')",
             (exam_id, uid)
         ).fetchone()
         if not sub:
             return jsonify({"error": "No completed submission found"}), 404
+        if not _can_view_performance(exam, sub):
+            return jsonify({"error": "Performance dashboard is locked until results are released for this exam."}), 403
 
         qids = json.loads(sub["question_ids"] or "[]")
         answers = json.loads(sub["answers"] or "{}")
@@ -1325,8 +1443,6 @@ def get_post_exam_insights(exam_id):
         ).fetchall()
         question_map = {q["id"]: q for q in questions}
         ordered_questions = [question_map[qid] for qid in qids if qid in question_map]
-
-        exam = db.execute("SELECT id, title FROM mock_exams WHERE id=?", (exam_id,)).fetchone()
 
         # 1. Categorical Performance Profile
         cat_stats = {}

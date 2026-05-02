@@ -1345,12 +1345,7 @@ function showAdminToast(msg, type='success') {
         <option value="all"> All Status</option>
       </select>
       <select id="qbCategoryFilter" onchange="loadAdminQuestions()" style="padding:9px 14px;background:white;border:1px solid #e2e8f0;border-radius:10px;color:#0f172a;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer">
-        <option value="">All Categories</option>
-        <option>Social Psychology</option><option>Clinical Psychology</option>
-        <option>Developmental Psychology</option><option>Cognitive Psychology</option>
-        <option>Abnormal Psychology</option><option>Research Methods &amp; Statistics</option>
-        <option>Counseling Psychology</option><option>Biological Psychology</option>
-        <option>General Psychology</option>
+        <option value="">All Themes</option>
       </select>
       <button onclick="loadAdminQuestions()" style="padding:9px 16px;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:10px;color:white;font-weight:700;cursor:pointer;font-family:inherit;font-size:.85rem;box-shadow:0 4px 12px rgba(34,197,94,.3)">🔄 Refresh</button>
       <span id="qbTotal" style="color:#64748b;font-size:.82rem;margin-left:auto"></span>
@@ -1481,6 +1476,18 @@ function showAdminToast(msg, type='success') {
               <div><div style="font-weight:700">Option Randomization</div><div style="font-size:0.8rem;color:var(--text-muted)">Shuffle answer options (A, B, C, D) dynamically.</div></div>
             </div>
           </div>
+          <div style="background:#f8fafc;border:1px solid var(--light-200);border-radius:12px;padding:20px;margin-bottom:16px">
+            <div style="display:flex;align-items:flex-start;gap:12px">
+              <input type="checkbox" id="wz-sc-confidence" checked style="margin-top:4px">
+              <div><div style="font-weight:700">Confidence Toggle</div><div style="font-size:0.8rem;color:var(--text-muted)">Show the "I am confident in this answer" checkbox on each question for metacognitive reflection.</div></div>
+            </div>
+          </div>
+          <div style="background:#f8fafc;border:1px solid var(--light-200);border-radius:12px;padding:20px;margin-bottom:16px">
+            <div style="display:flex;align-items:flex-start;gap:12px">
+              <input type="checkbox" id="wz-sc-view-performance" checked style="margin-top:4px">
+              <div><div style="font-weight:700">Immediate Performance Dashboard</div><div style="font-size:0.8rem;color:var(--text-muted)">If enabled, students can open the full performance dashboard immediately after submission. If disabled, they only see pass/fail until results are released.</div></div>
+            </div>
+          </div>
           <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px">
             <div style="display:flex;align-items:flex-start;gap:12px">
               <input type="checkbox" id="wz-sc-proctor" disabled style="margin-top:4px">
@@ -1496,7 +1503,7 @@ function showAdminToast(msg, type='success') {
         <div id="wstep-3" class="wizard-panel" style="display:none">
            <div style="background:var(--light-50);border-radius:12px;padding:20px;border:1px solid var(--light-200);margin-bottom:20px">
              <div style="display:flex;justify-content:space-between;align-items:center">
-               <div><div style="font-weight:800">Auto-Generate Blueprint</div><div style="font-size:0.8rem;color:var(--text-muted)">AI will compile a balanced subject allocation.</div></div>
+               <div><div style="font-weight:800">Auto-Generate Blueprint</div><div style="font-size:0.8rem;color:var(--text-muted)">Follows the official Ethiopian Ministry of Education blueprint exactly — 100 items, fixed theme/course weights, fixed Bloom distribution.</div></div>
                <button class="btn btn-primary btn-sm" type="button" onclick="generateWizardBlueprint()">✨ Generate Map</button>
              </div>
            </div>
@@ -1544,9 +1551,77 @@ function showAdminToast(msg, type='success') {
   let qbPage = 1;
   let qbQuestionCache = [];
   let teacherReviewCache = [];
+  let adminBlueprintMeta = null;
+
+  async function ensureAdminBlueprintMeta() {
+    if (adminBlueprintMeta) return adminBlueprintMeta;
+    adminBlueprintMeta = await API.getTeacherCategories();
+    return adminBlueprintMeta;
+  }
+
+  function escAdminOption(value) {
+    return String(value || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function getAdminThemeCourses(theme) {
+    const meta = adminBlueprintMeta?.hierarchy || [];
+    return meta.find((entry) => entry.theme === theme)?.courses || [];
+  }
+
+  function buildAdminThemeOptions(selected = '') {
+    const themes = adminBlueprintMeta?.categories || [];
+    return `<option value="">Select theme</option>` + themes.map((theme) => `<option value="${escAdminOption(theme)}" ${theme === selected ? 'selected' : ''}>${escAdminOption(theme)}</option>`).join('');
+  }
+
+  function buildAdminCourseOptions(theme, selected = '') {
+    const courses = getAdminThemeCourses(theme);
+    return `<option value="">Select course</option>` + courses.map((item) => `<option value="${escAdminOption(item.course)}" ${item.course === selected ? 'selected' : ''}>${escAdminOption(item.course)}</option>`).join('');
+  }
+
+  function buildAdminOutcomeOptions(theme, course, selected = '') {
+    const courseEntry = getAdminThemeCourses(theme).find((item) => item.course === course);
+    const outcomes = courseEntry?.outcomes || [];
+    return `<option value="">Select learning outcome</option>` + outcomes.map((item) => `<option value="${escAdminOption(item)}" ${item === selected ? 'selected' : ''}>${escAdminOption(item)}</option>`).join('');
+  }
+
+  window.onAdminThemeChange = function() {
+    const theme = document.getElementById('qe-category')?.value || '';
+    const courseSel = document.getElementById('qe-topic');
+    const outcomeSel = document.getElementById('qe-subtopic');
+    if (!courseSel || !outcomeSel) return;
+    courseSel.innerHTML = buildAdminCourseOptions(theme, '');
+    courseSel.disabled = !theme;
+    outcomeSel.innerHTML = buildAdminOutcomeOptions(theme, '', '');
+    outcomeSel.disabled = true;
+  };
+
+  window.onAdminCourseChange = function() {
+    const theme = document.getElementById('qe-category')?.value || '';
+    const course = document.getElementById('qe-topic')?.value || '';
+    const outcomeSel = document.getElementById('qe-subtopic');
+    if (!outcomeSel) return;
+    outcomeSel.innerHTML = buildAdminOutcomeOptions(theme, course, '');
+    outcomeSel.disabled = !(theme && course);
+  };
+
+  async function _populateQbCategoryFilter() {
+    const sel = document.getElementById('qbCategoryFilter');
+    if (!sel || sel.options.length > 1) return; // already populated
+    try {
+      const meta = await ensureAdminBlueprintMeta();
+      const themes = meta?.categories || [];
+      themes.forEach((theme) => {
+        const opt = document.createElement('option');
+        opt.value = theme;
+        opt.textContent = theme;
+        sel.appendChild(opt);
+      });
+    } catch (_) {}
+  }
 
   async function loadAdminQuestions(page) {
     if (page) qbPage = page;
+    _populateQbCategoryFilter();
     const tbody = document.getElementById('qbTableBody');
     tbody.innerHTML = '<tr><td colspan="7" style="padding:24px;text-align:center;color:#86efac">Loading…</td></tr>';
     try {
@@ -1710,23 +1785,24 @@ function showAdminToast(msg, type='success') {
   }
   window.rejectQuestionFromModal = rejectQuestionFromModal;
 
-  function openQuestionEdit(id) {
+  async function openQuestionEdit(id) {
     const question = findQuestionForReview(id);
     const modal = document.getElementById('questionReviewModal');
     const body = document.getElementById('questionReviewBody');
     const footer = document.getElementById('questionReviewFooter');
     if (!modal || !body || !footer || !question) return;
+    await ensureAdminBlueprintMeta();
     body.innerHTML = `
       <div style="background:linear-gradient(135deg,rgba(34,197,94,.14),rgba(14,116,144,.12));border:1px solid rgba(34,197,94,.18);border-radius:18px;padding:22px;margin-bottom:18px;">
         <div style="font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:#bbf7d0;margin-bottom:8px;">Approved Question Editor</div>
-        <div style="font-size:1.05rem;font-weight:800;line-height:1.6;color:#f0fdf4;">Update the category, topic, subtopic, or question content without leaving the review workspace.</div>
+        <div style="font-size:1.05rem;font-weight:800;line-height:1.6;color:#f0fdf4;">Update the theme, course, learning outcome, or question content without leaving the review workspace.</div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
-        <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Category</label><input id="qe-category" value="${escAdminAttr(question.subject_category || '')}" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit"></div>
-        <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Bloom Level</label><input id="qe-bloom" value="${escAdminAttr(question.bloom_level || '')}" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit"></div>
-        <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Title / Topic</label><input id="qe-topic" value="${escAdminAttr(question.topic || '')}" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit"></div>
-        <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Sub-title / Subtopic</label><input id="qe-subtopic" value="${escAdminAttr(question.subtopic || '')}" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit"></div>
-        <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Difficulty</label><input id="qe-difficulty" value="${escAdminAttr(question.difficulty || '')}" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit"></div>
+        <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Theme</label><select id="qe-category" onchange="onAdminThemeChange()" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit">${buildAdminThemeOptions(question.subject_category || '')}</select></div>
+        <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Bloom Level</label><select id="qe-bloom" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit">${['Remembering','Understanding','Applying','Analyzing','Evaluating','Creating'].map((level) => `<option value="${level}" ${level === (question.bloom_level || '') ? 'selected' : ''}>${level}</option>`).join('')}</select></div>
+        <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Course</label><select id="qe-topic" onchange="onAdminCourseChange()" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit">${buildAdminCourseOptions(question.subject_category || '', question.topic || '')}</select></div>
+        <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Learning Outcome</label><select id="qe-subtopic" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit">${buildAdminOutcomeOptions(question.subject_category || '', question.topic || '', question.subtopic || '')}</select></div>
+        <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Difficulty</label><select id="qe-difficulty" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit">${['easy','medium','hard'].map((level) => `<option value="${level}" ${level === (question.difficulty || '') ? 'selected' : ''}>${level}</option>`).join('')}</select></div>
         <div><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Correct Index</label><input id="qe-correct" type="number" min="0" max="3" value="${Number(question.correct_idx || 0)}" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit"></div>
       </div>
       <div style="margin-bottom:14px;"><label style="display:block;font-size:.74rem;color:#86efac;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">Question Text</label><textarea id="qe-question" rows="4" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0fdf4;font-family:inherit;resize:vertical">${escAdminHtml(question.question_text || '')}</textarea></div>
@@ -1740,6 +1816,10 @@ function showAdminToast(msg, type='success') {
     `;
     footer.innerHTML = `<button class="btn btn-ghost" onclick="openQuestionReview(${question.id})">Back</button><button class="btn btn-primary" onclick="saveQuestionEdit(${question.id})">Save Changes</button>`;
     modal.classList.add('active');
+    const courseSel = document.getElementById('qe-topic');
+    const outcomeSel = document.getElementById('qe-subtopic');
+    if (courseSel) courseSel.disabled = !(question.subject_category || '');
+    if (outcomeSel) outcomeSel.disabled = !(question.subject_category && question.topic);
   }
   window.openQuestionEdit = openQuestionEdit;
 
@@ -2191,44 +2271,77 @@ function showAdminToast(msg, type='success') {
     }
     _wizStep = Math.max(1, Math.min(WIZ_TOTAL, _wizStep + delta));
     renderWizStep();
+    // Auto-generate blueprint when reaching Step 3
+    if (_wizStep === 3) generateWizardBlueprint();
   }
   window.wizSetStep = wizSetStep;
 
   async function generateWizardBlueprint() {
     const container = document.getElementById('wz-blueprint-container');
     if (!container) return;
-    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">Fetching available question counts…</div>';
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">Fetching official blueprint and approved-question coverage…</div>';
     try {
-      const data = await API.adminListQuestions({ status: 'approved', page: 1 });
-      const stats = data.stats || {};
-      const SUBJECTS = [
-        { name: 'General Psychology',    pct: 20 },
-        { name: 'Abnormal Psychology',   pct: 18 },
-        { name: 'Research Methods',       pct: 12 },
-        { name: 'Developmental Psychology', pct: 12 },
-        { name: 'Social Psychology',      pct: 10 },
-        { name: 'Biological Psychology', pct: 10 },
-        { name: 'Cognitive Psychology',   pct: 10 },
-        { name: 'Ethics & Law',           pct: 8  },
-      ];
-      const total = parseInt(document.getElementById('newExamCount').value) || 100;
-      const approved = stats.approved || 0;
-      container.innerHTML = SUBJECTS.map(s => {
-        const count = Math.round(total * s.pct / 100);
-        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#f8fafc;border:1px solid var(--light-200);border-radius:10px">
-          <span style="font-weight:700;font-size:0.88rem;color:#0f172a">${s.name}</span>
-          <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:80px;background:#e2e8f0;border-radius:4px;height:6px;overflow:hidden">
-              <div style="height:100%;background:#16a34a;width:${s.pct}%;border-radius:4px"></div>
+      const [meta, summary] = await Promise.all([
+        ensureAdminBlueprintMeta(),
+        API.adminGetQuestionBlueprintSummary(),
+      ]);
+      const themeCounts = meta.theme_counts || {};
+      const courseCounts = meta.course_counts || {};
+      const bloomCounts = meta.bloom_counts || {};
+      const availableThemes = summary.theme_counts || {};
+      const availableCourses = summary.course_counts || {};
+      const availableBloom = summary.bloom_counts || {};
+      const total = Object.values(courseCounts).reduce((sum, count) => sum + Number(count || 0), 0);
+      document.getElementById('newExamCount').value = total;
+
+      const themeCards = Object.entries(themeCounts).map(([theme, needed]) => {
+        const available = Number(availableThemes[theme] || 0);
+        const shortage = Math.max(0, needed - available);
+        const courses = (meta.hierarchy || []).find((entry) => entry.theme === theme)?.courses || [];
+        return `<div style="padding:18px;border-radius:14px;background:#ffffff;border:1px solid ${shortage ? '#fecaca' : '#bbf7d0'}">
+          <div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:12px">
+            <div>
+              <div style="font-weight:800;color:#0f172a;font-size:.92rem;line-height:1.5">${escAdminHtml(theme)}</div>
+              <div style="font-size:.76rem;color:#64748b;margin-top:4px">Required ${needed} items • Available ${available}</div>
             </div>
-            <span style="font-size:0.82rem;color:#16a34a;font-weight:800;min-width:30px">${count}</span>
-            <span style="font-size:0.78rem;color:var(--text-muted)">${s.pct}%</span>
+            <span style="padding:5px 10px;border-radius:999px;background:${shortage ? '#fee2e2' : '#dcfce7'};color:${shortage ? '#b91c1c' : '#166534'};font-size:.72rem;font-weight:800">${shortage ? `${shortage} short` : 'Ready'}</span>
+          </div>
+          <div style="display:grid;gap:8px">
+            ${courses.map(({ course }) => {
+              const required = Number(courseCounts[course] || 0);
+              const available = Number(availableCourses[course] || 0);
+              const shortage = Math.max(0, required - available);
+              return `<div style="display:flex;justify-content:space-between;gap:10px;font-size:.8rem;padding:9px 10px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0">
+                <span style="color:#0f172a;font-weight:700">${escAdminHtml(course)}</span>
+                <span style="color:${shortage ? '#dc2626' : '#16a34a'};font-weight:800">${available}/${required}${shortage ? ` • short ${shortage}` : ''}</span>
+              </div>`;
+            }).join('')}
           </div>
         </div>`;
-      }).join('') +
-      `<div style="margin-top:10px;padding:12px 16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;font-size:0.83rem;color:#166534;font-weight:700">
-         Blueprint generated · ${total} total questions · ${approved} approved in pool
-      </div>`;
+      }).join('');
+
+      const bloomSummary = Object.entries(bloomCounts).map(([level, needed]) => {
+        const available = Number(availableBloom[level] || 0);
+        const shortage = Math.max(0, Number(needed) - available);
+        return `<div style="display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;font-size:.8rem">
+          <span style="font-weight:700;color:#0f172a">${escAdminHtml(level)}</span>
+          <span style="color:${shortage ? '#dc2626' : '#16a34a'};font-weight:800">${available}/${needed}${shortage ? ` • short ${shortage}` : ''}</span>
+        </div>`;
+      }).join('');
+
+      const hasShortage = Object.entries(courseCounts).some(([course, needed]) => Number(availableCourses[course] || 0) < Number(needed || 0))
+        || Object.entries(bloomCounts).some(([level, needed]) => Number(availableBloom[level] || 0) < Number(needed || 0));
+
+      container.innerHTML = `
+        <div style="padding:16px 18px;border-radius:14px;background:${hasShortage ? '#fff7ed' : '#f0fdf4'};border:1px solid ${hasShortage ? '#fed7aa' : '#bbf7d0'};margin-bottom:16px">
+          <div style="font-weight:800;color:${hasShortage ? '#9a3412' : '#166534'}">${hasShortage ? 'Blueprint gaps detected' : 'Official 100-item blueprint ready'}</div>
+          <div style="font-size:.82rem;color:${hasShortage ? '#9a3412' : '#166534'};margin-top:4px">The generator now follows the Ministry blueprint exactly: 100 items, fixed theme/course weights, and fixed overall Bloom distribution.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:16px">${themeCards}</div>
+        <div style="padding:16px;border-radius:14px;background:#ffffff;border:1px solid #dbeafe">
+          <div style="font-weight:800;color:#1e3a8a;margin-bottom:12px">Cognitive Domain Coverage</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">${bloomSummary}</div>
+        </div>`;
     } catch(e) {
       container.innerHTML = `<div style="color:#dc2626;padding:16px">Could not generate blueprint: ${e.message}</div>`;
     }
@@ -2246,6 +2359,10 @@ function showAdminToast(msg, type='success') {
         duration_mins:  parseInt(document.getElementById('newExamDuration').value) || 120,
         scheduled_at:   document.getElementById('newExamStart').value ? new Date(document.getElementById('newExamStart').value).toISOString() : null,
         ends_at:        document.getElementById('newExamEnd').value ? new Date(document.getElementById('newExamEnd').value).toISOString() : null,
+        shuffle_questions: document.getElementById('wz-sc-shuffle-q').checked,
+        shuffle_options: document.getElementById('wz-sc-shuffle-o').checked,
+        confidence_enabled: document.getElementById('wz-sc-confidence').checked,
+        instant_performance_view: document.getElementById('wz-sc-view-performance').checked,
       };
       if (!payload.title) { showToast('Exam title is required', 'error'); return; }
       await API.adminCreateMockExam(payload);
