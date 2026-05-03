@@ -265,13 +265,15 @@
 
 .hero-motto {
   font-family: var(--font-display);
-  font-size: clamp(2.8rem, 6vw, 5.5rem);
+  font-size: clamp(2.2rem, 10vw, 5.5rem);
   font-weight: 900;
   line-height: 1.0;
   letter-spacing: -0.02em;
   color: white;
   text-transform: uppercase;
   margin-bottom: var(--space-6);
+  word-break: break-word;
+  overflow-wrap: break-word;
   animation: fadeSlideUp 0.8s ease forwards;
   animation-delay: 0.35s;
   opacity: 0;
