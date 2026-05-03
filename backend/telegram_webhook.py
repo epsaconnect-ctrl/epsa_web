@@ -73,7 +73,7 @@ def handle_start_command(chat_id, first_name):
             [
                 {
                     "text": "🌟 Open EPSA Portal",
-                    "web_app": {"url": app_url}
+                    "url": "https://t.me/epsahub_bot/EPSA"
                 }
             ]
         ]
