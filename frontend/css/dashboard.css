@@ -11,6 +11,11 @@
   overflow-x: hidden;
 }
 
+html, body, .dash-main, .dash-content, .dash-section {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 /* ─── SIDEBAR ────────────────────────────────── */
 .sidebar {
   width: 260px;
@@ -1172,6 +1177,26 @@
   .profile-stats { grid-template-columns: repeat(2, 1fr); }
   .profile-tabs { flex-wrap: wrap; gap: var(--space-2); }
   .profile-tab { flex: 1; min-width: 120px; }
+  .dash-section [style*="grid-template-columns:1fr 1fr"],
+  .dash-section [style*="grid-template-columns:300px 1fr"],
+  .dash-section [style*="grid-template-columns:2fr 1fr"],
+  .dash-section [style*="grid-template-columns:repeat(4,1fr)"] {
+    grid-template-columns: 1fr !important;
+  }
+  .dash-section [style*="display:flex;justify-content:space-between"] {
+    flex-wrap: wrap;
+    gap: 12px !important;
+  }
+  .dash-section [style*="min-width:132px"],
+  .dash-section [style*="min-width:260px"] {
+    min-width: 0 !important;
+  }
+  .dash-section table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1190,6 +1215,15 @@
   .dash-content { padding: var(--space-3); }
   .sidebar { width: 100%; }
   .sidebar.open, .sidebar.sidebar-active { width: 100%; }
+  .dash-topbar,
+  .dash-topbar-left,
+  .dash-topbar-right {
+    flex-wrap: wrap;
+  }
+  .dash-section [style*="grid-template-columns:1fr 1fr"],
+  .dash-section [style*="repeat(auto-fit,minmax(260px,1fr))"] {
+    grid-template-columns: 1fr !important;
+  }
   .chat-header,
   .chat-input-area {
     padding-left: var(--space-4);

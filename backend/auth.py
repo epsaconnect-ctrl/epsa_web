@@ -721,12 +721,13 @@ def register():
             face_row = db.execute("SELECT id FROM face_embeddings WHERE user_id=?", (user_id,)).fetchone()
             if face_result and reference_embedding is not None and live_embedding_set is not None:
                 if face_row:
+                    now_value = utcnow()
                     db.execute(
                         """
                         UPDATE face_embeddings
                         SET embedding=?, angle_embeddings=?, engine=?, reference_image_hash=?, match_threshold=?,
-                            registration_verified=1, registration_score=?, registration_verified_at=DATETIME('now'),
-                            updated_at=DATETIME('now')
+                            registration_verified=1, registration_score=?, registration_verified_at=?,
+                            updated_at=?
                         WHERE user_id=?
                         """,
                         (
@@ -736,17 +737,20 @@ def register():
                             hash_image(profile_photo_bytes),
                             face_result.threshold,
                             face_result.score,
+                            now_value,
+                            now_value,
                             user_id,
                         ),
                     )
                 else:
+                    now_value = utcnow()
                     db.execute(
                         """
                         INSERT INTO face_embeddings (
                             user_id, embedding, angle_embeddings, engine, reference_image_hash, match_threshold,
                             registration_verified, registration_score, registration_verified_at, updated_at
                         )
-                        VALUES (?,?,?,?,?,?,1,?,DATETIME('now'),DATETIME('now'))
+                        VALUES (?,?,?,?,?,?,1,?,?,?)
                         """,
                         (
                             user_id,
@@ -756,6 +760,8 @@ def register():
                             hash_image(profile_photo_bytes),
                             face_result.threshold,
                             face_result.score,
+                            now_value,
+                            now_value,
                         ),
                     )
         else:
@@ -773,13 +779,14 @@ def register():
             )
             user_id = cur.lastrowid
             if face_result and reference_embedding is not None and live_embedding_set is not None:
+                now_value = utcnow()
                 db.execute(
                     """
                     INSERT INTO face_embeddings (
                         user_id, embedding, angle_embeddings, engine, reference_image_hash, match_threshold,
                         registration_verified, registration_score, registration_verified_at, updated_at
                     )
-                    VALUES (?,?,?,?,?,?,1,?,DATETIME('now'),DATETIME('now'))
+                    VALUES (?,?,?,?,?,?,1,?,?,?)
                     """,
                     (
                         user_id,
@@ -789,6 +796,8 @@ def register():
                         hash_image(profile_photo_bytes),
                         face_result.threshold,
                         face_result.score,
+                        now_value,
+                        now_value,
                     ),
                 )
         db.commit()
@@ -1379,19 +1388,21 @@ def telegram_send_otp():
         # Store OTP keyed by telegram_id (we use the email field in otp_store
         # since it's just a lookup key — any unique string works here)
         otp_key = f"tg:{telegram_id}"
+        expires_at = plus_interval(seconds=otp_ttl)
+        now_value = utcnow()
         db.execute(
             """
-            UPDATE otp_store SET used=1, used_at=DATETIME('now')
+            UPDATE otp_store SET used=1, used_at=?
             WHERE email=? AND used=0
             """,
-            (otp_key,),
+            (now_value, otp_key),
         )
         db.execute(
             """
             INSERT INTO otp_store (email, code, expires_at)
-            VALUES (?, ?, DATETIME('now', ? || ' seconds'))
+            VALUES (?, ?, ?)
             """,
-            (otp_key, otp_code, str(otp_ttl)),
+            (otp_key, otp_code, expires_at),
         )
         db.commit()
     finally:
@@ -1470,10 +1481,10 @@ def telegram_verify_otp():
         otp_row = db.execute(
             """
             SELECT * FROM otp_store
-            WHERE email=? AND code=? AND used=0 AND expires_at > DATETIME('now')
+            WHERE email=? AND code=? AND used=0 AND expires_at > ?
             ORDER BY id DESC LIMIT 1
             """,
-            (otp_key, otp_entered),
+            (otp_key, otp_entered, utcnow()),
         ).fetchone()
 
         if not otp_row:
@@ -1481,8 +1492,8 @@ def telegram_verify_otp():
 
         # Mark OTP as used
         db.execute(
-            "UPDATE otp_store SET used=1, used_at=DATETIME('now') WHERE id=?",
-            (otp_row["id"],),
+            "UPDATE otp_store SET used=1, used_at=? WHERE id=?",
+            (utcnow(), otp_row["id"]),
         )
 
         # Guard: prevent double-linking to another account

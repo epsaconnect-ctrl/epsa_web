@@ -138,8 +138,16 @@ async function handleLogin(event) {
     const data = await API.login(identifier, password);
     const role = data.user.role;
     if (data.user.status === 'pending') {
-      showToast('Your application is still under review.', 'gold');
-      setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+      showToast('Your application is pending review, but your portal access is active.', 'gold');
+      if (typeof EPSA_TG !== 'undefined' && EPSA_TG.isTelegramWebApp()) {
+        await EPSA_TG.handleManualLogin(data);
+      } else if (role === 'admin' || role === 'super_admin') {
+        window.location.href = 'admin/dashboard.html';
+      } else if (role === 'teacher') {
+        window.location.href = 'teacher.html';
+      } else {
+        window.location.href = 'dashboard.html';
+      }
     } else if (typeof EPSA_TG !== 'undefined' && EPSA_TG.isTelegramWebApp()) {
       await EPSA_TG.handleManualLogin(data);
     } else if (role === 'admin' || role === 'super_admin') {

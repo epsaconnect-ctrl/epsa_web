@@ -11,6 +11,11 @@
   overflow-x: hidden;
 }
 
+html, body, .admin-main, .admin-content, .admin-section {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 .admin-sidebar {
   width: 256px;
   min-width: 256px;
@@ -625,6 +630,22 @@
   }
   #telegramBroadcastSubmitBtn {
     width: 100%;
+  }
+  .admin-section [style*="grid-template-columns:1fr 1fr"],
+  .admin-section [style*="grid-template-columns:minmax(260px,34%) 1fr"],
+  .admin-section [style*="grid-template-columns:repeat(4,1fr)"],
+  .admin-section [style*="grid-template-columns:repeat(5,1fr)"],
+  .admin-section [style*="grid-template-columns:1.5fr 0.95fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  .admin-section [style*="display:flex;justify-content:space-between"] {
+    flex-wrap: wrap;
+    gap: 12px !important;
+  }
+  .admin-section [style*="min-width:110px"],
+  .admin-section [style*="min-width:120px"],
+  .admin-section [style*="min-width:260px"] {
+    min-width: 0 !important;
   }
 }
 
