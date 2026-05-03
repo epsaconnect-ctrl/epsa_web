@@ -412,7 +412,7 @@
 </div>
 
 <script>
-  const API = (window.__EPSA_CONFIG__?.API_BASE_URL || localStorage.getItem('epsa_api_base') || ${window.location.origin}/api).replace(/\/api\/?$/, '');
+  const API = (window.__EPSA_CONFIG__?.API_BASE_URL || localStorage.getItem('epsa_api_base') || `${window.location.origin}/api`).replace(/\/api\/?$/, '');
   let allPartners = [];
   let activeCat = '';
   const catColors = { NGO: '#4ade80', Hospital: '#f472b6', University: '#60a5fa', Government: '#fbbf24', Clinic: '#c084fc', Research: '#fb923c', Strategic: '#818cf8' };

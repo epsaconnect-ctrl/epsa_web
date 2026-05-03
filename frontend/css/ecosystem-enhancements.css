@@ -255,7 +255,10 @@
   }
 
   .nav-btn-login {
-    display: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
   }
 
   #mobile-menu {
@@ -265,6 +268,32 @@
 
   .public-mobile-dock {
     display: block;
+  }
+
+  body {
+    padding-bottom: 92px;
+  }
+
+  .navbar-dark-inner {
+    gap: 12px;
+  }
+
+  .nav-links {
+    display: flex !important;
+    margin-left: auto;
+  }
+
+  .nav-links .nav-link-item {
+    display: none !important;
+  }
+
+  .nav-links .btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 14px !important;
+    font-size: 0.8rem !important;
+    white-space: nowrap;
   }
 
   .glass-inline-card,

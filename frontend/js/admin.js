@@ -112,13 +112,31 @@ function switchAdminSection(section) {
   const pt = document.getElementById('adminPageTitle');
   if (pt) pt.textContent = adminSectionTitle(section);
   currentAdminSection = section;
-  document.getElementById('adminSidebar')?.classList.remove('open');
+  setAdminSidebarOpen(false);
   runAdminSectionLoader(section);
 }
 window.switchAdminSection = switchAdminSection;
 
-function toggleAdminSidebar() { document.getElementById('adminSidebar').classList.toggle('open'); }
+function setAdminSidebarOpen(force) {
+  const sidebar = document.getElementById('adminSidebar') || document.querySelector('.admin-sidebar');
+  const backdrop = document.getElementById('adminSidebarBackdrop');
+  if (!sidebar) return;
+  const shouldOpen = typeof force === 'boolean' ? force : !sidebar.classList.contains('sidebar-active');
+  sidebar.classList.toggle('open', shouldOpen);
+  sidebar.classList.toggle('sidebar-active', shouldOpen);
+  backdrop?.classList.toggle('active', shouldOpen);
+  document.body.classList.toggle('admin-sidebar-open', shouldOpen && window.innerWidth <= 768);
+}
+
+function toggleAdminSidebar() {
+  setAdminSidebarOpen();
+}
+window.setAdminSidebarOpen = setAdminSidebarOpen;
 window.toggleAdminSidebar = toggleAdminSidebar;
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') setAdminSidebarOpen(false);
+});
 
 async function refreshCurrentSection() { await switchAdminSection(currentAdminSection); }
 window.refreshCurrentSection = refreshCurrentSection;
@@ -2193,14 +2211,6 @@ window.switchAdminSection = function(section) {
   if (typeof previousAdminSectionSwitch === 'function') previousAdminSectionSwitch(section);
   if (section === 'voting') {
     ensureVotingWorkspaceShell();
-  }
-};
-
-// Sidebar toggle for mobile
-window.toggleSidebar = function() {
-  const sidebar = document.getElementById('adminSidebar') || document.querySelector('.admin-sidebar') || document.querySelector('.sidebar');
-  if (sidebar) {
-    sidebar.classList.toggle('sidebar-active');
   }
 };
 

@@ -227,6 +227,7 @@
       </button>
     </div>
   </aside>
+  <button class="admin-sidebar-backdrop" id="adminSidebarBackdrop" type="button" onclick="setAdminSidebarOpen(false)" aria-label="Close admin sidebar"></button>
 
   <!--  MAIN  -->
   <div class="admin-main">
@@ -1120,7 +1121,7 @@ const ADMIN_UPLOAD_BASE = (() => {
   if (origin && /^https?:/i.test(origin) && !/^(file:|null)$/i.test(origin)) {
     return origin.replace(/\/$/, '');
   }
-  return (window.__EPSA_CONFIG__?.API_BASE_URL || localStorage.getItem('epsa_api_base') || ${window.location.origin}/api).replace(/\/api\/?$/, '');
+  return (window.__EPSA_CONFIG__?.API_BASE_URL || localStorage.getItem('epsa_api_base') || `${window.location.origin}/api`).replace(/\/api\/?$/, '');
 })();
 
 function getAdminToken() { return localStorage.getItem('epsa_access_token') || ''; }

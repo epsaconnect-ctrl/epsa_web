@@ -99,7 +99,7 @@ function switchSection(section) {
   const pt = document.getElementById('pageTitle');
   if (pt) pt.textContent = titles[section] || section;
   currentSection = section;
-  if (window.innerWidth <= 768) document.getElementById('sidebar')?.classList.remove('open');
+  if (window.innerWidth <= 768) setSidebarOpen(false);
 
   if (section === 'clubs' && typeof loadMyClubs === 'function') loadMyClubs();
   if (section === 'exams' && typeof loadExams === 'function') loadExams();
@@ -116,8 +116,26 @@ function switchSection(section) {
 }
 window.switchSection = switchSection;
 
-function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+function setSidebarOpen(force) {
+  const sidebar = document.getElementById('sidebar') || document.querySelector('.sidebar');
+  const backdrop = document.getElementById('sidebarBackdrop');
+  if (!sidebar) return;
+  const shouldOpen = typeof force === 'boolean' ? force : !sidebar.classList.contains('sidebar-active');
+  sidebar.classList.toggle('open', shouldOpen);
+  sidebar.classList.toggle('sidebar-active', shouldOpen);
+  backdrop?.classList.toggle('active', shouldOpen);
+  document.body.classList.toggle('sidebar-open', shouldOpen && window.innerWidth <= 768);
+}
+
+function toggleSidebar() {
+  setSidebarOpen();
+}
+window.setSidebarOpen = setSidebarOpen;
 window.toggleSidebar = toggleSidebar;
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') setSidebarOpen(false);
+});
 
 async function loadProfile() {
   try {
@@ -677,12 +695,3 @@ async function connectWithStudent(studentId) {
   }
 }
 window.connectWithStudent = connectWithStudent;
-
-// Sidebar toggle for mobile
-window.toggleSidebar = function() {
-  const sidebar = document.getElementById('sidebar') || document.querySelector('.sidebar') || document.querySelector('.admin-sidebar');
-  if (sidebar) {
-    sidebar.classList.toggle('sidebar-active');
-  }
-};
-

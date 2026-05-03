@@ -21,6 +21,9 @@
 (function (global) {
   'use strict';
 
+  let activeLinkingPromise = null;
+  let resolveActiveLinkingPromise = null;
+
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   function getApiBase() {
@@ -42,6 +45,27 @@
   function storeUser(user) {
     if (typeof API !== 'undefined') API.setUser(user);
     else localStorage.setItem('epsa_user', JSON.stringify(user));
+  }
+
+  function updateStoredUser(patch) {
+    if (!patch || typeof patch !== 'object') return;
+    const currentUser = (typeof API !== 'undefined' && typeof API.getUser === 'function')
+      ? (API.getUser() || {})
+      : JSON.parse(localStorage.getItem('epsa_user') || '{}');
+    storeUser({ ...currentUser, ...patch });
+  }
+
+  function redirectForUser(user) {
+    const role = user?.role;
+    if (role === 'admin' || role === 'super_admin') {
+      window.location.href = 'admin/dashboard.html';
+      return;
+    }
+    if (role === 'teacher') {
+      window.location.href = 'teacher.html';
+      return;
+    }
+    window.location.href = 'dashboard.html';
   }
 
   async function apiPost(path, body, token) {
@@ -253,15 +277,41 @@
     faceBtn.parentNode.insertBefore(btn, divider.nextSibling);
   }
 
+  async function handleManualLogin(loginPayload) {
+    if (!isTelegramWebApp()) {
+      redirectForUser(loginPayload?.user);
+      return;
+    }
+
+    const user = loginPayload?.user || {};
+    if (user.role === 'admin' || user.role === 'super_admin' || user.role === 'teacher') {
+      redirectForUser(user);
+      return;
+    }
+
+    if (user.telegram_id) {
+      redirectForUser(user);
+      return;
+    }
+
+    await showLinkingModal({ requireLink: true });
+  }
+
   /**
    * Called AFTER a successful normal password login (from auth.js).
    * Shows the OTP linking modal if inside Telegram.
    */
-  function showLinkingModal() {
-    if (!isTelegramWebApp()) return;
+  function showLinkingModal(options = {}) {
+    if (!isTelegramWebApp()) return Promise.resolve({ linked: false });
+    if (activeLinkingPromise) return activeLinkingPromise;
+    const requireLink = options.requireLink !== false;
 
     // Build and inject the modal
-    if (document.getElementById('tg-link-modal')) return; // already shown
+    if (document.getElementById('tg-link-modal')) return Promise.resolve({ linked: false });
+
+    activeLinkingPromise = new Promise((resolve) => {
+      resolveActiveLinkingPromise = resolve;
+    });
 
     const tgUser = getTelegramUser();
     const username = tgUser?.username ? `@${tgUser.username}` : (tgUser?.first_name || 'your Telegram account');
@@ -340,7 +390,7 @@
             flex:1;padding:10px;border-radius:10px;border:1px solid var(--border,#333);
             background:transparent;color:var(--text-muted,#aaa);cursor:pointer;font-size:0.875rem;
           ">
-            Skip for now
+            Cancel sign-in
           </button>
         </div>
       </div>
@@ -399,9 +449,14 @@
       if (ok) {
         status.style.color = '#22c55e';
         status.textContent = '🎉 Telegram linked! Redirecting...';
+        updateStoredUser({ telegram_id: data?.telegram_id || String(tgUser?.id || '') });
         setTimeout(() => {
           overlay.remove();
-          window.location.href = 'dashboard.html';
+          const resolver = resolveActiveLinkingPromise;
+          activeLinkingPromise = null;
+          resolveActiveLinkingPromise = null;
+          if (resolver) resolver({ linked: true, telegram_id: data?.telegram_id || null });
+          redirectForUser((typeof API !== 'undefined' && typeof API.getUser === 'function') ? API.getUser() : null);
         }, 1200);
       } else {
         status.style.color = '#ef4444';
@@ -413,8 +468,21 @@
 
     document.getElementById('tg-skip-link-btn').addEventListener('click', () => {
       overlay.remove();
-      window.location.href = 'dashboard.html';
+      const resolver = resolveActiveLinkingPromise;
+      activeLinkingPromise = null;
+      resolveActiveLinkingPromise = null;
+      if (resolver) resolver({ linked: false, cancelled: true });
+      if (requireLink) {
+        showToastMsg('Telegram linking is required before entering the Mini App portal.', 'info');
+        if (typeof API !== 'undefined' && typeof API.clearToken === 'function') {
+          API.clearToken();
+        }
+        setTimeout(() => { window.location.href = 'login.html'; }, 250);
+      } else {
+        redirectForUser((typeof API !== 'undefined' && typeof API.getUser === 'function') ? API.getUser() : null);
+      }
     });
+    return activeLinkingPromise;
   }
 
   // ── Dashboard Page ─────────────────────────────────────────────────────────
@@ -521,6 +589,7 @@
   global.EPSA_TG = {
     isTelegramWebApp,
     tryAutoLogin,
+    handleManualLogin,
     showLinkingModal,
     sendOtp,
     verifyOtp,

@@ -24,6 +24,10 @@
   border-right: 1px solid rgba(255,255,255,0.04);
 }
 
+.admin-sidebar-backdrop {
+  display: none;
+}
+
 .admin-sidebar-logo {
   display: flex;
   align-items: center;
@@ -549,13 +553,40 @@
 }
 
 @media (max-width: 768px) {
+  body.admin-sidebar-open {
+    overflow: hidden;
+  }
   .admin-sidebar { transform: translateX(-256px); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
   .admin-sidebar.open, .admin-sidebar.sidebar-active { transform: translateX(0); box-shadow: var(--shadow-xl); }
+  .admin-sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    display: block;
+    opacity: 0;
+    pointer-events: none;
+    border: 0;
+    background: rgba(5, 14, 7, 0.52);
+    backdrop-filter: blur(2px);
+    transition: opacity 0.25s ease;
+    z-index: calc(var(--z-sticky) - 1);
+  }
+  .admin-sidebar-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
 
   .admin-main { margin-left: 0; }
+  #adminHamburger { display: inline-flex !important; align-items: center; justify-content: center; }
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .admin-content { padding: var(--space-4); }
   .admin-form-grid { grid-template-columns: 1fr; }
+  .admin-topbar { padding: 0 var(--space-4); }
+  .table-header {
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .table-search-input { width: 100%; }
 }
 
 /* ─── VOTING ADMIN TABS ───────────────────────── */

@@ -488,7 +488,7 @@
 </div>
 
 <script>
-  const API = (window.__EPSA_CONFIG__?.API_BASE_URL || localStorage.getItem('epsa_api_base') || ${window.location.origin}/api).replace(/\/api\/?$/, '');
+  const API = (window.__EPSA_CONFIG__?.API_BASE_URL || localStorage.getItem('epsa_api_base') || `${window.location.origin}/api`).replace(/\/api\/?$/, '');
   let allClubs = [];
 
   async function loadClubs() {

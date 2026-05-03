@@ -125,6 +125,49 @@ body {
 }
 
 @media (max-width: 768px) {
+  .navbar-dark-inner,
+  .hero-inner,
+  .clubs-hero-inner,
+  .gi-hero-inner {
+    gap: 18px !important;
+  }
+
+  .partners-stats-inner,
+  .impact-inner {
+    gap: 24px !important;
+  }
+
+  .clubs-filter-inner,
+  .filter-bar-inner {
+    align-items: stretch !important;
+  }
+
+  .clubs-search,
+  .filter-search,
+  .uni-filter {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .club-modal,
+  .partner-modal {
+    max-height: calc(100vh - 120px) !important;
+  }
+
+  .club-modal-header,
+  .club-modal-body {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  .modal-tabs {
+    flex-wrap: wrap;
+  }
+
+  .modal-tab {
+    min-width: calc(50% - 4px);
+  }
+
   .clubs-hero,
   .partners-hero,
   .gi-hero,

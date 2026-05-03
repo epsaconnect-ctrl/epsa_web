@@ -28,6 +28,10 @@
   overflow: hidden;
 }
 
+.sidebar-backdrop {
+  display: none;
+}
+
 .sidebar-logo {
   display: flex;
   align-items: center;
@@ -1116,6 +1120,9 @@
 }
 
 @media (max-width: 768px) {
+  body.sidebar-open {
+    overflow: hidden;
+  }
   .sidebar {
     transform: translateX(-260px);
     width: 280px;
@@ -1125,12 +1132,42 @@
     transform: translateX(0);
     box-shadow: var(--shadow-xl);
   }
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    display: block;
+    opacity: 0;
+    pointer-events: none;
+    border: 0;
+    background: rgba(5, 14, 7, 0.52);
+    backdrop-filter: blur(2px);
+    transition: opacity 0.25s ease;
+    z-index: calc(var(--z-sticky) - 1);
+  }
+  .sidebar-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
   .dash-main { margin-left: 0; }
   .sidebar-toggle { display: flex; }
   .quick-actions { grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
   .chat-layout { grid-template-columns: 1fr; }
   .chat-sidebar { display: none; }
   .dash-content { padding: var(--space-4); }
+  .dash-topbar { padding: 0 var(--space-4); }
+  .welcome-card { padding: var(--space-6); }
+  .welcome-stats { flex-wrap: wrap; gap: var(--space-4); }
+  .training-status-bar,
+  .exam-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .profile-info-area {
+    padding: 0 var(--space-4) var(--space-5);
+    gap: var(--space-4);
+  }
+  .profile-stats-row { flex-wrap: wrap; }
+  .profile-stat-item { min-width: 50%; }
   .profile-header { flex-direction: column; text-align: center; gap: var(--space-3); }
   .profile-stats { grid-template-columns: repeat(2, 1fr); }
   .profile-tabs { flex-wrap: wrap; gap: var(--space-2); }
@@ -1141,10 +1178,21 @@
   .quick-actions { grid-template-columns: 1fr 1fr; gap: var(--space-2); }
   .training-grid { grid-template-columns: 1fr; }
   .profile-info-area { flex-direction: column; align-items: flex-start; }
+  .profile-actions {
+    width: 100%;
+  }
+  .profile-actions .btn {
+    width: 100%;
+  }
   .profile-stats { grid-template-columns: 1fr; gap: var(--space-2); }
   .profile-tabs { flex-direction: column; }
   .profile-tab { width: 100%; }
   .dash-content { padding: var(--space-3); }
   .sidebar { width: 100%; }
-  .sidebar.open { width: 100%; }
+  .sidebar.open, .sidebar.sidebar-active { width: 100%; }
+  .chat-header,
+  .chat-input-area {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
 }

@@ -176,7 +176,7 @@ async function handleLogin(event) {
       showToast('Your application is still under review.', 'gold');
       setTimeout(() => { window.location.href = 'login.html'; }, 2000);
     } else if (typeof EPSA_TG !== 'undefined' && EPSA_TG.isTelegramWebApp()) {
-      EPSA_TG.showLinkingModal();
+      await EPSA_TG.handleManualLogin(data);
     } else if (role === 'admin' || role === 'super_admin') {
       window.location.href = 'admin/dashboard.html';
     } else if (role === 'teacher') {

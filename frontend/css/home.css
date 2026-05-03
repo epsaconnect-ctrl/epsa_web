@@ -27,6 +27,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-8);
+  min-width: 0;
 }
 
 .nav-logo {
@@ -114,6 +115,7 @@
   align-items: center;
   gap: var(--space-3);
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .nav-btn-login {
@@ -127,6 +129,8 @@
   backdrop-filter: blur(8px);
   transition: var(--transition-normal);
   cursor: pointer;
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .nav-btn-login:hover {
@@ -236,6 +240,8 @@
   position: relative;
   z-index: 2;
   max-width: 680px;
+  width: 100%;
+  min-width: 0;
   padding-top: 100px;
 }
 
@@ -274,6 +280,8 @@
   margin-bottom: var(--space-6);
   word-break: break-word;
   overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
   animation: fadeSlideUp 0.8s ease forwards;
   animation-delay: 0.35s;
   opacity: 0;
@@ -2056,9 +2064,64 @@
 }
 
 @media (max-width: 768px) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  .navbar {
+    padding: 12px 0;
+  }
+
+  .nav-inner {
+    gap: 10px;
+  }
+
+  .nav-logo {
+    min-width: 0;
+    gap: 10px;
+  }
+
+  .nav-logo img {
+    width: 42px;
+    height: 42px;
+  }
+
+  .nav-logo-text {
+    min-width: 0;
+  }
+
+  .nav-logo-sub {
+    display: none;
+  }
+
   .nav-menu { display: none; }
   .nav-hamburger { display: flex; }
   .nav-btn-register { display: none; }
+  .nav-actions {
+    margin-left: auto;
+    gap: 8px;
+  }
+  .nav-btn-login {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px !important;
+    font-size: 0.82rem;
+    min-width: 0;
+  }
+  .hero-content {
+    max-width: 100%;
+    padding-top: 88px;
+  }
+  .hero-motto {
+    font-size: clamp(2rem, 13vw, 3.7rem);
+    line-height: 0.98;
+    max-width: min(100%, 8.5ch);
+  }
+  .hero-vision {
+    max-width: 100%;
+  }
   .about-grid { grid-template-columns: 1fr; }
   .about-img-badge { display: none; }
   .programs-grid { grid-template-columns: 1fr; }
@@ -2090,6 +2153,26 @@
 }
 
 @media (max-width: 480px) {
+  .nav-inner {
+    align-items: center;
+  }
+  .nav-logo-main {
+    font-size: 1rem;
+  }
+  .nav-btn-login {
+    padding: 8px 14px !important;
+    font-size: 0.78rem;
+  }
+  .nav-hamburger {
+    padding: 6px;
+  }
+  .hero-motto {
+    font-size: clamp(1.8rem, 12.5vw, 3.15rem);
+    max-width: min(100%, 8ch);
+  }
+  .hero-vision {
+    font-size: 0.98rem;
+  }
   .hero-actions { flex-direction: column; align-items: flex-start; }
   .stats-grid { grid-template-columns: 1fr 1fr; }
   .cta-card { padding: var(--space-8) var(--space-5); }
