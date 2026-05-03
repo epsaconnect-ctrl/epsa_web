@@ -2956,31 +2956,32 @@ def telegram_broadcast():
 
     endpoint = "sendMessage"
     request_payload = payload.copy()
+    files = None
     if media_file and media_file.filename:
         ext = media_file.filename.rsplit('.', 1)[-1].lower() if '.' in media_file.filename else ''
         media_kind = 'photo' if (
             (media_file.mimetype or '').startswith('image/')
             or ext in {'jpg', 'jpeg', 'png', 'webp'}
         ) else 'video'
-        folder = 'telegram_broadcasts'
-        saved_name = save_upload(media_file, folder)
-        media_url = upload_url(folder, saved_name)
-        if media_url and media_url.startswith('/'):
-            media_url = f"{base_url}{media_url}"
-        if not media_url:
-            return jsonify({'error': 'Failed to prepare the uploaded media file.'}), 500
         endpoint = 'sendPhoto' if media_kind == 'photo' else 'sendVideo'
         request_payload.update({
-            media_kind: media_url,
             'caption': message_text[:1024],
         })
+        media_file.stream.seek(0)
+        files = {
+            media_kind: (
+                media_file.filename,
+                media_file.stream,
+                media_file.mimetype or 'application/octet-stream',
+            )
+        }
     else:
         request_payload['text'] = message_text
 
     url = f"https://api.telegram.org/bot{bot_token}/{endpoint}"
 
     try:
-        resp = requests.post(url, data=request_payload, timeout=20)
+        resp = requests.post(url, data=request_payload, files=files, timeout=30)
         resp_data = resp.json()
         if not resp_data.get('ok'):
             return jsonify({'error': f"Telegram API Error: {resp_data.get('description')}"}), 500
