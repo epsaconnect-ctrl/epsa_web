@@ -677,3 +677,12 @@ async function connectWithStudent(studentId) {
   }
 }
 window.connectWithStudent = connectWithStudent;
+
+// Sidebar toggle for mobile
+window.toggleSidebar = function() {
+  const sidebar = document.getElementById('sidebar') || document.querySelector('.sidebar') || document.querySelector('.admin-sidebar');
+  if (sidebar) {
+    sidebar.classList.toggle('sidebar-active');
+  }
+};
+

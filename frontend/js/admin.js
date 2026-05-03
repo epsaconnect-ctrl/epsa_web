@@ -2196,3 +2196,12 @@ window.switchAdminSection = function(section) {
   }
 };
 
+// Sidebar toggle for mobile
+window.toggleSidebar = function() {
+  const sidebar = document.getElementById('adminSidebar') || document.querySelector('.admin-sidebar') || document.querySelector('.sidebar');
+  if (sidebar) {
+    sidebar.classList.toggle('sidebar-active');
+  }
+};
+
+

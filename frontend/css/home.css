@@ -2309,3 +2309,13 @@
     height: 260px;
   }
 }
+
+@media (max-width: 768px) {
+  .nav-btn-login {
+    background: linear-gradient(135deg, var(--epsa-gold-light), var(--epsa-gold)) !important;
+    color: var(--dark-800) !important;
+    border: none !important;
+    box-shadow: 0 4px 16px rgba(200,163,64,0.4) !important;
+    padding: 8px 18px !important;
+  }
+}
