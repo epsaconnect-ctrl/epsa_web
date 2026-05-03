@@ -134,6 +134,7 @@ class AppSettings:
     bootstrap_admin_totp_secret: str | None
     gunicorn_bind: str
     gunicorn_workers: int
+    telegram_bot_token: str | None
 
     @property
     def is_local(self):
@@ -303,4 +304,5 @@ def get_settings():
         bootstrap_admin_totp_secret=(os.getenv("EPSA_BOOTSTRAP_ADMIN_TOTP_SECRET") or "").strip() or None,
         gunicorn_bind=os.getenv("EPSA_GUNICORN_BIND", "0.0.0.0:5000"),
         gunicorn_workers=max(1, _env_int("EPSA_GUNICORN_WORKERS", 2)),
+        telegram_bot_token=(os.getenv("EPSA_TELEGRAM_BOT_TOKEN") or "").strip() or None,
     )

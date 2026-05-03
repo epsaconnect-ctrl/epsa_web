@@ -775,6 +775,24 @@
 <script src="js/voting.js"></script>
 <script src="js/messaging.js"></script>
 <script src="js/exam.js"></script>
+<!-- Telegram WebApp SDK -- safe to load in any browser; does nothing outside Telegram -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="js/telegram-auth.js"></script>
+<script>
+  // Telegram Mini App: inject linked-status widget into the profile section.
+  // Guards inside telegram-auth.js: if not inside Telegram, returns immediately.
+  document.addEventListener('DOMContentLoaded', function() {
+    EPSA_TG.initDashboardPage();
+  });
+  // Re-run when user navigates to the profile section
+  const _origSwitchSection = window.switchSection;
+  window.switchSection = function(section) {
+    if (_origSwitchSection) _origSwitchSection(section);
+    if (section === 'profile' && EPSA_TG.isTelegramWebApp()) {
+      setTimeout(() => EPSA_TG.initDashboardPage(), 300);
+    }
+  };
+</script>
 
 <!-- ── REGISTER CLUB MODAL ── -->
 <div class="modal-overlay" id="registerClubModal">

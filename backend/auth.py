@@ -1167,3 +1167,328 @@ def me():
     user = _serialize_row(row)
     user.pop("password_hash", None)
     return jsonify(user)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# TELEGRAM MINI APP AUTHENTICATION
+# These endpoints are ONLY called from the Telegram Mini App context.
+# They do NOT affect or interfere with any normal browser-based login flows.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _get_telegram_bot():
+    """Import telegram_bot module lazily (avoids import errors if requests is unavailable)."""
+    try:
+        from . import telegram_bot as tgbot
+    except ImportError:
+        import telegram_bot as tgbot
+    return tgbot
+
+
+def _get_bot_token():
+    settings = get_settings()
+    token = settings.telegram_bot_token
+    if not token:
+        logger.error("[Telegram] EPSA_TELEGRAM_BOT_TOKEN is not configured")
+    return token
+
+
+@auth_bp.route("/telegram-login", methods=["POST"])
+@rate_limit("telegram-login", limit=20, window_seconds=300)
+def telegram_login():
+    """
+    Auto-login via Telegram initData.
+
+    Called when a user opens the EPSA Mini App and has previously linked their
+    Telegram account. Returns a JWT if their telegram_id is found in the DB.
+
+    Request: { "init_data": "<raw Telegram WebApp initData string>" }
+    Response (success): standard auth payload with JWT
+    Response (not linked): { "code": "not_linked", "telegram_user": {...} }
+    Response (invalid): 401
+    """
+    data = _request_json()
+    init_data = (data.get("init_data") or "").strip()
+
+    if not init_data:
+        return jsonify({"error": "init_data is required"}), 400
+
+    bot_token = _get_bot_token()
+    if not bot_token:
+        return jsonify({"error": "Telegram integration is not configured on this server"}), 503
+
+    tgbot = _get_telegram_bot()
+
+    if not tgbot.verify_telegram_init_data(init_data, bot_token):
+        logger.warning("[Telegram/Login] Invalid or expired initData received")
+        return jsonify({"error": "Invalid or expired Telegram data. Please reopen the app."}), 401
+
+    tg_user = tgbot.parse_telegram_user(init_data)
+    if not tg_user or not tg_user.get("id"):
+        return jsonify({"error": "Could not extract Telegram user data"}), 400
+
+    telegram_id = str(tg_user["id"])
+
+    db = get_db()
+    try:
+        row = db.execute(
+            "SELECT * FROM users WHERE telegram_id=?",
+            (telegram_id,),
+        ).fetchone()
+    finally:
+        db.close()
+
+    if not row:
+        logger.info("[Telegram/Login] No EPSA account linked for telegram_id=%s", telegram_id)
+        return jsonify({
+            "code": "not_linked",
+            "message": "No EPSA account is linked to this Telegram account yet.",
+            "telegram_user": {
+                "id": tg_user.get("id"),
+                "first_name": tg_user.get("first_name", ""),
+                "username": tg_user.get("username", ""),
+            },
+        }), 404
+
+    if not _is_verified_user(row) or not _is_active_user(row):
+        return jsonify({"error": "Account is not active. Please contact EPSA support."}), 403
+
+    if row["status"] == "pending":
+        return jsonify({"error": "Account is under review.", "status": "pending"}), 403
+
+    if row["status"] == "rejected":
+        return jsonify({"error": f"Account rejected: {row['rejection_reason'] or 'contact support'}"}), 403
+
+    logger.info("[Telegram/Login] Auto-login for user_id=%s via telegram_id=%s", row["id"], telegram_id)
+    return _auth_response(row, {"login_method": "telegram"})
+
+
+@auth_bp.route("/telegram-send-otp", methods=["POST"])
+@jwt_required()
+@rate_limit("telegram-send-otp", limit=5, window_seconds=600)
+def telegram_send_otp():
+    """
+    Send an OTP to the student's Telegram DM for account linking.
+
+    Called AFTER the student has already logged in with email/password.
+    The JWT identifies who is linking.
+
+    Request: { "init_data": "<raw Telegram WebApp initData string>" }
+
+    IMPORTANT: The student must have started @epsahub_bot first, otherwise
+    the bot cannot DM them and will return an error with instructions.
+    """
+    uid = get_jwt_identity()
+    data = _request_json()
+    init_data = (data.get("init_data") or "").strip()
+
+    if not init_data:
+        return jsonify({"error": "init_data is required"}), 400
+
+    bot_token = _get_bot_token()
+    if not bot_token:
+        return jsonify({"error": "Telegram integration is not configured on this server"}), 503
+
+    tgbot = _get_telegram_bot()
+
+    if not tgbot.verify_telegram_init_data(init_data, bot_token):
+        return jsonify({"error": "Invalid or expired Telegram data"}), 401
+
+    tg_user = tgbot.parse_telegram_user(init_data)
+    if not tg_user or not tg_user.get("id"):
+        return jsonify({"error": "Could not extract Telegram user data"}), 400
+
+    telegram_id = str(tg_user["id"])
+    first_name = tg_user.get("first_name", "")
+
+    db = get_db()
+    try:
+        # Prevent one Telegram account from linking to two different EPSA accounts
+        existing = db.execute(
+            "SELECT id FROM users WHERE telegram_id=? AND id != ?",
+            (telegram_id, uid),
+        ).fetchone()
+        if existing:
+            return jsonify({
+                "error": "This Telegram account is already linked to another EPSA account."
+            }), 409
+
+        # Check if already linked to THIS user (idempotent)
+        current_user = db.execute("SELECT telegram_id, first_name FROM users WHERE id=?", (uid,)).fetchone()
+        if current_user and current_user["telegram_id"] == telegram_id:
+            return jsonify({
+                "message": "Telegram is already linked to your account.",
+                "already_linked": True,
+            }), 200
+
+        # Generate 6-digit OTP
+        import secrets as _secrets
+        otp_code = str(_secrets.randbelow(900000) + 100000)  # 100000–999999
+        settings = get_settings()
+        otp_ttl = min(300, settings.otp_ttl_seconds)  # max 5 min for security
+
+        # Store OTP keyed by telegram_id (we use the email field in otp_store
+        # since it's just a lookup key — any unique string works here)
+        otp_key = f"tg:{telegram_id}"
+        db.execute(
+            """
+            UPDATE otp_store SET used=1, used_at=DATETIME('now')
+            WHERE email=? AND used=0
+            """,
+            (otp_key,),
+        )
+        db.execute(
+            """
+            INSERT INTO otp_store (email, code, expires_at)
+            VALUES (?, ?, DATETIME('now', ? || ' seconds'))
+            """,
+            (otp_key, otp_code, str(otp_ttl)),
+        )
+        db.commit()
+    finally:
+        db.close()
+
+    # Send OTP via Telegram bot
+    msg = tgbot.build_otp_message(otp_code, first_name)
+    delivered = tgbot.send_telegram_message(telegram_id, msg, bot_token)
+
+    if not delivered:
+        logger.warning(
+            "[Telegram/SendOTP] Bot could not DM telegram_id=%s. "
+            "User may not have started the bot.",
+            telegram_id,
+        )
+        return jsonify({
+            "error": (
+                "Could not send OTP to your Telegram. "
+                "Please open @epsahub_bot in Telegram and press the Start button first, "
+                "then try again."
+            ),
+            "code": "bot_not_started",
+        }), 422
+
+    logger.info("[Telegram/SendOTP] OTP sent to telegram_id=%s for user_id=%s", telegram_id, uid)
+    return jsonify({
+        "message": "Verification code sent to your Telegram.",
+        "telegram_first_name": first_name,
+        "expires_in_seconds": otp_ttl,
+    })
+
+
+@auth_bp.route("/telegram-verify-otp", methods=["POST"])
+@jwt_required()
+@rate_limit("telegram-verify-otp", limit=10, window_seconds=600)
+def telegram_verify_otp():
+    """
+    Verify the OTP entered by the student and link their Telegram account.
+
+    Request: {
+        "init_data": "<raw Telegram WebApp initData string>",
+        "otp": "123456"
+    }
+    """
+    uid = get_jwt_identity()
+    data = _request_json()
+    init_data = (data.get("init_data") or "").strip()
+    otp_entered = (data.get("otp") or "").strip()
+
+    if not init_data or not otp_entered:
+        return jsonify({"error": "init_data and otp are required"}), 400
+
+    if not otp_entered.isdigit() or len(otp_entered) != 6:
+        return jsonify({"error": "OTP must be a 6-digit number"}), 400
+
+    bot_token = _get_bot_token()
+    if not bot_token:
+        return jsonify({"error": "Telegram integration is not configured on this server"}), 503
+
+    tgbot = _get_telegram_bot()
+
+    if not tgbot.verify_telegram_init_data(init_data, bot_token):
+        return jsonify({"error": "Invalid or expired Telegram data"}), 401
+
+    tg_user = tgbot.parse_telegram_user(init_data)
+    if not tg_user or not tg_user.get("id"):
+        return jsonify({"error": "Could not extract Telegram user data"}), 400
+
+    telegram_id = str(tg_user["id"])
+    otp_key = f"tg:{telegram_id}"
+
+    db = get_db()
+    try:
+        otp_row = db.execute(
+            """
+            SELECT * FROM otp_store
+            WHERE email=? AND code=? AND used=0 AND expires_at > DATETIME('now')
+            ORDER BY id DESC LIMIT 1
+            """,
+            (otp_key, otp_entered),
+        ).fetchone()
+
+        if not otp_row:
+            return jsonify({"error": "Invalid or expired OTP. Request a new code and try again."}), 400
+
+        # Mark OTP as used
+        db.execute(
+            "UPDATE otp_store SET used=1, used_at=DATETIME('now') WHERE id=?",
+            (otp_row["id"],),
+        )
+
+        # Guard: prevent double-linking to another account
+        conflict = db.execute(
+            "SELECT id FROM users WHERE telegram_id=? AND id != ?",
+            (telegram_id, uid),
+        ).fetchone()
+        if conflict:
+            db.commit()
+            return jsonify({
+                "error": "This Telegram account is already linked to another EPSA account."
+            }), 409
+
+        # Link telegram_id to this user
+        db.execute(
+            "UPDATE users SET telegram_id=? WHERE id=?",
+            (telegram_id, uid),
+        )
+        db.commit()
+
+        linked_user = db.execute("SELECT * FROM users WHERE id=?", (uid,)).fetchone()
+    finally:
+        db.close()
+
+    logger.info("[Telegram/VerifyOTP] Linked telegram_id=%s to user_id=%s", telegram_id, uid)
+    return jsonify({
+        "message": "Telegram account linked successfully! You can now sign in with Telegram next time.",
+        "telegram_id": telegram_id,
+        "telegram_username": tg_user.get("username", ""),
+        "telegram_first_name": tg_user.get("first_name", ""),
+    })
+
+
+@auth_bp.route("/unlink-telegram", methods=["POST"])
+@jwt_required()
+@rate_limit("unlink-telegram", limit=10, window_seconds=600)
+def unlink_telegram():
+    """
+    Unlink the Telegram account from the student's EPSA profile.
+
+    Can be called from the profile settings page (manual unlink) or
+    by the student themselves to disconnect their Telegram account.
+    Logout does NOT call this — the link is preserved across sessions.
+    """
+    uid = get_jwt_identity()
+    db = get_db()
+    try:
+        row = db.execute("SELECT telegram_id FROM users WHERE id=?", (uid,)).fetchone()
+        if not row or not row["telegram_id"]:
+            return jsonify({"message": "No Telegram account is linked.", "was_linked": False}), 200
+
+        db.execute("UPDATE users SET telegram_id=NULL WHERE id=?", (uid,))
+        db.commit()
+        logger.info("[Telegram/Unlink] Unlinked telegram_id=%s from user_id=%s", row["telegram_id"], uid)
+    finally:
+        db.close()
+
+    return jsonify({
+        "message": "Telegram account unlinked from your EPSA profile.",
+        "was_linked": True,
+    })

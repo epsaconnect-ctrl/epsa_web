@@ -298,6 +298,9 @@
 
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
+<!-- Telegram WebApp SDK — safe to load in any browser; does nothing outside Telegram -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="js/telegram-auth.js"></script>
 <script>
   document.getElementById('loginForm').addEventListener('submit', handleLogin);
   document.getElementById('togglePassword').addEventListener('click', () => {
@@ -319,6 +322,72 @@
     showToast('If this email is registered, a reset link has been sent.', 'success');
     closeForgotModal();
   }
+
+  // ── Telegram Mini App init ─────────────────────────────────────────────────
+  // Only runs inside Telegram (isTelegramWebApp() guards everything inside).
+  // Normal browser visits: EPSA_TG.initLoginPage() returns immediately — zero impact.
+  EPSA_TG.initLoginPage();
+
+  // Patch handleLogin to intercept the post-login redirect when inside Telegram.
+  // For normal browser users, this runs identically to the original (no change).
+  const _origHandleLogin = window.handleLogin;
+  window.handleLogin = async function(event) {
+    // If NOT in Telegram, run original unchanged
+    if (!EPSA_TG.isTelegramWebApp()) {
+      return _origHandleLogin ? _origHandleLogin(event) : undefined;
+    }
+
+    // Inside Telegram: prevent default redirect, check link status after login
+    event.preventDefault();
+    const identifier = document.getElementById('login-username')?.value?.trim() || '';
+    const password = document.getElementById('login-password')?.value || '';
+    if (!identifier || !password) {
+      // Let original handle validation errors
+      return _origHandleLogin ? _origHandleLogin(event) : undefined;
+    }
+
+    const btn = document.getElementById('loginBtn');
+    const btnText = document.getElementById('loginBtnText');
+    const spinner = document.getElementById('loginSpinner');
+    if (btn) btn.disabled = true;
+    if (btnText) btnText.textContent = 'Signing in...';
+    if (spinner) spinner.style.display = 'block';
+
+    try {
+      const data = await API.login(identifier, password);
+      const role = data?.user?.role;
+      const hasTelegramLinked = !!data?.user?.telegram_id;
+
+      // Admins/teachers don't need Telegram linking — redirect normally
+      if (role === 'admin' || role === 'super_admin') {
+        window.location.href = 'admin/dashboard.html';
+        return;
+      }
+      if (role === 'teacher') {
+        window.location.href = 'teacher.html';
+        return;
+      }
+      if (data?.user?.status === 'pending') {
+        if (typeof showToast === 'function') showToast('Your application is still under review.', 'gold');
+        setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+        return;
+      }
+
+      // Student logged in successfully
+      if (hasTelegramLinked) {
+        // Already linked — go straight to dashboard
+        window.location.href = 'dashboard.html';
+      } else {
+        // Not linked — show the OTP linking modal
+        EPSA_TG.showLinkingModal();
+      }
+    } catch (err) {
+      if (typeof showToast === 'function') showToast(err.message || 'Login failed.', 'error');
+      if (btn) btn.disabled = false;
+      if (btnText) btnText.textContent = 'Sign In to EPSA';
+      if (spinner) spinner.style.display = 'none';
+    }
+  };
 </script>
 </body>
 </html>

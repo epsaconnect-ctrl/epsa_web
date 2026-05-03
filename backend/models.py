@@ -1227,7 +1227,12 @@ def migrate_db():
             correct_count       INTEGER DEFAULT 0,
             avg_time            REAL DEFAULT 0,
             UNIQUE(exam_id, university, category)
-        )"""
+        )""",
+        # ── TELEGRAM MINI APP INTEGRATION ────────────────────────────────────────────
+        # Add telegram_id to users table (nullable, unique so one Telegram account
+        # cannot be linked to multiple EPSA accounts).
+        """ALTER TABLE users ADD COLUMN telegram_id TEXT""",
+        """CREATE UNIQUE INDEX IF NOT EXISTS idx_users_telegram_id ON users(telegram_id) WHERE telegram_id IS NOT NULL""",
     ]
     for sql in migrations:
         try:
