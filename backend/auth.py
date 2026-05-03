@@ -963,7 +963,9 @@ def admin_login():
 @auth_bp.route("/send-otp", methods=["POST"])
 @rate_limit("send-otp", limit=6, window_seconds=900)
 def send_otp():
-    email = normalize_email(_request_json().get("email"))
+    payload = _request_json()
+    email = normalize_email(payload.get("email"))
+    init_data = (payload.get("init_data") or "").strip()
     if not email:
         return jsonify({"error": "Email required"}), 400
     limited = enforce_rate_limit("send-otp-email", limit=3, window_seconds=900, key_value=email)
@@ -1008,6 +1010,29 @@ def send_otp():
     """
 
     expose_otp = bool(settings.show_otp_in_response)
+    telegram_delivery = False
+    telegram_delivery_failed = False
+    telegram_delivery_message = ""
+    if init_data:
+        try:
+            bot_token = _get_bot_token()
+            tgbot = _get_telegram_bot() if bot_token else None
+            if bot_token and tgbot and tgbot.verify_telegram_init_data(init_data, bot_token):
+                tg_user = tgbot.parse_telegram_user(init_data) or {}
+                telegram_id = str(tg_user.get("id") or "").strip()
+                if telegram_id:
+                    dm_message = tgbot.build_otp_message(code, tg_user.get("first_name", ""))
+                    telegram_delivery = bool(tgbot.send_telegram_message(telegram_id, dm_message, bot_token))
+                    if not telegram_delivery:
+                        telegram_delivery_failed = True
+                        telegram_delivery_message = "Telegram bot delivery was unavailable, so EPSA is showing the code here as a fallback."
+            elif init_data:
+                telegram_delivery_failed = True
+                telegram_delivery_message = "Telegram session validation failed, so EPSA is showing the code here as a fallback."
+        except Exception as exc:
+            telegram_delivery_failed = True
+            telegram_delivery_message = "Telegram delivery could not be completed, so EPSA is showing the code here as a fallback."
+            logger.warning("[OTP] Telegram registration delivery fallback for %s: %s", _mask_email(email), exc)
     if expose_otp:
         logger.warning("[DEV OTP] email=%s otp=%s", _mask_email(email), code)
     else:
@@ -1039,9 +1064,19 @@ def send_otp():
                 "message": "OTP generated successfully",
                 "otp": code,
                 "email_failed": not settings.show_otp_in_response,
+                "telegram_sent": telegram_delivery,
+                "telegram_delivery_failed": telegram_delivery_failed,
+                "telegram_message": telegram_delivery_message,
             }
         )
-    return jsonify({"message": "OTP sent"})
+    return jsonify(
+        {
+            "message": "OTP sent",
+            "telegram_sent": telegram_delivery,
+            "telegram_delivery_failed": telegram_delivery_failed,
+            "telegram_message": telegram_delivery_message,
+        }
+    )
 
 
 @auth_bp.route("/verify-otp", methods=["POST"])
@@ -1373,13 +1408,15 @@ def telegram_send_otp():
             telegram_id,
         )
         return jsonify({
-            "error": (
-                "Could not send OTP to your Telegram. "
-                "Please open @epsahub_bot in Telegram and press the Start button first, "
-                "then try again."
+            "message": "EPSA could not DM the code to Telegram, so a secure one-time fallback code is shown below.",
+            "warning": (
+                "Open @epsahub_bot in Telegram and press Start so future sign-ins can receive the code automatically."
             ),
-            "code": "bot_not_started",
-        }), 422
+            "code": "inline_otp_fallback",
+            "otp": otp_code,
+            "telegram_first_name": first_name,
+            "expires_in_seconds": otp_ttl,
+        }), 200
 
     logger.info("[Telegram/SendOTP] OTP sent to telegram_id=%s for user_id=%s", telegram_id, uid)
     return jsonify({

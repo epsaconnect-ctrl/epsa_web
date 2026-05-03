@@ -89,6 +89,27 @@
     }
   }
 
+  function formatOtpStatus(data) {
+    const safeOtp = String(data?.otp || '').replace(/[^\d]/g, '').slice(0, 6);
+    const expiresIn = Number(data?.expires_in_seconds || 300);
+    const warning = data?.warning || data?.telegram_message || '';
+    if (!safeOtp) return '';
+    return `
+      <div style="display:grid;gap:10px;text-align:left;">
+        <div style="padding:12px 14px;border-radius:16px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.18);color:#166534;">
+          <strong>Your verification code is ready.</strong><br>
+          Use this fallback code now if Telegram did not deliver the DM.
+        </div>
+        <div style="padding:16px;border-radius:18px;background:#0f172a;color:white;text-align:center;border:1px solid rgba(255,255,255,0.08);">
+          <div style="font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.65);margin-bottom:8px;">One-time code</div>
+          <div style="font-size:1.9rem;font-weight:800;letter-spacing:0.34em;text-indent:0.34em;">${safeOtp}</div>
+          <div style="font-size:0.76rem;color:rgba(255,255,255,0.68);margin-top:10px;">Expires in ${expiresIn}s</div>
+        </div>
+        ${warning ? `<div style="padding:12px 14px;border-radius:16px;background:rgba(245,158,11,0.10);border:1px solid rgba(245,158,11,0.18);color:#92400e;">${warning}</div>` : ''}
+      </div>
+    `;
+  }
+
   // ── Core Detection ─────────────────────────────────────────────────────────
 
   /**
@@ -417,10 +438,15 @@
 
       const { ok, data } = await sendOtp();
       if (ok) {
-        status.style.color = '#22c55e';
-        status.textContent = `✅ Code sent to Telegram! Expires in ${data.expires_in_seconds || 300}s.`;
+        status.style.color = '#166534';
+        if (data?.otp) {
+          status.innerHTML = formatOtpStatus(data);
+          document.getElementById('tg-otp-input').value = String(data.otp).replace(/[^\d]/g, '').slice(0, 6);
+        } else {
+          status.textContent = `Code sent. Expires in ${data.expires_in_seconds || 300}s.`;
+        }
         document.getElementById('tg-code-input-row').style.display = 'block';
-        btn.textContent = '🔄 Resend Code';
+        btn.textContent = 'Resend Code';
         btn.disabled = false;
       } else {
         const errMsg = data?.error || 'Failed to send OTP.';
@@ -435,7 +461,7 @@
           `;
         }
         btn.disabled = false;
-        btn.textContent = '📩 Send Verification Code';
+        btn.textContent = 'Send Verification Code';
       }
     });
 

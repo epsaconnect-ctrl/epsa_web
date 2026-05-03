@@ -8,46 +8,11 @@ let faceLoginCountdownTimer = null;
 
 const FACE_SCAN_TASKS = [
   {
-    key: 'lighting',
-    title: 'Light check',
-    description: 'Balances dark and bright scenes so your facial detail stays usable.',
-    prompt: 'Hold your face steady for a moment while the camera adapts to the light.',
-    purpose: 'Used to normalize exposure before identity comparison.',
-  },
-  {
     key: 'centered',
-    title: 'Center your face',
-    description: 'Locks the core facial map so EPSA tracks your features, not the background.',
-    prompt: 'Center your face inside the guide frame.',
-    purpose: 'Used to anchor eye, nose, mouth, cheek, and chin geometry.',
-  },
-  {
-    key: 'smile',
-    title: 'Smile naturally',
-    description: 'Confirms live expression movement and captures mouth structure.',
-    prompt: 'Smile naturally and hold it for a moment.',
-    purpose: 'Used for liveness and mouth-pattern confirmation.',
-  },
-  {
-    key: 'turnLeft',
-    title: 'Turn left',
-    description: 'Captures the left contour of your face for a stronger identity map.',
-    prompt: 'Turn your face slightly to the left.',
-    purpose: 'Used to store your left-side angle signature.',
-  },
-  {
-    key: 'turnRight',
-    title: 'Turn right',
-    description: 'Captures the right contour of your face to complete the face map.',
-    prompt: 'Turn your face slightly to the right.',
-    purpose: 'Used to store your right-side angle signature.',
-  },
-  {
-    key: 'moveCloser',
-    title: 'Move closer',
-    description: 'Tightens the final crop so the recognizer sees more face and less background.',
-    prompt: 'Move a little closer to the camera for the final focus lock.',
-    purpose: 'Used to create the final high-detail identity crop.',
+    title: 'Face alignment',
+    description: 'Keep your face inside the frame so EPSA can compare it with the uploaded profile photo.',
+    prompt: 'Center your face inside the guide and hold still for a moment.',
+    purpose: 'Used to capture one clean live face frame for comparison.',
   },
 ];
 
@@ -265,7 +230,7 @@ function renderStep(step) {
     updateFaceHoldDisplay();
     updateFaceStatus(
       faceVerification.verified
-        ? `Smart scan already passed. Latest match score: <strong>${faceVerification.score}</strong>.`
+        ? `Live face check already passed. Latest match score: <strong>${faceVerification.score}</strong>.`
         : 'Live face check is optional. If you want to use it, look into the camera and tap verify.',
       faceVerification.verified ? 'success' : 'info'
     );
@@ -543,8 +508,8 @@ function updateFacePrompt(message = '') {
   const promptEl = byId('faceScanPrompt');
   const currentTask = getCurrentFaceTask();
   const completedPrompt = isFaceLoginMode()
-    ? 'Smart scan complete. EPSA is ready to verify your registered face map and sign you in.'
-    : 'Smart scan complete. Run the final identity match.';
+    ? 'Face capture is ready. EPSA can now sign you in.'
+    : 'Face capture is ready. You can verify whenever you are ready.';
   if (promptEl) {
     promptEl.textContent = message || currentTask?.prompt || completedPrompt;
   }
@@ -568,7 +533,7 @@ function updateFacePrompt(message = '') {
     } else {
       badge.textContent = currentTask
         ? `${currentTask.title}`
-        : 'Face map complete';
+        : 'Face ready';
     }
   }
 }
@@ -643,12 +608,12 @@ function updateFaceHoldDisplay(task = getCurrentFaceTask()) {
   if (!title || !countdown || !fill || !caption) return;
 
   if (!task) {
-    title.textContent = 'Smart scan ready';
+    title.textContent = 'Face ready';
     countdown.textContent = 'Done';
     fill.style.width = '100%';
     caption.textContent = isFaceLoginMode()
-      ? 'All guided captures are complete. EPSA can now compare your live facial map to your registered identity and sign you in.'
-      : 'All guided captures are complete. Run the final identity match against the uploaded profile photo.';
+      ? 'Your live face is ready. EPSA can compare it to your registered identity and sign you in.'
+      : 'Your live face is ready. Verify it against your uploaded profile photo whenever you are ready.';
     return;
   }
 
@@ -658,8 +623,8 @@ function updateFaceHoldDisplay(task = getCurrentFaceTask()) {
   countdown.textContent = holding ? `${remaining.toFixed(1)}s` : '1.0s';
   fill.style.width = `${Math.round((faceVerification.holdProgress || 0) * 100)}%`;
   caption.textContent = holding
-    ? 'Stay steady until the bar completes. EPSA will capture this pose automatically.'
-    : 'Move into the requested pose, then hold it steadily for one second before capture.';
+    ? 'Stay steady for a moment so EPSA can capture a clean frame.'
+    : 'Center your face and hold still for a moment before capture.';
 }
 
 function updateFaceActionButtons() {
@@ -1429,7 +1394,7 @@ async function startSmartFaceScan() {
   updateFaceHoldDisplay();
   updateFaceStatus(
     isFaceLoginMode()
-      ? 'Smart scan started. Follow each guided step and EPSA will sign you in as soon as your registered face map is confirmed.'
+      ? 'Camera started. Keep your face in the frame and EPSA will sign you in as soon as a clear live capture is ready.'
       : 'Camera started. Center your face and tap Verify Live Face whenever you are ready.',
     'info'
   );

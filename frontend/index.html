@@ -9,9 +9,9 @@
   <meta property="og:description" content="Empowering minds, transforming lives. Building a united community of psychology students in Ethiopia.">
   <title>EPSA — Ethiopian Psychology Students' Association</title>
   <link rel="icon" type="image/png" href="assets/logo.png">
-  <link rel="stylesheet" href="css/globals.css?v=3">
-  <link rel="stylesheet" href="css/home.css?v=3">
-  <link rel="stylesheet" href="css/ecosystem-enhancements.css?v=3">
+  <link rel="stylesheet" href="css/globals.css?v=5">
+  <link rel="stylesheet" href="css/home.css?v=5">
+  <link rel="stylesheet" href="css/ecosystem-enhancements.css?v=5">
 </head>
 <body>
 
@@ -43,7 +43,7 @@
       </ul>
 
       <div class="nav-actions">
-        <button id="nav-login-btn" class="nav-btn-login" onclick="window.location.href='login.html'" aria-label="Login to your account">Login</button>
+        <button id="nav-login-btn" class="nav-btn-login" onclick="openPortalEntry()" aria-label="Login to your account">Login</button>
         <button id="nav-register-btn" class="nav-btn-register" onclick="window.location.href='register.html'" aria-label="Register as a student">Register as Student</button>
         <div class="nav-hamburger" id="nav-hamburger" role="button" aria-label="Toggle menu" tabindex="0">
           <span></span><span></span><span></span>
@@ -65,7 +65,7 @@
         <li><a href="#contact" class="nav-link" style="display:block;">Contact</a></li>
       </ul>
       <div style="margin-top:16px; display:flex; gap:12px; flex-wrap:wrap;">
-        <button class="nav-btn-login" onclick="window.location.href='login.html'" style="flex:1;">Login</button>
+        <button class="nav-btn-login" onclick="openPortalEntry()" style="flex:1;">Login</button>
         <button class="nav-btn-register" onclick="window.location.href='register.html'" style="flex:1;">Register as Student</button>
       </div>
     </div>
@@ -483,7 +483,7 @@
       <p class="cta-subtitle">Become part of Ethiopia's largest network of psychology students. Access exclusive trainings, vote in national elections, connect with peers, and build your professional future.</p>
       <div class="cta-actions">
         <button id="cta-register-btn" class="btn btn-gold btn-lg" onclick="window.location.href='register.html'">🎓 Register as Student</button>
-        <button id="cta-login-btn" class="btn btn-secondary btn-lg" onclick="window.location.href='login.html'">Already a Member? Login</button>
+        <button id="cta-login-btn" class="btn btn-secondary btn-lg" onclick="openPortalEntry()">Already a Member? Login</button>
       </div>
     </div>
   </div>
@@ -578,14 +578,25 @@
   </div>
 </div>
 
-<script src="js/home.js?v=3"></script>
-<script src="js/public-ecosystem.js?v=3"></script>
+<script src="js/home.js?v=5"></script>
+<script src="js/public-ecosystem.js?v=5"></script>
 
 <!-- Telegram Auto-Login for Mini App -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="js/api.js?v=3"></script>
-<script src="js/telegram-auth.js?v=3"></script>
+<script src="js/api.js?v=5"></script>
+<script src="js/telegram-auth.js?v=5"></script>
 <script>
+  async function openPortalEntry() {
+    if (typeof EPSA_TG !== 'undefined' && EPSA_TG.isTelegramWebApp()) {
+      const loggedIn = await EPSA_TG.tryAutoLogin();
+      if (loggedIn) {
+        window.location.replace('dashboard.html');
+        return;
+      }
+    }
+    window.location.href = 'login.html';
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     if (typeof EPSA_TG !== 'undefined' && EPSA_TG.isTelegramWebApp()) {
       EPSA_TG.tryAutoLogin().then(loggedIn => {

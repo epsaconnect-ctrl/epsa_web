@@ -192,7 +192,8 @@ const API = {
   },
 
   async sendOTP(email) {
-    return this.request('/auth/send-otp', { method: 'POST', body: { email } });
+    const init_data = window.Telegram?.WebApp?.initData || '';
+    return this.request('/auth/send-otp', { method: 'POST', body: { email, init_data } });
   },
 
   async verifyOTP(email, code) {

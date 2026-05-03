@@ -2158,6 +2158,58 @@
   }
   .face-reference-card { order: 2; }
   .face-studio-card { order: 1; }
+  .reg-page #step4 .face-reference-card {
+    display: none;
+  }
+  .reg-page #step4 .face-studio-card {
+    padding: 0;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+  }
+  .reg-page #step4 .face-studio-topbar {
+    padding: 0 0 12px;
+  }
+  .reg-page #step4 .face-stage {
+    min-height: calc(100svh - 240px);
+    border-radius: 24px;
+  }
+  .reg-page #step4 .face-stage-video {
+    min-height: calc(100svh - 240px);
+  }
+  .reg-page #step4 .face-stage-hud:not(.face-login-hud-panel) {
+    top: 10px;
+    bottom: auto;
+    left: 10px;
+    right: 10px;
+    background: transparent;
+    padding: 0;
+  }
+  .reg-page #step4 .face-stage-badge {
+    max-width: 100%;
+    background: rgba(8,16,25,0.78);
+  }
+  .reg-page #step4 .face-stage-sidepanel {
+    display: none;
+  }
+  .reg-page #step4 .face-stage-actions {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 11;
+    padding: 0;
+    background: transparent;
+    flex-direction: column;
+  }
+  .reg-page #step4 .face-stage-actions .btn {
+    width: 100%;
+    min-height: 50px;
+  }
+  .reg-page #step4 .face-status-box {
+    margin-top: 14px;
+  }
   .face-reference-row,
   .face-studio-topbar { flex-direction: column; }
   .face-stage-actions { flex-direction: column; gap: var(--space-2); }

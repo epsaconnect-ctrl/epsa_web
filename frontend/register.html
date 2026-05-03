@@ -6,8 +6,8 @@
   <meta name="description" content="Register as an EPSA student member — Ethiopian Psychology Students' Association">
   <title>Register — EPSA</title>
   <link rel="icon" type="image/png" href="assets/logo.png">
-  <link rel="stylesheet" href="css/globals.css?v=4">
-  <link rel="stylesheet" href="css/auth.css?v=4">
+  <link rel="stylesheet" href="css/globals.css?v=5">
+  <link rel="stylesheet" href="css/auth.css?v=5">
 </head>
 <body>
 <div class="toast-container" id="toastContainer"></div>
@@ -53,7 +53,7 @@
         </div>
         <div class="reg-step" id="si-4">
           <div class="reg-step-num">4</div>
-          <div class="reg-step-label">Face Verify</div>
+          <div class="reg-step-label">Optional Face</div>
         </div>
         <div class="reg-step" id="si-5">
           <div class="reg-step-num">5</div>
@@ -321,12 +321,12 @@
                 </div>
                 <div>
                   <div class="face-reference-title">Uploaded profile photo</div>
-                  <div class="face-reference-copy">This stays on the left while the smart scanner isolates your face, adapts to low light, and checks liveness before it runs the final match.</div>
+                  <div class="face-reference-copy">EPSA uses this photo as the reference. If you choose the optional live check, simply face the camera and verify against this uploaded profile image.</div>
                   <div class="face-reference-meta" id="faceReferenceMeta">Waiting for a profile photo face lock.</div>
                 </div>
               </div>
 
-              <div class="face-challenge-card">
+              <div class="face-challenge-card" style="display:none;">
                 <div class="face-card-kicker">Verification Flow</div>
                 <div id="faceScanPrompt" class="face-scan-prompt">Start the smart scan and follow the live prompts one by one.</div>
                 <div class="face-hold-panel" id="faceHoldPanel">
@@ -342,7 +342,7 @@
                 <div id="faceChallengeList" class="face-challenge-list"></div>
               </div>
 
-              <div class="face-metric-grid">
+              <div class="face-metric-grid" style="display:none;">
                 <div class="face-metric-chip">
                   <span class="face-metric-label">Lighting</span>
                   <strong id="faceMetricLighting">Analyzing</strong>
@@ -361,7 +361,7 @@
                 </div>
               </div>
 
-              <div class="face-tracker-strip">
+              <div class="face-tracker-strip" style="display:none;">
                 <div class="face-tracker-pill">
                   <span>Face tracker</span>
                   <strong id="faceTrackerStatus">Searching</strong>
@@ -377,7 +377,7 @@
               <div class="face-studio-topbar">
                 <div>
                   <div class="face-studio-title">Identity Camera</div>
-                  <div class="face-studio-copy">A guided camera stage for secure face verification with live tracking, angle mapping, and a final identity comparison.</div>
+                  <div class="face-studio-copy">Open the camera, frame your face, and verify. This step is optional and compares your live face only with the profile photo you already uploaded.</div>
                 </div>
                 <button type="button" class="btn btn-ghost btn-sm" id="restartFaceCameraBtn">Restart Camera</button>
               </div>
@@ -397,8 +397,8 @@
                   <div class="face-stage-sidepanel">
                     <div class="face-stage-sidepanel-kicker">Next move</div>
                     <div class="face-stage-sidepanel-title" id="faceStageInstructionTitle">Align your face</div>
-                    <div class="face-stage-sidepanel-copy" id="faceStageInstructionCopy">EPSA will guide you step by step and compare the live face to your uploaded profile photo.</div>
-                    <div class="face-stage-sidepanel-reason" id="faceStageInstructionReason">Reference face mapping starts as soon as the camera locks.</div>
+                    <div class="face-stage-sidepanel-copy" id="faceStageInstructionCopy">Keep your face inside the frame and verify whenever you are ready.</div>
+                    <div class="face-stage-sidepanel-reason" id="faceStageInstructionReason">EPSA will compare the live face to your uploaded profile photo.</div>
                   </div>
                 </div>
                 <svg class="face-landmark-overlay" id="faceLandmarkOverlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
@@ -416,16 +416,16 @@
               </div>
 
               <div class="face-stage-actions">
-                <button type="button" class="btn btn-gold" id="startSmartScanBtn">Start Smart Scan</button>
-                <button type="button" class="btn btn-primary" id="captureFaceBtn" disabled>Verify Identity</button>
-                <button type="button" class="btn btn-ghost" id="testFaceBtn" disabled>Test Match</button>
+                <button type="button" class="btn btn-gold" id="startSmartScanBtn">Open Camera</button>
+                <button type="button" class="btn btn-primary" id="captureFaceBtn" disabled>Verify Live Face</button>
+                <button type="button" class="btn btn-ghost" id="testFaceBtn" disabled style="display:none;">Test Match</button>
                 <button type="button" class="btn btn-ghost" id="retakeFaceBtn" style="display:none;">Retake Scan</button>
               </div>
 
-              <div class="face-angle-gallery" id="faceAngleGallery"></div>
+              <div class="face-angle-gallery" id="faceAngleGallery" style="display:none;"></div>
 
               <div id="faceVerificationStatus" class="face-status-box">
-                Smart face verification has not started yet.
+                Live face check is optional. Open the camera and verify if you want to use it.
               </div>
               <div class="form-error" id="face-err" style="display:none; margin-top:var(--space-3);">⚠ Live face check could not be completed yet.</div>
             </div>
@@ -522,7 +522,7 @@
   </main>
 </div>
 
-<script src="js/api.js?v=4"></script>
-<script src="js/auth.js?v=4"></script>
+<script src="js/api.js?v=5"></script>
+<script src="js/auth.js?v=5"></script>
 </body>
 </html>
