@@ -1381,7 +1381,7 @@ def telegram_send_otp():
         otp_key = f"tg:{telegram_id}"
         db.execute(
             """
-            UPDATE otp_store SET used=1, used_at=DATETIME('now')
+            UPDATE otp_store SET used=1, used_at=NOW()
             WHERE email=? AND used=0
             """,
             (otp_key,),
@@ -1389,9 +1389,9 @@ def telegram_send_otp():
         db.execute(
             """
             INSERT INTO otp_store (email, code, expires_at)
-            VALUES (?, ?, DATETIME('now', ? || ' seconds'))
+            VALUES (?, ?, NOW() + INTERVAL '1 second' * ?)
             """,
-            (otp_key, otp_code, str(otp_ttl)),
+            (otp_key, otp_code, otp_ttl),
         )
         db.commit()
     finally:
@@ -1470,7 +1470,7 @@ def telegram_verify_otp():
         otp_row = db.execute(
             """
             SELECT * FROM otp_store
-            WHERE email=? AND code=? AND used=0 AND expires_at > DATETIME('now')
+            WHERE email=? AND code=? AND used=0 AND expires_at > NOW()
             ORDER BY id DESC LIMIT 1
             """,
             (otp_key, otp_entered),
@@ -1481,7 +1481,7 @@ def telegram_verify_otp():
 
         # Mark OTP as used
         db.execute(
-            "UPDATE otp_store SET used=1, used_at=DATETIME('now') WHERE id=?",
+            "UPDATE otp_store SET used=1, used_at=NOW() WHERE id=?",
             (otp_row["id"],),
         )
 
