@@ -2204,4 +2204,57 @@ window.toggleSidebar = function() {
   }
 };
 
+// --- Telegram Broadcast ---
+async function broadcastToTelegram() {
+  const textarea = document.getElementById('telegramBroadcastMessage');
+  if (!textarea) return;
+  const message = textarea.value.trim();
+  
+  if (!message) {
+    showToast('Please enter a message to broadcast.', 'error');
+    return;
+  }
+  
+  if (!confirm('Are you sure you want to broadcast this message to the entire Telegram channel?')) {
+    return;
+  }
+  
+  try {
+    const btn = event.target;
+    const oldText = btn.innerHTML;
+    btn.innerHTML = '⏳ Sending...';
+    btn.disabled = true;
+    
+    const res = await fetch(API._apiBase + '/admin/telegram/broadcast', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + API.getToken()
+      },
+      body: JSON.stringify({ message: message })
+    });
+    
+    const data = await res.json();
+    btn.innerHTML = oldText;
+    btn.disabled = false;
+    
+    if (res.ok) {
+      showToast('Broadcast sent successfully!', 'success');
+      textarea.value = '';
+    } else {
+      showToast(data.error || 'Failed to send broadcast.', 'error');
+    }
+  } catch (e) {
+    console.error(e);
+    showToast('Network error while broadcasting.', 'error');
+    const btn = event.target;
+    if (btn) {
+      btn.innerHTML = '🚀 Send to Channel';
+      btn.disabled = false;
+    }
+  }
+}
+window.broadcastToTelegram = broadcastToTelegram;
+
+
 

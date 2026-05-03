@@ -2892,3 +2892,53 @@ def budget_overview():
             'status': 'Use active for usable grants, pledged for promised but not fully usable funds, and completed for closed grant sources.'
         }
     })
+
+@admin_bp.route('/telegram/broadcast', methods=['POST'])
+@require_admin
+def telegram_broadcast():
+    data = request.json or {}
+    message_text = data.get('message', '').strip()
+    
+    if not message_text:
+        return jsonify({'error': 'Message text is required.'}), 400
+        
+    try:
+        from .config import get_settings
+    except ImportError:
+        from config import get_settings
+    settings = get_settings()
+    bot_token = settings.telegram_bot_token
+    
+    if not bot_token:
+        return jsonify({'error': 'Telegram Bot Token is not configured.'}), 500
+        
+    import requests
+    import json
+    
+    reply_markup = {
+        "inline_keyboard": [
+            [
+                {
+                    "text": "🌟 Open EPSA Portal",
+                    "url": "https://t.me/epsahub_bot/EPSA"
+                }
+            ]
+        ]
+    }
+    
+    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    payload = {
+        "chat_id": "@epsahub",
+        "text": message_text,
+        "reply_markup": json.dumps(reply_markup)
+    }
+    
+    try:
+        resp = requests.post(url, data=payload, timeout=10)
+        resp_data = resp.json()
+        if not resp_data.get('ok'):
+            return jsonify({'error': f"Telegram API Error: {resp_data.get('description')}"}), 500
+        return jsonify({'message': 'Broadcast sent successfully!'})
+    except Exception as e:
+        logger.error(f"Broadcast error: {e}")
+        return jsonify({'error': f"Failed to connect to Telegram: {str(e)}"}), 500
