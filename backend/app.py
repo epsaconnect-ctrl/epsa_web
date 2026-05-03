@@ -43,6 +43,7 @@ try:
     from .teacher import teacher_bp
     from .mock_exams import mock_exams_bp
     from .analytics import analytics_bp
+    from .telegram_webhook import telegram_webhook_bp
 except ImportError:
     from config import get_settings
     from models import ensure_bootstrap_admin, get_db, init_db, migrate_db
@@ -66,6 +67,7 @@ except ImportError:
     from teacher import teacher_bp
     from mock_exams import mock_exams_bp
     from analytics import analytics_bp
+    from telegram_webhook import telegram_webhook_bp
 
 PROJECT_ROOT = os.path.abspath(os.path.join(BACKEND_DIR, '..'))
 FRONTEND_DIR = os.path.join(PROJECT_ROOT, 'frontend')
@@ -163,6 +165,7 @@ app.register_blueprint(network_bp,    url_prefix='/api/network')
 app.register_blueprint(teacher_bp,    url_prefix='/api/teacher')
 app.register_blueprint(mock_exams_bp, url_prefix='/api/mock-exams')
 app.register_blueprint(analytics_bp,  url_prefix='/api/analytics')
+app.register_blueprint(telegram_webhook_bp, url_prefix='/api/telegram')
 
 
 def ensure_runtime_ready():

@@ -201,3 +201,28 @@ def build_otp_message(otp_code: str, first_name: str = "") -> str:
         f"⏱ This code expires in <b>5 minutes</b>.\n"
         f"Do not share it with anyone."
     )
+
+def set_webhook(app_url: str, bot_token: str) -> bool:
+    """
+    Register the webhook URL with Telegram.
+    """
+    if not bot_token:
+        logger.error("[Telegram] set_webhook: bot_token is missing")
+        return False
+
+    # Ensure URL doesn't have trailing slash before appending endpoint
+    base_url = app_url[:-1] if app_url.endswith('/') else app_url
+    webhook_url = f"{base_url}/api/telegram/webhook"
+    
+    url = f"https://api.telegram.org/bot{bot_token}/setWebhook"
+    try:
+        resp = requests.post(url, json={"url": webhook_url}, timeout=10)
+        if resp.status_code == 200 and resp.json().get("ok"):
+            logger.info("[Telegram] set_webhook: successfully set to %s", webhook_url)
+            return True
+        else:
+            logger.error("[Telegram] set_webhook: failed: %s", resp.text)
+            return False
+    except Exception as exc:
+        logger.error("[Telegram] set_webhook: request failed: %s", exc)
+        return False
