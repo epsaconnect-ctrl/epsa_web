@@ -138,6 +138,16 @@ def _is_active_user(row):
     return bool(row and int(row["is_active"] or 0))
 
 
+def _student_can_enter_pending_portal(row):
+    return bool(
+        row
+        and (row["role"] or "student") == "student"
+        and (row["status"] or "pending") == "pending"
+        and _is_verified_user(row)
+        and _is_active_user(row)
+    )
+
+
 def _duplicate_email_response(row, *, intended_role="student"):
     role = (row["role"] or "account") if row else "account"
     status = (row["status"] or "unknown") if row else "unknown"
@@ -617,31 +627,33 @@ def register():
         return jsonify({"error": "Profile photo is required."}), 400
     if not reg_slip or not reg_slip.filename:
         return jsonify({"error": "Registration slip is required."}), 400
-    if not live_capture:
-        return jsonify({"error": "Live face verification is required before registration."}), 400
     if not allowed_file(profile_photo.filename, {"png", "jpg", "jpeg", "webp"}):
         return jsonify({"error": "Profile photo must be JPG, PNG, or WEBP."}), 400
     if not allowed_file(reg_slip.filename):
         return jsonify({"error": "Registration slip must be PDF or image."}), 400
 
-    try:
-        profile_photo_bytes = _read_storage_bytes(profile_photo)
-        reference_embedding, live_embedding_set, face_result = run_biometric_task(
-            _verify_registration_faces,
-            profile_photo_bytes,
-            live_capture,
-            angle_samples,
-        )
-    except FaceVerificationError as exc:
-        return jsonify({"error": str(exc)}), 400
-    if not face_result.verified:
-        return jsonify(
-            {
-                "error": "Live face verification failed. Please retake the smart scan and finish the guided prompts before submitting.",
-                "score": face_result.score,
-                "threshold": face_result.threshold,
-            }
-        ), 403
+    profile_photo_bytes = _read_storage_bytes(profile_photo)
+    reference_embedding = None
+    live_embedding_set = None
+    face_result = None
+    if live_capture:
+        try:
+            reference_embedding, live_embedding_set, face_result = run_biometric_task(
+                _verify_registration_faces,
+                profile_photo_bytes,
+                live_capture,
+                angle_samples,
+            )
+        except FaceVerificationError as exc:
+            return jsonify({"error": str(exc)}), 400
+        if not face_result.verified:
+            return jsonify(
+                {
+                    "error": "Live face verification did not match your uploaded profile photo closely enough. You can retry the live check or continue registering without it.",
+                    "score": face_result.score,
+                    "threshold": face_result.threshold,
+                }
+            ), 403
 
     reg_slip_bytes = _read_storage_bytes(reg_slip)
     db = get_db()
@@ -707,26 +719,60 @@ def register():
             )
             user_id = existing_user["id"]
             face_row = db.execute("SELECT id FROM face_embeddings WHERE user_id=?", (user_id,)).fetchone()
-            if face_row:
-                db.execute(
-                    """
-                    UPDATE face_embeddings
-                    SET embedding=?, angle_embeddings=?, engine=?, reference_image_hash=?, match_threshold=?,
-                        registration_verified=1, registration_score=?, registration_verified_at=DATETIME('now'),
-                        updated_at=DATETIME('now')
-                    WHERE user_id=?
-                    """,
-                    (
-                        serialize_embedding(reference_embedding),
-                        serialize_embedding_set(live_embedding_set),
-                        face_result.engine,
-                        hash_image(profile_photo_bytes),
-                        face_result.threshold,
-                        face_result.score,
-                        user_id,
-                    ),
+            if face_result and reference_embedding is not None and live_embedding_set is not None:
+                if face_row:
+                    db.execute(
+                        """
+                        UPDATE face_embeddings
+                        SET embedding=?, angle_embeddings=?, engine=?, reference_image_hash=?, match_threshold=?,
+                            registration_verified=1, registration_score=?, registration_verified_at=DATETIME('now'),
+                            updated_at=DATETIME('now')
+                        WHERE user_id=?
+                        """,
+                        (
+                            serialize_embedding(reference_embedding),
+                            serialize_embedding_set(live_embedding_set),
+                            face_result.engine,
+                            hash_image(profile_photo_bytes),
+                            face_result.threshold,
+                            face_result.score,
+                            user_id,
+                        ),
+                    )
+                else:
+                    db.execute(
+                        """
+                        INSERT INTO face_embeddings (
+                            user_id, embedding, angle_embeddings, engine, reference_image_hash, match_threshold,
+                            registration_verified, registration_score, registration_verified_at, updated_at
+                        )
+                        VALUES (?,?,?,?,?,?,1,?,DATETIME('now'),DATETIME('now'))
+                        """,
+                        (
+                            user_id,
+                            serialize_embedding(reference_embedding),
+                            serialize_embedding_set(live_embedding_set),
+                            face_result.engine,
+                            hash_image(profile_photo_bytes),
+                            face_result.threshold,
+                            face_result.score,
+                        ),
+                    )
+        else:
+            cur = db.execute(
+                """
+                INSERT INTO users (
+                    username, password_hash, first_name, father_name, grandfather_name,
+                    email, phone, university, program_type, academic_year, field_of_study,
+                    graduation_year, profile_photo, reg_slip, role, status, student_id, graduation_status,
+                    is_verified, is_active
                 )
-            else:
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?, 'student', 'pending', ?, ?, 1, 1)
+                """,
+                user_values,
+            )
+            user_id = cur.lastrowid
+            if face_result and reference_embedding is not None and live_embedding_set is not None:
                 db.execute(
                     """
                     INSERT INTO face_embeddings (
@@ -745,38 +791,6 @@ def register():
                         face_result.score,
                     ),
                 )
-        else:
-            cur = db.execute(
-                """
-                INSERT INTO users (
-                    username, password_hash, first_name, father_name, grandfather_name,
-                    email, phone, university, program_type, academic_year, field_of_study,
-                    graduation_year, profile_photo, reg_slip, role, status, student_id, graduation_status,
-                    is_verified, is_active
-                )
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?, 'student', 'pending', ?, ?, 1, 1)
-                """,
-                user_values,
-            )
-            user_id = cur.lastrowid
-            db.execute(
-                """
-                INSERT INTO face_embeddings (
-                    user_id, embedding, angle_embeddings, engine, reference_image_hash, match_threshold,
-                    registration_verified, registration_score, registration_verified_at, updated_at
-                )
-                VALUES (?,?,?,?,?,?,1,?,DATETIME('now'),DATETIME('now'))
-                """,
-                (
-                    user_id,
-                    serialize_embedding(reference_embedding),
-                    serialize_embedding_set(live_embedding_set),
-                    face_result.engine,
-                    hash_image(profile_photo_bytes),
-                    face_result.threshold,
-                    face_result.score,
-                ),
-            )
         db.commit()
     finally:
         db.close()
@@ -784,9 +798,10 @@ def register():
     return (
         jsonify(
             {
-                "message": "Application submitted. Under review within 24 hours.",
+                "message": "Application submitted. You can sign in now while admin review is pending. If your application is later rejected, EPSA will notify you by email.",
                 "status": "pending",
-                "face_verified": True,
+                "face_verified": bool(face_result and face_result.verified),
+                "portal_access": "enabled_while_pending",
             }
         ),
         201,
@@ -845,7 +860,7 @@ def login():
         db.close()
 
     role = row["status"] if row else "pending"
-    if row["status"] == "pending":
+    if row["status"] == "pending" and (row["role"] or "student") != "student":
         role_label = "Teacher application" if row["role"] == "teacher" else "Account"
         return jsonify({"error": f"{role_label} is under review. Check back in 24 hours.", "status": "pending"}), 403
     if row["status"] == "rejected":
@@ -1252,7 +1267,7 @@ def telegram_login():
     if not _is_verified_user(row) or not _is_active_user(row):
         return jsonify({"error": "Account is not active. Please contact EPSA support."}), 403
 
-    if row["status"] == "pending":
+    if row["status"] == "pending" and not _student_can_enter_pending_portal(row):
         return jsonify({"error": "Account is under review.", "status": "pending"}), 403
 
     if row["status"] == "rejected":

@@ -6,8 +6,8 @@
   <meta name="description" content="Register as an EPSA student member — Ethiopian Psychology Students' Association">
   <title>Register — EPSA</title>
   <link rel="icon" type="image/png" href="assets/logo.png">
-  <link rel="stylesheet" href="css/globals.css">
-  <link rel="stylesheet" href="css/auth.css">
+  <link rel="stylesheet" href="css/globals.css?v=4">
+  <link rel="stylesheet" href="css/auth.css?v=4">
 </head>
 <body>
 <div class="toast-container" id="toastContainer"></div>
@@ -21,6 +21,7 @@
           <img src="assets/logo.png" alt="EPSA Logo">
           <span>EPSA</span>
         </a>
+        <a href="index.html" class="reg-mobile-back">← Home</a>
         <span style="font-size:0.825rem; color:rgba(255,255,255,0.45);">Already a member? <a href="login.html" style="color:var(--epsa-gold-light); font-weight:600;">Sign In</a></span>
       </div>
     </div>
@@ -33,7 +34,7 @@
       <div class="reg-title-block">
         <div class="section-label" style="justify-content:center; margin-bottom:var(--space-3);">Student Membership</div>
         <h1 class="reg-title">Join EPSA</h1>
-        <p class="reg-subtitle">Complete the form below. Your application will be reviewed within 24 hours.</p>
+        <p class="reg-subtitle">Complete the form below. Your application will enter admin review, but you can still sign in while the review is pending unless the application is later rejected.</p>
       </div>
 
       <!-- Step Indicator -->
@@ -305,8 +306,8 @@
           <div class="reg-step-header">
             <div class="reg-step-icon">📷</div>
             <div>
-              <div class="reg-step-title">Smart Face Verification</div>
-              <div class="reg-step-desc">Complete a guided live scan one pose at a time. EPSA uses light recovery, expression liveness, left/right angle mapping, and a final close crop before matching your live face to the uploaded profile photo.</div>
+              <div class="reg-step-title">Optional Live Face Check</div>
+              <div class="reg-step-desc">This step is optional. If you want extra identity protection, look into the camera and let EPSA compare your live face with the profile photo you uploaded.</div>
             </div>
           </div>
 
@@ -426,12 +427,12 @@
               <div id="faceVerificationStatus" class="face-status-box">
                 Smart face verification has not started yet.
               </div>
-              <div class="form-error" id="face-err" style="display:none; margin-top:var(--space-3);">⚠ Complete smart face verification before continuing</div>
+              <div class="form-error" id="face-err" style="display:none; margin-top:var(--space-3);">⚠ Live face check could not be completed yet.</div>
             </div>
           </div>
 
           <div class="face-privacy-note">
-            EPSA stores a processed facial signature for identity checks. The live smart scan creates a face-focused verification capture and liveness summary, and raw temporary frames are not kept as permanent uploads.
+            If you use this step, EPSA stores a processed facial signature for identity checks. You can also continue without it and finish your registration normally.
           </div>
         </div>
 
@@ -496,13 +497,13 @@
             <div class="pending-icon">⏳</div>
             <h2 class="pending-title">Application Submitted!</h2>
             <p class="pending-desc">
-              Thank you for joining EPSA! Your application is now under review. You will receive a decision within <strong>24 hours</strong>.
+              Thank you for joining EPSA! Your application is now under review. You can already sign in while admin review is pending, and the team will still review your documents within <strong>24 hours</strong>.
             </p>
             <div class="pending-steps">
-              <div class="pending-step">✅ <span>Application received, documents uploaded, and face verification completed</span></div>
+              <div class="pending-step">✅ <span>Application received and your registration details were saved successfully</span></div>
               <div class="pending-step">🔍 <span>Admin team will verify your student registration slip</span></div>
-              <div class="pending-step">📧 <span>If approved, you can log in with your credentials</span></div>
-              <div class="pending-step">❌ <span>If rejected, you'll receive an email explaining why</span></div>
+              <div class="pending-step">🔓 <span>You can sign in now while the application stays in the pending review list</span></div>
+              <div class="pending-step">📧 <span>If your application is rejected later, EPSA will notify you through the email address you provided</span></div>
             </div>
             <div style="margin-top:var(--space-8);">
               <button class="btn btn-primary" onclick="window.location.href='login.html'">Go to Login Page</button>
@@ -521,7 +522,7 @@
   </main>
 </div>
 
-<script src="js/api.js"></script>
-<script src="js/auth.js"></script>
+<script src="js/api.js?v=4"></script>
+<script src="js/auth.js?v=4"></script>
 </body>
 </html>

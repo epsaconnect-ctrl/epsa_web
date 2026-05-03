@@ -368,6 +368,31 @@ const API = {
   },
   async updateTraining(id, body) { return this.request(`/admin/trainings/${id}`, { method: 'PUT', body }); },
   async deleteTraining(id)     { return this.request(`/admin/trainings/${id}`, { method: 'DELETE' }); },
+  async submitTelegramBroadcast(formData) {
+    const token = this.getToken();
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    let resp = null;
+    for (const base of this.getApiBases()) {
+      try {
+        resp = await fetch(`${base}/admin/telegram/broadcast`, {
+          method: 'POST',
+          headers,
+          body: formData,
+          credentials: 'include',
+        });
+        this._apiBase = base;
+        localStorage.setItem('epsa_api_base', base);
+        break;
+      } catch (err) {
+        resp = null;
+      }
+    }
+    if (!resp) throw new Error('EPSA backend is unreachable.');
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) throw new Error(data.error || 'Telegram broadcast failed');
+    return data;
+  },
   async verifyReceipt(appId)   { return this.request(`/admin/training-applications/${appId}/verify`, { method: 'POST' }); },
   async createExam(body)       { return this.request('/admin/exams', { method: 'POST', body }); },
   async updateExam(id, body)   { return this.request(`/admin/exams/${id}`, { method: 'PUT', body }); },

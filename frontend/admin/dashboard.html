@@ -289,22 +289,72 @@
         </div>
         
         <!-- Telegram Broadcast Card -->
-        <div class="data-table-card" style="margin-top:var(--space-5); background: linear-gradient(135deg, rgba(42, 171, 238, 0.05), rgba(42, 171, 238, 0.02)); border: 1px solid rgba(42, 171, 238, 0.2);">
-          <div class="table-header" style="flex-direction: column; align-items: flex-start; gap: 8px;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <div style="width: 40px; height: 40px; background: #2AABEE; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem;">
+        <div class="data-table-card" style="margin-top:var(--space-5);background:linear-gradient(145deg,rgba(42,171,238,0.09),rgba(255,255,255,0.98));border:1px solid rgba(42,171,238,0.24);box-shadow:0 24px 48px rgba(42,171,238,0.10);">
+          <div class="table-header" style="flex-direction:column;align-items:flex-start;gap:10px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="width:46px;height:46px;background:linear-gradient(135deg,#2AABEE,#1184c7);border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.25rem;box-shadow:0 16px 30px rgba(42,171,238,0.24);">
                 ✈️
               </div>
               <div>
                 <div class="table-title">Telegram Channel Broadcast</div>
-                <div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;">Post directly to @epsahub with the "Open Portal" button attached.</div>
+                <div style="font-size:0.82rem;color:var(--text-muted);margin-top:3px;max-width:680px;line-height:1.55;">
+                  Post a clean channel update with optional photo or video, a caption, and a single EPSA action button that guides members where to go next.
+                </div>
               </div>
             </div>
           </div>
-          <div style="padding: var(--space-4);">
-            <textarea id="telegramBroadcastMessage" class="form-input" rows="4" placeholder="Type your promotional message here..." style="width: 100%; resize: vertical; margin-bottom: var(--space-3);"></textarea>
-            <div style="display: flex; justify-content: flex-end;">
-              <button class="btn btn-primary" onclick="broadcastToTelegram()" style="background: #2AABEE; border-color: #2AABEE; box-shadow: 0 4px 12px rgba(42,171,238,0.3);">🚀 Send to Channel</button>
+          <div style="padding:var(--space-4);display:grid;gap:16px;">
+            <div style="display:grid;gap:8px;">
+              <label for="telegramBroadcastMessage" style="font-size:0.78rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#0f5f90;">Broadcast message / caption</label>
+              <textarea id="telegramBroadcastMessage" class="form-input" rows="5" placeholder="Write the message or caption that should appear in the EPSA Telegram channel..." style="width:100%;resize:vertical;"></textarea>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1.15fr 0.85fr;gap:14px;">
+              <div style="display:grid;gap:8px;">
+                <label for="telegramBroadcastMedia" style="font-size:0.78rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#0f5f90;">Optional media</label>
+                <label for="telegramBroadcastMedia" style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;border-radius:18px;border:1px dashed rgba(42,171,238,0.35);background:rgba(255,255,255,0.82);cursor:pointer;">
+                  <span style="display:flex;flex-direction:column;gap:4px;">
+                    <strong style="font-size:0.92rem;color:var(--text-primary);">Upload a photo or video</strong>
+                    <span style="font-size:0.8rem;color:var(--text-muted);">Perfect for announcements, event posters, and campaign clips.</span>
+                  </span>
+                  <span class="btn btn-ghost btn-sm" style="pointer-events:none;">Choose File</span>
+                </label>
+                <input id="telegramBroadcastMedia" type="file" accept="image/*,video/*" style="display:none;">
+                <div id="telegramBroadcastMediaName" style="font-size:0.82rem;color:var(--text-muted);">No media selected.</div>
+              </div>
+
+              <div style="display:grid;gap:8px;">
+                <label for="telegramBroadcastButtonType" style="font-size:0.78rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#0f5f90;">Channel button</label>
+                <select id="telegramBroadcastButtonType" class="form-input">
+                  <option value="open_portal">Open EPSA Portal</option>
+                  <option value="join_hub">Join EPSA HUB</option>
+                  <option value="see_epsa">Explore EPSA</option>
+                </select>
+                <div id="telegramBroadcastButtonHint" style="font-size:0.8rem;color:var(--text-muted);line-height:1.55;">
+                  Opens the Telegram Mini App so linked members can enter their portal, while new visitors can continue to sign in and link their Telegram account.
+                </div>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
+              <div style="padding:12px 14px;border-radius:16px;background:rgba(255,255,255,0.86);border:1px solid rgba(15,23,42,0.06);">
+                <div style="font-size:0.74rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:6px;">Open EPSA Portal</div>
+                <div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.55;">Best for members already in Telegram. They are taken into the EPSA Mini App and can continue with portal sign-in.</div>
+              </div>
+              <div style="padding:12px 14px;border-radius:16px;background:rgba(255,255,255,0.86);border:1px solid rgba(15,23,42,0.06);">
+                <div style="font-size:0.74rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:6px;">Join EPSA HUB</div>
+                <div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.55;">Best for recruitment posts. Sends people straight to the member registration page.</div>
+              </div>
+              <div style="padding:12px 14px;border-radius:16px;background:rgba(255,255,255,0.86);border:1px solid rgba(15,23,42,0.06);">
+                <div style="font-size:0.74rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:6px;">Explore EPSA</div>
+                <div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.55;">Best for campaigns and storytelling. Sends people to the EPSA public home page.</div>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;">
+              <button class="btn btn-primary" id="telegramBroadcastSubmitBtn" onclick="broadcastToTelegram(event)" style="background:#2AABEE;border-color:#2AABEE;box-shadow:0 10px 24px rgba(42,171,238,0.28);">
+                🚀 Send to Channel
+              </button>
             </div>
           </div>
         </div>

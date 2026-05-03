@@ -266,7 +266,7 @@ function renderStep(step) {
     updateFaceStatus(
       faceVerification.verified
         ? `Smart scan already passed. Latest match score: <strong>${faceVerification.score}</strong>.`
-        : 'Start the smart scan, complete the guided liveness checks, then run the final identity match.',
+        : 'Live face check is optional. If you want to use it, look into the camera and tap verify.',
       faceVerification.verified ? 'success' : 'info'
     );
     updateFaceActionButtons();
@@ -323,9 +323,7 @@ function validateStep(step) {
   }
 
   if (step === 4) {
-    const verified = !!faceVerification.verified;
-    if (byId('face-err')) byId('face-err').style.display = verified ? 'none' : 'flex';
-    valid = verified && valid;
+    if (byId('face-err')) byId('face-err').style.display = 'none';
   }
 
   if (step === 5) {
@@ -678,7 +676,7 @@ function updateFaceActionButtons() {
     } else {
       startBtn.style.display = '';
       startBtn.disabled = !faceVerification.stream || faceVerification.smartScanActive || busy;
-      startBtn.textContent = faceVerification.smartScanActive ? 'Smart Scan Running...' : 'Start Smart Scan';
+      startBtn.textContent = faceVerification.smartScanActive ? 'Camera Active...' : 'Start Live Check';
     }
   }
 
@@ -688,17 +686,11 @@ function updateFaceActionButtons() {
       ? (isFaceLoginMode() ? 'Signing In...' : 'Verifying...')
       : isFaceLoginMode()
         ? 'Use Current Face'
-        : ready ? 'Verify Identity' : 'Use Current Scan';
+        : 'Verify Live Face';
   }
 
   if (testBtn) {
-    if (isFaceLoginMode()) {
-      testBtn.style.display = 'none';
-    } else {
-      testBtn.style.display = '';
-      testBtn.disabled = !faceVerification.stream || busy;
-      testBtn.textContent = faceVerification.busyAction === 'test' ? 'Testing...' : 'Test Match';
-    }
+    testBtn.style.display = 'none';
   }
 
   if (retakeBtn) {
@@ -782,7 +774,7 @@ async function prepareFaceVerificationStep() {
   updateFaceMetricDisplay();
   renderAngleGallery();
   updateFaceHoldDisplay();
-  updateFaceStatus('Start the smart scan, follow each guided pose one by one, then run the final identity match.', 'info');
+  updateFaceStatus('This live face check is optional. Look into the camera and tap verify if you want EPSA to compare your live face with your uploaded photo.', 'info');
   const photoFile = byId('profilePhotoInput')?.files?.[0];
   if (photoFile && !faceVerification.profilePhotoFaceReady && !faceVerification.profilePhotoAnalyzing) {
     try {
@@ -838,7 +830,7 @@ async function startFaceCamera() {
     if (fallback) fallback.style.display = 'none';
     updateFaceFocusHint(isFaceLoginMode()
       ? 'Camera ready. Look naturally into the guide for automatic sign-in.'
-      : 'Camera ready. Start the smart scan when you are in frame.');
+      : 'Camera ready. Look into the frame, then verify when you are ready.');
     await initializeFaceDetector();
   } catch (err) {
     if (fallback) fallback.style.display = 'flex';
@@ -1311,7 +1303,7 @@ function finalizeFaceTask(taskKey, analysis) {
           }
         }, 420);
       } else {
-        updateFaceStatus('Smart liveness scan complete. Click <strong>Verify Identity</strong> to compare the live face map against the uploaded profile photo.', 'success');
+        updateFaceStatus('Live camera is ready. Click <strong>Verify Live Face</strong> to compare the current live frame against your uploaded profile photo.', 'success');
       }
       return;
     default:
@@ -1366,8 +1358,8 @@ function evaluateFaceAnalysis(analysis) {
     faceVerification.lockMissCount += 1;
     const scanElapsed = faceVerification.scanStartedAt ? Date.now() - faceVerification.scanStartedAt : 0;
     if (faceVerification.lockMissCount >= 12 && scanElapsed >= 9000) {
-      updateFaceFocusHint('The scanner still needs a clearer face. You can keep adjusting, or press Use Current Scan for a direct comparison from the current frame.');
-      updateFaceStatus('Live face lock is still unstable, but you do not have to stay stuck here. Press <strong>Use Current Scan</strong> and EPSA will attempt the identity match from the current frame.', 'gold');
+      updateFaceFocusHint('The scanner still needs a clearer face. You can keep adjusting, then tap Verify Live Face whenever the frame looks clear.');
+      updateFaceStatus('Live face lock is still unstable, but this step is optional. If you want to continue with it, steady the camera and try verifying again.', 'gold');
     } else {
       updateFaceFocusHint('Bring your face inside the guide and hold still for a moment.');
       updateFaceStatus('EPSA is locating your face. Keep the camera steady, stay inside the guide, and avoid strong backlight.', 'info');
@@ -1438,7 +1430,7 @@ async function startSmartFaceScan() {
   updateFaceStatus(
     isFaceLoginMode()
       ? 'Smart scan started. Follow each guided step and EPSA will sign you in as soon as your registered face map is confirmed.'
-      : 'Smart scan started. Follow each prompt one by one and hold the pose for one second when the guide locks.',
+      : 'Camera started. Center your face and tap Verify Live Face whenever you are ready.',
     'info'
   );
   faceVerification.smartScanActive = true;
@@ -1885,7 +1877,7 @@ function resetFaceVerification(keepCamera = false) {
   updateFaceStatus(
     isFaceLoginMode()
       ? 'Center your face in the guide. EPSA will recognize you automatically.'
-      : 'Start the smart scan, follow each guided pose one by one, then run the final identity match.',
+      : 'Live face check is optional. Look into the camera and tap verify if you want to use it.',
     'info'
   );
   updateReferencePreview(profilePhotoDataUrl);
@@ -1903,7 +1895,7 @@ function populateReview() {
     ['University', val('university') === 'other' ? val('otherUniversity') : val('university')],
     ['Program', val('programType')],
     ['Academic Year', val('academicYear')],
-    ['Face Verification', faceVerification.verified ? `Smart scan verified (${faceVerification.score})` : 'Pending'],
+    ['Face Verification', faceVerification.verified ? `Completed (${faceVerification.score})` : 'Optional - skipped'],
   ];
   const container = byId('reviewSummary');
   if (!container) return;
@@ -1992,8 +1984,12 @@ async function submitRegistration() {
     formData.append('academic_year', val('academicYear'));
     formData.append('field_of_study', val('fieldOfStudy'));
     formData.append('graduation_year', val('graduationYear'));
-    formData.append('live_capture', faceVerification.capture);
-    formData.append('angle_samples', JSON.stringify(faceVerification.angleSamples.map((sample) => sample.image)));
+    if (faceVerification.capture) {
+      formData.append('live_capture', faceVerification.capture);
+    }
+    if (faceVerification.angleSamples.length) {
+      formData.append('angle_samples', JSON.stringify(faceVerification.angleSamples.map((sample) => sample.image)));
+    }
 
     const photoFile = byId('profilePhotoInput')?.files?.[0];
     const slipFile = byId('regSlipInput')?.files?.[0];
@@ -2006,7 +2002,7 @@ async function submitRegistration() {
     if (byId('regNav')) byId('regNav').style.display = 'none';
     if (byId('stepIndicator')) byId('stepIndicator').style.display = 'none';
     stopFaceCamera();
-    showToast('Application submitted successfully. Awaiting admin review.', 'success');
+    showToast('Application submitted successfully. You can sign in while admin review is pending.', 'success');
   } catch (err) {
     showToast(err.message || 'Registration failed.', 'error');
     if (nextBtn) {
@@ -2221,11 +2217,19 @@ function setupPasswordRecoveryUI() {
   if (resetToken) openResetModal(resetToken);
 }
 
+function setupTelegramMiniAppGuide() {
+  const guide = byId('telegramMiniAppGuide');
+  if (!guide) return;
+  const inTelegram = typeof EPSA_TG !== 'undefined' && typeof EPSA_TG.isTelegramWebApp === 'function' && EPSA_TG.isTelegramWebApp();
+  guide.style.display = inTelegram ? 'block' : 'none';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   wireOtpInputs();
   setupRegistrationUI();
   setupLoginFaceUI();
   setupPasswordRecoveryUI();
+  setupTelegramMiniAppGuide();
   renderStep(currentStep);
 });
 

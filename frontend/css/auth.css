@@ -151,7 +151,9 @@
 
 /* ─── AUTH RIGHT PANEL ───────────────────────── */
 .auth-panel-right {
-  background: var(--off-white);
+  background:
+    radial-gradient(circle at top right, rgba(200,163,64,0.12), transparent 30%),
+    linear-gradient(180deg, #f9faf6 0%, #f4f7f2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -164,6 +166,18 @@
   width: 100%;
   max-width: 460px;
   animation: fadeSlideUp 0.6s ease forwards;
+}
+
+.auth-mobile-back,
+.reg-mobile-back {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  color: var(--epsa-green);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.88rem;
+  margin-bottom: var(--space-4);
 }
 
 .auth-form-header {
@@ -195,11 +209,87 @@
 }
 
 .auth-card {
-  background: white;
+  background: linear-gradient(180deg, rgba(255,255,255,0.99), rgba(252,252,249,0.99));
   border-radius: var(--radius-xl);
   padding: var(--space-8);
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--light-200);
+}
+
+.auth-telegram-guide {
+  margin-bottom: var(--space-5);
+  padding: 18px;
+  border-radius: 24px;
+  border: 1px solid rgba(34,158,217,0.18);
+  background:
+    radial-gradient(circle at top right, rgba(42,171,238,0.14), transparent 36%),
+    linear-gradient(180deg, rgba(255,255,255,0.98), rgba(244,249,255,0.98));
+  box-shadow: 0 16px 34px rgba(15,23,42,0.06);
+}
+
+.auth-telegram-guide-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.auth-telegram-guide-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2AABEE, #1184c7);
+  color: white;
+  font-weight: 800;
+  box-shadow: 0 12px 22px rgba(42,171,238,0.22);
+  flex-shrink: 0;
+}
+
+.auth-telegram-guide-title {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.auth-telegram-guide-copy {
+  margin-top: 4px;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.auth-telegram-guide-steps {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.auth-telegram-guide-steps div {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.75);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  border: 1px solid rgba(15,23,42,0.06);
+}
+
+.auth-telegram-guide-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.auth-telegram-guide-note {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  flex: 1;
+  min-width: 180px;
 }
 
 /* ─── LOGIN SPECIFIC ─────────────────────────── */
@@ -716,6 +806,17 @@
 .face-reference-card > .face-tracker-strip {
   grid-area: tracker;
   margin-top: 0;
+}
+
+.reg-page .face-challenge-card,
+.reg-page .face-angle-gallery,
+.reg-page .face-metric-grid,
+.reg-page .face-tracker-strip {
+  display: none;
+}
+
+.reg-page .face-reference-copy {
+  color: var(--text-secondary);
 }
 
 .face-card-kicker {
@@ -1789,6 +1890,8 @@
   .auth-page { grid-template-columns: 1fr; }
   .auth-panel-left { display: none; }
   .auth-panel-right { padding: var(--space-6) var(--space-4); }
+  .auth-mobile-back,
+  .reg-mobile-back { display: inline-flex; }
   .form-row { grid-template-columns: 1fr; }
   .face-login-layout { grid-template-columns: 1fr; }
   .face-login-support-grid { grid-template-columns: 1fr; }
@@ -1838,6 +1941,18 @@
   .reg-card { padding: var(--space-4); }
   .auth-card { padding: var(--space-4); }
   .auth-form-container { padding: var(--space-3); }
+  .auth-telegram-guide { padding: 16px; border-radius: 20px; }
+  .auth-telegram-guide-actions { flex-direction: column; align-items: stretch; }
+  .auth-telegram-guide-actions .btn { width: 100%; justify-content: center; }
+  .reg-header-inner {
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: space-between;
+  }
+  .reg-header-inner > span:last-child {
+    width: 100%;
+    order: 3;
+  }
   
   /* Enhanced mobile facial recognition */
   .face-verification-stage {

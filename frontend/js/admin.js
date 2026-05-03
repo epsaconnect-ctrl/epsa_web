@@ -2266,5 +2266,70 @@ async function broadcastToTelegram() {
 }
 window.broadcastToTelegram = broadcastToTelegram;
 
+document.getElementById('telegramBroadcastMedia')?.addEventListener('change', (event) => {
+  const label = document.getElementById('telegramBroadcastMediaName');
+  const file = event.target.files?.[0];
+  if (label) {
+    label.textContent = file
+      ? `${file.name} selected`
+      : 'No media selected.';
+  }
+});
+
+document.getElementById('telegramBroadcastButtonType')?.addEventListener('change', (event) => {
+  const hint = document.getElementById('telegramBroadcastButtonHint');
+  if (!hint) return;
+  const value = event.target.value;
+  if (value === 'join_hub') {
+    hint.textContent = 'Best for recruitment posts. People will land on the EPSA registration page and can return home using the mobile back button.';
+  } else if (value === 'see_epsa') {
+    hint.textContent = 'Best for storytelling posts. People will land on the EPSA public homepage and explore the wider platform.';
+  } else {
+    hint.textContent = 'Opens the Telegram Mini App so linked members can enter their portal, while new visitors can continue to sign in and link their Telegram account.';
+  }
+});
+
+// Override the legacy text-only broadcaster with the media-aware version.
+async function broadcastToTelegram(event) {
+  const textarea = document.getElementById('telegramBroadcastMessage');
+  const mediaInput = document.getElementById('telegramBroadcastMedia');
+  const buttonType = document.getElementById('telegramBroadcastButtonType');
+  const mediaName = document.getElementById('telegramBroadcastMediaName');
+  const btn = document.getElementById('telegramBroadcastSubmitBtn') || event?.target;
+  if (!textarea || !buttonType || !btn) return;
+
+  const message = textarea.value.trim();
+  const media = mediaInput?.files?.[0] || null;
+  if (!message && !media) {
+    showToast('Add a message or attach a photo/video before sending.', 'error');
+    return;
+  }
+
+  if (!confirm('Send this post to the EPSA Telegram channel now?')) return;
+
+  const formData = new FormData();
+  formData.append('message', message);
+  formData.append('button_type', buttonType.value || 'open_portal');
+  if (media) formData.append('media', media);
+
+  const oldText = btn.innerHTML;
+  try {
+    btn.innerHTML = 'Sending...';
+    btn.disabled = true;
+    const data = await API.submitTelegramBroadcast(formData);
+    showToast(data.message || 'Broadcast sent successfully!', 'success');
+    textarea.value = '';
+    if (mediaInput) mediaInput.value = '';
+    if (mediaName) mediaName.textContent = 'No media selected.';
+  } catch (e) {
+    console.error(e);
+    showToast(e.message || 'Network error while broadcasting.', 'error');
+  } finally {
+    btn.innerHTML = oldText;
+    btn.disabled = false;
+  }
+}
+window.broadcastToTelegram = broadcastToTelegram;
+
 
 

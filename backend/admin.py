@@ -2896,45 +2896,91 @@ def budget_overview():
 @admin_bp.route('/telegram/broadcast', methods=['POST'])
 @require_admin
 def telegram_broadcast():
-    data = request.json or {}
-    message_text = data.get('message', '').strip()
-    
-    if not message_text:
-        return jsonify({'error': 'Message text is required.'}), 400
-        
+    data = request.form if request.form else (request.json or {})
+    message_text = (data.get('message') or '').strip()
+    button_type = (data.get('button_type') or 'open_portal').strip().lower()
+    media_file = request.files.get('media')
+
+    if not message_text and not (media_file and media_file.filename):
+        return jsonify({'error': 'Add a message or attach media before sending.'}), 400
+
     try:
         from .config import get_settings
     except ImportError:
         from config import get_settings
     settings = get_settings()
     bot_token = settings.telegram_bot_token
-    
+
     if not bot_token:
         return jsonify({'error': 'Telegram Bot Token is not configured.'}), 500
-        
+
     import requests
     import json
-    
+
+    base_url = request.host_url.rstrip('/')
+    home_url = f"{base_url}/index.html"
+    register_url = f"{base_url}/register.html"
+    mini_app_url = "https://t.me/epsahub_bot/EPSA"
+
+    button_map = {
+        'open_portal': {
+            'text': 'Open EPSA Portal',
+            'url': mini_app_url,
+        },
+        'join_hub': {
+            'text': 'Join EPSA HUB',
+            'url': register_url,
+        },
+        'see_epsa': {
+            'text': 'Explore EPSA',
+            'url': home_url,
+        },
+    }
+    chosen_button = button_map.get(button_type, button_map['open_portal'])
+
     reply_markup = {
         "inline_keyboard": [
             [
                 {
-                    "text": "🌟 Open EPSA Portal",
-                    "url": "https://t.me/epsahub_bot/EPSA"
+                    "text": chosen_button["text"],
+                    "url": chosen_button["url"],
                 }
             ]
         ]
     }
-    
-    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+
     payload = {
         "chat_id": "@epsahub",
-        "text": message_text,
-        "reply_markup": json.dumps(reply_markup)
+        "reply_markup": json.dumps(reply_markup),
     }
-    
+
+    endpoint = "sendMessage"
+    request_payload = payload.copy()
+    if media_file and media_file.filename:
+        ext = media_file.filename.rsplit('.', 1)[-1].lower() if '.' in media_file.filename else ''
+        media_kind = 'photo' if (
+            (media_file.mimetype or '').startswith('image/')
+            or ext in {'jpg', 'jpeg', 'png', 'webp'}
+        ) else 'video'
+        folder = 'telegram_broadcasts'
+        saved_name = save_upload(media_file, folder)
+        media_url = upload_url(folder, saved_name)
+        if media_url and media_url.startswith('/'):
+            media_url = f"{base_url}{media_url}"
+        if not media_url:
+            return jsonify({'error': 'Failed to prepare the uploaded media file.'}), 500
+        endpoint = 'sendPhoto' if media_kind == 'photo' else 'sendVideo'
+        request_payload.update({
+            media_kind: media_url,
+            'caption': message_text[:1024],
+        })
+    else:
+        request_payload['text'] = message_text
+
+    url = f"https://api.telegram.org/bot{bot_token}/{endpoint}"
+
     try:
-        resp = requests.post(url, data=payload, timeout=10)
+        resp = requests.post(url, data=request_payload, timeout=20)
         resp_data = resp.json()
         if not resp_data.get('ok'):
             return jsonify({'error': f"Telegram API Error: {resp_data.get('description')}"}), 500

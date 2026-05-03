@@ -268,6 +268,14 @@
         setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
       } else {
         showToastMsg('No EPSA account linked to this Telegram yet. Please sign in with your credentials first.', 'info');
+        if (data?.code === 'bot_not_started') {
+          status.innerHTML = `
+            <div style="padding:12px 14px;border-radius:14px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.18);color:#991b1b;">
+              <strong>EPSA could not send the Telegram code yet.</strong><br>
+              Open <a href="https://t.me/epsahub_bot?start=epsa_link" target="_blank" style="color:#229ED9;font-weight:700;">@epsahub_bot</a>, press <strong>Start</strong>, then come back here and try again.
+            </div>
+          `;
+        }
         btn.disabled = false;
         btn.innerHTML = `<span style="font-size:1.2rem;">✈️</span> Login with Telegram`;
       }
@@ -326,25 +334,26 @@
 
     overlay.innerHTML = `
       <div style="
-        background:var(--surface,#1c2432);border-radius:16px;padding:24px;
-        max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.5);
+        background:linear-gradient(180deg,rgba(255,255,255,0.98),rgba(245,249,255,0.98));border-radius:24px;padding:24px;
+        max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.24);
+        border:1px solid rgba(34,158,217,0.16);color:#0f172a;
         animation:slideUp 0.25s ease;
       ">
         <div style="text-align:center;margin-bottom:20px;">
           <div style="font-size:2.5rem;margin-bottom:8px;">✈️</div>
-          <h2 style="font-size:1.2rem;font-weight:700;margin:0 0 6px;color:var(--text-primary,#fff);">
+          <h2 style="font-size:1.2rem;font-weight:700;margin:0 0 6px;color:#0f172a;">
             Link Telegram Account
           </h2>
-          <p style="color:var(--text-muted,#aaa);font-size:0.875rem;margin:0;">
+          <p style="color:#475569;font-size:0.92rem;line-height:1.6;margin:0;">
             Link <strong style="color:#229ED9;">${username}</strong> to your EPSA account for one-tap login next time.
           </p>
         </div>
 
         <!-- Bot start notice -->
         <div id="tg-bot-notice" style="
-          background:rgba(34,158,217,0.12);border:1px solid rgba(34,158,217,0.3);
-          border-radius:10px;padding:12px;margin-bottom:16px;font-size:0.8rem;
-          color:var(--text-secondary,#ccc);
+          background:linear-gradient(135deg,rgba(34,158,217,0.10),rgba(200,163,64,0.10));border:1px solid rgba(34,158,217,0.22);
+          border-radius:16px;padding:14px;margin-bottom:16px;font-size:0.86rem;
+          color:#334155;line-height:1.65;
         ">
           ⚠️ <strong>Before you request the code:</strong> Open
           <a href="https://t.me/epsahub_bot" target="_blank" style="color:#229ED9;">@epsahub_bot</a>
@@ -382,13 +391,13 @@
             </button>
           </div>
 
-          <p id="tg-otp-status" style="font-size:0.825rem;color:var(--text-muted,#aaa);text-align:center;margin:8px 0 0;min-height:18px;"></p>
+          <p id="tg-otp-status" style="font-size:0.85rem;color:#64748b;text-align:center;margin:10px 0 0;min-height:22px;line-height:1.6;"></p>
         </div>
 
         <div style="display:flex;gap:8px;margin-top:16px;">
           <button id="tg-skip-link-btn" style="
             flex:1;padding:10px;border-radius:10px;border:1px solid var(--border,#333);
-            background:transparent;color:var(--text-muted,#aaa);cursor:pointer;font-size:0.875rem;
+            background:transparent;color:#475569;cursor:pointer;font-size:0.875rem;
           ">
             Cancel sign-in
           </button>
