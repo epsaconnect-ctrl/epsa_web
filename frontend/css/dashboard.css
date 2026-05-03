@@ -11,9 +11,23 @@
   overflow-x: hidden;
 }
 
-html, body, .dash-main, .dash-content, .dash-section {
+html, body, .dash-main {
   max-width: 100%;
   overflow-x: hidden;
+}
+
+.dash-content,
+.dash-section {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(26,107,60,0.18) transparent;
+}
+
+.dash-section > *,
+.dash-section [style] {
+  min-width: 0;
 }
 
 /* ─── SIDEBAR ────────────────────────────────── */
@@ -222,6 +236,7 @@ html, body, .dash-main, .dash-content, .dash-section {
   flex: 1;
   margin-left: 260px;
   min-height: 100vh;
+  min-width: 0;
   display: flex;
   flex-direction: column;
 }
@@ -299,6 +314,23 @@ html, body, .dash-main, .dash-content, .dash-section {
   padding: var(--space-8);
   max-width: 1200px;
   width: 100%;
+  min-width: 0;
+}
+
+.dash-section {
+  min-width: 0;
+}
+
+.dash-section > div,
+.dash-section > section,
+.dash-section > article {
+  max-width: 100%;
+}
+
+.dash-section table,
+.dash-section [style*="overflow:hidden"],
+.dash-section [style*="overflow: hidden"] {
+  max-width: 100%;
 }
 
 /* ─── OVERVIEW / WELCOME ─────────────────────── */
@@ -1128,9 +1160,18 @@ html, body, .dash-main, .dash-content, .dash-section {
   body.sidebar-open {
     overflow: hidden;
   }
+  .dash-page {
+    background:
+      radial-gradient(circle at top left, rgba(200,163,64,0.14), transparent 28%),
+      linear-gradient(180deg, #f9fbf7 0%, #eef4ef 100%);
+  }
   .sidebar {
-    transform: translateX(-260px);
-    width: 280px;
+    transform: translateX(calc(-100% - 18px));
+    width: min(88vw, 320px);
+    min-width: min(88vw, 320px);
+    height: 100dvh;
+    border-radius: 0 28px 28px 0;
+    box-shadow: 0 24px 64px rgba(5, 14, 7, 0.32);
     transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
   }
   .sidebar.open, .sidebar.sidebar-active {
@@ -1155,12 +1196,49 @@ html, body, .dash-main, .dash-content, .dash-section {
   }
   .dash-main { margin-left: 0; }
   .sidebar-toggle { display: flex; }
+  .dash-content {
+    padding: var(--space-4);
+    scroll-padding-inline: var(--space-4);
+    overflow-x: visible;
+  }
+  .dash-section {
+    padding-bottom: var(--space-3);
+    overflow-x: visible;
+  }
+  .dash-section > div,
+  .dash-section > section,
+  .dash-section > article,
+  .dash-section > form {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(26,107,60,0.22) transparent;
+  }
   .quick-actions { grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
   .chat-layout { grid-template-columns: 1fr; }
   .chat-sidebar { display: none; }
-  .dash-content { padding: var(--space-4); }
-  .dash-topbar { padding: 0 var(--space-4); }
+  .dash-topbar {
+    padding: 0 var(--space-4);
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(18px);
+  }
   .welcome-card { padding: var(--space-6); }
+  .welcome-card,
+  .info-card,
+  .training-card,
+  .candidate-card,
+  .student-card,
+  .chat-layout,
+  .profile-header-card {
+    border-radius: 24px;
+    box-shadow: 0 16px 38px rgba(15, 23, 42, 0.08);
+  }
+  .welcome-card {
+    background:
+      radial-gradient(circle at top right, rgba(200,163,64,0.28), transparent 34%),
+      linear-gradient(145deg, var(--dark-800), var(--epsa-green-dark));
+  }
   .welcome-stats { flex-wrap: wrap; gap: var(--space-4); }
   .training-status-bar,
   .exam-card {
@@ -1213,12 +1291,38 @@ html, body, .dash-main, .dash-content, .dash-section {
   .profile-tabs { flex-direction: column; }
   .profile-tab { width: 100%; }
   .dash-content { padding: var(--space-3); }
-  .sidebar { width: 100%; }
-  .sidebar.open, .sidebar.sidebar-active { width: 100%; }
+  .sidebar {
+    width: min(92vw, 340px);
+    min-width: min(92vw, 340px);
+    border-radius: 0 24px 24px 0;
+  }
+  .sidebar.open, .sidebar.sidebar-active {
+    width: min(92vw, 340px);
+  }
+  .sidebar-logo,
+  .sidebar-user,
+  .sidebar-footer {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+  .dash-topbar {
+    padding: 10px var(--space-3);
+    min-height: 72px;
+    height: auto;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(18px);
+  }
   .dash-topbar,
   .dash-topbar-left,
   .dash-topbar-right {
     flex-wrap: wrap;
+  }
+  .dash-topbar-right {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .welcome-card {
+    padding: var(--space-5);
   }
   .dash-section [style*="grid-template-columns:1fr 1fr"],
   .dash-section [style*="repeat(auto-fit,minmax(260px,1fr))"] {
