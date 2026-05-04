@@ -2918,14 +2918,15 @@ def telegram_broadcast():
     import json
 
     base_url = request.host_url.rstrip('/')
-    home_url = f"{base_url}/index.html"
-    register_url = f"{base_url}/register.html"
-    mini_app_url = "https://t.me/epsahub_bot/EPSA"
+    public_base_url = (settings.app_public_url or base_url).rstrip('/')
+    home_url = public_base_url
+    register_url = f"{public_base_url}/register"
+    portal_url = f"{public_base_url}/login"
 
     button_map = {
         'open_portal': {
             'text': 'Open EPSA Portal',
-            'url': mini_app_url,
+            'url': portal_url,
         },
         'join_hub': {
             'text': 'Join EPSA HUB',

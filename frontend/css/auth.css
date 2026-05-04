@@ -2303,6 +2303,111 @@
   }
 }
 
+@media (max-width: 768px) {
+  .reg-page #step4 .face-step-layout {
+    display: block;
+  }
+
+  .reg-page #step4 .face-reference-card {
+    display: none;
+  }
+
+  .reg-page #step4 .face-studio-card {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    padding: 0 0 calc(16px + env(safe-area-inset-bottom));
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .reg-page #step4 .face-studio-topbar {
+    padding: 0 16px 12px;
+    margin-bottom: 0;
+  }
+
+  .reg-page #step4 .face-stage {
+    min-height: calc(100svh - 170px);
+    border-radius: 0;
+  }
+
+  .reg-page #step4 .face-stage-video {
+    min-height: calc(100svh - 170px);
+  }
+
+  .reg-page #step4 .face-stage-hud:not(.face-login-hud-panel) {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    bottom: auto;
+    padding: 0;
+    gap: 10px;
+    flex-direction: column;
+    align-items: stretch;
+    background: transparent;
+  }
+
+  .reg-page #step4 .face-stage-badge {
+    align-self: flex-start;
+    max-width: 100%;
+    background: rgba(8,16,25,0.8);
+  }
+
+  .reg-page #step4 .face-stage-sidepanel {
+    display: block;
+    max-width: none;
+    padding: 12px 14px;
+    border-radius: 18px;
+    background: rgba(8,16,25,0.72);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 14px 28px rgba(8,16,25,0.2);
+    backdrop-filter: blur(12px);
+  }
+
+  .reg-page #step4 .face-stage-sidepanel-copy,
+  .reg-page #step4 .face-stage-sidepanel-reason {
+    display: block;
+  }
+
+  .reg-page #step4 .face-focus-hint {
+    left: 12px;
+    right: 12px;
+    bottom: 112px;
+    background: rgba(8,16,25,0.72);
+    border-color: rgba(255,255,255,0.08);
+  }
+
+  .reg-page #step4 .face-stage-actions {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    z-index: 12;
+    padding: 10px;
+    gap: 10px;
+    flex-direction: column;
+    border-radius: 18px;
+    background: rgba(8,16,25,0.72);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(14px);
+  }
+
+  .reg-page #step4 .face-stage-actions .btn {
+    width: 100%;
+    min-height: 50px;
+    justify-content: center;
+  }
+
+  .reg-page #step4 .face-status-box,
+  .reg-page #step4 .face-privacy-note,
+  .reg-page #step4 .form-error {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+}
+
 @keyframes faceLoginSuccessReveal {
   from { opacity: 0; transform: translateY(10px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }

@@ -63,17 +63,15 @@ def handle_start_command(chat_id, first_name):
     import requests
     import json
     
-    # Use the official direct Mini App link
-    app_url = settings.app_public_url
-    if app_url.endswith("/"):
-        app_url = app_url[:-1]
+    app_url = (settings.app_public_url or "").rstrip("/")
+    portal_url = f"{app_url}/login" if app_url else "https://epsahub.com/login"
         
     reply_markup = {
         "inline_keyboard": [
             [
                 {
                     "text": "🌟 Open EPSA Portal",
-                    "url": "https://t.me/epsahub_bot/EPSA"
+                    "url": portal_url
                 }
             ]
         ]

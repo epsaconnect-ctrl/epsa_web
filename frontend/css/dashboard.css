@@ -1334,3 +1334,40 @@ html, body, .dash-main {
     padding-right: var(--space-4);
   }
 }
+
+@media (max-width: 768px) {
+  #mockResultsModal {
+    padding: 12px !important;
+  }
+
+  #mockResultsModal > div {
+    max-width: 100% !important;
+    padding: 18px !important;
+    border-radius: 22px !important;
+  }
+
+  #mockResultsModal > div > div:first-child {
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-start !important;
+  }
+
+  #mockResultsContent [style*="grid-template-columns:minmax(0,1.4fr) minmax(280px,.9fr)"],
+  #mockResultsContent [style*="grid-template-columns:minmax(0,1.35fr) minmax(300px,.9fr)"],
+  #mockResultsContent [style*="grid-template-columns:repeat(3,minmax(0,1fr))"],
+  #mockResultsContent [style*="grid-template-columns:1fr 1fr"],
+  #mockResultsContent [style*="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  #mockResultsContent [style*="justify-content:space-between"] {
+    flex-wrap: wrap;
+    gap: 10px !important;
+  }
+
+  #mockResultsContent [style*="display:flex;gap:10px;flex-wrap:wrap"] > a,
+  #mockResultsContent [style*="display:flex;gap:10px;flex-wrap:wrap"] > button {
+    width: 100%;
+    justify-content: center;
+  }
+}
