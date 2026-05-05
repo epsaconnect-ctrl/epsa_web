@@ -2917,11 +2917,15 @@ def telegram_broadcast():
     import requests
     import json
 
-    # Force the base URL to epsahub.com, otherwise it might use the backend's Railway URL
+    # Use the Direct Mini App Link so buttons open inside Telegram overlay natively
+    # instead of bouncing to an external browser.
     public_base_url = "https://epsahub.com"
-    home_url = public_base_url
-    register_url = f"{public_base_url}/register"
-    portal_url = f"{public_base_url}/login"
+    home_url = "https://t.me/epsahub_bot/EPSA"
+    
+    # We pass startapp parameters; if the frontend implements routing for them,
+    # they will go straight to login/register. Otherwise, it will just open the Mini App natively.
+    register_url = "https://t.me/epsahub_bot/EPSA?startapp=register"
+    portal_url = "https://t.me/epsahub_bot/EPSA?startapp=login"
 
     button_map = {
         'open_portal': {
