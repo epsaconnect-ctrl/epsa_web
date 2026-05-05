@@ -2959,7 +2959,7 @@ def telegram_broadcast():
     ]
 
     endpoint = "sendMessage"
-    request_payload_base = payload.copy()
+    request_payload_base = {}
     request_payload_base["reply_markup"] = json.dumps(reply_markup)
     
     files = None
