@@ -152,7 +152,7 @@ def send_telegram_message(chat_id: int | str, text: str, bot_token: str) -> bool
 
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     payload = {
-        "chat_id": int(chat_id),
+        "chat_id": chat_id if isinstance(chat_id, str) else int(chat_id),
         "text": text,
         "parse_mode": "HTML",
     }

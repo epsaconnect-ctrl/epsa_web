@@ -2955,8 +2955,14 @@ def telegram_broadcast():
         "reply_markup": json.dumps(reply_markup),
     }
 
+    # ── Send to both the member hub AND the official public channel ──
+    BROADCAST_TARGETS = [
+        "@epsahub",              # existing member bot group
+        "@EPSA_Official_Channel", # public channel (bot must be admin)
+    ]
+
     endpoint = "sendMessage"
-    request_payload = payload.copy()
+    request_payload_base = payload.copy()
     files = None
     if media_file and media_file.filename:
         ext = media_file.filename.rsplit('.', 1)[-1].lower() if '.' in media_file.filename else ''
@@ -2965,28 +2971,45 @@ def telegram_broadcast():
             or ext in {'jpg', 'jpeg', 'png', 'webp'}
         ) else 'video'
         endpoint = 'sendPhoto' if media_kind == 'photo' else 'sendVideo'
-        request_payload.update({
-            'caption': message_text[:1024],
-        })
+        request_payload_base.update({'caption': message_text[:1024]})
         media_file.stream.seek(0)
-        files = {
-            media_kind: (
-                media_file.filename,
-                media_file.stream,
-                media_file.mimetype or 'application/octet-stream',
-            )
-        }
+        media_bytes = media_file.stream.read()
+        files_template = (media_file.filename, media_bytes, media_file.mimetype or 'application/octet-stream')
+        media_key = media_kind
     else:
-        request_payload['text'] = message_text
+        request_payload_base['text'] = message_text
+        media_bytes = None
+        files_template = None
+        media_key = None
 
     url = f"https://api.telegram.org/bot{bot_token}/{endpoint}"
 
+    successes = []
+    failures = []
     try:
-        resp = requests.post(url, data=request_payload, files=files, timeout=30)
-        resp_data = resp.json()
-        if not resp_data.get('ok'):
-            return jsonify({'error': f"Telegram API Error: {resp_data.get('description')}"}), 500
-        return jsonify({'message': 'Broadcast sent successfully!'})
+        for target in BROADCAST_TARGETS:
+            send_payload = {**request_payload_base, "chat_id": target}
+            if files_template and media_key:
+                files = {media_key: files_template}
+                resp = requests.post(url, data=send_payload, files=files, timeout=30)
+            else:
+                resp = requests.post(url, data=send_payload, timeout=30)
+            resp_data = resp.json()
+            if resp_data.get('ok'):
+                successes.append(target)
+            else:
+                err = resp_data.get('description', 'Unknown error')
+                logger.warning(f"[Broadcast] Failed for {target}: {err}")
+                failures.append({"target": target, "error": err})
+
+        if not successes:
+            return jsonify({'error': f"Broadcast failed for all targets. Details: {failures}"}), 500
+
+        msg = f"Broadcast sent to {len(successes)} target(s): {', '.join(successes)}."
+        if failures:
+            msg += f" Failed for: {[f['target'] for f in failures]}."
+        return jsonify({'message': msg, 'successes': successes, 'failures': failures})
+
     except Exception as e:
         logger.error(f"Broadcast error: {e}")
-        return jsonify({'error': f"Failed to connect to Telegram: {str(e)}"}), 500
+        return jsonify({'error': f"Failed to connect to Telegram: {str(e)}\n"}), 500

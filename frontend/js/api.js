@@ -497,6 +497,7 @@ const API = {
   async adminGetLiveMockAnalytics()             { return this.request('/mock-exams/admin/live-analytics'); },
   async adminReleaseMockExamResults(id)         { return this.adminReleaseExamResults(id); }, // alias
   async adminGetExamReport(id)                  { return this.request(`/mock-exams/admin/${id}/report`); },
+  async adminGetExamQuestions(id)               { return this.request(`/mock-exams/admin/${id}/questions`); },
   async adminDeleteQuestion(id)                { return this.request(`/mock-exams/admin/questions/${id}`, { method: 'DELETE' }); },
 
   // ── Logout ──
