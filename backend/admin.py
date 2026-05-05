@@ -2917,8 +2917,8 @@ def telegram_broadcast():
     import requests
     import json
 
-    base_url = request.host_url.rstrip('/')
-    public_base_url = (settings.app_public_url or base_url).rstrip('/')
+    # Force the base URL to epsahub.com, otherwise it might use the backend's Railway URL
+    public_base_url = "https://epsahub.com"
     home_url = public_base_url
     register_url = f"{public_base_url}/register"
     portal_url = f"{public_base_url}/login"
