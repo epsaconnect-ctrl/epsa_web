@@ -1313,6 +1313,76 @@ def admin_exam_report(exam_id):
             for s in submissions[:10]
         ],
     })
+
+
+@mock_exams_bp.route("/admin/<int:exam_id>/questions", methods=["GET"])
+@jwt_required()
+def admin_get_exam_questions(exam_id):
+    uid = get_jwt_identity()
+    db = get_db()
+    try:
+        _require_admin(db, uid)
+        exam = db.execute("SELECT * FROM mock_exams WHERE id=?", (exam_id,)).fetchone()
+        if not exam:
+            return jsonify({"error": "Exam not found"}), 404
+
+        qids_str = exam["question_set"]
+        if not qids_str:
+            return jsonify({"exam_title": exam["title"], "total": 0, "themes": []})
+
+        import json
+        qids = json.loads(qids_str)
+        if not qids:
+            return jsonify({"exam_title": exam["title"], "total": 0, "themes": []})
+
+        placeholders = ",".join("?" * len(qids))
+        questions = db.execute(
+            f"SELECT id, subject_category, topic, bloom_level, difficulty, question_text, option_a, option_b, option_c, option_d, correct_idx FROM question_bank WHERE id IN ({placeholders})",
+            qids
+        ).fetchall()
+
+        # Group by subject_category -> topic
+        grouped = {}
+        for q in questions:
+            theme = q["subject_category"] or "General"
+            course = q["topic"] or "General"
+            if theme not in grouped:
+                grouped[theme] = {}
+            if course not in grouped[theme]:
+                grouped[theme][course] = []
+            grouped[theme][course].append(dict(q))
+
+        themes_list = []
+        q_number = 1
+        for theme_name, courses_dict in grouped.items():
+            courses_list = []
+            theme_q_count = 0
+            for course_name, q_list in courses_dict.items():
+                course_q_list = []
+                for q in q_list:
+                    q_data = q.copy()
+                    q_data["number"] = q_number
+                    course_q_list.append(q_data)
+                    q_number += 1
+                courses_list.append({
+                    "course": course_name,
+                    "question_count": len(q_list),
+                    "questions": course_q_list
+                })
+                theme_q_count += len(q_list)
+            themes_list.append({
+                "theme": theme_name,
+                "question_count": theme_q_count,
+                "courses": courses_list
+            })
+
+        return jsonify({
+            "exam_title": exam["title"],
+            "total": len(qids),
+            "themes": themes_list
+        })
+    finally:
+        db.close()
 @mock_exams_bp.route("/admin/<int:exam_id>", methods=["DELETE"])
 @jwt_required()
 def admin_delete_exam(exam_id):
