@@ -2917,16 +2917,13 @@ def telegram_broadcast():
     import requests
     import json
 
-    # Use the native tg:// protocol instead of https://t.me/
-    # This prevents the OS from opening a web browser and forces the Telegram client
-    # to handle the Mini App natively.
+    # We must use https://t.me/ because the Telegram API rejects tg:// URLs 
+    # for inline buttons with a BUTTON_URL_INVALID error. 
     public_base_url = "https://epsahub.com"
-    home_url = "tg://resolve?domain=epsahub_bot&appname=EPSA"
+    home_url = "https://t.me/epsahub_bot/EPSA"
     
-    # We pass startapp parameters; if the frontend implements routing for them,
-    # they will go straight to login/register. Otherwise, it will just open the Mini App natively.
-    register_url = "tg://resolve?domain=epsahub_bot&appname=EPSA&startapp=register"
-    portal_url = "tg://resolve?domain=epsahub_bot&appname=EPSA&startapp=login"
+    register_url = "https://t.me/epsahub_bot/EPSA?startapp=register"
+    portal_url = "https://t.me/epsahub_bot/EPSA?startapp=login"
 
     button_map = {
         'open_portal': {
