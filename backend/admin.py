@@ -2939,20 +2939,7 @@ def telegram_broadcast():
     }
     chosen_button = button_map.get(button_type, button_map['open_portal'])
 
-    reply_markup_group = {
-        "inline_keyboard": [
-            [
-                {
-                    "text": chosen_button["text"],
-                    "web_app": {
-                        "url": chosen_button["url"]
-                    }
-                }
-            ]
-        ]
-    }
-
-    reply_markup_channel = {
+    reply_markup = {
         "inline_keyboard": [
             [
                 {
@@ -2971,8 +2958,8 @@ def telegram_broadcast():
 
     endpoint = "sendMessage"
     request_payload_base = payload.copy()
-    if 'reply_markup' in request_payload_base:
-        del request_payload_base['reply_markup']  # remove so we can add it per-target
+    request_payload_base["reply_markup"] = json.dumps(reply_markup)
+    
     files = None
     if media_file and media_file.filename:
         ext = media_file.filename.rsplit('.', 1)[-1].lower() if '.' in media_file.filename else ''
@@ -3000,13 +2987,6 @@ def telegram_broadcast():
         for target in BROADCAST_TARGETS:
             send_payload = {**request_payload_base, "chat_id": target}
             
-            # Use web_app for the group, but fallback to regular URL for the channel
-            # because Telegram channels do not support web_app buttons yet.
-            if target == "@EPSA_Official_Channel":
-                send_payload["reply_markup"] = json.dumps(reply_markup_channel)
-            else:
-                send_payload["reply_markup"] = json.dumps(reply_markup_group)
-
             if files_template and media_key:
                 files = {media_key: files_template}
                 resp = requests.post(url, data=send_payload, files=files, timeout=30)
