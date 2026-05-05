@@ -2944,7 +2944,9 @@ def telegram_broadcast():
             [
                 {
                     "text": chosen_button["text"],
-                    "url": chosen_button["url"],
+                    "web_app": {
+                        "url": chosen_button["url"]
+                    }
                 }
             ]
         ]
