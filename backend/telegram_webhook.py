@@ -63,15 +63,18 @@ def handle_start_command(chat_id, first_name):
     import requests
     import json
     
-    app_url = (settings.app_public_url or "").rstrip("/")
-    portal_url = f"{app_url}/login" if app_url else "https://epsahub.com/login"
+    # Because /start happens in a private chat, we CAN use the native web_app property
+    # to open the Mini App seamlessly inside Telegram.
+    portal_url = "https://epsahub.com/"
         
     reply_markup = {
         "inline_keyboard": [
             [
                 {
                     "text": "🌟 Open EPSA Portal",
-                    "url": portal_url
+                    "web_app": {
+                        "url": portal_url
+                    }
                 }
             ]
         ]
