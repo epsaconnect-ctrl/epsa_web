@@ -2331,5 +2331,342 @@ async function broadcastToTelegram(event) {
 }
 window.broadcastToTelegram = broadcastToTelegram;
 
+// ── MOCK EXAMS ADMIN ────────────────────────────────────────────────────────
+
+let _adminMockExams = [];
+
+async function loadAdminMockExams() {
+  const section = adminSectionTarget('mock-exams');
+  if (!section) return;
+
+  // Inject shell on first load
+  if (!document.getElementById('mockExamAdminRoot')) {
+    section.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:18px;">
+        <div>
+          <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.35rem;margin:0 0 4px;">Mock Exam Center</h3>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin:0;">Schedule, activate, and monitor adaptive mock exams drawn from the question bank.</p>
+        </div>
+        <button class="btn btn-primary" onclick="openCreateMockExamModal()">+ Schedule Exam</button>
+      </div>
+      <div id="mockExamAdminRoot"></div>
+    `;
+  }
+
+  const root = document.getElementById('mockExamAdminRoot');
+  root.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted);">Loading exams…</div>';
+
+  try {
+    const data = await API.adminListMockExams();
+    _adminMockExams = data.exams || [];
+
+    if (!_adminMockExams.length) {
+      root.innerHTML = `<div class="glass-inline-card" style="padding:32px;text-align:center;color:var(--text-muted);">
+        <div style="font-size:2rem;margin-bottom:10px;">📝</div>
+        <div style="font-weight:700;margin-bottom:6px;">No mock exams scheduled yet</div>
+        <div style="font-size:0.84rem;">Click "Schedule Exam" to create your first adaptive mock exam.</div>
+      </div>`;
+      return;
+    }
+
+    root.innerHTML = _adminMockExams.map(e => {
+      const statusBadge = e.is_active
+        ? '<span class="soft-badge green">Active</span>'
+        : e.results_released
+          ? '<span class="soft-badge blue">Results Released</span>'
+          : '<span class="soft-badge gold">Inactive</span>';
+
+      const retakeBadge = e.allow_retake
+        ? '<span class="soft-badge blue" title="Students may retake this exam">Retake On</span>'
+        : '';
+
+      const scheduled = e.scheduled_at ? new Date(e.scheduled_at.endsWith('Z') ? e.scheduled_at : e.scheduled_at + 'Z').toLocaleString() : '—';
+      const ends = e.ends_at ? new Date(e.ends_at.endsWith('Z') ? e.ends_at : e.ends_at + 'Z').toLocaleString() : '—';
+      const avg = e.avg_score != null ? `${parseFloat(e.avg_score).toFixed(1)}%` : '—';
+
+      return `
+        <div class="glass-inline-card" style="margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start;">
+            <div style="flex:1;min-width:220px;">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+                <span style="font-family:var(--font-display);font-weight:800;font-size:1.04rem;">${adminEsc(e.title)}</span>
+                ${statusBadge}
+                ${retakeBadge}
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(4,auto);gap:16px;font-size:0.8rem;color:var(--text-secondary);margin-bottom:8px;">
+                <span>⏱ ${e.duration_mins} min</span>
+                <span>📋 ${e.question_count} Qs</span>
+                <span>👥 ${e.submission_count || 0} submitted</span>
+                <span>📊 Avg: ${avg}</span>
+              </div>
+              <div style="font-size:0.76rem;color:var(--text-muted);">
+                Opens: ${scheduled} · Closes: ${ends}
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;">
+              ${!e.is_active && !e.results_released ? `<button class="btn btn-primary btn-sm" onclick="adminActivateMockExam(${e.id})">▶ Activate</button>` : ''}
+              ${e.is_active ? `<button class="btn btn-ghost btn-sm" style="color:#b91c1c;" onclick="adminStopMockExam(${e.id})">⏹ Stop</button>` : ''}
+              ${!e.results_released ? `<button class="btn btn-outline-green btn-sm" onclick="adminReleaseMockExamResults(${e.id})">Release Results</button>` : ''}
+              <button class="btn btn-ghost btn-sm" onclick="openMockExamReport(${e.id}, '${adminEsc(e.title)}')">📊 Report</button>
+              <button class="btn btn-ghost btn-sm" onclick="openEditMockExamModal(${e.id})">Edit</button>
+              <button class="btn btn-ghost btn-sm" style="color:#b91c1c;" onclick="adminDeleteMockExam(${e.id})">Delete</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch (err) {
+    root.innerHTML = `<div class="glass-inline-card" style="color:#b91c1c;padding:24px;">${adminEsc(err.message || 'Failed to load mock exams')}</div>`;
+  }
+}
+window.loadAdminMockExams = loadAdminMockExams;
+
+function openCreateMockExamModal() {
+  if (!document.getElementById('createMockExamModal')) {
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="modal-overlay" id="createMockExamModal" onclick="if(event.target===this)this.classList.remove('active')">
+        <div class="modal" style="max-width:680px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+            <h3 style="font-family:var(--font-display);font-weight:800;margin:0;">Schedule Mock Exam</h3>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('createMockExamModal').classList.remove('active')">Close</button>
+          </div>
+          <div style="display:grid;gap:12px;">
+            <div class="form-group"><label class="form-label">Exam Title *</label>
+              <input id="cme-title" class="form-input" placeholder="e.g. EPSA National Mock Exam — May 2026"></div>
+            <div class="form-group"><label class="form-label">Description</label>
+              <textarea id="cme-desc" class="form-input" rows="2" placeholder="Brief description for students"></textarea></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div class="form-group"><label class="form-label">Duration (minutes)</label>
+                <input id="cme-duration" type="number" min="10" max="360" class="form-input" value="120"></div>
+              <div class="form-group"><label class="form-label">Start (scheduled_at)</label>
+                <input id="cme-scheduled" type="datetime-local" class="form-input"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Ends At</label>
+              <input id="cme-ends" type="datetime-local" class="form-input"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.85rem;font-weight:600;">
+                <input id="cme-shuffle-q" type="checkbox" checked> Shuffle questions</label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.85rem;font-weight:600;">
+                <input id="cme-shuffle-o" type="checkbox" checked> Shuffle options</label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.85rem;font-weight:600;">
+                <input id="cme-confidence" type="checkbox" checked> Confidence rating</label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.85rem;font-weight:600;">
+                <input id="cme-instant" type="checkbox" checked> Instant performance view</label>
+            </div>
+            <div style="padding:14px 16px;background:rgba(26,107,60,0.06);border-radius:16px;border:1px solid rgba(26,107,60,0.14);">
+              <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;">
+                <input id="cme-retake" type="checkbox" style="margin-top:3px;">
+                <div>
+                  <div style="font-weight:700;font-size:0.9rem;">Allow Retake</div>
+                  <div style="font-size:0.78rem;color:var(--text-muted);margin-top:3px;">Students who have already submitted may attempt the exam again while the window is open. Each attempt creates a new submission record.</div>
+                </div>
+              </label>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:6px;">
+              <button class="btn btn-ghost" onclick="document.getElementById('createMockExamModal').classList.remove('active')">Cancel</button>
+              <button class="btn btn-primary" onclick="submitCreateMockExam()">Create Exam</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `);
+  }
+  document.getElementById('createMockExamModal').classList.add('active');
+}
+window.openCreateMockExamModal = openCreateMockExamModal;
+
+async function submitCreateMockExam() {
+  const title = document.getElementById('cme-title')?.value.trim();
+  if (!title) { showToast('Exam title is required', 'error'); return; }
+  const body = {
+    title,
+    description: document.getElementById('cme-desc')?.value.trim() || '',
+    duration_mins: parseInt(document.getElementById('cme-duration')?.value) || 120,
+    scheduled_at: document.getElementById('cme-scheduled')?.value || null,
+    ends_at: document.getElementById('cme-ends')?.value || null,
+    is_active: false,
+    shuffle_questions: document.getElementById('cme-shuffle-q')?.checked ?? true,
+    shuffle_options: document.getElementById('cme-shuffle-o')?.checked ?? true,
+    confidence_enabled: document.getElementById('cme-confidence')?.checked ?? true,
+    instant_performance_view: document.getElementById('cme-instant')?.checked ?? true,
+    allow_retake: document.getElementById('cme-retake')?.checked ?? false,
+  };
+  try {
+    const res = await API.adminCreateMockExam(body);
+    showToast(res.message || 'Exam created successfully', 'success');
+    document.getElementById('createMockExamModal').classList.remove('active');
+    await loadAdminMockExams();
+  } catch (err) {
+    showToast(err.message || 'Failed to create exam', 'error');
+  }
+}
+window.submitCreateMockExam = submitCreateMockExam;
+
+function openEditMockExamModal(id) {
+  const e = _adminMockExams.find(x => x.id === id);
+  if (!e) return;
+  const toLocal = iso => {
+    if (!iso) return '';
+    const d = new Date(iso.endsWith('Z') ? iso : iso + 'Z');
+    return new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  };
+  if (!document.getElementById('editMockExamModal')) {
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="modal-overlay" id="editMockExamModal" onclick="if(event.target===this)this.classList.remove('active')">
+        <div class="modal" style="max-width:620px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+            <h3 style="font-family:var(--font-display);font-weight:800;margin:0;">Edit Mock Exam</h3>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('editMockExamModal').classList.remove('active')">Close</button>
+          </div>
+          <div style="display:grid;gap:12px;">
+            <input type="hidden" id="eme-id">
+            <div class="form-group"><label class="form-label">Title</label>
+              <input id="eme-title" class="form-input"></div>
+            <div class="form-group"><label class="form-label">Description</label>
+              <textarea id="eme-desc" class="form-input" rows="2"></textarea></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div class="form-group"><label class="form-label">Duration (min)</label>
+                <input id="eme-duration" type="number" min="10" class="form-input"></div>
+              <div class="form-group"><label class="form-label">Opens At</label>
+                <input id="eme-scheduled" type="datetime-local" class="form-input"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Closes At</label>
+              <input id="eme-ends" type="datetime-local" class="form-input"></div>
+            <div style="padding:14px 16px;background:rgba(26,107,60,0.06);border-radius:16px;border:1px solid rgba(26,107,60,0.14);">
+              <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;">
+                <input id="eme-retake" type="checkbox" style="margin-top:3px;">
+                <div>
+                  <div style="font-weight:700;font-size:0.9rem;">Allow Retake</div>
+                  <div style="font-size:0.78rem;color:var(--text-muted);margin-top:3px;">Students who submitted may attempt again while the window is open. Each attempt is a new submission row.</div>
+                </div>
+              </label>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:6px;">
+              <button class="btn btn-ghost" onclick="document.getElementById('editMockExamModal').classList.remove('active')">Cancel</button>
+              <button class="btn btn-primary" onclick="submitEditMockExam()">Save Changes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `);
+  }
+  document.getElementById('eme-id').value = e.id;
+  document.getElementById('eme-title').value = e.title || '';
+  document.getElementById('eme-desc').value = e.description || '';
+  document.getElementById('eme-duration').value = e.duration_mins || 120;
+  document.getElementById('eme-scheduled').value = toLocal(e.scheduled_at);
+  document.getElementById('eme-ends').value = toLocal(e.ends_at);
+  document.getElementById('eme-retake').checked = !!e.allow_retake;
+  document.getElementById('editMockExamModal').classList.add('active');
+}
+window.openEditMockExamModal = openEditMockExamModal;
+
+async function submitEditMockExam() {
+  const id = parseInt(document.getElementById('eme-id')?.value);
+  if (!id) return;
+  const body = {
+    title: document.getElementById('eme-title')?.value.trim(),
+    description: document.getElementById('eme-desc')?.value.trim(),
+    duration_mins: parseInt(document.getElementById('eme-duration')?.value) || 120,
+    scheduled_at: document.getElementById('eme-scheduled')?.value || null,
+    ends_at: document.getElementById('eme-ends')?.value || null,
+    allow_retake: document.getElementById('eme-retake')?.checked ?? false,
+  };
+  try {
+    const res = await API.adminUpdateMockExam(id, body);
+    showToast(res.message || 'Exam updated', 'success');
+    document.getElementById('editMockExamModal').classList.remove('active');
+    await loadAdminMockExams();
+  } catch (err) {
+    showToast(err.message || 'Failed to update exam', 'error');
+  }
+}
+window.submitEditMockExam = submitEditMockExam;
+
+async function adminActivateMockExam(id) {
+  try {
+    const res = await API.adminActivateMockExam(id);
+    showToast(res.message || 'Exam activated', 'success');
+    await loadAdminMockExams();
+  } catch (err) { showToast(err.message || 'Failed to activate', 'error'); }
+}
+window.adminActivateMockExam = adminActivateMockExam;
+
+async function adminStopMockExam(id) {
+  if (!confirm('Stop this exam? Students will no longer be able to submit.')) return;
+  try {
+    const res = await API.adminStopMockExam(id);
+    showToast(res.message || 'Exam stopped', 'success');
+    await loadAdminMockExams();
+  } catch (err) { showToast(err.message || 'Failed to stop exam', 'error'); }
+}
+window.adminStopMockExam = adminStopMockExam;
+
+async function adminReleaseMockExamResults(id) {
+  if (!confirm('Release results? The exam will be stopped and scores shown to students.')) return;
+  try {
+    const res = await API.adminReleaseMockExamResults(id);
+    showToast(res.message || 'Results released', 'success');
+    await loadAdminMockExams();
+  } catch (err) { showToast(err.message || 'Failed to release results', 'error'); }
+}
+window.adminReleaseMockExamResults = adminReleaseMockExamResults;
+
+async function adminDeleteMockExam(id) {
+  if (!confirm('Permanently delete this exam and all submissions?')) return;
+  try {
+    const res = await API.adminDeleteMockExam(id);
+    showToast(res.message || 'Exam deleted', 'success');
+    await loadAdminMockExams();
+  } catch (err) { showToast(err.message || 'Failed to delete exam', 'error'); }
+}
+window.adminDeleteMockExam = adminDeleteMockExam;
+
+async function openMockExamReport(id, title) {
+  if (!document.getElementById('mockExamReportModal')) {
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="modal-overlay" id="mockExamReportModal" onclick="if(event.target===this)this.classList.remove('active')">
+        <div class="modal" style="max-width:860px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+            <h3 id="mockExamReportTitle" style="font-family:var(--font-display);font-weight:800;margin:0;"></h3>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('mockExamReportModal').classList.remove('active')">Close</button>
+          </div>
+          <div id="mockExamReportBody" style="min-height:200px;"></div>
+        </div>
+      </div>
+    `);
+  }
+  const modal = document.getElementById('mockExamReportModal');
+  const body = document.getElementById('mockExamReportBody');
+  document.getElementById('mockExamReportTitle').textContent = title;
+  body.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted);">Loading report…</div>';
+  modal.classList.add('active');
+  try {
+    const data = await API.request(`/mock-exams/admin/${id}/report`);
+    const ov = data.overview || {};
+    body.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
+        <div class="admin-detail-card"><div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Submissions</div>
+          <div style="font-family:var(--font-display);font-size:1.4rem;font-weight:900;">${ov.total_submissions || 0}</div></div>
+        <div class="admin-detail-card"><div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Avg Score</div>
+          <div style="font-family:var(--font-display);font-size:1.4rem;font-weight:900;">${ov.avg_score || 0}%</div></div>
+        <div class="admin-detail-card"><div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Pass Rate</div>
+          <div style="font-family:var(--font-display);font-size:1.4rem;font-weight:900;">${ov.pass_rate || 0}%</div></div>
+        <div class="admin-detail-card"><div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;">Score Range</div>
+          <div style="font-family:var(--font-display);font-size:1.2rem;font-weight:900;">${ov.min_score || 0}–${ov.max_score || 0}%</div></div>
+      </div>
+      <div style="font-weight:700;margin-bottom:10px;">Top Students</div>
+      <div style="display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;">
+        ${(data.top_students || []).map((s, i) => `
+          <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 14px;border-radius:14px;background:var(--light-50);border:1px solid var(--light-200);">
+            <span style="font-weight:700;">${i + 1}. ${adminEsc(s.student_name)}</span>
+            <span style="font-weight:700;color:var(--epsa-green);">${parseFloat(s.score || 0).toFixed(1)}%</span>
+          </div>`).join('') || '<div style="color:var(--text-muted);">No submissions yet.</div>'}
+      </div>`;
+  } catch (err) {
+    body.innerHTML = `<div style="color:#b91c1c;padding:24px;">${adminEsc(err.message || 'Unable to load report')}</div>`;
+  }
+}
+window.openMockExamReport = openMockExamReport;
+
 
 
