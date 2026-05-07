@@ -263,8 +263,10 @@ def start_mock_exam(exam_id):
             allow_retake = _coerce_bool(exam.get("allow_retake"), False)
             if not allow_retake:
                 return jsonify({"error": "You have already submitted this exam"}), 409
-            # If allow_retake is true, create a new submission with same question set
-            # (fall through to create new submission below)
+            
+            # For retakes, clear the old submission to allow a fresh start and fresh timer
+            db.execute("DELETE FROM mock_exam_submissions WHERE id=?", (existing["id"],))
+            db.commit()
             existing = None
 
         if existing:
