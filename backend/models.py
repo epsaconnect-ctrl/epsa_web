@@ -1234,6 +1234,18 @@ def migrate_db():
         # cannot be linked to multiple EPSA accounts).
         """ALTER TABLE users ADD COLUMN telegram_id TEXT""",
         """CREATE UNIQUE INDEX IF NOT EXISTS idx_users_telegram_id ON users(telegram_id) WHERE telegram_id IS NOT NULL""",
+        # ── EXAM HISTORY ────────────────────────────────────────────
+        """CREATE TABLE IF NOT EXISTS mock_exam_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            original_submission_id INTEGER,
+            exam_id INTEGER NOT NULL REFERENCES mock_exams(id),
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            score REAL,
+            total_questions INTEGER,
+            started_at DATETIME,
+            submitted_at DATETIME,
+            archived_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )""",
     ]
     for sql in migrations:
         try:

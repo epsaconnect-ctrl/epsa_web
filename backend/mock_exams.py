@@ -264,7 +264,13 @@ def start_mock_exam(exam_id):
             if not allow_retake:
                 return jsonify({"error": "You have already submitted this exam"}), 409
             
-            # For retakes, clear the old submission to allow a fresh start and fresh timer
+            # For retakes, archive the old submission into mock_exam_history to allow robust analytics
+            db.execute("""
+                INSERT INTO mock_exam_history (original_submission_id, exam_id, user_id, score, total_questions, started_at, submitted_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (existing["id"], existing["exam_id"], existing["user_id"], existing["score"], existing["total_questions"], existing["started_at"], existing["submitted_at"]))
+            
+            # Clear the old submission to allow a fresh start and fresh timer
             db.execute("DELETE FROM mock_exam_submissions WHERE id=?", (existing["id"],))
             db.commit()
             existing = None
@@ -1243,16 +1249,63 @@ def admin_exam_report(exam_id):
         if not exam:
             return jsonify({"error": "Not found"}), 404
 
-        submissions = db.execute(
+        # Fetch active submissions
+        active_subs = db.execute(
             """
-            SELECT ms.*, u.first_name||' '||u.father_name as student_name, u.university
+            SELECT ms.user_id, ms.score, ms.status, u.first_name||' '||u.father_name as student_name, u.university, ms.answers, ms.option_order
             FROM mock_exam_submissions ms
             JOIN users u ON u.id=ms.user_id
             WHERE ms.exam_id=? AND ms.status IN ('submitted','auto_submitted')
-            ORDER BY ms.score DESC
             """,
             (exam_id,)
         ).fetchall()
+
+        # Fetch history submissions for the same exam
+        history_subs = db.execute(
+            "SELECT user_id, score FROM mock_exam_history WHERE exam_id=? AND score IS NOT NULL",
+            (exam_id,)
+        ).fetchall()
+
+        # Aggregate scores per user
+        user_scores = {}
+        submissions_dict = {}
+        for sub in active_subs:
+            uid = sub["user_id"]
+            if uid not in user_scores:
+                user_scores[uid] = []
+            if sub["score"] is not None:
+                user_scores[uid].append(sub["score"])
+            submissions_dict[uid] = dict(sub) # keep track of the latest active submission for other data
+
+        for hsub in history_subs:
+            uid = hsub["user_id"]
+            if uid not in user_scores:
+                user_scores[uid] = []
+            user_scores[uid].append(hsub["score"])
+
+        def _calculate_robust_average(scores):
+            if not scores: return 0.0
+            if len(scores) < 3: return sum(scores) / len(scores)
+            sorted_scores = sorted(scores)
+            n = len(sorted_scores)
+            q1 = sorted_scores[n // 4]
+            q3 = sorted_scores[(n * 3) // 4]
+            iqr = q3 - q1
+            if iqr == 0: return sum(scores) / len(scores) # if identical scores
+            lower_bound = q1 - 1.5 * iqr
+            upper_bound = q3 + 1.5 * iqr
+            valid_scores = [s for s in scores if lower_bound <= s <= upper_bound]
+            return sum(valid_scores) / len(valid_scores) if valid_scores else sum(scores) / len(scores)
+
+        submissions = []
+        for uid, sub_data in submissions_dict.items():
+            scores = user_scores.get(uid, [])
+            sub_data["score"] = round(_calculate_robust_average(scores), 2)
+            sub_data["attempts_count"] = len(scores)
+            submissions.append(sub_data)
+
+        # Sort by robust score descending
+        submissions.sort(key=lambda x: x["score"] if x["score"] is not None else 0, reverse=True)
 
         analytics = db.execute(
             """

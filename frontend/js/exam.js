@@ -613,24 +613,35 @@ function autoDisqualify(reason) {
 }
 
 // ── SUBMIT EXAM ───────────────────────────────
-async function submitExam() {
+async function submitExam(auto = false) {
   if (examState.submitted) return;
   const answered = Object.keys(examState.answers).length;
   const total    = examState.questions.length;
-  if (answered < total) {
+  if (!auto && answered < total) {
     const confirmed = window.confirm(`You have answered ${answered}/${total} questions. Submit anyway?`);
     if (!confirmed) return;
   }
-  await doSubmitExam();
+  
+  // Disable button and show loading state
+  const btn = document.querySelector('.btn-gold[onclick*="submitExam"]');
+  const originalText = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span style="display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 1s linear infinite;vertical-align:middle;margin-right:8px;"></span> Submitting...`;
+    btn.style.opacity = '0.8';
+    btn.style.cursor = 'not-allowed';
+  }
+
+  await doSubmitExam(btn, originalText);
 }
 window.submitExam = submitExam;
 
 async function autoSubmitExam() {
   showToast('⏰ Time is up! Auto-submitting…', 'error');
-  await doSubmitExam();
+  await submitExam(true);
 }
 
-async function doSubmitExam() {
+async function doSubmitExam(btn, originalText) {
   examState.submitted = true;
   clearInterval(examState.timerInterval);
   clearInterval(examState.heartbeatInterval);
@@ -640,6 +651,14 @@ async function doSubmitExam() {
     await API.submitExam(examState.examId, examState.answers);
   } catch(err) {
     showToast('Failed to submit: ' + err.message, 'error');
+    examState.submitted = false; // allow retry
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+    }
+    return;
   }
 
   const overlay = document.getElementById('examOverlay');

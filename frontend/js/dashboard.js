@@ -395,9 +395,15 @@ async function loadExams() {
       const resultReleased = !!e.results_released && e.my_submission && e.my_submission.score !== null;
       const faceReady = !!e.face_registered;
       const passLabel = e.my_submission && e.my_submission.passed === false ? 'Below passing mark' : (e.my_submission && e.my_submission.passed ? 'Passed' : '');
+      const actionButtons = `
+        <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;">
+          ${e.can_view_performance ? `<button class="btn btn-outline-green btn-sm" onclick="viewPerformance(${e.id})">📊 View Performance</button>` : ''}
+          ${e.can_retake ? `<button class="btn btn-primary btn-sm" onclick="takeExam(${e.id},'${e.title.replace(/'/g, "\\'")}',${e.duration_mins})">🔄 Retake Exam</button>` : ''}
+        </div>
+      `;
       const completedMarkup = resultReleased
-        ? `<div><div style="font-family:var(--font-display);font-size:1.8rem;font-weight:900;color:var(--epsa-green);">${e.my_submission.score}%</div><div style="font-size:0.72rem;color:var(--text-muted);">Score${passLabel ? ` · ${passLabel}` : ''}</div></div>`
-        : `<div><div style="font-weight:800;color:var(--epsa-gold-dark);font-size:0.88rem;">Awaiting Release</div><div style="font-size:0.72rem;color:var(--text-muted);">Admin review in progress</div></div>`;
+        ? `<div><div style="font-family:var(--font-display);font-size:1.8rem;font-weight:900;color:var(--epsa-green);">${e.my_submission.score}%</div><div style="font-size:0.72rem;color:var(--text-muted);">Score${passLabel ? ` · ${passLabel}` : ''}</div>${actionButtons}</div>`
+        : `<div><div style="font-weight:800;color:var(--epsa-gold-dark);font-size:0.88rem;">Awaiting Release</div><div style="font-size:0.72rem;color:var(--text-muted);">Admin review in progress</div>${actionButtons}</div>`;
 
       return `
       <div class="exam-card">
@@ -432,6 +438,40 @@ async function loadExams() {
   }
 }
 window.loadExams = loadExams;
+
+async function viewPerformance(eid) {
+  const overlay = document.getElementById('examOverlay');
+  if (!overlay) return;
+  overlay.style.display = 'block';
+  overlay.innerHTML = `
+    <div style="max-width:500px;margin:100px auto;text-align:center;padding:var(--space-8);">
+      <div style="width:100px;height:100px;border-radius:50%;background:rgba(26,107,60,0.1);display:flex;align-items:center;justify-content:center;font-size:2.5rem;margin:0 auto var(--space-6);">
+        📊
+      </div>
+      <h2 style="font-family:var(--font-display);font-size:2rem;font-weight:900;margin-bottom:var(--space-3);color:white;">Loading Insights</h2>
+      <div style="color:var(--text-muted);margin-bottom:var(--space-6);">Fetching your performance data...</div>
+      <div style="display:inline-block;width:30px;height:30px;border:3px solid rgba(26,107,60,0.2);border-top-color:var(--epsa-green);border-radius:50%;animation:spin 1s linear infinite;"></div>
+    </div>`;
+
+  try {
+    const insights = await API.getMockInsights(eid);
+    if (insights.error) throw new Error(insights.error);
+    if (typeof renderInsightsDashboard === 'function') {
+      renderInsightsDashboard(insights, overlay);
+    } else {
+      throw new Error("Insights renderer not found. Make sure exam.js is loaded.");
+    }
+  } catch (e) {
+    overlay.innerHTML = `
+      <div style="max-width:500px;margin:100px auto;text-align:center;padding:var(--space-8);background:white;border-radius:var(--radius-xl);">
+        <div style="color:#ef4444;margin-bottom:16px;font-size:2rem;">⚠️</div>
+        <h3 style="margin-bottom:8px;">Failed to Load Insights</h3>
+        <p style="color:var(--text-muted);margin-bottom:24px;">${e.message || 'Results might not be available yet.'}</p>
+        <button class="btn btn-primary" onclick="document.getElementById('examOverlay').style.display='none'">Close</button>
+      </div>`;
+  }
+}
+window.viewPerformance = viewPerformance;
 
 async function takeExam(eid, title, duration) {
   try {
