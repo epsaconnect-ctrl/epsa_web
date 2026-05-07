@@ -1453,6 +1453,10 @@
   min-width: 136px;
 }
 
+.mobile-skip-face-btn {
+  display: none !important;
+}
+
 .face-angle-gallery {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
@@ -2443,6 +2447,25 @@
     min-height: 48px;
     justify-content: center;
     font-size: 0.95rem;
+  }
+
+  .reg-page #step4 .face-stage-actions .mobile-skip-face-btn {
+    display: flex !important;
+    background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+    color: rgba(255,255,255,0.9);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    backdrop-filter: blur(12px);
+    transition: all 0.25s ease;
+    margin-top: 6px;
+  }
+
+  .reg-page #step4 .face-stage-actions .mobile-skip-face-btn:active {
+    background: rgba(255,255,255,0.12);
+    border-color: rgba(255,255,255,0.25);
+    transform: scale(0.98);
   }
 
   .reg-page #step4 .face-guide-frame {
