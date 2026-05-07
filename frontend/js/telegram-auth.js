@@ -219,17 +219,81 @@
     const tgUser = getTelegramUser();
     const firstName = tgUser?.first_name || 'there';
 
+    // Show immediate loading splash before attempting auto-login
+    showTelegramLoadingSplash();
+
     // 1. Try silent auto-login first
     const loggedIn = await tryAutoLogin();
     if (loggedIn) {
-      // Already linked — redirect to dashboard
+      // Already linked — redirect to dashboard immediately
+      removeTelegramLoadingSplash();
       showToastMsg(`Welcome back, ${firstName}!`, 'success');
-      setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+      // Redirect immediately without extra delay
+      window.location.href = 'dashboard.html';
       return;
     }
 
-    // 2. Not linked — inject Telegram banner + linking instructions
+    // 2. Not linked — remove splash and inject Telegram banner + linking instructions
+    removeTelegramLoadingSplash();
     _injectTelegramLoginUI(firstName);
+  }
+
+  function showTelegramLoadingSplash() {
+    // Create full-screen loading overlay
+    const splash = document.createElement('div');
+    splash.id = 'tg-loading-splash';
+    splash.style.cssText = `
+      position: fixed; inset: 0; z-index: 9999;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 24px; color: white;
+    `;
+    splash.innerHTML = `
+      <div style="position: relative; width: 64px; height: 64px;">
+        <div style="
+          position: absolute; inset: 0;
+          border: 3px solid rgba(255,255,255,0.1);
+          border-radius: 50%;
+          border-top-color: #22c55e;
+          border-right-color: #3b82f6;
+          animation: spin 0.8s linear infinite;
+        "></div>
+        <div style="
+          position: absolute; inset: 8px;
+          border: 2px solid transparent;
+          border-radius: 50%;
+          border-top-color: rgba(34,197,94,0.6);
+          animation: spin 1.2s linear infinite reverse;
+        "></div>
+      </div>
+      <div style="text-align: center;">
+        <div style="
+          font-size: 1.25rem; font-weight: 700;
+          letter-spacing: 0.05em;
+          margin-bottom: 8px;
+        ">Opening EPSA Portal</div>
+        <div style="
+          font-size: 0.9rem;
+          color: rgba(255,255,255,0.7);
+        ">Just a moment…</div>
+      </div>
+      <style>
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      </style>
+    `;
+    document.body.appendChild(splash);
+  }
+
+  function removeTelegramLoadingSplash() {
+    const splash = document.getElementById('tg-loading-splash');
+    if (splash) {
+      splash.style.opacity = '0';
+      splash.style.transition = 'opacity 0.3s ease';
+      setTimeout(() => splash.remove(), 300);
+    }
   }
 
   function _injectTelegramLoginUI(firstName) {

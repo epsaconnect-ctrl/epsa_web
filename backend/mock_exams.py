@@ -212,6 +212,11 @@ def list_mock_exams():
         row["can_start"] = is_open and not row["my_status"]
         row["can_continue"] = is_open and row["my_status"] == "in_progress"
         row["is_submitted"] = row["my_status"] in ("submitted", "auto_submitted")
+        
+        # Check if allow_retake is enabled and exam is still open
+        allow_retake = _coerce_bool(row.get("allow_retake"), False)
+        row["can_retake"] = bool(is_open and row["is_submitted"] and allow_retake)
+        
         row["results_viewable"] = bool(
             row["is_submitted"] and (
                 _coerce_bool(row.get("instant_performance_view"), True) or
@@ -254,7 +259,13 @@ def start_mock_exam(exam_id):
         ).fetchone()
 
         if existing and existing["status"] in ("submitted", "auto_submitted"):
-            return jsonify({"error": "You have already submitted this exam"}), 409
+            # Check if allow_retake is enabled
+            allow_retake = _coerce_bool(exam.get("allow_retake"), False)
+            if not allow_retake:
+                return jsonify({"error": "You have already submitted this exam"}), 409
+            # If allow_retake is true, create a new submission with same question set
+            # (fall through to create new submission below)
+            existing = None
 
         if existing:
             # Resume: return existing question set
@@ -296,9 +307,13 @@ def start_mock_exam(exam_id):
             })
 
         base_question_ids = _get_or_create_exam_question_set(db, exam)
-        question_ids = list(base_question_ids)
-        if _coerce_bool(exam["shuffle_questions"], True):
+        
+        # For retakes, use the same question set (base_question_ids); for first attempt, optionally shuffle
+        if _coerce_bool(exam["shuffle_questions"], True) and not existing:
+            question_ids = list(base_question_ids)
             random.shuffle(question_ids)
+        else:
+            question_ids = list(base_question_ids)
 
         if not question_ids:
             return jsonify({"error": "Not enough approved questions in the bank to generate this exam"}), 500
@@ -1049,6 +1064,24 @@ def get_my_results(exam_id):
 @mock_exams_bp.route("/admin", methods=["POST"])
 @jwt_required()
 def admin_create_exam():
+    """
+    Create a new mock exam.
+    
+    Request body:
+    {
+      "title": "string",
+      "description": "string (optional)",
+      "duration_mins": 60,
+      "scheduled_at": "ISO datetime (optional)",
+      "ends_at": "ISO datetime (optional)",
+      "is_active": bool,
+      "shuffle_questions": bool,
+      "shuffle_options": bool,
+      "confidence_enabled": bool,
+      "instant_performance_view": bool,
+      "allow_retake": bool (optional, default false) - Allow students to retake exam during opening window
+    }
+    """
     uid = get_jwt_identity()
     data = request.json or {}
     db = get_db()
@@ -1070,8 +1103,8 @@ def admin_create_exam():
             INSERT INTO mock_exams (title, description, question_count, duration_mins,
                                     blueprint, question_set, scheduled_at, ends_at, is_active,
                                     shuffle_questions, shuffle_options, confidence_enabled,
-                                    instant_performance_view, created_by)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                                    instant_performance_view, allow_retake, created_by)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """,
             (
                 data["title"],
@@ -1087,6 +1120,7 @@ def admin_create_exam():
                 int(_coerce_bool(data.get("shuffle_options"), True)),
                 int(_coerce_bool(data.get("confidence_enabled"), True)),
                 int(_coerce_bool(data.get("instant_performance_view"), True)),
+                int(_coerce_bool(data.get("allow_retake"), False)),
                 uid,
             )
         )
@@ -1108,7 +1142,7 @@ def admin_update_exam(exam_id):
         fields = ["title", "description", "question_count", "duration_mins",
                   "scheduled_at", "ends_at", "is_active", "results_released",
                   "shuffle_questions", "shuffle_options", "confidence_enabled",
-                  "instant_performance_view"]
+                  "instant_performance_view", "allow_retake"]
         updates = {}
         for f in fields:
             if f in data:

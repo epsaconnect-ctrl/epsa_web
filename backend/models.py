@@ -1182,6 +1182,7 @@ def migrate_db():
         """ALTER TABLE mock_exams ADD COLUMN shuffle_options INTEGER DEFAULT 1""",
         """ALTER TABLE mock_exams ADD COLUMN confidence_enabled INTEGER DEFAULT 1""",
         """ALTER TABLE mock_exams ADD COLUMN instant_performance_view INTEGER DEFAULT 1""",
+        """ALTER TABLE mock_exams ADD COLUMN allow_retake INTEGER DEFAULT 0""",
         """ALTER TABLE question_analytics ADD COLUMN avg_time_correct REAL DEFAULT 0""",
         """ALTER TABLE question_analytics ADD COLUMN avg_time_incorrect REAL DEFAULT 0""",
         """ALTER TABLE question_analytics ADD COLUMN doubt_count INTEGER DEFAULT 0""",

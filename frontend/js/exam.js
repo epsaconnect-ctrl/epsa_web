@@ -53,15 +53,9 @@ function startExamPlayer(examId, title, durationMins, questionsList, isLockedPre
   document.getElementById('examPlayerTitle').textContent = title;
   if (startDirect) {
     disablePreviewProtection();
-    examState.hasStarted = true;
-    examState.startTime = Date.now();
     examState.previewActive = false;
     renderExamQuestions();
-    startExamTimer();
-    startExamHeartbeat();
-    enableAntiCheat();
-    syncExamProgress();
-    showToast('Exam started. Good luck!', 'gold');
+    showBeginTimedExamButton();
   } else {
     renderExamPreview(isLockedPreview, scheduledAt);
   }
@@ -94,6 +88,41 @@ function beginExamSessionAfterGate() {
   showToast('Exam started. Good luck!', 'gold');
 }
 window.beginExamSessionAfterGate = beginExamSessionAfterGate;
+
+// ── BEGIN TIMED EXAM BUTTON (Pre-Start Gate) ──
+function showBeginTimedExamButton() {
+  const container = document.getElementById('examQuestions'); if (!container) return;
+  const total = examState.questions.length;
+  document.getElementById('examProgress').textContent = `0/${total}`;
+  const display = document.getElementById('examTimerDisplay');
+  if (display) display.textContent = '--:--';
+
+  const headerHtml = `
+    <div style="text-align:center;margin-bottom:var(--space-6);padding:var(--space-10);
+      background:linear-gradient(135deg,rgba(26,107,60,0.08),rgba(26,107,60,0.03));
+      border:1px solid rgba(26,107,60,0.25);border-radius:var(--radius-xl);
+      box-shadow:0 4px 24px rgba(26,107,60,0.08);">
+      <div style="font-size:2.5rem;margin-bottom:var(--space-3);">⏱️</div>
+      <h2 style="font-family:var(--font-display);font-weight:800;color:var(--epsa-green);margin-bottom:var(--space-2);">Ready to Begin?</h2>
+      <p style="color:var(--text-muted);font-size:0.9rem;max-width:500px;margin:0 auto var(--space-6);">
+        You have <strong>${examState.durationMins} minutes</strong> to complete this exam with <strong>${total} questions</strong>. The timer will start when you click below.
+      </p>
+      <button class="btn btn-lg" id="beginTimedExamBtn" style="font-size:1rem;padding:var(--space-3) var(--space-8);background:var(--epsa-green);color:white;border-radius:var(--radius-lg);border:none;cursor:pointer;font-weight:700;">
+        ▶️ Begin Timed Exam
+      </button>
+    </div>
+  `;
+  
+  container.innerHTML = headerHtml;
+  
+  const btn = document.getElementById('beginTimedExamBtn');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      beginExamSessionAfterGate();
+    });
+  }
+}
+window.showBeginTimedExamButton = showBeginTimedExamButton;
 
 // ── RENDER PREVIEW ────────────────────────────
 function renderExamPreview(isLockedPreview, scheduledAt) {
@@ -189,6 +218,7 @@ function renderExamPreview(isLockedPreview, scheduledAt) {
 
 function showExamStartingBanner() {
   const container = document.getElementById('examQuestions'); if (!container) return;
+  const total = examState.questions.length;
   disablePreviewProtection();
 
   // Inject keyframe animation into the page if not already present
@@ -213,17 +243,22 @@ function showExamStartingBanner() {
       color:white;">
       <div style="font-size:4rem;margin-bottom:var(--space-4);">🚀</div>
       <h1 style="font-family:var(--font-display);font-size:2.5rem;font-weight:900;
-        color:#c8a340;margin-bottom:var(--space-3);letter-spacing:-0.02em;">
+        color:#c8a340;margin-bottom:var(--space-4);letter-spacing:-0.02em;">
         EXAM STARTING NOW
       </h1>
-      <p style="color:rgba(255,255,255,0.75);font-size:1rem;">Good luck! The exam will begin in a moment…</p>
+      <p style="color:rgba(255,255,255,0.75);font-size:1rem;margin-bottom:var(--space-6);">Get ready for timed evaluation of ${total} questions.</p>
+      <button class="btn btn-lg" id="startExamNowBtn" style="font-size:1rem;padding:var(--space-3) var(--space-7);background:#c8a340;color:#0a3d1f;border:none;border-radius:var(--radius-lg);cursor:pointer;font-weight:700;">
+        ▶️ Start Exam Now
+      </button>
     </div>
   `;
 
-  // Auto-launch the exam after 5 seconds
-  setTimeout(() => {
-    beginExamNow();
-  }, 5000);
+  const btn = document.getElementById('startExamNowBtn');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      beginExamNow();
+    });
+  }
 }
 
 // ── RENDER QUESTIONS ──────────────────────────
