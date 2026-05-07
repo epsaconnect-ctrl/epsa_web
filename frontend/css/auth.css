@@ -1457,6 +1457,10 @@
   display: none !important;
 }
 
+.mobile-only-face-instructions {
+  display: none !important;
+}
+
 .face-angle-gallery {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
@@ -2466,6 +2470,10 @@
     background: rgba(255,255,255,0.12);
     border-color: rgba(255,255,255,0.25);
     transform: scale(0.98);
+  }
+
+  .mobile-only-face-instructions {
+    display: block !important;
   }
 
   .reg-page #step4 .face-guide-frame {

@@ -1567,9 +1567,12 @@ async function runFaceComparison({ testOnly = false } = {}) {
     if (result.verified) {
       if (!testOnly) {
         stopFaceAnalysis();
-        updateFaceStatus(`Identity verified successfully. Match score: <strong>${result.score}</strong>. Your smart scan is now linked to the uploaded profile photo.`, 'success');
+        updateFaceStatus(`Identity verified successfully. Match score: <strong>${result.score}</strong>. Your smart scan is now linked. Proceeding to the final step...`, 'success');
         if (byId('face-err')) byId('face-err').style.display = 'none';
         showToast('Smart face verification passed.', 'success');
+        setTimeout(() => {
+          if (currentStep === 4) changeStep(1);
+        }, 2000);
       } else {
         updateFaceStatus(`Test match passed. Match score: <strong>${result.score}</strong>. This environment looks compatible with your uploaded profile photo.`, 'success');
         showToast('Test match passed.', 'success');
