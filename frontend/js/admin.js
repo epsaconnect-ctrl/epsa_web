@@ -324,7 +324,7 @@ function renderToTbody(tbody, applicants, compact) {
       <td>
         <div class="table-avatar-name">
           <div class="table-avatar" style="overflow:hidden; display:flex; justify-content:center; align-items:center;">
-          ${a.profile_photo ? `<img src="${API_BASE}/uploads/profiles/${a.profile_photo}" style="width:100%;height:100%;object-fit:cover;" onerror="this.outerHTML='${a.first_name[0]}${a.father_name[0]}'">` : `${a.first_name[0]}${a.father_name[0]}`}
+          ${a.profile_photo ? `<img src="${API.getBaseOrigin()}/uploads/profiles/${a.profile_photo}" style="width:100%;height:100%;object-fit:cover;" onerror="this.outerHTML='${a.first_name[0]}${a.father_name[0]}'">` : `${a.first_name[0]}${a.father_name[0]}`}
         </div>
           <div><div class="table-primary">${a.first_name} ${a.father_name}</div><div class="table-secondary">${a.email}</div></div>
         </div>
@@ -476,7 +476,7 @@ function viewApplicant(id) {
 
   header.innerHTML = `
     <div style="width:90px;height:90px;border-radius:var(--radius-lg);background:linear-gradient(135deg,var(--epsa-green),var(--epsa-gold));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.8rem;flex-shrink:0;overflow:hidden;">
-      ${a.profile_photo ? `<img src="${API_BASE}/uploads/profiles/${a.profile_photo}" style="width:100%;height:100%;object-fit:cover;" onerror="this.outerHTML='${a.first_name[0]}${a.father_name[0]}'">` : `${a.first_name[0]}${a.father_name[0]}`}
+      ${a.profile_photo ? `<img src="${API.getBaseOrigin()}/uploads/profiles/${a.profile_photo}" style="width:100%;height:100%;object-fit:cover;" onerror="this.outerHTML='${a.first_name[0]}${a.father_name[0]}'">` : `${a.first_name[0]}${a.father_name[0]}`}
     </div>
     <div>
       <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.3rem;">${a.first_name} ${a.father_name}</h3>
@@ -524,7 +524,7 @@ window.viewApplicant = viewApplicant;
 function viewDocument(docType, filename) {
   if (!filename) { showToast('No file attached', 'error'); return; }
   const token = API.getToken();
-  fetch(`${API_BASE}/documents/${docType}/${filename}`, {
+  fetch(`${API.getBaseOrigin()}/api/documents/${docType}/${filename}`, {
     headers: { 'Authorization': `Bearer ${token}` }
   })
   .then(async response => {
