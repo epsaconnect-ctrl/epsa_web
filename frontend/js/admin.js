@@ -10,6 +10,7 @@ let allTrainingsAdmin   = [];
 let allExamsAdmin       = [];
 let currentApplicantFilter = 'all';
 let currentApplicantDocumentUrl = null;
+const warmedApplicantPhotoUrls = new Set();
 
 function relocateDynamicAdminSections() {
   const adminContent = document.querySelector('.admin-content');
@@ -322,9 +323,23 @@ function getApplicantProfileUrl(applicant) {
 function getApplicantPhotoMarkup(applicant) {
   const profileUrl = getApplicantProfileUrl(applicant);
   if (profileUrl) {
-    return `<img src="${adminEsc(profileUrl)}" alt="${adminEsc(getApplicantInitials(applicant))}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy">`;
+    return `<img src="${adminEsc(profileUrl)}" alt="${adminEsc(getApplicantInitials(applicant))}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="eager" decoding="async" fetchpriority="high">`;
   }
   return adminEsc(getApplicantInitials(applicant));
+}
+
+function warmApplicantPhoto(applicant) {
+  const profileUrl = getApplicantProfileUrl(applicant);
+  if (!profileUrl || warmedApplicantPhotoUrls.has(profileUrl)) return;
+  warmedApplicantPhotoUrls.add(profileUrl);
+  const img = new Image();
+  img.decoding = 'async';
+  img.fetchPriority = 'high';
+  img.src = profileUrl;
+}
+
+function warmApplicantPhotos(applicants = []) {
+  applicants.forEach((applicant) => warmApplicantPhoto(applicant));
 }
 
 function revokeApplicantDocumentPreviewUrl() {
@@ -517,6 +532,7 @@ async function loadApplicants(status = 'pending', tabEl = null) {
     allTeacherApplicants = (
       teachersResult.status === 'fulfilled' ? (teachersResult.value?.teachers || []) : []
     );
+    warmApplicantPhotos(allApplicants);
 
     if (studentsResult.status !== 'fulfilled') {
       showToast('Student applications partially failed to load.', 'error');
