@@ -256,11 +256,15 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-6);">
           <div class="chart-card">
             <h3 style="font-family:var(--font-display);font-weight:700;margin-bottom:var(--space-4);">Registration Trend</h3>
-            <div class="chart-placeholder"> Analytics chart  backend integration required</div>
+            <div style="position: relative; height: 250px; width: 100%;">
+              <canvas id="registrationTrendChart"></canvas>
+            </div>
           </div>
           <div class="chart-card">
             <h3 style="font-family:var(--font-display);font-weight:700;margin-bottom:var(--space-4);">University Distribution</h3>
-            <div class="chart-placeholder">Distribution chart  backend integration required</div>
+            <div style="position: relative; height: 250px; width: 100%;">
+              <canvas id="universityDistributionChart"></canvas>
+            </div>
           </div>
         </div>
 
@@ -2730,6 +2734,7 @@ function showAdminToast(msg, type='success') {
     <div id="analyticsStudentBody"><div style="text-align:center;padding:40px;color:#64748b">Loading&hellip;</div></div>
   </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="../js/admin-analytics.js"></script>
 <!-- EXAM QUESTIONS MODAL -->
 <div id="examQuestionsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9100;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;backdrop-filter:blur(6px)">

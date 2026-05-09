@@ -142,6 +142,9 @@ async function refreshCurrentSection() { await switchAdminSection(currentAdminSe
 window.refreshCurrentSection = refreshCurrentSection;
 
 // ── STATS ─────────────────────────────────────
+let regTrendChartInstance = null;
+let uniDistChartInstance = null;
+
 async function loadDashboardStats() {
   try {
     const data = await API.adminStats();
@@ -152,6 +155,101 @@ async function loadDashboardStats() {
     s('kpi-receipts',  data.pending_receipts || 0);
     const pb = document.getElementById('pendingBadge');
     if (pb) { pb.textContent = data.pending || 0; pb.style.display = data.pending > 0 ? 'inline-block' : 'none'; }
+
+    // Render Registration Trend
+    if (data.registration_trend && typeof Chart !== 'undefined') {
+      const rtCtx = document.getElementById('registrationTrendChart');
+      if (rtCtx) {
+        if (regTrendChartInstance) regTrendChartInstance.destroy();
+        const gradient = rtCtx.getContext('2d').createLinearGradient(0, 0, 0, 250);
+        gradient.addColorStop(0, 'rgba(26, 107, 60, 0.4)');
+        gradient.addColorStop(1, 'rgba(26, 107, 60, 0.0)');
+        regTrendChartInstance = new Chart(rtCtx, {
+          type: 'line',
+          data: {
+            labels: data.registration_trend.map(d => d.month),
+            datasets: [{
+              label: 'New Registrations',
+              data: data.registration_trend.map(d => d.count),
+              borderColor: '#1a6b3c',
+              backgroundColor: gradient,
+              borderWidth: 3,
+              pointBackgroundColor: '#1a6b3c',
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              fill: true,
+              tension: 0.4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                titleFont: { size: 13, family: 'Inter' },
+                bodyFont: { size: 14, family: 'Inter', weight: 'bold' },
+                padding: 12,
+                cornerRadius: 8,
+                displayColors: false
+              }
+            },
+            scales: {
+              x: { grid: { display: false }, ticks: { font: { family: 'Inter' } } },
+              y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.04)', drawBorder: false }, ticks: { font: { family: 'Inter' }, stepSize: 1 } }
+            }
+          }
+        });
+      }
+    }
+
+    // Render University Distribution
+    if (data.university_distribution && typeof Chart !== 'undefined') {
+      const udCtx = document.getElementById('universityDistributionChart');
+      if (udCtx) {
+        if (uniDistChartInstance) uniDistChartInstance.destroy();
+        const colors = ['#1a6b3c', '#2AABEE', '#c8a340', '#6366f1', '#ec4899', '#8b5cf6', '#14b8a6', '#f43f5e'];
+        uniDistChartInstance = new Chart(udCtx, {
+          type: 'bar',
+          data: {
+            labels: data.university_distribution.map(d => {
+              const u = d.university || 'Unknown';
+              return u.length > 15 ? u.substring(0, 15) + '...' : u;
+            }),
+            datasets: [{
+              label: 'Students',
+              data: data.university_distribution.map(d => d.count),
+              backgroundColor: colors.slice(0, data.university_distribution.length),
+              borderRadius: 6,
+              borderSkipped: false
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                titleFont: { size: 13, family: 'Inter' },
+                bodyFont: { size: 14, family: 'Inter', weight: 'bold' },
+                padding: 12,
+                cornerRadius: 8,
+                displayColors: false
+              }
+            },
+            scales: {
+              x: { grid: { display: false }, ticks: { font: { family: 'Inter' }, maxRotation: 45, minRotation: 45 } },
+              y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.04)', drawBorder: false }, ticks: { font: { family: 'Inter' }, stepSize: 1 } }
+            }
+          }
+        });
+      }
+    }
+
     await loadRecentApplicants();
   } catch(err) {
     showToast('Failed to load dashboard stats', 'error');

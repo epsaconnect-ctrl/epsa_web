@@ -534,6 +534,21 @@ def stats():
         except Exception as exc:
             logger.warning("[Admin/stats] query failed: %s — %s", sql[:80], exc)
             return 0
+
+    try:
+        reg_trend_rows = db.execute("SELECT strftime('%Y-%m', created_at) as month, COUNT(*) as count FROM users WHERE role='student' GROUP BY month ORDER BY month").fetchall()
+        reg_trend = [{'month': r['month'], 'count': r['count']} for r in reg_trend_rows]
+    except Exception as exc:
+        logger.warning("[Admin/stats] reg_trend failed: %s", exc)
+        reg_trend = []
+
+    try:
+        uni_dist_rows = db.execute("SELECT university, COUNT(*) as count FROM users WHERE role='student' AND status='approved' GROUP BY university ORDER BY count DESC LIMIT 8").fetchall()
+        uni_dist = [{'university': r['university'], 'count': r['count']} for r in uni_dist_rows]
+    except Exception as exc:
+        logger.warning("[Admin/stats] uni_dist failed: %s", exc)
+        uni_dist = []
+
     data = {
         'total_students':   _count("SELECT COUNT(*) FROM users WHERE role='student'"),
         'pending':          _count("SELECT COUNT(*) FROM users WHERE status='pending'"),
@@ -545,6 +560,8 @@ def stats():
         'total_votes':      _count("SELECT COUNT(*) FROM votes"),
         'active_exams':     _count("SELECT COUNT(*) FROM exams WHERE is_active=1"),
         'messages_today':   _count("SELECT COUNT(*) FROM messages WHERE DATE(sent_at)=DATE('now')"),
+        'registration_trend': reg_trend,
+        'university_distribution': uni_dist,
     }
     db.close()
     return jsonify(data)
