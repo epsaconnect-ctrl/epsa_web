@@ -747,6 +747,33 @@ function renderAngleGallery() {
   `).join('');
 }
 
+function clearMobileFaceChromeTimer() {
+  if (faceVerification.mobileOverlayTimer) {
+    clearTimeout(faceVerification.mobileOverlayTimer);
+    faceVerification.mobileOverlayTimer = null;
+  }
+}
+
+function isMobileFaceStage() {
+  return currentStep === 4 && window.innerWidth <= 768;
+}
+
+function setMobileFaceChromeCollapsed(collapsed) {
+  const step = byId('step4');
+  if (!step) return;
+  step.classList.toggle('face-mobile-chrome-collapsed', !!collapsed && isMobileFaceStage());
+}
+
+function scheduleMobileFaceChromeCollapse(delay = 3200) {
+  clearMobileFaceChromeTimer();
+  setMobileFaceChromeCollapsed(false);
+  if (!isMobileFaceStage()) return;
+  faceVerification.mobileOverlayTimer = setTimeout(() => {
+    setMobileFaceChromeCollapsed(true);
+    faceVerification.mobileOverlayTimer = null;
+  }, delay);
+}
+
 async function prepareFaceVerificationStep() {
   resetFaceVerification(true);
   renderFaceChallenges();
@@ -756,6 +783,7 @@ async function prepareFaceVerificationStep() {
   renderAngleGallery();
   updateFaceHoldDisplay();
   updateFaceStatus('This live face check is optional. Tap Verify Live Face to compare your live face with your uploaded photo, or use Skip Face Check to continue without it.', 'info');
+  scheduleMobileFaceChromeCollapse(4200);
   const photoFile = byId('profilePhotoInput')?.files?.[0];
   if (photoFile && !faceVerification.profilePhotoFaceReady && !faceVerification.profilePhotoAnalyzing) {
     try {
@@ -813,8 +841,10 @@ async function startFaceCamera() {
       ? 'Camera ready. Look naturally into the guide for automatic sign-in.'
       : 'Camera ready. Look into the frame, then verify when you are ready.');
     await initializeFaceDetector();
+    scheduleMobileFaceChromeCollapse(2600);
   } catch (err) {
     if (fallback) fallback.style.display = 'flex';
+    setMobileFaceChromeCollapsed(false);
     updateFaceStatus(
       err?.message === 'camera_api_unavailable'
         ? 'This browser cannot open the camera here. Use the locally served EPSA site on your computer or the secure HTTPS deployment link on your phone.'
@@ -1414,6 +1444,7 @@ async function startSmartFaceScan() {
       : 'Camera started. Center your face and tap Verify Live Face whenever you are ready.',
     'info'
   );
+  scheduleMobileFaceChromeCollapse(2200);
   faceVerification.smartScanActive = true;
   faceVerification.scanStartedAt = Date.now();
   updateFaceActionButtons();
@@ -1576,6 +1607,7 @@ async function runFaceComparison({ testOnly = false } = {}) {
       if (!testOnly) {
         stopFaceAnalysis();
         faceVerification.skippedByUser = false;
+        scheduleMobileFaceChromeCollapse(5000);
         updateFaceStatus(`Identity verified successfully. Match score: <strong>${result.score}</strong>. Your smart scan is now linked. Proceeding to the final step...`, 'success');
         if (byId('face-err')) byId('face-err').style.display = 'none';
         showToast('Smart face verification passed.', 'success');
@@ -1587,6 +1619,7 @@ async function runFaceComparison({ testOnly = false } = {}) {
         showToast('Test match passed.', 'success');
       }
     } else {
+      scheduleMobileFaceChromeCollapse(5000);
       if (!testOnly) {
         updateFaceStatus(`Your live face does not match the uploaded profile photo yet. Match score: <strong>${result.score}</strong>. Please steady the phone, keep your face inside the guide, and try again. You can also skip face verification and continue.`, 'error');
         showToast(result.message || 'Face verification failed.', 'error');
@@ -1599,6 +1632,7 @@ async function runFaceComparison({ testOnly = false } = {}) {
     if (!testOnly) {
       faceVerification.verified = false;
     }
+    scheduleMobileFaceChromeCollapse(5000);
     updateFaceStatus(err.message || 'Face verification failed. Please retry the smart scan.', 'error');
     showToast(err.message || 'Face verification failed.', 'error');
   } finally {
@@ -1899,6 +1933,7 @@ window.populateReview = populateReview;
 async function skipFaceVerificationStep() {
   faceVerification.skippedByUser = true;
   stopFaceAnalysis();
+  scheduleMobileFaceChromeCollapse(5000);
   updateFaceStatus('You skipped face verification. EPSA will continue with registration without the optional live face check.', 'gold');
   showToast('Face verification skipped. You can still complete registration.', 'info');
   if (currentStep === 4) {
@@ -2102,6 +2137,7 @@ function setupRegistrationUI() {
     byId('captureFaceBtn')?.addEventListener('click', captureAndVerifyFace);
     byId('testFaceBtn')?.addEventListener('click', testFaceMatch);
     byId('skipFaceCheckBtn')?.addEventListener('click', skipFaceVerificationStep);
+    byId('faceVerifyVideo')?.addEventListener('click', () => scheduleMobileFaceChromeCollapse(2400));
     byId('retakeFaceBtn')?.addEventListener('click', async () => {
       resetFaceVerification(true);
       renderFaceChallenges();

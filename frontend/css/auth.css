@@ -2441,6 +2441,13 @@
     display: block;
   }
 
+  .reg-page #step4 .face-stage-badge,
+  .reg-page #step4 .face-stage-sidepanel,
+  .reg-page #step4 .face-status-box,
+  .reg-page #step4 .face-studio-topbar button {
+    transition: opacity 0.35s ease, transform 0.35s ease, filter 0.35s ease;
+  }
+
   .reg-page #step4 .face-focus-hint {
     display: none;
   }
@@ -2518,6 +2525,25 @@
 
   .reg-page #step4 .face-angle-gallery {
     display: none !important;
+  }
+
+  .reg-page #step4.face-mobile-chrome-collapsed .face-stage-badge,
+  .reg-page #step4.face-mobile-chrome-collapsed .face-stage-sidepanel,
+  .reg-page #step4.face-mobile-chrome-collapsed .face-studio-topbar button,
+  .reg-page #step4.face-mobile-chrome-collapsed .face-status-box {
+    opacity: 0;
+    pointer-events: none;
+    filter: blur(8px);
+  }
+
+  .reg-page #step4.face-mobile-chrome-collapsed .face-stage-badge,
+  .reg-page #step4.face-mobile-chrome-collapsed .face-studio-topbar button {
+    transform: translateY(-14px);
+  }
+
+  .reg-page #step4.face-mobile-chrome-collapsed .face-stage-sidepanel,
+  .reg-page #step4.face-mobile-chrome-collapsed .face-status-box {
+    transform: translateY(18px);
   }
 
   /* Optimized layout for portrait orientation */

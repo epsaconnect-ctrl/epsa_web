@@ -213,9 +213,8 @@ def list_mock_exams():
         row["can_continue"] = is_open and row["my_status"] == "in_progress"
         row["is_submitted"] = row["my_status"] in ("submitted", "auto_submitted")
         
-        # Check if allow_retake is enabled and exam is still open
-        allow_retake = _coerce_bool(row.get("allow_retake"), False)
-        row["can_retake"] = bool(is_open and row["is_submitted"] and allow_retake)
+        # Open-window retakes should remain available to students after submission.
+        row["can_retake"] = bool(is_open and row["is_submitted"])
         
         row["results_viewable"] = bool(
             row["is_submitted"] and (
@@ -257,11 +256,24 @@ def start_mock_exam(exam_id):
             "SELECT * FROM mock_exam_submissions WHERE exam_id=? AND user_id=?",
             (exam_id, uid)
         ).fetchone()
-        allow_retake = _coerce_bool(exam["allow_retake"], False)
-
         if existing:
             if existing["status"] in ("submitted", "auto_submitted"):
-                if not allow_retake:
+                exam_is_open = bool(exam["is_active"])
+                if exam["ends_at"]:
+                    try:
+                        ends = datetime.fromisoformat(str(exam["ends_at"]))
+                        if now > ends:
+                            exam_is_open = False
+                    except Exception:
+                        pass
+                if exam["scheduled_at"]:
+                    try:
+                        scheduled = datetime.fromisoformat(str(exam["scheduled_at"]))
+                        if now < scheduled:
+                            exam_is_open = False
+                    except Exception:
+                        pass
+                if not exam_is_open:
                     return jsonify({"error": "You have already submitted this exam"}), 409
 
                 # Reset the existing row in-place for a clean retake while preserving the one-row-per-user schema.
