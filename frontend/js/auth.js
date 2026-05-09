@@ -21,6 +21,7 @@ let faceVerification = {};
 function createFaceVerificationState() {
   return {
     verified: false,
+    skippedByUser: false,
     score: null,
     threshold: null,
     capture: '',
@@ -640,6 +641,7 @@ function updateFaceActionButtons() {
   const captureBtn = byId('captureFaceBtn');
   const testBtn = byId('testFaceBtn');
   const retakeBtn = byId('retakeFaceBtn');
+  const skipBtn = byId('skipFaceCheckBtn');
   const busy = !!faceVerification.busyAction;
   const ready = FACE_SCAN_TASKS.every((task) => faceVerification.tasks[task.key]);
 
@@ -669,6 +671,12 @@ function updateFaceActionButtons() {
   if (retakeBtn) {
     retakeBtn.style.display = faceVerification.smartScanActive || faceVerification.verified || faceVerification.bestCapture ? 'inline-flex' : 'none';
     retakeBtn.disabled = busy;
+  }
+
+  if (skipBtn && !isFaceLoginMode()) {
+    skipBtn.style.display = 'inline-flex';
+    skipBtn.disabled = busy;
+    skipBtn.textContent = faceVerification.skippedByUser ? 'Continue Without Face Check' : 'Skip Face Check';
   }
 }
 
@@ -747,7 +755,7 @@ async function prepareFaceVerificationStep() {
   updateFaceMetricDisplay();
   renderAngleGallery();
   updateFaceHoldDisplay();
-  updateFaceStatus('This live face check is optional. Look into the camera and tap verify if you want EPSA to compare your live face with your uploaded photo.', 'info');
+  updateFaceStatus('This live face check is optional. Tap Verify Live Face to compare your live face with your uploaded photo, or use Skip Face Check to continue without it.', 'info');
   const photoFile = byId('profilePhotoInput')?.files?.[0];
   if (photoFile && !faceVerification.profilePhotoFaceReady && !faceVerification.profilePhotoAnalyzing) {
     try {
@@ -1567,19 +1575,20 @@ async function runFaceComparison({ testOnly = false } = {}) {
     if (result.verified) {
       if (!testOnly) {
         stopFaceAnalysis();
+        faceVerification.skippedByUser = false;
         updateFaceStatus(`Identity verified successfully. Match score: <strong>${result.score}</strong>. Your smart scan is now linked. Proceeding to the final step...`, 'success');
         if (byId('face-err')) byId('face-err').style.display = 'none';
         showToast('Smart face verification passed.', 'success');
         setTimeout(() => {
           if (currentStep === 4) changeStep(1);
-        }, 2000);
+        }, 700);
       } else {
         updateFaceStatus(`Test match passed. Match score: <strong>${result.score}</strong>. This environment looks compatible with your uploaded profile photo.`, 'success');
         showToast('Test match passed.', 'success');
       }
     } else {
       if (!testOnly) {
-        updateFaceStatus(`Verification failed. Match score: <strong>${result.score}</strong>. Retake the smart scan and keep your face inside the guide during the final movement step.`, 'error');
+        updateFaceStatus(`Your live face does not match the uploaded profile photo yet. Match score: <strong>${result.score}</strong>. Please steady the phone, keep your face inside the guide, and try again. You can also skip face verification and continue.`, 'error');
         showToast(result.message || 'Face verification failed.', 'error');
       } else {
         updateFaceStatus(`Test match did not pass yet. Match score: <strong>${result.score}</strong>. Try another room angle, a steadier frame, or slightly better light and test again.`, 'gold');
@@ -1836,11 +1845,13 @@ function resetFaceVerification(keepCamera = false) {
   const profilePhotoDataUrl = faceVerification.profilePhotoDataUrl;
   const profilePhotoFaceReady = faceVerification.profilePhotoFaceReady;
   const profilePhotoAnalyzing = faceVerification.profilePhotoAnalyzing;
+  const skippedByUser = faceVerification.skippedByUser;
   resetFaceState();
   faceVerification.stream = existingStream;
   faceVerification.profilePhotoDataUrl = profilePhotoDataUrl;
   faceVerification.profilePhotoFaceReady = profilePhotoFaceReady;
   faceVerification.profilePhotoAnalyzing = profilePhotoAnalyzing;
+  faceVerification.skippedByUser = skippedByUser;
   renderFaceChallenges();
   updateFacePrompt();
   updateFaceMetricDisplay();
@@ -1853,7 +1864,7 @@ function resetFaceVerification(keepCamera = false) {
   updateFaceStatus(
     isFaceLoginMode()
       ? 'Center your face in the guide. EPSA will recognize you automatically.'
-      : 'Live face check is optional. Look into the camera and tap verify if you want to use it.',
+      : 'Live face check is optional. Look into the camera and tap verify if you want to use it, or skip and continue.',
     'info'
   );
   updateReferencePreview(profilePhotoDataUrl);
@@ -1871,7 +1882,7 @@ function populateReview() {
     ['University', val('university') === 'other' ? val('otherUniversity') : val('university')],
     ['Program', val('programType')],
     ['Academic Year', val('academicYear')],
-    ['Face Verification', faceVerification.verified ? `Completed (${faceVerification.score})` : 'Optional - skipped'],
+    ['Face Verification', faceVerification.verified ? `Completed (${faceVerification.score})` : (faceVerification.skippedByUser ? 'Skipped by user' : 'Optional - skipped')],
   ];
   const container = byId('reviewSummary');
   if (!container) return;
@@ -1884,6 +1895,17 @@ function populateReview() {
   if (byId('emailDisplay')) byId('emailDisplay').textContent = val('emailAddress');
 }
 window.populateReview = populateReview;
+
+async function skipFaceVerificationStep() {
+  faceVerification.skippedByUser = true;
+  stopFaceAnalysis();
+  updateFaceStatus('You skipped face verification. EPSA will continue with registration without the optional live face check.', 'gold');
+  showToast('Face verification skipped. You can still complete registration.', 'info');
+  if (currentStep === 4) {
+    await changeStep(1);
+  }
+}
+window.skipFaceVerificationStep = skipFaceVerificationStep;
 
 async function sendOTP() {
   const email = val('emailAddress');
@@ -2079,6 +2101,7 @@ function setupRegistrationUI() {
     byId('startSmartScanBtn')?.addEventListener('click', startSmartFaceScan);
     byId('captureFaceBtn')?.addEventListener('click', captureAndVerifyFace);
     byId('testFaceBtn')?.addEventListener('click', testFaceMatch);
+    byId('skipFaceCheckBtn')?.addEventListener('click', skipFaceVerificationStep);
     byId('retakeFaceBtn')?.addEventListener('click', async () => {
       resetFaceVerification(true);
       renderFaceChallenges();

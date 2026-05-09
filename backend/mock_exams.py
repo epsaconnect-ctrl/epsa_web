@@ -257,25 +257,77 @@ def start_mock_exam(exam_id):
             "SELECT * FROM mock_exam_submissions WHERE exam_id=? AND user_id=?",
             (exam_id, uid)
         ).fetchone()
-
-        if existing and existing["status"] in ("submitted", "auto_submitted"):
-            # Check if allow_retake is enabled
-            allow_retake = _coerce_bool(exam.get("allow_retake"), False)
-            if not allow_retake:
-                return jsonify({"error": "You have already submitted this exam"}), 409
-            
-            # For retakes, archive the old submission into mock_exam_history to allow robust analytics
-            db.execute("""
-                INSERT INTO mock_exam_history (original_submission_id, exam_id, user_id, score, total_questions, started_at, submitted_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (existing["id"], existing["exam_id"], existing["user_id"], existing["score"], existing["total_questions"], existing["started_at"], existing["submitted_at"]))
-            
-            # Clear the old submission to allow a fresh start and fresh timer
-            db.execute("DELETE FROM mock_exam_submissions WHERE id=?", (existing["id"],))
-            db.commit()
-            existing = None
+        allow_retake = _coerce_bool(exam["allow_retake"], False)
 
         if existing:
+            if existing["status"] in ("submitted", "auto_submitted"):
+                if not allow_retake:
+                    return jsonify({"error": "You have already submitted this exam"}), 409
+
+                # Reset the existing row in-place for a clean retake while preserving the one-row-per-user schema.
+                base_question_ids = _get_or_create_exam_question_set(db, exam)
+                question_ids = list(base_question_ids)
+                if _coerce_bool(exam["shuffle_questions"], True):
+                    random.shuffle(question_ids)
+                if not question_ids:
+                    return jsonify({"error": "Not enough approved questions in the bank to generate this exam"}), 500
+
+                option_order = _randomize_options(
+                    question_ids,
+                    db,
+                    shuffle_options=_coerce_bool(exam["shuffle_options"], True)
+                )
+                db.execute(
+                    """
+                    UPDATE mock_exam_submissions
+                    SET question_ids=?,
+                        option_order=?,
+                        answers='{}',
+                        time_per_question='{}',
+                        answer_changes='{}',
+                        confidence_levels='{}',
+                        score=NULL,
+                        total_questions=?,
+                        status='in_progress',
+                        started_at=DATETIME('now'),
+                        submitted_at=NULL,
+                        updated_at=DATETIME('now')
+                    WHERE id=?
+                    """,
+                    (
+                        json.dumps(question_ids),
+                        json.dumps(option_order),
+                        len(question_ids),
+                        existing["id"],
+                    )
+                )
+                db.commit()
+                questions = _load_questions_for_student(db, question_ids, option_order)
+                max_duration_secs = (exam["duration_mins"] or 120) * 60
+                remaining_secs = max_duration_secs
+                if exam["ends_at"]:
+                    deadline = datetime.fromisoformat(str(exam["ends_at"]))
+                    secs_until_deadline = (deadline - now).total_seconds()
+                    remaining_secs = min(max_duration_secs, secs_until_deadline)
+
+                return jsonify({
+                    "submission_id": existing["id"],
+                    "questions": questions,
+                    "total": len(question_ids),
+                    "duration_mins": exam["duration_mins"],
+                    "elapsed_secs": 0,
+                    "remaining_secs": int(max(0, remaining_secs)),
+                    "answers": {},
+                    "time_per_question": {},
+                    "answer_changes": {},
+                    "confidence_levels": {},
+                    "confidence_enabled": _coerce_bool(exam["confidence_enabled"], True),
+                    "instant_performance_view": _coerce_bool(exam["instant_performance_view"], True),
+                    "exam_title": exam["title"],
+                    "resuming": False,
+                    "retake": True,
+                })
+
             # Resume: return existing question set
             qids = json.loads(existing["question_ids"])
             opt_order = json.loads(existing["option_order"] or "{}")
