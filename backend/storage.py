@@ -55,6 +55,12 @@ class LocalStorageProvider:
         with open(self.base_dir / folder / filename, "rb") as handle:
             return handle.read()
 
+    def public_url(self, folder, filename):
+        return f"/uploads/{folder}/{filename}"
+
+    def private_url(self, folder, filename, download_name=None):
+        return f"/api/documents/{folder}/{filename}"
+
 
 class S3StorageProvider:
     mode = "s3"
@@ -116,16 +122,7 @@ class S3StorageProvider:
         return redirect(self._public_url(folder, filename), code=302)
 
     def private_response(self, folder, filename, download_name=None):
-        url = self.client.generate_presigned_url(
-            "get_object",
-            Params={
-                "Bucket": self.settings.s3_bucket,
-                "Key": self._key(folder, filename, private=True),
-                **({"ResponseContentDisposition": f'inline; filename="{download_name or filename}"'} if download_name else {}),
-            },
-            ExpiresIn=300,
-        )
-        return redirect(url, code=302)
+        return redirect(self.private_url(folder, filename, download_name=download_name), code=302)
 
     def read_bytes(self, folder, filename, private=None):
         if private is None:
@@ -135,6 +132,20 @@ class S3StorageProvider:
             Key=self._key(folder, filename, private=private),
         )
         return response["Body"].read()
+
+    def public_url(self, folder, filename):
+        return self._public_url(folder, filename)
+
+    def private_url(self, folder, filename, download_name=None):
+        return self.client.generate_presigned_url(
+            "get_object",
+            Params={
+                "Bucket": self.settings.s3_bucket,
+                "Key": self._key(folder, filename, private=True),
+                **({"ResponseContentDisposition": f'inline; filename="{download_name or filename}"'} if download_name else {}),
+            },
+            ExpiresIn=300,
+        )
 
 
 import logging as _logging
@@ -174,7 +185,7 @@ class SupabaseStorageProvider:
         key = self._key(folder, filename)
         return f"{self._storage_root()}/object/public/{self._bucket()}/{key}"
 
-    def _signed_redirect(self, key, *, expires_in=300):
+    def _signed_url(self, key, *, expires_in=300):
         try:
             response = requests.post(
                 f"{self._storage_root()}/object/sign/{self._bucket()}/{key}",
@@ -189,9 +200,9 @@ class SupabaseStorageProvider:
             payload = response.json()
             signed_path = payload.get("signedURL") or payload.get("signedUrl") or payload.get("url") or ""
             if signed_path.startswith("http"):
-                return redirect(signed_path, code=302)
+                return signed_path
             signed_path = signed_path if signed_path.startswith("/") else f"/{signed_path}"
-            return redirect(f"{self._storage_root()}{signed_path}", code=302)
+            return f"{self._storage_root()}{signed_path}"
         except Exception as exc:
             _storage_logger.error("[Supabase] Signed URL generation failed for key=%s: %s", key, exc)
             raise
@@ -234,7 +245,7 @@ class SupabaseStorageProvider:
 
     def private_response(self, folder, filename, download_name=None):
         key = self._key(folder, filename)
-        return self._signed_redirect(key, expires_in=300)
+        return redirect(self._signed_url(key, expires_in=300), code=302)
 
     def read_bytes(self, folder, filename, private=None):
         key = self._key(folder, filename)
@@ -250,6 +261,13 @@ class SupabaseStorageProvider:
         except Exception as exc:
             _storage_logger.error("[Supabase] read_bytes failed for %s/%s: %s", folder, filename, exc)
             raise
+
+    def public_url(self, folder, filename):
+        return self._public_url(folder, filename)
+
+    def private_url(self, folder, filename, download_name=None):
+        key = self._key(folder, filename)
+        return self._signed_url(key, expires_in=300)
 
 
 def get_storage():
@@ -306,9 +324,18 @@ def read_upload_bytes(folder, filename):
     return storage.read_bytes(folder, filename)
 
 
-def upload_url(folder, filename):
+def upload_url(folder, filename, *, private=None, download_name=None):
     if not filename:
         return None
+    storage = get_storage()
+    if private is None:
+        private = is_private_folder(folder)
+    if private:
+        if hasattr(storage, "private_url"):
+            return storage.private_url(folder, filename, download_name=download_name)
+        return f"/api/documents/{folder}/{filename}"
+    if hasattr(storage, "public_url"):
+        return storage.public_url(folder, filename)
     return f"/uploads/{folder}/{filename}"
 
 

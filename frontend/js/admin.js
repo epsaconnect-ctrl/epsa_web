@@ -328,10 +328,10 @@ function getApplicantPhotoMarkup(applicant) {
 }
 
 function revokeApplicantDocumentPreviewUrl() {
-  if (currentApplicantDocumentUrl) {
+  if (currentApplicantDocumentUrl && String(currentApplicantDocumentUrl).startsWith('blob:')) {
     URL.revokeObjectURL(currentApplicantDocumentUrl);
-    currentApplicantDocumentUrl = null;
   }
+  currentApplicantDocumentUrl = null;
 }
 
 async function renderApplicantDocumentPreview(docType, filename) {
@@ -339,6 +339,8 @@ async function renderApplicantDocumentPreview(docType, filename) {
   const actions = document.getElementById('applicantDocumentActions');
   if (!preview || !actions) return;
   revokeApplicantDocumentPreviewUrl();
+  const applicant = allApplicants.find((item) => item.id === currentApplicantId);
+  const directUrl = applicant?.reg_slip_url || '';
   if (!filename) {
     preview.innerHTML = `<div style="padding:18px;border:1px dashed var(--light-300);border-radius:16px;color:var(--text-muted);text-align:center;">No registration slip was uploaded.</div>`;
     actions.innerHTML = '';
@@ -349,27 +351,38 @@ async function renderApplicantDocumentPreview(docType, filename) {
   actions.innerHTML = '';
 
   try {
-    const token = API.getToken();
-    const response = await fetch(API.getDocumentUrl(docType, filename), {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      credentials: 'include',
-    });
-    if (!response.ok) {
-      throw new Error('Document restricted or not found');
-    }
-    const blob = await response.blob();
-    currentApplicantDocumentUrl = URL.createObjectURL(blob);
-    const mime = (blob.type || '').toLowerCase();
+    const effectiveUrl = directUrl || API.getDocumentUrl(docType, filename);
+    currentApplicantDocumentUrl = effectiveUrl;
+    const lowerUrl = effectiveUrl.toLowerCase();
+    const looksLikeImage = /\.(png|jpe?g|webp|gif|bmp|svg)(\?|#|$)/i.test(lowerUrl);
+    const looksLikePdf = /\.pdf(\?|#|$)/i.test(lowerUrl);
 
-    if (mime.startsWith('image/')) {
-      preview.innerHTML = `<img src="${currentApplicantDocumentUrl}" alt="Registration slip" style="width:100%;max-height:420px;object-fit:contain;border-radius:18px;background:#fff;border:1px solid var(--light-200);">`;
-    } else if (mime.includes('pdf')) {
-      preview.innerHTML = `<iframe src="${currentApplicantDocumentUrl}" title="Registration slip preview" style="width:100%;height:420px;border:1px solid var(--light-200);border-radius:18px;background:#fff;"></iframe>`;
+    if (looksLikeImage) {
+      preview.innerHTML = `<img src="${adminEsc(effectiveUrl)}" alt="Registration slip" style="width:100%;max-height:420px;object-fit:contain;border-radius:18px;background:#fff;border:1px solid var(--light-200);" referrerpolicy="no-referrer">`;
+    } else if (looksLikePdf || directUrl) {
+      preview.innerHTML = `<iframe src="${adminEsc(effectiveUrl)}" title="Registration slip preview" style="width:100%;height:420px;border:1px solid var(--light-200);border-radius:18px;background:#fff;"></iframe>`;
     } else {
-      preview.innerHTML = `<div style="padding:18px;border:1px dashed var(--light-300);border-radius:16px;color:var(--text-muted);text-align:center;">Preview is not available for this file type, but you can open the document below.</div>`;
+      const token = API.getToken();
+      const response = await fetch(effectiveUrl, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Document restricted or not found');
+      }
+      const blob = await response.blob();
+      currentApplicantDocumentUrl = URL.createObjectURL(blob);
+      const mime = (blob.type || '').toLowerCase();
+      if (mime.startsWith('image/')) {
+        preview.innerHTML = `<img src="${currentApplicantDocumentUrl}" alt="Registration slip" style="width:100%;max-height:420px;object-fit:contain;border-radius:18px;background:#fff;border:1px solid var(--light-200);">`;
+      } else if (mime.includes('pdf')) {
+        preview.innerHTML = `<iframe src="${currentApplicantDocumentUrl}" title="Registration slip preview" style="width:100%;height:420px;border:1px solid var(--light-200);border-radius:18px;background:#fff;"></iframe>`;
+      } else {
+        preview.innerHTML = `<div style="padding:18px;border:1px dashed var(--light-300);border-radius:16px;color:var(--text-muted);text-align:center;">Preview is not available for this file type, but you can open the document below.</div>`;
+      }
     }
 
-    actions.innerHTML = `<button class="btn btn-secondary" type="button" style="width:100%;" onclick="window.open('${currentApplicantDocumentUrl}', '_blank', 'noopener')">Open Full Document</button>`;
+    actions.innerHTML = `<button class="btn btn-secondary" type="button" style="width:100%;" onclick="window.open('${adminEsc(currentApplicantDocumentUrl)}', '_blank', 'noopener')">Open Full Document</button>`;
   } catch (err) {
     preview.innerHTML = `<div style="padding:18px;border:1px dashed #fecaca;border-radius:16px;color:#b91c1c;text-align:center;">${adminEsc(err.message || 'Unable to load document preview')}</div>`;
     actions.innerHTML = '';
