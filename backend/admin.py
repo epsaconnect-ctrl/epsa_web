@@ -543,7 +543,7 @@ def stats():
         reg_trend = []
 
     try:
-        uni_dist_rows = db.execute("SELECT university, COUNT(*) as count FROM users WHERE role='student' AND status='approved' GROUP BY university ORDER BY count DESC LIMIT 8").fetchall()
+        uni_dist_rows = db.execute("SELECT university, COUNT(*) as count FROM users WHERE role='student' AND status='approved' GROUP BY university ORDER BY count DESC LIMIT 30").fetchall()
         uni_dist = [{'university': r['university'], 'count': r['count']} for r in uni_dist_rows]
     except Exception as exc:
         logger.warning("[Admin/stats] uni_dist failed: %s", exc)

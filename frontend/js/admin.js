@@ -211,42 +211,59 @@ async function loadDashboardStats() {
       const udCtx = document.getElementById('universityDistributionChart');
       if (udCtx) {
         if (uniDistChartInstance) uniDistChartInstance.destroy();
-        const colors = ['#1a6b3c', '#2AABEE', '#c8a340', '#6366f1', '#ec4899', '#8b5cf6', '#14b8a6', '#f43f5e'];
-        uniDistChartInstance = new Chart(udCtx, {
-          type: 'bar',
+        const numUnis = data.university_distribution.length;
+        const chartType = numUnis >= 10 ? 'pie' : 'bar';
+        
+        // Ensure we have enough colors by repeating if necessary
+        const baseColors = ['#1a6b3c', '#2AABEE', '#c8a340', '#6366f1', '#ec4899', '#8b5cf6', '#14b8a6', '#f43f5e', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'];
+        const colors = Array.from({length: numUnis}, (_, i) => baseColors[i % baseColors.length]);
+        
+        const chartConfig = {
+          type: chartType,
           data: {
             labels: data.university_distribution.map(d => {
               const u = d.university || 'Unknown';
-              return u.length > 15 ? u.substring(0, 15) + '...' : u;
+              return u.length > (chartType === 'pie' ? 25 : 15) ? u.substring(0, chartType === 'pie' ? 25 : 15) + '...' : u;
             }),
             datasets: [{
               label: 'Students',
               data: data.university_distribution.map(d => d.count),
-              backgroundColor: colors.slice(0, data.university_distribution.length),
-              borderRadius: 6,
-              borderSkipped: false
+              backgroundColor: colors,
+              borderRadius: chartType === 'bar' ? 6 : 0,
+              borderSkipped: false,
+              borderWidth: chartType === 'pie' ? 2 : 0,
+              borderColor: '#ffffff'
             }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-              legend: { display: false },
+              legend: { 
+                display: chartType === 'pie',
+                position: 'right',
+                labels: { font: { family: 'Inter', size: 11 }, boxWidth: 12 }
+              },
               tooltip: {
                 backgroundColor: 'rgba(15, 23, 42, 0.9)',
                 titleFont: { size: 13, family: 'Inter' },
                 bodyFont: { size: 14, family: 'Inter', weight: 'bold' },
                 padding: 12,
                 cornerRadius: 8,
-                displayColors: false
+                displayColors: true
               }
-            },
-            scales: {
-              x: { grid: { display: false }, ticks: { font: { family: 'Inter' }, maxRotation: 45, minRotation: 45 } },
-              y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.04)', drawBorder: false }, ticks: { font: { family: 'Inter' }, stepSize: 1 } }
             }
           }
-        });
+        };
+
+        if (chartType === 'bar') {
+          chartConfig.options.scales = {
+            x: { grid: { display: false }, ticks: { font: { family: 'Inter' }, maxRotation: 45, minRotation: 45 } },
+            y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.04)', drawBorder: false }, ticks: { font: { family: 'Inter' }, stepSize: 1 } }
+          };
+        }
+
+        uniDistChartInstance = new Chart(udCtx, chartConfig);
       }
     }
 
@@ -306,7 +323,9 @@ function renderToTbody(tbody, applicants, compact) {
     <tr>
       <td>
         <div class="table-avatar-name">
-          <div class="table-avatar">${a.first_name[0]}${a.father_name[0]}</div>
+          <div class="table-avatar" style="overflow:hidden; display:flex; justify-content:center; align-items:center;">
+          ${a.profile_photo ? `<img src="${API_BASE}/uploads/profiles/${a.profile_photo}" style="width:100%;height:100%;object-fit:cover;" onerror="this.outerHTML='${a.first_name[0]}${a.father_name[0]}'">` : `${a.first_name[0]}${a.father_name[0]}`}
+        </div>
           <div><div class="table-primary">${a.first_name} ${a.father_name}</div><div class="table-secondary">${a.email}</div></div>
         </div>
       </td>
@@ -456,7 +475,9 @@ function viewApplicant(id) {
   const body   = document.getElementById('applicantDetailBody');
 
   header.innerHTML = `
-    <div style="width:90px;height:90px;border-radius:var(--radius-lg);background:linear-gradient(135deg,var(--epsa-green),var(--epsa-gold));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.8rem;flex-shrink:0;">${a.first_name[0]}${a.father_name[0]}</div>
+    <div style="width:90px;height:90px;border-radius:var(--radius-lg);background:linear-gradient(135deg,var(--epsa-green),var(--epsa-gold));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.8rem;flex-shrink:0;overflow:hidden;">
+      ${a.profile_photo ? `<img src="${API_BASE}/uploads/profiles/${a.profile_photo}" style="width:100%;height:100%;object-fit:cover;" onerror="this.outerHTML='${a.first_name[0]}${a.father_name[0]}'">` : `${a.first_name[0]}${a.father_name[0]}`}
+    </div>
     <div>
       <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.3rem;">${a.first_name} ${a.father_name}</h3>
       <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">${a.email} · ${a.phone}</div>
@@ -477,8 +498,18 @@ function viewApplicant(id) {
       <span style="color:var(--text-muted);font-weight:500;">${l}</span>
       <span style="font-weight:600;">${v}</span>
     </div>`).join('') +
-    `<div style="margin-top:var(--space-4);">
-      <a class="doc-preview-link" href="#" onclick="viewDocument('slips', '${a.reg_slip}'); return false;"> View Registration Slip</a>
+    `<div style="margin-top:var(--space-5); padding: var(--space-4); background: #f8fafc; border: 1px solid var(--light-200); border-radius: var(--radius-md);">
+      <div style="font-weight:800; font-size: 0.95rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+        📄 Registration Slip
+      </div>
+      <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px;">
+        ${a.reg_slip ? 'The applicant has attached a registration document for verification.' : 'No registration slip was provided.'}
+      </div>
+      ${a.reg_slip ? 
+        `<button class="btn btn-secondary" style="width:100%; display: flex; justify-content: center; align-items: center; gap: 8px;" onclick="viewDocument('slips', '${a.reg_slip}'); return false;">
+           <span style="font-size: 1.1rem;">👁️</span> View Document
+         </button>` 
+      : ''}
     </div>`;
 
   const approveBtn = document.getElementById('modalApproveBtn');
