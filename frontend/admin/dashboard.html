@@ -857,11 +857,11 @@
 
 <!-- ── APPLICANT DETAIL MODAL ── -->
 <div class="modal-overlay" id="applicantModal">
-  <div class="modal applicant-detail" style="max-width:660px;">
+  <div class="modal applicant-detail" style="max-width:660px;max-height:min(88vh,900px);display:flex;flex-direction:column;">
     <div class="applicant-detail-header" id="applicantDetailHeader">
       <!-- Populated by JS -->
     </div>
-    <div id="applicantDetailBody" style="display:flex;flex-direction:column;gap:var(--space-3);"></div>
+    <div id="applicantDetailBody" style="display:flex;flex-direction:column;gap:var(--space-3);overflow-y:auto;min-height:0;padding-right:6px;"></div>
     <div style="display:flex;gap:var(--space-3);justify-content:flex-end;margin-top:var(--space-6);padding-top:var(--space-5);border-top:1px solid var(--light-200);">
       <button class="btn btn-ghost" onclick="closeApplicantModal()">Close</button>
       <button class="btn btn-primary action-btn-reject" id="modalRejectBtn" onclick="rejectCurrentApplicant()"> Reject</button>

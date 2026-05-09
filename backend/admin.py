@@ -30,7 +30,7 @@ def _serialize_row(row):
         if isinstance(v, (datetime, date)):
             d[k] = v.isoformat()
     if d.get('profile_photo'):
-        d['profile_photo_url'] = upload_url('profiles', d['profile_photo'], private=False)
+        d['profile_photo_url'] = upload_url('profiles', d['profile_photo'], private=True, download_name=d['profile_photo'])
     if d.get('reg_slip'):
         d['reg_slip_url'] = upload_url('slips', d['reg_slip'], private=True, download_name=d['reg_slip'])
     return d

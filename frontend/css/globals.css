@@ -580,9 +580,10 @@ input, textarea, select {
   backdrop-filter: blur(6px);
   z-index: var(--z-overlay);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: var(--space-6);
+  overflow-y: auto;
   opacity: 0;
   visibility: hidden;
   transition: var(--transition-normal);
@@ -599,6 +600,8 @@ input, textarea, select {
   padding: var(--space-8);
   max-width: 560px;
   width: 100%;
+  max-height: calc(100vh - (var(--space-6) * 2));
+  overflow-y: auto;
   box-shadow: var(--shadow-xl);
   transform: scale(0.9) translateY(20px);
   transition: var(--transition-spring);
