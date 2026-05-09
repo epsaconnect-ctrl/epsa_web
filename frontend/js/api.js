@@ -33,6 +33,10 @@ const API = {
     if (path.startsWith('/')) return `${this.getBaseOrigin()}${path}`;
     return `${this.getBaseOrigin()}/${path}`;
   },
+  getDocumentUrl(docType, filename) {
+    if (!docType || !filename) return '';
+    return this.toAbsoluteUrl(`/api/documents/${encodeURIComponent(docType)}/${encodeURIComponent(filename)}`);
+  },
   // ── Auth token management ──
   getToken() { return localStorage.getItem('epsa_token') || localStorage.getItem('epsa_access_token'); },
   setToken(t) {
@@ -213,8 +217,18 @@ const API = {
   resolveUploadUrl(folder, filename) {
     if (!filename) return '';
     if (/^https?:\/\//i.test(filename)) return filename;
+    if (filename.startsWith('/storage/v1/') || filename.startsWith('/uploads/')) {
+      return this.toAbsoluteUrl(filename);
+    }
     const safeFolder = String(folder || '').replace(/^\/+|\/+$/g, '');
-    const safeName = String(filename || '').replace(/^\/+/, '');
+    let safeName = String(filename || '').replace(/^\/+/, '');
+    if (safeFolder) {
+      const folderPrefix = `${safeFolder}/`;
+      const folderIndex = safeName.indexOf(folderPrefix);
+      if (folderIndex >= 0) {
+        safeName = safeName.slice(folderIndex + folderPrefix.length);
+      }
+    }
     return this.toAbsoluteUrl(`/uploads/${safeFolder}/${safeName}`);
   },
 

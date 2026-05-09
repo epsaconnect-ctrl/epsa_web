@@ -9,6 +9,7 @@ let allTeacherApplicants = [];
 let allTrainingsAdmin   = [];
 let allExamsAdmin       = [];
 let currentApplicantFilter = 'all';
+let currentApplicantDocumentUrl = null;
 
 function relocateDynamicAdminSections() {
   const adminContent = document.querySelector('.admin-content');
@@ -307,6 +308,74 @@ function renderApplicantsTable(applicants) {
   renderToTbody(tbody, applicants, false);
 }
 
+function getApplicantInitials(applicant) {
+  const first = ((applicant?.first_name || '').trim()[0] || '').toUpperCase();
+  const father = ((applicant?.father_name || '').trim()[0] || '').toUpperCase();
+  return `${first}${father}` || 'ST';
+}
+
+function getApplicantProfileUrl(applicant) {
+  const source = applicant?.profile_photo_url || applicant?.photo_url || applicant?.profile_photo || '';
+  return API.resolveUploadUrl('profiles', source);
+}
+
+function getApplicantPhotoMarkup(applicant) {
+  const profileUrl = getApplicantProfileUrl(applicant);
+  if (profileUrl) {
+    return `<img src="${adminEsc(profileUrl)}" alt="${adminEsc(getApplicantInitials(applicant))}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy">`;
+  }
+  return adminEsc(getApplicantInitials(applicant));
+}
+
+function revokeApplicantDocumentPreviewUrl() {
+  if (currentApplicantDocumentUrl) {
+    URL.revokeObjectURL(currentApplicantDocumentUrl);
+    currentApplicantDocumentUrl = null;
+  }
+}
+
+async function renderApplicantDocumentPreview(docType, filename) {
+  const preview = document.getElementById('applicantDocumentPreview');
+  const actions = document.getElementById('applicantDocumentActions');
+  if (!preview || !actions) return;
+  revokeApplicantDocumentPreviewUrl();
+  if (!filename) {
+    preview.innerHTML = `<div style="padding:18px;border:1px dashed var(--light-300);border-radius:16px;color:var(--text-muted);text-align:center;">No registration slip was uploaded.</div>`;
+    actions.innerHTML = '';
+    return;
+  }
+
+  preview.innerHTML = `<div style="padding:18px;border:1px dashed var(--light-300);border-radius:16px;color:var(--text-muted);text-align:center;">Loading document preview...</div>`;
+  actions.innerHTML = '';
+
+  try {
+    const token = API.getToken();
+    const response = await fetch(API.getDocumentUrl(docType, filename), {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      throw new Error('Document restricted or not found');
+    }
+    const blob = await response.blob();
+    currentApplicantDocumentUrl = URL.createObjectURL(blob);
+    const mime = (blob.type || '').toLowerCase();
+
+    if (mime.startsWith('image/')) {
+      preview.innerHTML = `<img src="${currentApplicantDocumentUrl}" alt="Registration slip" style="width:100%;max-height:420px;object-fit:contain;border-radius:18px;background:#fff;border:1px solid var(--light-200);">`;
+    } else if (mime.includes('pdf')) {
+      preview.innerHTML = `<iframe src="${currentApplicantDocumentUrl}" title="Registration slip preview" style="width:100%;height:420px;border:1px solid var(--light-200);border-radius:18px;background:#fff;"></iframe>`;
+    } else {
+      preview.innerHTML = `<div style="padding:18px;border:1px dashed var(--light-300);border-radius:16px;color:var(--text-muted);text-align:center;">Preview is not available for this file type, but you can open the document below.</div>`;
+    }
+
+    actions.innerHTML = `<button class="btn btn-secondary" type="button" style="width:100%;" onclick="window.open('${currentApplicantDocumentUrl}', '_blank', 'noopener')">Open Full Document</button>`;
+  } catch (err) {
+    preview.innerHTML = `<div style="padding:18px;border:1px dashed #fecaca;border-radius:16px;color:#b91c1c;text-align:center;">${adminEsc(err.message || 'Unable to load document preview')}</div>`;
+    actions.innerHTML = '';
+  }
+}
+
 function renderToTbody(tbody, applicants, compact) {
   if (!applicants.length) {
     tbody.innerHTML = `<tr><td colspan="${compact ? 6 : 8}" style="text-align:center;color:var(--text-muted);padding:var(--space-8);">No applicants found</td></tr>`;
@@ -324,7 +393,7 @@ function renderToTbody(tbody, applicants, compact) {
       <td>
         <div class="table-avatar-name">
           <div class="table-avatar" style="overflow:hidden; display:flex; justify-content:center; align-items:center;">
-          ${a.profile_photo ? `<img src="${API.resolveUploadUrl('profiles', a.profile_photo)}" style="width:100%;height:100%;object-fit:cover;" onerror="this.outerHTML='${a.first_name[0]}${a.father_name[0]}'">` : `${a.first_name[0]}${a.father_name[0]}`}
+          ${getApplicantPhotoMarkup(a)}
         </div>
           <div><div class="table-primary">${a.first_name} ${a.father_name}</div><div class="table-secondary">${a.email}</div></div>
         </div>
@@ -470,13 +539,14 @@ function viewApplicant(id) {
   const a = allApplicants.find(x => x.id === id);
   if (!a) return;
   currentApplicantId = id;
+  revokeApplicantDocumentPreviewUrl();
 
   const header = document.getElementById('applicantDetailHeader');
   const body   = document.getElementById('applicantDetailBody');
 
   header.innerHTML = `
     <div style="width:90px;height:90px;border-radius:var(--radius-lg);background:linear-gradient(135deg,var(--epsa-green),var(--epsa-gold));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.8rem;flex-shrink:0;overflow:hidden;">
-      ${a.profile_photo ? `<img src="${API.resolveUploadUrl('profiles', a.profile_photo)}" style="width:100%;height:100%;object-fit:cover;" onerror="this.outerHTML='${a.first_name[0]}${a.father_name[0]}'">` : `${a.first_name[0]}${a.father_name[0]}`}
+      ${getApplicantPhotoMarkup(a)}
     </div>
     <div>
       <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.3rem;">${a.first_name} ${a.father_name}</h3>
@@ -539,6 +609,76 @@ window.viewDocument = viewDocument;
 
 function closeApplicantModal() { document.getElementById('applicantModal').classList.remove('active'); }
 window.closeApplicantModal = closeApplicantModal;
+
+function viewDocument(docType, filename) {
+  if (!filename) {
+    showToast('No file attached', 'error');
+    return;
+  }
+  renderApplicantDocumentPreview(docType, filename).catch((err) => {
+    showToast(err.message || 'Unable to load document', 'error');
+  });
+}
+window.viewDocument = viewDocument;
+
+function closeApplicantModal() {
+  revokeApplicantDocumentPreviewUrl();
+  document.getElementById('applicantModal').classList.remove('active');
+}
+window.closeApplicantModal = closeApplicantModal;
+
+function viewApplicant(id) {
+  const a = allApplicants.find((item) => item.id === id);
+  if (!a) return;
+  currentApplicantId = id;
+  revokeApplicantDocumentPreviewUrl();
+
+  const header = document.getElementById('applicantDetailHeader');
+  const body = document.getElementById('applicantDetailBody');
+  if (!header || !body) return;
+
+  header.innerHTML = `
+    <div style="width:90px;height:90px;border-radius:var(--radius-lg);background:linear-gradient(135deg,var(--epsa-green),var(--epsa-gold));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.8rem;flex-shrink:0;overflow:hidden;">
+      ${getApplicantPhotoMarkup(a)}
+    </div>
+    <div>
+      <h3 style="font-family:var(--font-display);font-weight:800;font-size:1.3rem;">${adminEsc(a.first_name)} ${adminEsc(a.father_name)}</h3>
+      <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">${adminEsc(a.email || '')} · ${adminEsc(a.phone || '')}</div>
+      <div style="margin-top:8px;"><span class="badge ${a.status === 'pending' ? 'status-pending' : a.status === 'approved' ? 'status-approved' : 'status-rejected'}">${adminEsc((a.status || '').toUpperCase())}</span></div>
+    </div>`;
+
+  const rows = [
+    ['University', a.university],
+    ['Program', a.program_type],
+    ['Year', a.academic_year ? `Year ${a.academic_year}` : ''],
+    ['Phone', a.phone],
+    ['Email', a.email],
+    ['Applied', formatDate(a.created_at)],
+  ];
+
+  body.innerHTML = rows.map(([label, value]) => `
+    <div style="display:flex;justify-content:space-between;padding:var(--space-3) 0;border-bottom:1px solid var(--light-200);font-size:0.875rem;gap:12px;">
+      <span style="color:var(--text-muted);font-weight:500;">${adminEsc(label)}</span>
+      <span style="font-weight:600;text-align:right;">${adminEsc(value || '')}</span>
+    </div>`).join('') + `
+    <div style="margin-top:var(--space-5);padding:var(--space-4);background:#f8fafc;border:1px solid var(--light-200);border-radius:var(--radius-md);">
+      <div style="font-weight:800;font-size:0.95rem;margin-bottom:6px;">Registration Slip</div>
+      <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:14px;">
+        ${a.reg_slip ? 'The applicant has attached a registration document for verification.' : 'No registration slip was provided.'}
+      </div>
+      <div id="applicantDocumentPreview"></div>
+      <div id="applicantDocumentActions" style="margin-top:12px;"></div>
+    </div>`;
+
+  const approveBtn = document.getElementById('modalApproveBtn');
+  const rejectBtn = document.getElementById('modalRejectBtn');
+  if (approveBtn) approveBtn.style.display = a.status === 'pending' ? 'inline-flex' : 'none';
+  if (rejectBtn) rejectBtn.style.display = a.status === 'pending' ? 'inline-flex' : 'none';
+
+  document.getElementById('applicantModal').classList.add('active');
+  renderApplicantDocumentPreview('slips', a.reg_slip);
+}
+window.viewApplicant = viewApplicant;
 
 async function quickApprove(id, btn) {
   try { await API.approveApplicant(id); } catch(_) {}
