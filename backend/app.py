@@ -604,6 +604,7 @@ def public_news():
         d = dict(r)
         if d.get('image_path'):
             d['image_url'] = upload_url('news', d['image_path'])
+            d['image_api_url'] = f"/api/news/{d['id']}/image"
         excerpt = (d.get('excerpt') or '').strip()
         content = (d.get('content') or '').strip()
         if not excerpt and content:
@@ -629,12 +630,29 @@ def public_news_detail(nid):
     item = dict(row)
     if item.get('image_path'):
         item['image_url'] = upload_url('news', item['image_path'])
+        item['image_api_url'] = f"/api/news/{item['id']}/image"
     excerpt = (item.get('excerpt') or '').strip()
     content = (item.get('content') or '').strip()
     if not excerpt and content:
         item['excerpt'] = content[:180].rstrip() + ('...' if len(content) > 180 else '')
     item['has_full_content'] = bool(content)
     return jsonify(item)
+
+
+@app.route('/api/news/<int:nid>/image')
+def public_news_image(nid):
+    try:
+        ensure_runtime_ready()
+    except Exception:
+        pass
+    if _runtime_init_error and not _runtime_initialized:
+        return jsonify({'status': 'error', 'message': 'DB not ready'}), 503
+    db = get_db()
+    row = db.execute("SELECT image_path FROM news_events WHERE id = ?", (nid,)).fetchone()
+    db.close()
+    if not row or not row['image_path']:
+        abort(404)
+    return public_upload_response('news', row['image_path'])
 
 
 @app.route('/uploads/<folder>/<filename>')

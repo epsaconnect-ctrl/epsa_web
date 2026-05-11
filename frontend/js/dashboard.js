@@ -44,6 +44,10 @@ function formatDashboardDate(value) {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+function dashboardNewsImageUrl(item) {
+  return API.toAbsoluteUrl(item?.image_api_url || item?.image_url || '');
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   relocateDynamicDashboardSections();
   // Strict check: BOTH a token AND a cached user must exist.
@@ -195,7 +199,7 @@ function renderStudentUpdates() {
   featuredWrap.innerHTML = `
     <div class="student-featured-card">
       <div class="student-featured-media">
-        ${featured.image_url ? `<img src="${API.toAbsoluteUrl(featured.image_url)}" alt="${dashboardEscapeHtml(featured.title)}">` : ''}
+        ${(featured.image_api_url || featured.image_url) ? `<img src="${dashboardNewsImageUrl(featured)}" alt="${dashboardEscapeHtml(featured.title)}">` : ''}
       </div>
       <div class="student-featured-body">
         <span class="news-category">${dashboardEscapeHtml(featured.category || 'Update')}</span>
@@ -213,7 +217,7 @@ function renderStudentUpdates() {
   listWrap.innerHTML = others.map((item) => `
     <button type="button" class="student-update-item" onclick="openNewsPreviewModal(${item.id})">
       <div class="student-update-thumb">
-        ${item.image_url ? `<img src="${API.toAbsoluteUrl(item.image_url)}" alt="${dashboardEscapeHtml(item.title)}">` : ''}
+        ${(item.image_api_url || item.image_url) ? `<img src="${dashboardNewsImageUrl(item)}" alt="${dashboardEscapeHtml(item.title)}">` : ''}
       </div>
       <div style="text-align:left;">
         <span class="news-category" style="font-size:0.68rem;">${dashboardEscapeHtml(item.category || 'Update')}</span>
@@ -243,7 +247,7 @@ function openNewsPreviewModal(id) {
   const item = studentUpdatesCache.find((entry) => entry.id === id);
   if (!modal || !content || !item) return;
   content.innerHTML = `
-    ${item.image_url ? `<div class="news-preview-hero"><img src="${API.toAbsoluteUrl(item.image_url)}" alt="${dashboardEscapeHtml(item.title)}"></div>` : ''}
+    ${(item.image_api_url || item.image_url) ? `<div class="news-preview-hero"><img src="${dashboardNewsImageUrl(item)}" alt="${dashboardEscapeHtml(item.title)}"></div>` : ''}
     <div class="news-preview-body">
       <div class="news-detail-meta" style="margin-bottom:14px;">
         <span class="news-category">${dashboardEscapeHtml(item.category || 'Update')}</span>

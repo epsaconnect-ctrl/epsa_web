@@ -20,6 +20,10 @@ function newsImageUrl(path) {
   return API.toAbsoluteUrl(path);
 }
 
+function resolveNewsItemImage(item) {
+  return newsImageUrl(item?.image_api_url || item?.image_url || '');
+}
+
 function readNewsQueryId() {
   const raw = new URLSearchParams(window.location.search).get('id');
   const parsed = Number(raw);
@@ -34,7 +38,7 @@ function renderNewsDetail(item) {
     return;
   }
   panel.innerHTML = `
-    ${item.image_url ? `<div class="news-detail-media"><img src="${newsImageUrl(item.image_url)}" alt="${newsEscapeHtml(item.title)}"></div>` : ''}
+    ${(item.image_api_url || item.image_url) ? `<div class="news-detail-media"><img src="${resolveNewsItemImage(item)}" alt="${newsEscapeHtml(item.title)}"></div>` : ''}
     <div class="news-detail-body">
       <div class="news-detail-meta">
         <span class="news-category">${newsEscapeHtml(item.category || 'Update')}</span>
@@ -57,7 +61,7 @@ function renderNewsArchive(items, selectedId) {
   grid.innerHTML = items.map((item) => `
     <a class="news-archive-card" href="news.html?id=${item.id}" ${selectedId === item.id ? 'aria-current="page"' : ''}>
       <div class="news-archive-image">
-        ${item.image_url ? `<img src="${newsImageUrl(item.image_url)}" alt="${newsEscapeHtml(item.title)}">` : ''}
+        ${(item.image_api_url || item.image_url) ? `<img src="${resolveNewsItemImage(item)}" alt="${newsEscapeHtml(item.title)}">` : ''}
       </div>
       <div class="news-archive-content">
         <div class="news-detail-meta" style="margin-bottom:12px;">
