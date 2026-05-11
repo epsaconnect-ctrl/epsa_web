@@ -250,7 +250,7 @@ function renderStudentUpdates() {
   }
 
   const featured = studentUpdatesCache[0];
-  const others = studentUpdatesCache.slice(1, 6);
+  const others = studentUpdatesCache.slice(1, 2);
 
   featuredWrap.innerHTML = `
     <div class="student-featured-card">
@@ -290,7 +290,7 @@ function renderStudentUpdates() {
 
 async function loadStudentUpdates() {
   try {
-    studentUpdatesCache = await API.get('/news?limit=6');
+    studentUpdatesCache = await API.get('/news?limit=2');
     renderStudentUpdates();
   } catch (err) {
     const featuredWrap = document.getElementById('studentUpdatesFeatured');

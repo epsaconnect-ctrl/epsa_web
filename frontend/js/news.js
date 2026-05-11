@@ -121,6 +121,17 @@ function readNewsQueryId() {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
+let newsArchiveExpanded = false;
+let newsArchiveItemsCache = [];
+
+function updateNewsArchiveToggle() {
+  const btn = document.getElementById('newsArchiveToggle');
+  if (!btn) return;
+  const hasMore = newsArchiveItemsCache.length > 2;
+  btn.style.display = hasMore ? 'inline-flex' : 'none';
+  btn.textContent = newsArchiveExpanded ? 'Show fewer updates' : 'View all updates';
+}
+
 function renderNewsDetail(item) {
   const panel = document.getElementById('newsDetailPanel');
   if (!panel) return;
@@ -149,9 +160,11 @@ function renderNewsArchive(items, selectedId) {
   if (!grid) return;
   if (!items.length) {
     grid.innerHTML = '<div class="news-detail-empty">No news or event updates have been published yet.</div>';
+    updateNewsArchiveToggle();
     return;
   }
-  grid.innerHTML = items.map((item) => `
+  const visibleItems = newsArchiveExpanded ? items : items.slice(0, 2);
+  grid.innerHTML = visibleItems.map((item) => `
     <a class="news-archive-card" href="news.html?id=${item.id}" ${selectedId === item.id ? 'aria-current="page"' : ''}>
       <div class="news-archive-image">
         ${renderNewsGallery(item, 'archive')}
@@ -171,16 +184,18 @@ function renderNewsArchive(items, selectedId) {
     </a>
   `).join('');
   wireNewsImageFallbacks(grid);
+  updateNewsArchiveToggle();
 }
 
 async function loadNewsPage() {
   const selectedId = readNewsQueryId();
   try {
     const items = await API.get('/news');
+    newsArchiveItemsCache = Array.isArray(items) ? items : [];
     if (!selectedId) {
-      const featured = Array.isArray(items) && items.length ? items[0] : null;
+      const featured = newsArchiveItemsCache.length ? newsArchiveItemsCache[0] : null;
       renderNewsDetail(featured);
-      renderNewsArchive(Array.isArray(items) ? items : [], null);
+      renderNewsArchive(newsArchiveItemsCache, null);
       return;
     }
 
@@ -188,12 +203,19 @@ async function loadNewsPage() {
       API.get(`/news/${selectedId}`),
       API.get('/news'),
     ]);
+    newsArchiveItemsCache = Array.isArray(archive) ? archive : [];
     renderNewsDetail(detail);
-    renderNewsArchive(Array.isArray(archive) ? archive : [], selectedId);
+    renderNewsArchive(newsArchiveItemsCache, selectedId);
   } catch (error) {
     renderNewsDetail(null);
     renderNewsArchive([], selectedId);
   }
 }
 
-document.addEventListener('DOMContentLoaded', loadNewsPage);
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('newsArchiveToggle')?.addEventListener('click', () => {
+    newsArchiveExpanded = !newsArchiveExpanded;
+    renderNewsArchive(newsArchiveItemsCache, readNewsQueryId());
+  });
+  loadNewsPage();
+});

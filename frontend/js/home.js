@@ -309,7 +309,7 @@ async function loadPublicNews() {
   const wrapper = document.getElementById('homeNewsWrapper');
   if (!wrapper) return;
   try {
-    const res = await fetch(homeApiUrl('/api/news?limit=5'));
+    const res = await fetch(homeApiUrl('/api/news?limit=2'));
     if (!res.ok) throw new Error('API error');
     const news = await res.json();
     if (!news.length) {
@@ -318,7 +318,7 @@ async function loadPublicNews() {
     }
 
     const featured = news.find(n => n.is_featured) || news[0];
-    const rest = news.filter(n => n.id !== featured.id).slice(0, 4);
+    const rest = news.filter(n => n.id !== featured.id).slice(0, 1);
 
     let html = `
       <a class="news-featured reveal revealed" href="news.html?id=${featured.id}">
