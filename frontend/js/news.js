@@ -40,6 +40,46 @@ function resolveNewsMediaImage(media) {
   return newsImageUrl(rawPath);
 }
 
+function newsMediaFallbacks(item, media) {
+  const urls = [];
+  const push = (value) => {
+    const text = String(value || '').trim();
+    if (text && !urls.includes(text)) urls.push(text);
+  };
+  if (media?.image_api_url) push(newsImageUrl(media.image_api_url));
+  if (media?.image_url) {
+    push(newsImageUrl(media.image_url));
+    if (typeof API.resolveUploadUrl === 'function') push(API.resolveUploadUrl('news', media.image_url));
+  }
+  if (media?.image_path && typeof API.resolveUploadUrl === 'function') push(API.resolveUploadUrl('news', media.image_path));
+  if (media?.news_id) push(newsImageUrl(`/api/news/${media.news_id}/image`));
+  if (item?.id) push(newsImageUrl(`/api/news/${item.id}/image`));
+  return urls;
+}
+
+function renderNewsImg(item, media, altText) {
+  const fallbacks = newsMediaFallbacks(item, media);
+  const primary = fallbacks.shift() || '';
+  return `<img class="js-news-fallback-image" src="${newsEscapeHtml(primary)}" data-fallbacks="${newsEscapeHtml(fallbacks.join('|'))}" alt="${newsEscapeHtml(altText)}">`;
+}
+
+function wireNewsImageFallbacks(root = document) {
+  root.querySelectorAll('.js-news-fallback-image').forEach((img) => {
+    if (img.dataset.fallbackBound === '1') return;
+    img.dataset.fallbackBound = '1';
+    img.addEventListener('error', () => {
+      const list = String(img.dataset.fallbacks || '').split('|').filter(Boolean);
+      const next = list.shift();
+      if (next) {
+        img.dataset.fallbacks = list.join('|');
+        img.src = next;
+      } else {
+        img.style.display = 'none';
+      }
+    });
+  });
+}
+
 function readNewsGallery(item, maxItems = null) {
   const gallery = Array.isArray(item?.gallery) ? item.gallery : [];
   return maxItems ? gallery.slice(0, maxItems) : gallery;
@@ -57,7 +97,7 @@ function renderNewsGallery(item, variant = 'detail') {
     <div class="${className}">
       ${gallery.map((media, index) => `
         <figure class="news-gallery-cell news-gallery-cell-${index + 1}">
-          <img src="${resolveNewsMediaImage(media)}" alt="${newsEscapeHtml(media.caption || item.title || 'EPSA update image')}">
+          ${renderNewsImg(item, media, media.caption || item.title || 'EPSA update image')}
           ${(media.caption || '').trim() && variant === 'detail' ? `<figcaption>${newsEscapeHtml(media.caption)}</figcaption>` : ''}
         </figure>
       `).join('')}
@@ -92,6 +132,7 @@ function renderNewsDetail(item) {
       <div class="news-detail-content">${newsEscapeHtml(item.content || item.excerpt || 'Full details will be added soon.')}</div>
     </div>
   `;
+  wireNewsImageFallbacks(panel);
 }
 
 function renderNewsArchive(items, selectedId) {
@@ -120,6 +161,7 @@ function renderNewsArchive(items, selectedId) {
       </div>
     </a>
   `).join('');
+  wireNewsImageFallbacks(grid);
 }
 
 async function loadNewsPage() {

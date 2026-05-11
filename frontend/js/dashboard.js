@@ -64,6 +64,46 @@ function dashboardNewsMediaUrl(media) {
   return API.toAbsoluteUrl(rawPath);
 }
 
+function dashboardNewsMediaFallbacks(item, media) {
+  const urls = [];
+  const push = (value) => {
+    const text = String(value || '').trim();
+    if (text && !urls.includes(text)) urls.push(text);
+  };
+  if (media?.image_api_url) push(API.toAbsoluteUrl(media.image_api_url));
+  if (media?.image_url) {
+    push(API.toAbsoluteUrl(media.image_url));
+    if (typeof API.resolveUploadUrl === 'function') push(API.resolveUploadUrl('news', media.image_url));
+  }
+  if (media?.image_path && typeof API.resolveUploadUrl === 'function') push(API.resolveUploadUrl('news', media.image_path));
+  if (media?.news_id) push(API.toAbsoluteUrl(`/api/news/${media.news_id}/image`));
+  if (item?.id) push(API.toAbsoluteUrl(`/api/news/${item.id}/image`));
+  return urls;
+}
+
+function dashboardRenderNewsImg(item, media, altText) {
+  const fallbacks = dashboardNewsMediaFallbacks(item, media);
+  const primary = fallbacks.shift() || '';
+  return `<img class="js-news-fallback-image" src="${dashboardEscapeHtml(primary)}" data-fallbacks="${dashboardEscapeHtml(fallbacks.join('|'))}" alt="${dashboardEscapeHtml(altText)}">`;
+}
+
+function dashboardWireNewsImageFallbacks(root = document) {
+  root.querySelectorAll('.js-news-fallback-image').forEach((img) => {
+    if (img.dataset.fallbackBound === '1') return;
+    img.dataset.fallbackBound = '1';
+    img.addEventListener('error', () => {
+      const list = String(img.dataset.fallbacks || '').split('|').filter(Boolean);
+      const next = list.shift();
+      if (next) {
+        img.dataset.fallbacks = list.join('|');
+        img.src = next;
+      } else {
+        img.style.display = 'none';
+      }
+    });
+  });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   relocateDynamicDashboardSections();
   // Strict check: BOTH a token AND a cached user must exist.
@@ -244,6 +284,8 @@ function renderStudentUpdates() {
       </div>
     </button>
   `).join('');
+  dashboardWireNewsImageFallbacks(featuredWrap);
+  dashboardWireNewsImageFallbacks(listWrap);
 }
 
 async function loadStudentUpdates() {
@@ -274,7 +316,7 @@ function renderDashboardNewsGallery(item, variant = 'featured') {
     <div class="${className}">
       ${gallery.map((media, index) => `
         <figure class="dashboard-news-cell dashboard-news-cell-${index + 1}">
-          <img src="${dashboardEscapeHtml(dashboardNewsMediaUrl(media))}" alt="${dashboardEscapeHtml(media.caption || item.title || 'EPSA update image')}">
+          ${dashboardRenderNewsImg(item, media, media.caption || item.title || 'EPSA update image')}
           ${(media.caption || '').trim() && index === 0 && variant === 'featured' ? `<figcaption>${dashboardEscapeHtml(media.caption)}</figcaption>` : ''}
         </figure>
       `).join('')}
@@ -304,6 +346,7 @@ function openNewsPreviewModal(id) {
       </div>
     </div>
   `;
+  dashboardWireNewsImageFallbacks(content);
   modal.classList.add('active');
 }
 window.openNewsPreviewModal = openNewsPreviewModal;
