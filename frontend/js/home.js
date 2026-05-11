@@ -140,6 +140,15 @@ function homeMediaUrl(path) {
   return `${HOME_API_ORIGIN}${path}`;
 }
 
+function homeEscapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ── Leadership — Load from API ────────────────
 async function loadLeadership() {
   try {
@@ -255,7 +264,7 @@ async function loadPublicNews() {
   const wrapper = document.getElementById('homeNewsWrapper');
   if (!wrapper) return;
   try {
-    const res = await fetch(homeApiUrl('/api/news'));
+    const res = await fetch(homeApiUrl('/api/news?limit=5'));
     if (!res.ok) throw new Error('API error');
     const news = await res.json();
     if (!news.length) {
@@ -267,31 +276,33 @@ async function loadPublicNews() {
     const rest = news.filter(n => n.id !== featured.id).slice(0, 4);
 
     let html = `
-      <div class="news-featured reveal revealed">
+      <a class="news-featured reveal revealed" href="news.html?id=${featured.id}">
         <div class="news-featured-img">
-          ${featured.image_url ? `<img src="${homeMediaUrl(featured.image_url)}" style="width:100%;height:100%;object-fit:cover;">` : '📢'}
+          ${featured.image_url ? `<img src="${homeMediaUrl(featured.image_url)}" alt="${homeEscapeHtml(featured.title)}" style="width:100%;height:100%;object-fit:cover;">` : '📢'}
           <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(13,31,18,0.6),transparent);"></div>
           <div style="position:absolute;bottom:20px;left:20px;">
             <span class="news-category">📅 ${formatRelativeDate(featured.created_at)}</span>
           </div>
         </div>
         <div class="news-featured-body">
-          <span class="news-category">${featured.category}</span>
-          <h3 class="news-card-title">${featured.title}</h3>
-          <p class="news-card-excerpt">${featured.excerpt}</p>
+          <span class="news-category">${homeEscapeHtml(featured.category)}</span>
+          <h3 class="news-card-title">${homeEscapeHtml(featured.title)}</h3>
+          <p class="news-card-excerpt">${homeEscapeHtml(featured.excerpt || featured.content || 'Read the latest update from EPSA.')}</p>
         </div>
-      </div>
+      </a>
     `;
 
     if (rest.length > 0) {
       const colors = ['var(--epsa-gold)', '#2563eb', '#16a34a', '#8b5cf6'];
       html += `<div class="news-sidebar">`;
       html += rest.map((n, i) => `
-        <div class="news-small-card reveal revealed" style="border-left-color:${colors[i%colors.length]};">
-          <span class="news-category" style="font-size:0.7rem; padding:2px 8px;">${n.category}</span>
-          <div class="news-small-title">${n.title}</div>
+        <a class="news-small-card reveal revealed" href="news.html?id=${n.id}" style="border-left-color:${colors[i%colors.length]}; text-decoration:none;">
+          <span class="news-category" style="font-size:0.7rem; padding:2px 8px;">${homeEscapeHtml(n.category)}</span>
+          <div class="news-small-title">${homeEscapeHtml(n.title)}</div>
+          ${n.image_url ? `<div style="margin:12px 0 10px;border-radius:14px;overflow:hidden;height:116px;background:#e5e7eb;"><img src="${homeMediaUrl(n.image_url)}" alt="${homeEscapeHtml(n.title)}" style="width:100%;height:100%;object-fit:cover;"></div>` : ''}
+          <div style="font-size:0.8rem;color:var(--text-secondary);line-height:1.6;margin-bottom:8px;">${homeEscapeHtml((n.excerpt || n.content || '').slice(0, 110))}${(n.excerpt || n.content || '').length > 110 ? '...' : ''}</div>
           <div class="news-small-date">📅 ${formatRelativeDate(n.created_at)}</div>
-        </div>
+        </a>
       `).join('');
       html += `</div>`;
     }

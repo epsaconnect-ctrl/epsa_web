@@ -7,6 +7,7 @@ let currentUser    = null;
 let allStudents    = [];
 let allTrainings   = [];
 let selectedTrainingId = null;
+let studentUpdatesCache = [];
 
 function relocateDynamicDashboardSections() {
   const content = document.querySelector('.dash-content');
@@ -20,6 +21,27 @@ function relocateDynamicDashboardSections() {
 
 function dashboardSectionTarget(section) {
   return document.getElementById(`sec-${section}`) || document.getElementById(`section-${section}`);
+}
+
+function dashboardEscapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatDashboardDate(value) {
+  if (!value) return 'Recently posted';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return 'Recently posted';
+  const now = new Date();
+  const diff = Math.floor((now - d) / 86400000);
+  if (diff <= 0) return 'Today';
+  if (diff === 1) return 'Yesterday';
+  if (diff < 7) return `${diff} days ago`;
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -40,7 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (role === 'teacher') { window.location.href = 'teacher.html'; return; }
   if (role === 'admin' || role === 'super_admin') { window.location.href = 'admin/dashboard.html'; return; }
   populateUserUI(currentUser);
-  await Promise.allSettled([loadProfile(), loadTrainings(), loadNetworkStudents(), loadConversations(), loadExams(), loadVoting()]);
+  await Promise.allSettled([loadProfile(), loadTrainings(), loadNetworkStudents(), loadConversations(), loadExams(), loadVoting(), loadStudentUpdates()]);
   if (typeof loadEnhancedNetworking === 'function') {
     try { await loadEnhancedNetworking(); } catch (_) { /* optional */ }
   }
@@ -155,6 +177,94 @@ async function loadProfile() {
     showToast('Failed to load profile data', 'error');
   }
 }
+
+function renderStudentUpdates() {
+  const featuredWrap = document.getElementById('studentUpdatesFeatured');
+  const listWrap = document.getElementById('studentUpdatesList');
+  if (!featuredWrap || !listWrap) return;
+
+  if (!studentUpdatesCache.length) {
+    featuredWrap.innerHTML = '<div class="student-updates-loading">No EPSA updates are available yet.</div>';
+    listWrap.innerHTML = '<div class="student-updates-loading">Check back soon for news, events, and announcements.</div>';
+    return;
+  }
+
+  const featured = studentUpdatesCache[0];
+  const others = studentUpdatesCache.slice(1, 6);
+
+  featuredWrap.innerHTML = `
+    <div class="student-featured-card">
+      <div class="student-featured-media">
+        ${featured.image_url ? `<img src="${API.toAbsoluteUrl(featured.image_url)}" alt="${dashboardEscapeHtml(featured.title)}">` : ''}
+      </div>
+      <div class="student-featured-body">
+        <span class="news-category">${dashboardEscapeHtml(featured.category || 'Update')}</span>
+        <div class="student-featured-title">${dashboardEscapeHtml(featured.title)}</div>
+        <div class="student-featured-copy">${dashboardEscapeHtml(featured.excerpt || featured.content || 'Read the latest EPSA update.')}</div>
+        <div class="student-update-meta">${formatDashboardDate(featured.created_at)}</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:18px;">
+          <button type="button" class="btn btn-primary btn-sm" onclick="openNewsPreviewModal(${featured.id})">Read full update</button>
+          <a href="news.html?id=${featured.id}" class="btn btn-outline-green btn-sm">Open public page</a>
+        </div>
+      </div>
+    </div>
+  `;
+
+  listWrap.innerHTML = others.map((item) => `
+    <button type="button" class="student-update-item" onclick="openNewsPreviewModal(${item.id})">
+      <div class="student-update-thumb">
+        ${item.image_url ? `<img src="${API.toAbsoluteUrl(item.image_url)}" alt="${dashboardEscapeHtml(item.title)}">` : ''}
+      </div>
+      <div style="text-align:left;">
+        <span class="news-category" style="font-size:0.68rem;">${dashboardEscapeHtml(item.category || 'Update')}</span>
+        <div class="student-update-name">${dashboardEscapeHtml(item.title)}</div>
+        <div class="student-update-copy">${dashboardEscapeHtml(item.excerpt || item.content || 'Read more from the EPSA public updates feed.')}</div>
+        <div class="student-update-meta">${formatDashboardDate(item.created_at)}</div>
+      </div>
+    </button>
+  `).join('');
+}
+
+async function loadStudentUpdates() {
+  try {
+    studentUpdatesCache = await API.get('/news?limit=6');
+    renderStudentUpdates();
+  } catch (err) {
+    const featuredWrap = document.getElementById('studentUpdatesFeatured');
+    const listWrap = document.getElementById('studentUpdatesList');
+    if (featuredWrap) featuredWrap.innerHTML = '<div class="student-updates-loading">Unable to load EPSA updates right now.</div>';
+    if (listWrap) listWrap.innerHTML = '<div class="student-updates-loading">Please try again in a moment.</div>';
+  }
+}
+
+function openNewsPreviewModal(id) {
+  const modal = document.getElementById('newsPreviewModal');
+  const content = document.getElementById('newsPreviewContent');
+  const item = studentUpdatesCache.find((entry) => entry.id === id);
+  if (!modal || !content || !item) return;
+  content.innerHTML = `
+    ${item.image_url ? `<div class="news-preview-hero"><img src="${API.toAbsoluteUrl(item.image_url)}" alt="${dashboardEscapeHtml(item.title)}"></div>` : ''}
+    <div class="news-preview-body">
+      <div class="news-detail-meta" style="margin-bottom:14px;">
+        <span class="news-category">${dashboardEscapeHtml(item.category || 'Update')}</span>
+        <span class="student-update-meta" style="margin-top:0;">${formatDashboardDate(item.created_at)}</span>
+      </div>
+      <h3 class="student-featured-title" style="font-size:1.55rem;margin-bottom:12px;">${dashboardEscapeHtml(item.title)}</h3>
+      ${item.excerpt ? `<p class="student-featured-copy" style="margin-bottom:16px;">${dashboardEscapeHtml(item.excerpt)}</p>` : ''}
+      <div class="news-preview-content">${dashboardEscapeHtml(item.content || item.excerpt || 'Full details will be available soon.')}</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:22px;">
+        <a href="news.html?id=${item.id}" class="btn btn-primary btn-sm">Open full public page</a>
+      </div>
+    </div>
+  `;
+  modal.classList.add('active');
+}
+window.openNewsPreviewModal = openNewsPreviewModal;
+
+function closeNewsPreviewModal() {
+  document.getElementById('newsPreviewModal')?.classList.remove('active');
+}
+window.closeNewsPreviewModal = closeNewsPreviewModal;
 
 async function loadTrainings() {
   try {

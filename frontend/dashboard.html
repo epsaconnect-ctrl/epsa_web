@@ -124,6 +124,24 @@
           </div>
         </div>
 
+        <div class="student-updates-shell">
+          <div class="student-updates-panel student-updates-featured" id="studentUpdatesFeatured">
+            <div class="student-updates-loading">Loading the latest EPSA update...</div>
+          </div>
+          <div class="student-updates-panel">
+            <div class="student-updates-header">
+              <div>
+                <div class="section-label">Live Feed</div>
+                <h3 class="student-updates-title">News, Events & Announcements</h3>
+              </div>
+              <a href="news.html" class="btn btn-outline-green btn-sm">View all</a>
+            </div>
+            <div class="student-updates-list" id="studentUpdatesList">
+              <div class="student-updates-loading">Loading updates...</div>
+            </div>
+          </div>
+        </div>
+
         <!-- Recent Activity -->
         <div style="background:white; border-radius:var(--radius-xl); border:1px solid var(--light-200); overflow:hidden;">
           <div style="padding:var(--space-5) var(--space-6); border-bottom:1px solid var(--light-200); display:flex; justify-content:space-between; align-items:center;">
@@ -493,6 +511,13 @@
     </div><!-- end dash-content -->
   </div><!-- end dash-main -->
 </div><!-- end dash-page -->
+
+<div class="modal-overlay" id="newsPreviewModal" onclick="if(event.target===this)closeNewsPreviewModal()">
+  <div class="modal news-preview-modal">
+    <button type="button" class="news-preview-close" onclick="closeNewsPreviewModal()">×</button>
+    <div id="newsPreviewContent"></div>
+  </div>
+</div>
 
 <!-- ── PAYMENT MODAL ── -->
 <div class="modal-overlay" id="paymentModal">

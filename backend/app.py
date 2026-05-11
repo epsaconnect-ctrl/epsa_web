@@ -586,15 +586,55 @@ def public_news():
     if _runtime_init_error and not _runtime_initialized:
         return jsonify({'status': 'error', 'message': 'DB not ready'}), 503
     db = get_db()
-    rows = db.execute("SELECT * FROM news_events ORDER BY is_featured DESC, created_at DESC LIMIT 5").fetchall()
+    limit = request.args.get('limit', type=int)
+    category = (request.args.get('category') or '').strip()
+    query = "SELECT * FROM news_events"
+    params = []
+    if category:
+        query += " WHERE LOWER(category)=LOWER(?)"
+        params.append(category)
+    query += " ORDER BY is_featured DESC, created_at DESC"
+    if limit and limit > 0:
+        query += " LIMIT ?"
+        params.append(limit)
+    rows = db.execute(query, tuple(params)).fetchall()
     db.close()
     result = []
     for r in rows:
         d = dict(r)
-        if d['image_path']:
+        if d.get('image_path'):
             d['image_url'] = upload_url('news', d['image_path'])
+        excerpt = (d.get('excerpt') or '').strip()
+        content = (d.get('content') or '').strip()
+        if not excerpt and content:
+            d['excerpt'] = content[:180].rstrip() + ('...' if len(content) > 180 else '')
+        d['has_full_content'] = bool(content)
         result.append(d)
     return jsonify(result)
+
+
+@app.route('/api/news/<int:nid>')
+def public_news_detail(nid):
+    try:
+        ensure_runtime_ready()
+    except Exception:
+        pass
+    if _runtime_init_error and not _runtime_initialized:
+        return jsonify({'status': 'error', 'message': 'DB not ready'}), 503
+    db = get_db()
+    row = db.execute("SELECT * FROM news_events WHERE id = ?", (nid,)).fetchone()
+    db.close()
+    if not row:
+        return jsonify({'error': 'Update not found'}), 404
+    item = dict(row)
+    if item.get('image_path'):
+        item['image_url'] = upload_url('news', item['image_path'])
+    excerpt = (item.get('excerpt') or '').strip()
+    content = (item.get('content') or '').strip()
+    if not excerpt and content:
+        item['excerpt'] = content[:180].rstrip() + ('...' if len(content) > 180 else '')
+    item['has_full_content'] = bool(content)
+    return jsonify(item)
 
 
 @app.route('/uploads/<folder>/<filename>')
