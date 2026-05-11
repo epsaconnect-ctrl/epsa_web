@@ -2,11 +2,13 @@
 EPSA Platform — Flask Backend Entry Point
 """
 import logging
+import io
+import mimetypes
 import os
 import sys
 import threading
 import traceback
-from flask import Flask, jsonify, request, send_from_directory, abort
+from flask import Flask, jsonify, request, send_from_directory, send_file, abort
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -28,6 +30,7 @@ try:
         is_public_folder,
         private_upload_response,
         public_upload_response,
+        read_upload_bytes,
         upload_url,
     )
     from .auth import auth_bp
@@ -52,6 +55,7 @@ except ImportError:
         is_public_folder,
         private_upload_response,
         public_upload_response,
+        read_upload_bytes,
         upload_url,
     )
     from auth import auth_bp
@@ -652,7 +656,12 @@ def public_news_image(nid):
     db.close()
     if not row or not row['image_path']:
         abort(404)
-    return public_upload_response('news', row['image_path'])
+    filename = row['image_path']
+    payload = read_upload_bytes('news', filename)
+    if not payload:
+        abort(404)
+    mimetype = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+    return send_file(io.BytesIO(payload), mimetype=mimetype, download_name=filename, max_age=3600)
 
 
 @app.route('/uploads/<folder>/<filename>')
