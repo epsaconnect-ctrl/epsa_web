@@ -144,6 +144,27 @@ function newsCardImageUrl(item) {
   return homeMediaUrl(item?.image_api_url || item?.image_url || '');
 }
 
+function homeNewsGallery(item, maxItems = 4) {
+  return Array.isArray(item?.gallery) ? item.gallery.slice(0, maxItems) : [];
+}
+
+function renderHomeNewsMosaic(item, variant = 'featured') {
+  const gallery = homeNewsGallery(item, variant === 'featured' ? 4 : 3);
+  if (!gallery.length) return variant === 'featured' ? '📢' : '';
+  const className = variant === 'featured' ? 'home-news-mosaic' : 'home-news-mosaic home-news-mosaic-compact';
+  return `
+    <div class="${className}">
+      ${gallery.map((media, index) => `
+        <figure class="home-news-tile home-news-tile-${index + 1}">
+          <img src="${homeMediaUrl(media.image_url || '')}" alt="${homeEscapeHtml(media.caption || item.title || 'EPSA update image')}" style="width:100%;height:100%;object-fit:cover;">
+          ${(media.caption || '').trim() && index === 0 ? `<figcaption>${homeEscapeHtml(media.caption)}</figcaption>` : ''}
+        </figure>
+      `).join('')}
+      ${item.gallery_count > gallery.length ? `<div class="home-news-more">+${item.gallery_count - gallery.length}</div>` : ''}
+    </div>
+  `;
+}
+
 function homeEscapeHtml(value) {
   return String(value || '')
     .replace(/&/g, '&amp;')
@@ -282,7 +303,7 @@ async function loadPublicNews() {
     let html = `
       <a class="news-featured reveal revealed" href="news.html?id=${featured.id}">
         <div class="news-featured-img">
-          ${(featured.image_api_url || featured.image_url) ? `<img src="${newsCardImageUrl(featured)}" alt="${homeEscapeHtml(featured.title)}" style="width:100%;height:100%;object-fit:cover;">` : '📢'}
+          ${renderHomeNewsMosaic(featured, 'featured')}
           <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(13,31,18,0.6),transparent);"></div>
           <div style="position:absolute;bottom:20px;left:20px;">
             <span class="news-category">📅 ${formatRelativeDate(featured.created_at)}</span>
@@ -303,7 +324,7 @@ async function loadPublicNews() {
         <a class="news-small-card reveal revealed" href="news.html?id=${n.id}" style="border-left-color:${colors[i%colors.length]}; text-decoration:none;">
           <span class="news-category" style="font-size:0.7rem; padding:2px 8px;">${homeEscapeHtml(n.category)}</span>
           <div class="news-small-title">${homeEscapeHtml(n.title)}</div>
-          ${(n.image_api_url || n.image_url) ? `<div style="margin:12px 0 10px;border-radius:14px;overflow:hidden;height:116px;background:#e5e7eb;"><img src="${newsCardImageUrl(n)}" alt="${homeEscapeHtml(n.title)}" style="width:100%;height:100%;object-fit:cover;"></div>` : ''}
+          ${homeNewsGallery(n).length ? `<div style="margin:12px 0 10px;">${renderHomeNewsMosaic(n, 'compact')}</div>` : ''}
           <div style="font-size:0.8rem;color:var(--text-secondary);line-height:1.6;margin-bottom:8px;">${homeEscapeHtml((n.excerpt || n.content || '').slice(0, 110))}${(n.excerpt || n.content || '').length > 110 ? '...' : ''}</div>
           <div class="news-small-date">📅 ${formatRelativeDate(n.created_at)}</div>
         </a>

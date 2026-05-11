@@ -24,6 +24,32 @@ function resolveNewsItemImage(item) {
   return newsImageUrl(item?.image_api_url || item?.image_url || '');
 }
 
+function readNewsGallery(item, maxItems = null) {
+  const gallery = Array.isArray(item?.gallery) ? item.gallery : [];
+  return maxItems ? gallery.slice(0, maxItems) : gallery;
+}
+
+function renderNewsGallery(item, variant = 'detail') {
+  const gallery = readNewsGallery(item, variant === 'archive' ? 3 : null);
+  if (!gallery.length) {
+    return (item.image_api_url || item.image_url)
+      ? `<img src="${resolveNewsItemImage(item)}" alt="${newsEscapeHtml(item.title)}">`
+      : '';
+  }
+  const className = variant === 'archive' ? 'news-gallery-mosaic news-gallery-mosaic-compact' : 'news-gallery-mosaic';
+  return `
+    <div class="${className}">
+      ${gallery.map((media, index) => `
+        <figure class="news-gallery-cell news-gallery-cell-${index + 1}">
+          <img src="${newsImageUrl(media.image_url || '')}" alt="${newsEscapeHtml(media.caption || item.title || 'EPSA update image')}">
+          ${(media.caption || '').trim() && variant === 'detail' ? `<figcaption>${newsEscapeHtml(media.caption)}</figcaption>` : ''}
+        </figure>
+      `).join('')}
+      ${variant === 'archive' && item.gallery_count > gallery.length ? `<div class="news-gallery-overflow">+${item.gallery_count - gallery.length}</div>` : ''}
+    </div>
+  `;
+}
+
 function readNewsQueryId() {
   const raw = new URLSearchParams(window.location.search).get('id');
   const parsed = Number(raw);
@@ -38,11 +64,12 @@ function renderNewsDetail(item) {
     return;
   }
   panel.innerHTML = `
-    ${(item.image_api_url || item.image_url) ? `<div class="news-detail-media"><img src="${resolveNewsItemImage(item)}" alt="${newsEscapeHtml(item.title)}"></div>` : ''}
+    ${(readNewsGallery(item).length || item.image_api_url || item.image_url) ? `<div class="news-detail-media">${renderNewsGallery(item, 'detail')}</div>` : ''}
     <div class="news-detail-body">
       <div class="news-detail-meta">
         <span class="news-category">${newsEscapeHtml(item.category || 'Update')}</span>
         <span class="news-detail-date">${formatNewsDate(item.created_at)}</span>
+        ${item.gallery_count ? `<span class="news-detail-date">${item.gallery_count} photo${item.gallery_count === 1 ? '' : 's'}</span>` : ''}
       </div>
       <h2 class="news-detail-title">${newsEscapeHtml(item.title)}</h2>
       ${item.excerpt ? `<p class="news-detail-excerpt">${newsEscapeHtml(item.excerpt)}</p>` : ''}
@@ -61,7 +88,7 @@ function renderNewsArchive(items, selectedId) {
   grid.innerHTML = items.map((item) => `
     <a class="news-archive-card" href="news.html?id=${item.id}" ${selectedId === item.id ? 'aria-current="page"' : ''}>
       <div class="news-archive-image">
-        ${(item.image_api_url || item.image_url) ? `<img src="${resolveNewsItemImage(item)}" alt="${newsEscapeHtml(item.title)}">` : ''}
+        ${renderNewsGallery(item, 'archive')}
       </div>
       <div class="news-archive-content">
         <div class="news-detail-meta" style="margin-bottom:12px;">

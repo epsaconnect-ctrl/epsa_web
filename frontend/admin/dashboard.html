@@ -967,9 +967,13 @@
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Cover Image</label>
-          <input type="file" id="cn-image" class="form-input" accept="image/*">
+          <label class="form-label">Images</label>
+          <input type="file" id="cn-images" class="form-input" accept="image/*" multiple>
         </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Image Captions</label>
+        <textarea id="cn-gallery-captions" class="form-input" rows="3" placeholder="Optional: one caption per line, matching the image order."></textarea>
       </div>
       <div class="form-group">
         <label class="form-label">Short Excerpt *</label>

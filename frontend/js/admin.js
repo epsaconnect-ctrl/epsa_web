@@ -1991,10 +1991,15 @@ async function submitCreateNews(e) {
   formData.append('excerpt', document.getElementById('cn-excerpt').value);
   formData.append('content', document.getElementById('cn-content').value);
   formData.append('is_featured', document.getElementById('cn-featured').checked ? '1' : '0');
+  formData.append('gallery_captions', JSON.stringify(
+    document.getElementById('cn-gallery-captions').value
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+  ));
   
-  const fileInput = document.getElementById('cn-image');
+  const fileInput = document.getElementById('cn-images');
   if (fileInput.files.length > 0) {
-    formData.append('image', fileInput.files[0]);
+    Array.from(fileInput.files).forEach((file) => formData.append('images', file));
   }
   
   try {
@@ -2018,9 +2023,15 @@ async function loadAdminNews() {
     }
     tbody.innerHTML = news.map(n => `
       <tr>
-        <td>${n.image_path ? `<img src="/uploads/news/${n.image_path}" style="width:40px;height:40px;border-radius:var(--radius-sm);object-fit:cover;">` : ''}</td>
+        <td>
+          ${Array.isArray(n.gallery) && n.gallery.length ? `
+            <div style="display:grid;grid-template-columns:repeat(2,28px);gap:4px;">
+              ${n.gallery.slice(0, 4).map((item) => `<img src="${adminEsc(item.image_url || '')}" style="width:28px;height:28px;border-radius:8px;object-fit:cover;border:1px solid rgba(15,23,42,0.08);">`).join('')}
+            </div>
+          ` : ''}
+        </td>
         <td><span class="badge" style="background:var(--light-100);color:var(--text-muted);">${n.category}</span></td>
-        <td style="font-weight:700;">${n.title}</td>
+        <td style="font-weight:700;">${n.title}<div style="font-size:0.76rem;color:var(--text-muted);margin-top:4px;">${n.gallery_count || 0} image${(n.gallery_count || 0) === 1 ? '' : 's'}</div></td>
         <td style="font-size:0.8rem;color:var(--text-muted);">${new Date(n.created_at).toLocaleDateString()}</td>
         <td>${n.is_featured ? '<span class="badge" style="background:#fef08a;color:#854d0e;"> Featured</span>' : 'Standard'}</td>
         <td><button class="btn btn-ghost btn-sm" style="color:#ef4444;" onclick="deleteNews(${n.id})">🗑</button></td>

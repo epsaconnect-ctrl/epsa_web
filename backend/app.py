@@ -21,6 +21,53 @@ logging.basicConfig(
 )
 logger = logging.getLogger("epsa")
 
+
+def _fetch_news_media_map(db, news_ids):
+    if not news_ids:
+        return {}
+    placeholders = ",".join("?" * len(news_ids))
+    rows = db.execute(
+        f"""
+        SELECT id, news_id, image_path, caption, order_num
+        FROM news_event_media
+        WHERE news_id IN ({placeholders})
+        ORDER BY news_id ASC, order_num ASC, id ASC
+        """,
+        news_ids
+    ).fetchall()
+    media_map = {int(news_id): [] for news_id in news_ids}
+    for row in rows:
+        item = dict(row)
+        item["image_url"] = upload_url("news", item["image_path"])
+        media_map.setdefault(int(item["news_id"]), []).append(item)
+    return media_map
+
+
+def _serialize_news_item(row, media_map=None):
+    item = dict(row)
+    gallery = list((media_map or {}).get(int(item["id"]), []))
+    if not gallery and item.get("image_path"):
+        gallery = [{
+            "id": None,
+            "news_id": item["id"],
+            "image_path": item["image_path"],
+            "image_url": upload_url("news", item["image_path"]),
+            "caption": item.get("excerpt") or item.get("title"),
+            "order_num": 0,
+        }]
+    item["gallery"] = gallery
+    item["gallery_count"] = len(gallery)
+    if gallery:
+        item["image_url"] = gallery[0]["image_url"]
+        item["image_api_url"] = f"/api/news/{item['id']}/image"
+        item["hero_caption"] = (gallery[0].get("caption") or "").strip()
+    excerpt = (item.get('excerpt') or '').strip()
+    content = (item.get('content') or '').strip()
+    if not excerpt and content:
+        item['excerpt'] = content[:180].rstrip() + ('...' if len(content) > 180 else '')
+    item['has_full_content'] = bool(content)
+    return item
+
 BACKEND_DIR = os.path.dirname(__file__)
 try:
     from .config import get_settings
@@ -602,20 +649,9 @@ def public_news():
         query += " LIMIT ?"
         params.append(limit)
     rows = db.execute(query, tuple(params)).fetchall()
+    media_map = _fetch_news_media_map(db, [int(r["id"]) for r in rows])
     db.close()
-    result = []
-    for r in rows:
-        d = dict(r)
-        if d.get('image_path'):
-            d['image_url'] = upload_url('news', d['image_path'])
-            d['image_api_url'] = f"/api/news/{d['id']}/image"
-        excerpt = (d.get('excerpt') or '').strip()
-        content = (d.get('content') or '').strip()
-        if not excerpt and content:
-            d['excerpt'] = content[:180].rstrip() + ('...' if len(content) > 180 else '')
-        d['has_full_content'] = bool(content)
-        result.append(d)
-    return jsonify(result)
+    return jsonify([_serialize_news_item(r, media_map) for r in rows])
 
 
 @app.route('/api/news/<int:nid>')
@@ -628,19 +664,11 @@ def public_news_detail(nid):
         return jsonify({'status': 'error', 'message': 'DB not ready'}), 503
     db = get_db()
     row = db.execute("SELECT * FROM news_events WHERE id = ?", (nid,)).fetchone()
+    media_map = _fetch_news_media_map(db, [nid]) if row else {}
     db.close()
     if not row:
         return jsonify({'error': 'Update not found'}), 404
-    item = dict(row)
-    if item.get('image_path'):
-        item['image_url'] = upload_url('news', item['image_path'])
-        item['image_api_url'] = f"/api/news/{item['id']}/image"
-    excerpt = (item.get('excerpt') or '').strip()
-    content = (item.get('content') or '').strip()
-    if not excerpt and content:
-        item['excerpt'] = content[:180].rstrip() + ('...' if len(content) > 180 else '')
-    item['has_full_content'] = bool(content)
-    return jsonify(item)
+    return jsonify(_serialize_news_item(row, media_map))
 
 
 @app.route('/api/news/<int:nid>/image')
@@ -653,10 +681,24 @@ def public_news_image(nid):
         return jsonify({'status': 'error', 'message': 'DB not ready'}), 503
     db = get_db()
     row = db.execute("SELECT image_path FROM news_events WHERE id = ?", (nid,)).fetchone()
+    media_row = db.execute(
+        """
+        SELECT image_path
+        FROM news_event_media
+        WHERE news_id = ?
+        ORDER BY order_num ASC, id ASC
+        LIMIT 1
+        """,
+        (nid,)
+    ).fetchone()
     db.close()
-    if not row or not row['image_path']:
+    filename = None
+    if media_row and media_row['image_path']:
+        filename = media_row['image_path']
+    elif row and row['image_path']:
+        filename = row['image_path']
+    if not filename:
         abort(404)
-    filename = row['image_path']
     payload = read_upload_bytes('news', filename)
     if not payload:
         abort(404)

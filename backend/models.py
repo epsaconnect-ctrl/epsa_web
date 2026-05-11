@@ -436,6 +436,14 @@ CREATE TABLE IF NOT EXISTS news_events (
     created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS news_event_media (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    news_id     INTEGER NOT NULL REFERENCES news_events(id) ON DELETE CASCADE,
+    image_path  TEXT NOT NULL,
+    caption     TEXT,
+    order_num   INTEGER DEFAULT 0
+);
+
 CREATE TABLE IF NOT EXISTS leadership_profiles (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     name        TEXT NOT NULL,
@@ -768,6 +776,13 @@ def migrate_db():
             image_path  TEXT,
             is_featured INTEGER DEFAULT 0,
             created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+        )""",
+        """CREATE TABLE IF NOT EXISTS news_event_media (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            news_id INTEGER NOT NULL REFERENCES news_events(id) ON DELETE CASCADE,
+            image_path TEXT NOT NULL,
+            caption TEXT,
+            order_num INTEGER DEFAULT 0
         )""",
         """CREATE TABLE IF NOT EXISTS leadership_profiles (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,

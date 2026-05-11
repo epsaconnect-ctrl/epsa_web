@@ -492,6 +492,69 @@ html, body, .dash-main {
   display: block;
 }
 
+.dashboard-news-gallery {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  grid-template-rows: repeat(2, 1fr);
+  gap: 6px;
+  position: relative;
+}
+
+.dashboard-news-gallery-thumb {
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.dashboard-news-cell {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(26,107,60,0.12), rgba(200,163,64,0.16));
+}
+
+.dashboard-news-cell-1 {
+  grid-row: 1 / span 2;
+}
+
+.dashboard-news-cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.dashboard-news-cell figcaption {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(15,23,42,0.58);
+  color: white;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  backdrop-filter: blur(10px);
+}
+
+.dashboard-news-overflow {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.92);
+  color: var(--epsa-green-dark);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  box-shadow: 0 18px 35px rgba(15,23,42,0.18);
+}
+
 .student-featured-body {
   padding: var(--space-6);
   display: flex;
@@ -512,6 +575,19 @@ html, body, .dash-main {
   color: var(--text-secondary);
   line-height: 1.8;
   margin-bottom: var(--space-4);
+}
+
+.student-update-caption {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #355246;
+  font-size: 0.84rem;
+  line-height: 1.65;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(26,107,60,0.08), rgba(200,163,64,0.1));
 }
 
 .student-updates-list {

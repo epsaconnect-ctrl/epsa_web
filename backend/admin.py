@@ -36,6 +36,42 @@ def _serialize_row(row):
     return d
 
 
+def _parse_news_gallery_captions(raw_value):
+    if not raw_value:
+        return []
+    text = str(raw_value).strip()
+    if not text:
+        return []
+    try:
+        payload = json.loads(text)
+        if isinstance(payload, list):
+            return [str(item or '').strip() for item in payload]
+    except Exception:
+        pass
+    return [line.strip() for line in text.splitlines()]
+
+
+def _fetch_news_media_map(db, news_ids):
+    if not news_ids:
+        return {}
+    placeholders = ",".join("?" * len(news_ids))
+    rows = db.execute(
+        f"""
+        SELECT id, news_id, image_path, caption, order_num
+        FROM news_event_media
+        WHERE news_id IN ({placeholders})
+        ORDER BY news_id ASC, order_num ASC, id ASC
+        """,
+        news_ids
+    ).fetchall()
+    media_map = {int(news_id): [] for news_id in news_ids}
+    for row in rows:
+        item = dict(row)
+        item["image_url"] = upload_url("news", item["image_path"])
+        media_map.setdefault(int(item["news_id"]), []).append(item)
+    return media_map
+
+
 def require_admin(f):
     from functools import wraps
     @wraps(f)
@@ -2386,29 +2422,67 @@ def complete_vacancy_election(vacancy_id):
 def get_all_news():
     db = get_db()
     rows = db.execute("SELECT * FROM news_events ORDER BY created_at DESC").fetchall()
+    media_map = _fetch_news_media_map(db, [int(r["id"]) for r in rows])
     db.close()
-    return jsonify([dict(r) for r in rows])
+    result = []
+    for row in rows:
+        item = dict(row)
+        gallery = list(media_map.get(int(item["id"]), []))
+        if not gallery and item.get("image_path"):
+            gallery = [{
+                "id": None,
+                "news_id": item["id"],
+                "image_path": item["image_path"],
+                "image_url": upload_url("news", item["image_path"]),
+                "caption": item.get("excerpt") or item.get("title"),
+                "order_num": 0,
+            }]
+        item["gallery"] = gallery
+        item["gallery_count"] = len(gallery)
+        if gallery:
+            item["image_url"] = gallery[0]["image_url"]
+        result.append(item)
+    return jsonify(result)
 
 @admin_bp.route('/news', methods=['POST'])
 @require_admin
 def add_news():
     data = request.form
-    file = request.files.get('image')
-    filename = ''
-    if file:
-        import uuid
-        ext = file.filename.split('.')[-1]
-        filename = f"news_{uuid.uuid4().hex[:8]}.{ext}"
-        filename = save_upload(file, 'news', filename=filename)
+    gallery_files = [f for f in request.files.getlist('images') if f and getattr(f, 'filename', '')]
+    legacy_file = request.files.get('image')
+    if legacy_file and getattr(legacy_file, 'filename', '') and not gallery_files:
+        gallery_files = [legacy_file]
+
+    saved_gallery = []
+    captions = _parse_news_gallery_captions(data.get('gallery_captions'))
+    for idx, file in enumerate(gallery_files):
+        ext = (file.filename or '').split('.')[-1] or 'jpg'
+        filename = f"news_{uuid.uuid4().hex[:8]}_{idx}.{ext}"
+        stored = save_upload(file, 'news', filename=filename)
+        saved_gallery.append({
+            "image_path": stored,
+            "caption": captions[idx] if idx < len(captions) else '',
+            "order_num": idx,
+        })
+    cover_filename = saved_gallery[0]["image_path"] if saved_gallery else ''
     
     db = get_db()
     if data.get('is_featured') == '1':
         db.execute("UPDATE news_events SET is_featured=0")  # Ensures only one is featured
         
-    db.execute("""
+    cur = db.execute("""
         INSERT INTO news_events (title, category, excerpt, content, image_path, is_featured)
         VALUES (?, ?, ?, ?, ?, ?)
-    """, (data.get('title'), data.get('category'), data.get('excerpt'), data.get('content'), filename, int(data.get('is_featured', 0))))
+    """, (data.get('title'), data.get('category'), data.get('excerpt'), data.get('content'), cover_filename, int(data.get('is_featured', 0))))
+    news_id = cur.lastrowid
+    for item in saved_gallery:
+        db.execute(
+            """
+            INSERT INTO news_event_media (news_id, image_path, caption, order_num)
+            VALUES (?, ?, ?, ?)
+            """,
+            (news_id, item["image_path"], item["caption"], item["order_num"])
+        )
     db.commit(); db.close()
     return jsonify({'message': 'News published successfully'})
 
@@ -2416,6 +2490,7 @@ def add_news():
 @require_admin
 def delete_news(nid):
     db = get_db()
+    db.execute("DELETE FROM news_event_media WHERE news_id=?", (nid,))
     db.execute("DELETE FROM news_events WHERE id=?", (nid,))
     db.commit(); db.close()
     return jsonify({'message': 'News removed'})

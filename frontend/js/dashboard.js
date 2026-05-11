@@ -199,12 +199,13 @@ function renderStudentUpdates() {
   featuredWrap.innerHTML = `
     <div class="student-featured-card">
       <div class="student-featured-media">
-        ${(featured.image_api_url || featured.image_url) ? `<img src="${dashboardNewsImageUrl(featured)}" alt="${dashboardEscapeHtml(featured.title)}">` : ''}
+        ${renderDashboardNewsGallery(featured, 'featured')}
       </div>
       <div class="student-featured-body">
         <span class="news-category">${dashboardEscapeHtml(featured.category || 'Update')}</span>
         <div class="student-featured-title">${dashboardEscapeHtml(featured.title)}</div>
         <div class="student-featured-copy">${dashboardEscapeHtml(featured.excerpt || featured.content || 'Read the latest EPSA update.')}</div>
+        ${featured.hero_caption ? `<div class="student-update-caption">${dashboardEscapeHtml(featured.hero_caption)}</div>` : ''}
         <div class="student-update-meta">${formatDashboardDate(featured.created_at)}</div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:18px;">
           <button type="button" class="btn btn-primary btn-sm" onclick="openNewsPreviewModal(${featured.id})">Read full update</button>
@@ -217,7 +218,7 @@ function renderStudentUpdates() {
   listWrap.innerHTML = others.map((item) => `
     <button type="button" class="student-update-item" onclick="openNewsPreviewModal(${item.id})">
       <div class="student-update-thumb">
-        ${(item.image_api_url || item.image_url) ? `<img src="${dashboardNewsImageUrl(item)}" alt="${dashboardEscapeHtml(item.title)}">` : ''}
+        ${renderDashboardNewsGallery(item, 'thumb')}
       </div>
       <div style="text-align:left;">
         <span class="news-category" style="font-size:0.68rem;">${dashboardEscapeHtml(item.category || 'Update')}</span>
@@ -241,13 +242,38 @@ async function loadStudentUpdates() {
   }
 }
 
+function dashboardNewsGallery(item, maxItems = 4) {
+  return Array.isArray(item?.gallery) ? item.gallery.slice(0, maxItems) : [];
+}
+
+function renderDashboardNewsGallery(item, variant = 'featured') {
+  const gallery = dashboardNewsGallery(item, variant === 'featured' ? 4 : 3);
+  if (!gallery.length) {
+    return (variant === 'featured' && (item.image_api_url || item.image_url))
+      ? `<img src="${dashboardNewsImageUrl(item)}" alt="${dashboardEscapeHtml(item.title)}">`
+      : '';
+  }
+  const className = variant === 'featured' ? 'dashboard-news-gallery' : 'dashboard-news-gallery dashboard-news-gallery-thumb';
+  return `
+    <div class="${className}">
+      ${gallery.map((media, index) => `
+        <figure class="dashboard-news-cell dashboard-news-cell-${index + 1}">
+          <img src="${dashboardEscapeHtml(media.image_url || '')}" alt="${dashboardEscapeHtml(media.caption || item.title || 'EPSA update image')}">
+          ${(media.caption || '').trim() && index === 0 && variant === 'featured' ? `<figcaption>${dashboardEscapeHtml(media.caption)}</figcaption>` : ''}
+        </figure>
+      `).join('')}
+      ${item.gallery_count > gallery.length ? `<div class="dashboard-news-overflow">+${item.gallery_count - gallery.length}</div>` : ''}
+    </div>
+  `;
+}
+
 function openNewsPreviewModal(id) {
   const modal = document.getElementById('newsPreviewModal');
   const content = document.getElementById('newsPreviewContent');
   const item = studentUpdatesCache.find((entry) => entry.id === id);
   if (!modal || !content || !item) return;
   content.innerHTML = `
-    ${(item.image_api_url || item.image_url) ? `<div class="news-preview-hero"><img src="${dashboardNewsImageUrl(item)}" alt="${dashboardEscapeHtml(item.title)}"></div>` : ''}
+    ${(dashboardNewsGallery(item).length || item.image_api_url || item.image_url) ? `<div class="news-preview-hero">${renderDashboardNewsGallery(item, 'featured')}</div>` : ''}
     <div class="news-preview-body">
       <div class="news-detail-meta" style="margin-bottom:14px;">
         <span class="news-category">${dashboardEscapeHtml(item.category || 'Update')}</span>
@@ -255,6 +281,7 @@ function openNewsPreviewModal(id) {
       </div>
       <h3 class="student-featured-title" style="font-size:1.55rem;margin-bottom:12px;">${dashboardEscapeHtml(item.title)}</h3>
       ${item.excerpt ? `<p class="student-featured-copy" style="margin-bottom:16px;">${dashboardEscapeHtml(item.excerpt)}</p>` : ''}
+      ${item.hero_caption ? `<div class="student-update-caption" style="margin-bottom:16px;">${dashboardEscapeHtml(item.hero_caption)}</div>` : ''}
       <div class="news-preview-content">${dashboardEscapeHtml(item.content || item.excerpt || 'Full details will be available soon.')}</div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:22px;">
         <a href="news.html?id=${item.id}" class="btn btn-primary btn-sm">Open full public page</a>
