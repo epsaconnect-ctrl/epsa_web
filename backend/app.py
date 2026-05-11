@@ -39,6 +39,7 @@ def _fetch_news_media_map(db, news_ids):
     for row in rows:
         item = dict(row)
         item["image_url"] = upload_url("news", item["image_path"])
+        item["image_api_url"] = f"/api/news/media/{item['id']}/image"
         media_map.setdefault(int(item["news_id"]), []).append(item)
     return media_map
 
@@ -699,6 +700,27 @@ def public_news_image(nid):
         filename = row['image_path']
     if not filename:
         abort(404)
+    payload = read_upload_bytes('news', filename)
+    if not payload:
+        abort(404)
+    mimetype = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+    return send_file(io.BytesIO(payload), mimetype=mimetype, download_name=filename, max_age=3600)
+
+
+@app.route('/api/news/media/<int:media_id>/image')
+def public_news_gallery_image(media_id):
+    try:
+        ensure_runtime_ready()
+    except Exception:
+        pass
+    if _runtime_init_error and not _runtime_initialized:
+        return jsonify({'status': 'error', 'message': 'DB not ready'}), 503
+    db = get_db()
+    row = db.execute("SELECT image_path FROM news_event_media WHERE id = ?", (media_id,)).fetchone()
+    db.close()
+    if not row or not row['image_path']:
+        abort(404)
+    filename = row['image_path']
     payload = read_upload_bytes('news', filename)
     if not payload:
         abort(404)

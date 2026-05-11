@@ -149,7 +149,7 @@ function homeNewsGallery(item, maxItems = 4) {
 }
 
 function homeNewsMediaUrl(media) {
-  const direct = media?.image_url || media?.image_api_url || '';
+  const direct = media?.image_api_url || media?.image_url || '';
   if (direct) return homeMediaUrl(direct);
   const rawPath = String(media?.image_path || '').trim();
   if (!rawPath) return '';

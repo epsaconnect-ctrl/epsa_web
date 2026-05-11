@@ -68,6 +68,7 @@ def _fetch_news_media_map(db, news_ids):
     for row in rows:
         item = dict(row)
         item["image_url"] = upload_url("news", item["image_path"])
+        item["image_api_url"] = f"/api/news/media/{item['id']}/image"
         media_map.setdefault(int(item["news_id"]), []).append(item)
     return media_map
 

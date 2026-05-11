@@ -25,7 +25,7 @@ function resolveNewsItemImage(item) {
 }
 
 function resolveNewsMediaImage(media) {
-  const direct = media?.image_url || media?.image_api_url || '';
+  const direct = media?.image_api_url || media?.image_url || '';
   if (direct) {
     if (typeof API.resolveUploadUrl === 'function' && !/^https?:\/\//i.test(direct) && !String(direct).startsWith('/uploads/') && !String(direct).startsWith('/storage/')) {
       return API.resolveUploadUrl('news', direct);
