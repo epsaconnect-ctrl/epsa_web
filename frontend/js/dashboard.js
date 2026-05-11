@@ -311,6 +311,15 @@ function renderDashboardNewsGallery(item, variant = 'featured') {
       ? `<img src="${dashboardNewsImageUrl(item)}" alt="${dashboardEscapeHtml(item.title)}">`
       : '';
   }
+  if (gallery.length === 1) {
+    const media = gallery[0];
+    return `
+      <div class="dashboard-news-single ${variant === 'thumb' ? 'dashboard-news-single-thumb' : ''}">
+        ${dashboardRenderNewsImg(item, media, media.caption || item.title || 'EPSA update image')}
+        ${(media.caption || '').trim() && variant === 'featured' ? `<figcaption>${dashboardEscapeHtml(media.caption)}</figcaption>` : ''}
+      </div>
+    `;
+  }
   const className = variant === 'featured' ? 'dashboard-news-gallery' : 'dashboard-news-gallery dashboard-news-gallery-thumb';
   return `
     <div class="${className}">

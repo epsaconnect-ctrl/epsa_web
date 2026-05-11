@@ -162,6 +162,15 @@ function homeNewsMediaUrl(media) {
 function renderHomeNewsMosaic(item, variant = 'featured') {
   const gallery = homeNewsGallery(item, variant === 'featured' ? 4 : 3);
   if (!gallery.length) return variant === 'featured' ? '📢' : '';
+  if (gallery.length === 1) {
+    const media = gallery[0];
+    return `
+      <div class="home-news-single ${variant === 'compact' ? 'home-news-single-compact' : ''}">
+        <img src="${homeNewsMediaUrl(media)}" alt="${homeEscapeHtml(media.caption || item.title || 'EPSA update image')}" style="width:100%;height:100%;object-fit:cover;">
+        ${(media.caption || '').trim() && variant === 'featured' ? `<figcaption>${homeEscapeHtml(media.caption)}</figcaption>` : ''}
+      </div>
+    `;
+  }
   const className = variant === 'featured' ? 'home-news-mosaic' : 'home-news-mosaic home-news-mosaic-compact';
   return `
     <div class="${className}">

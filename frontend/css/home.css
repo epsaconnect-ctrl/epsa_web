@@ -953,6 +953,39 @@
   position: relative;
 }
 
+.home-news-single {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.home-news-single-compact {
+  height: 116px;
+  border-radius: 14px;
+}
+
+.home-news-single img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.home-news-single figcaption {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(15,23,42,0.55);
+  color: white;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  backdrop-filter: blur(10px);
+}
+
 .home-news-mosaic-compact {
   height: 116px;
   border-radius: 14px;

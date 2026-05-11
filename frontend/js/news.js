@@ -92,6 +92,15 @@ function renderNewsGallery(item, variant = 'detail') {
       ? `<img src="${resolveNewsItemImage(item)}" alt="${newsEscapeHtml(item.title)}">`
       : '';
   }
+  if (gallery.length === 1) {
+    const media = gallery[0];
+    return `
+      <div class="news-gallery-single ${variant === 'archive' ? 'news-gallery-single-compact' : ''}">
+        ${renderNewsImg(item, media, media.caption || item.title || 'EPSA update image')}
+        ${(media.caption || '').trim() && variant === 'detail' ? `<figcaption>${newsEscapeHtml(media.caption)}</figcaption>` : ''}
+      </div>
+    `;
+  }
   const className = variant === 'archive' ? 'news-gallery-mosaic news-gallery-mosaic-compact' : 'news-gallery-mosaic';
   return `
     <div class="${className}">
