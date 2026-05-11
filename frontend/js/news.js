@@ -24,6 +24,22 @@ function resolveNewsItemImage(item) {
   return newsImageUrl(item?.image_api_url || item?.image_url || '');
 }
 
+function resolveNewsMediaImage(media) {
+  const direct = media?.image_url || media?.image_api_url || '';
+  if (direct) {
+    if (typeof API.resolveUploadUrl === 'function' && !/^https?:\/\//i.test(direct) && !String(direct).startsWith('/uploads/') && !String(direct).startsWith('/storage/')) {
+      return API.resolveUploadUrl('news', direct);
+    }
+    return newsImageUrl(direct);
+  }
+  const rawPath = String(media?.image_path || '').trim();
+  if (!rawPath) return '';
+  if (typeof API.resolveUploadUrl === 'function') {
+    return API.resolveUploadUrl('news', rawPath);
+  }
+  return newsImageUrl(rawPath);
+}
+
 function readNewsGallery(item, maxItems = null) {
   const gallery = Array.isArray(item?.gallery) ? item.gallery : [];
   return maxItems ? gallery.slice(0, maxItems) : gallery;
@@ -41,7 +57,7 @@ function renderNewsGallery(item, variant = 'detail') {
     <div class="${className}">
       ${gallery.map((media, index) => `
         <figure class="news-gallery-cell news-gallery-cell-${index + 1}">
-          <img src="${newsImageUrl(media.image_url || '')}" alt="${newsEscapeHtml(media.caption || item.title || 'EPSA update image')}">
+          <img src="${resolveNewsMediaImage(media)}" alt="${newsEscapeHtml(media.caption || item.title || 'EPSA update image')}">
           ${(media.caption || '').trim() && variant === 'detail' ? `<figcaption>${newsEscapeHtml(media.caption)}</figcaption>` : ''}
         </figure>
       `).join('')}

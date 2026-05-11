@@ -148,6 +148,17 @@ function homeNewsGallery(item, maxItems = 4) {
   return Array.isArray(item?.gallery) ? item.gallery.slice(0, maxItems) : [];
 }
 
+function homeNewsMediaUrl(media) {
+  const direct = media?.image_url || media?.image_api_url || '';
+  if (direct) return homeMediaUrl(direct);
+  const rawPath = String(media?.image_path || '').trim();
+  if (!rawPath) return '';
+  if (/^https?:\/\//i.test(rawPath)) return rawPath;
+  if (rawPath.startsWith('/')) return homeMediaUrl(rawPath);
+  const normalized = rawPath.replace(/^news[\\/]/i, '').replace(/^\/+/, '');
+  return homeMediaUrl(`/uploads/news/${normalized}`);
+}
+
 function renderHomeNewsMosaic(item, variant = 'featured') {
   const gallery = homeNewsGallery(item, variant === 'featured' ? 4 : 3);
   if (!gallery.length) return variant === 'featured' ? '📢' : '';
@@ -156,7 +167,7 @@ function renderHomeNewsMosaic(item, variant = 'featured') {
     <div class="${className}">
       ${gallery.map((media, index) => `
         <figure class="home-news-tile home-news-tile-${index + 1}">
-          <img src="${homeMediaUrl(media.image_url || '')}" alt="${homeEscapeHtml(media.caption || item.title || 'EPSA update image')}" style="width:100%;height:100%;object-fit:cover;">
+          <img src="${homeNewsMediaUrl(media)}" alt="${homeEscapeHtml(media.caption || item.title || 'EPSA update image')}" style="width:100%;height:100%;object-fit:cover;">
           ${(media.caption || '').trim() && index === 0 ? `<figcaption>${homeEscapeHtml(media.caption)}</figcaption>` : ''}
         </figure>
       `).join('')}

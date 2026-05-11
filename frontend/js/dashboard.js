@@ -48,6 +48,22 @@ function dashboardNewsImageUrl(item) {
   return API.toAbsoluteUrl(item?.image_api_url || item?.image_url || '');
 }
 
+function dashboardNewsMediaUrl(media) {
+  const direct = media?.image_url || media?.image_api_url || '';
+  if (direct) {
+    if (typeof API.resolveUploadUrl === 'function' && !/^https?:\/\//i.test(direct) && !String(direct).startsWith('/uploads/') && !String(direct).startsWith('/storage/')) {
+      return API.resolveUploadUrl('news', direct);
+    }
+    return API.toAbsoluteUrl(direct);
+  }
+  const rawPath = String(media?.image_path || '').trim();
+  if (!rawPath) return '';
+  if (typeof API.resolveUploadUrl === 'function') {
+    return API.resolveUploadUrl('news', rawPath);
+  }
+  return API.toAbsoluteUrl(rawPath);
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   relocateDynamicDashboardSections();
   // Strict check: BOTH a token AND a cached user must exist.
@@ -258,7 +274,7 @@ function renderDashboardNewsGallery(item, variant = 'featured') {
     <div class="${className}">
       ${gallery.map((media, index) => `
         <figure class="dashboard-news-cell dashboard-news-cell-${index + 1}">
-          <img src="${dashboardEscapeHtml(media.image_url || '')}" alt="${dashboardEscapeHtml(media.caption || item.title || 'EPSA update image')}">
+          <img src="${dashboardEscapeHtml(dashboardNewsMediaUrl(media))}" alt="${dashboardEscapeHtml(media.caption || item.title || 'EPSA update image')}">
           ${(media.caption || '').trim() && index === 0 && variant === 'featured' ? `<figcaption>${dashboardEscapeHtml(media.caption)}</figcaption>` : ''}
         </figure>
       `).join('')}
