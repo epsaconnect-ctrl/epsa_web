@@ -163,6 +163,16 @@ def _get_or_create_exam_question_set(db, exam):
     return question_ids
 
 
+def _get_locked_exam_question_ids(db, exam):
+    """
+    Return the stored exam question set in its locked order.
+
+    Mock exams are scheduled with a canonical question_set that both the
+    admin "view questions" flow and every student attempt should reuse.
+    """
+    return list(_get_or_create_exam_question_set(db, exam) or [])
+
+
 def _can_view_performance(exam_row, submission_row):
     if not exam_row or not submission_row:
         return False
@@ -276,11 +286,8 @@ def start_mock_exam(exam_id):
                 if not exam_is_open:
                     return jsonify({"error": "You have already submitted this exam"}), 409
 
-                # Reset the existing row in-place for a clean retake while preserving the one-row-per-user schema.
-                base_question_ids = _get_or_create_exam_question_set(db, exam)
-                question_ids = list(base_question_ids)
-                if _coerce_bool(exam["shuffle_questions"], True):
-                    random.shuffle(question_ids)
+                # Retakes must reuse the exact locked exam that was scheduled.
+                question_ids = _get_locked_exam_question_ids(db, exam)
                 if not question_ids:
                     return jsonify({"error": "Not enough approved questions in the bank to generate this exam"}), 500
 
@@ -378,14 +385,9 @@ def start_mock_exam(exam_id):
                 "resuming": True,
             })
 
-        base_question_ids = _get_or_create_exam_question_set(db, exam)
-        
-        # For retakes, use the same question set (base_question_ids); for first attempt, optionally shuffle
-        if _coerce_bool(exam["shuffle_questions"], True) and not existing:
-            question_ids = list(base_question_ids)
-            random.shuffle(question_ids)
-        else:
-            question_ids = list(base_question_ids)
+        # First attempts must also use the exact locked question set so every
+        # student sees the same exam the admin scheduled.
+        question_ids = _get_locked_exam_question_ids(db, exam)
 
         if not question_ids:
             return jsonify({"error": "Not enough approved questions in the bank to generate this exam"}), 500
@@ -1493,17 +1495,19 @@ def admin_get_exam_questions(exam_id):
             f"SELECT id, subject_category, topic, bloom_level, difficulty, question_text, option_a, option_b, option_c, option_d, correct_idx FROM question_bank WHERE id IN ({placeholders})",
             qids
         ).fetchall()
+        question_map = {q["id"]: dict(q) for q in questions}
+        ordered_questions = [question_map[qid] for qid in qids if qid in question_map]
 
         # Group by subject_category -> topic
         grouped = {}
-        for q in questions:
+        for q in ordered_questions:
             theme = q["subject_category"] or "General"
             course = q["topic"] or "General"
             if theme not in grouped:
                 grouped[theme] = {}
             if course not in grouped[theme]:
                 grouped[theme][course] = []
-            grouped[theme][course].append(dict(q))
+            grouped[theme][course].append(q)
 
         themes_list = []
         q_number = 1
