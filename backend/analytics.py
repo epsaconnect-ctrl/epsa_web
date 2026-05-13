@@ -4,6 +4,7 @@ Provides advanced insights on student performance, question quality,
 Bloom's taxonomy coverage, and cohort-level metrics.
 """
 import json
+from collections import defaultdict
 from datetime import datetime, timezone
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
@@ -65,7 +66,7 @@ def server_time():
     return jsonify({"utc": now.isoformat(), "ts": now.timestamp()})
 
 
-# ── COHORT SUMMARY ────────────────────────────────────────────────────────────
+# ── COHORT SUMMARY (uses best score per student) ─────────────────────────────
 @analytics_bp.route("/cohort-summary", methods=["GET"])
 @jwt_required()
 def cohort_summary():
@@ -76,19 +77,44 @@ def cohort_summary():
         exam_id = request.args.get("exam_id")
 
         if exam_id:
-            subs = db.execute("""
-                SELECT ms.*, u.first_name||' '||u.father_name as name, u.university
-                FROM mock_exam_submissions ms
-                JOIN users u ON u.id = ms.user_id
-                WHERE ms.exam_id = ? AND ms.status IN ('submitted','auto_submitted')
-            """, (exam_id,)).fetchall()
+            subs = db.execute(
+                """
+                SELECT br.user_id, br.exam_id, br.best_score AS score,
+                       u.first_name||' '||u.father_name AS name, u.university
+                FROM (
+                    SELECT t.user_id, t.exam_id, MAX(t.score) AS best_score
+                    FROM (
+                        SELECT user_id, exam_id, score FROM mock_exam_submissions
+                        WHERE exam_id=? AND status IN ('submitted','auto_submitted') AND score IS NOT NULL
+                        UNION ALL
+                        SELECT user_id, exam_id, score FROM mock_exam_history
+                        WHERE exam_id=? AND score IS NOT NULL
+                    ) t
+                    GROUP BY t.user_id, t.exam_id
+                ) br
+                JOIN users u ON u.id = br.user_id
+                """,
+                (int(exam_id), int(exam_id)),
+            ).fetchall()
         else:
-            subs = db.execute("""
-                SELECT ms.*, u.first_name||' '||u.father_name as name, u.university
-                FROM mock_exam_submissions ms
-                JOIN users u ON u.id = ms.user_id
-                WHERE ms.status IN ('submitted','auto_submitted')
-            """).fetchall()
+            subs = db.execute(
+                """
+                SELECT br.user_id, br.exam_id, br.best_score AS score,
+                       u.first_name||' '||u.father_name AS name, u.university
+                FROM (
+                    SELECT t.user_id, t.exam_id, MAX(t.score) AS best_score
+                    FROM (
+                        SELECT user_id, exam_id, score FROM mock_exam_submissions
+                        WHERE status IN ('submitted','auto_submitted') AND score IS NOT NULL
+                        UNION ALL
+                        SELECT user_id, exam_id, score FROM mock_exam_history
+                        WHERE score IS NOT NULL
+                    ) t
+                    GROUP BY t.user_id, t.exam_id
+                ) br
+                JOIN users u ON u.id = br.user_id
+                """
+            ).fetchall()
 
         scores = [s["score"] for s in subs if s["score"] is not None]
         distribution = {
@@ -150,7 +176,7 @@ def cohort_summary():
         except Exception:
             category_perf = []
 
-        # University breakdown
+        # University breakdown (best score per student per exam)
         uni_scores = {}
         for s in subs:
             uni = s["university"] or "Unknown"
@@ -319,7 +345,15 @@ def bloom_analysis():
     })
 
 
-# ── AT-RISK STUDENTS ──────────────────────────────────────────────────────────
+# ── AT-RISK STUDENTS (any attempt < threshold; rich per-exam detail) ─────────
+def _serialize_ts(val):
+    if val is None:
+        return None
+    if isinstance(val, datetime):
+        return val.isoformat()
+    return val
+
+
 @analytics_bp.route("/at-risk-students", methods=["GET"])
 @jwt_required()
 def at_risk_students():
@@ -329,42 +363,131 @@ def at_risk_students():
         _require_admin(db, uid)
         threshold = float(request.args.get("threshold", 50))
         min_exams = int(request.args.get("min_exams", 1))
-        rows = db.execute("""
-            SELECT ms.user_id,
-                   u.first_name||' '||u.father_name as name,
+
+        hist = db.execute(
+            """
+            SELECT h.user_id, h.exam_id, h.score, h.submitted_at, h.attempt_number,
+                   me.title AS exam_title,
+                   u.first_name||' '||u.father_name AS name,
                    u.university, u.email,
-                   COUNT(ms.id)       as exam_count,
-                   AVG(ms.score)      as avg_score,
-                   MIN(ms.score)      as min_score,
-                   MAX(ms.score)      as max_score,
-                   MAX(ms.submitted_at) as last_exam
+                   u.program_type, u.academic_year, u.field_of_study
+            FROM mock_exam_history h
+            JOIN mock_exams me ON me.id = h.exam_id
+            JOIN users u ON u.id = h.user_id
+            WHERE h.score IS NOT NULL
+            ORDER BY h.user_id, h.exam_id, h.attempt_number ASC, h.id ASC
+            """
+        ).fetchall()
+
+        legacy = db.execute(
+            """
+            SELECT ms.user_id, ms.exam_id, ms.score, ms.submitted_at,
+                   1 AS attempt_number, me.title AS exam_title,
+                   u.first_name||' '||u.father_name AS name,
+                   u.university, u.email,
+                   u.program_type, u.academic_year, u.field_of_study
             FROM mock_exam_submissions ms
+            JOIN mock_exams me ON me.id = ms.exam_id
             JOIN users u ON u.id = ms.user_id
-            WHERE ms.status IN ('submitted','auto_submitted')
-              AND ms.score IS NOT NULL
-            GROUP BY ms.user_id
-            HAVING AVG(ms.score) < ? AND COUNT(ms.id) >= ?
-            ORDER BY AVG(ms.score) ASC
-        """, (threshold, min_exams)).fetchall()
+            WHERE ms.status IN ('submitted','auto_submitted') AND ms.score IS NOT NULL
+              AND NOT EXISTS (
+                  SELECT 1 FROM mock_exam_history mh
+                  WHERE mh.exam_id = ms.exam_id AND mh.user_id = ms.user_id
+              )
+            """
+        ).fetchall()
+
+        by_pair = defaultdict(list)
+        meta = {}
+
+        def _ingest_row(r):
+            key = (r["user_id"], r["exam_id"])
+            if key not in meta:
+                meta[key] = {
+                    "name": r["name"],
+                    "university": r["university"],
+                    "email": r["email"],
+                    "program_type": r["program_type"],
+                    "academic_year": r["academic_year"],
+                    "field_of_study": r["field_of_study"],
+                    "exam_title": r["exam_title"],
+                }
+            by_pair[key].append({
+                "score": float(r["score"]) if r["score"] is not None else None,
+                "submitted_at": _serialize_ts(r["submitted_at"]),
+                "attempt_number": int(r["attempt_number"] or 1),
+            })
+
+        for r in hist:
+            _ingest_row(r)
+        for r in legacy:
+            _ingest_row(r)
+
+        students = {}
+        for (sid, eid), attempts in by_pair.items():
+            attempts.sort(key=lambda a: (a["attempt_number"], a["submitted_at"] or ""))
+            if not any(a["score"] is not None and a["score"] < threshold for a in attempts):
+                continue
+            m = meta[(sid, eid)]
+            best_sc = max((a["score"] for a in attempts if a["score"] is not None), default=None)
+            first_t = next((a["submitted_at"] for a in attempts if a.get("submitted_at")), None)
+            last_t = next((a["submitted_at"] for a in reversed(attempts) if a.get("submitted_at")), None)
+
+            if sid not in students:
+                students[sid] = {
+                    "student_id": sid,
+                    "name": m["name"],
+                    "university": m["university"],
+                    "email": m["email"],
+                    "program_type": m["program_type"],
+                    "academic_year": m["academic_year"],
+                    "field_of_study": m["field_of_study"],
+                    "at_risk_exams": [],
+                    "overall_best": None,
+                    "_last_ts": None,
+                }
+
+            students[sid]["at_risk_exams"].append({
+                "exam_id": eid,
+                "exam_title": m["exam_title"],
+                "best_score": round(best_sc, 2) if best_sc is not None else None,
+                "attempt_count": len(attempts),
+                "all_attempts": attempts,
+                "first_taken": first_t,
+                "last_taken": last_t,
+            })
+            if best_sc is not None:
+                ob = students[sid]["overall_best"]
+                if ob is None or best_sc > ob:
+                    students[sid]["overall_best"] = round(best_sc, 2)
+            if last_t and (students[sid]["_last_ts"] is None or str(last_t) > str(students[sid]["_last_ts"])):
+                students[sid]["_last_ts"] = last_t
+
+        result = []
+        for sid, data in students.items():
+            if len(data["at_risk_exams"]) < min_exams:
+                continue
+            exams = sorted(data["at_risk_exams"], key=lambda x: x["last_taken"] or "")
+            bests = [x["best_score"] for x in exams if x["best_score"] is not None]
+            avg_score = round(sum(bests) / len(bests), 2) if bests else 0.0
+            data.pop("_last_ts", None)
+            data["exam_count"] = len(exams)
+            data["avg_score"] = avg_score
+            data["last_exam"] = max(
+                (x["last_taken"] for x in exams if x.get("last_taken")),
+                default=None,
+            )
+            data["at_risk_exams"] = exams
+            data["risk_level"] = "high" if (data["overall_best"] or 0) < 35 else "moderate"
+            result.append(data)
+
+        result.sort(key=lambda x: x["overall_best"] or 0)
+
     finally:
         db.close()
     return jsonify({
-        "at_risk_students": [
-            {
-                "student_id":  r["user_id"],
-                "name":        r["name"],
-                "university":  r["university"],
-                "email":       r["email"],
-                "exam_count":  r["exam_count"],
-                "avg_score":   round(r["avg_score"] or 0, 2),
-                "min_score":   round(r["min_score"]  or 0, 2),
-                "max_score":   round(r["max_score"]  or 0, 2),
-                "last_exam":   r["last_exam"],
-                "risk_level":  "high" if (r["avg_score"] or 0) < 35 else "moderate",
-            }
-            for r in rows
-        ],
-        "count":     len(rows),
+        "at_risk_students": result,
+        "count":     len(result),
         "threshold": threshold,
     })
 
@@ -451,6 +574,57 @@ def student_behavior(student_id):
 
         scores    = [e["score"] for e in exam_history if e["score"] is not None]
         avg_score = sum(scores) / len(scores) if scores else 0
+        best_score = max(scores) if scores else 0
+
+        # Fetch full retake history from mock_exam_history for this student
+        retake_history_rows = db.execute("""
+            SELECT mh.exam_id, mh.score, mh.submitted_at, mh.attempt_number,
+                   me.title as exam_title
+            FROM mock_exam_history mh
+            JOIN mock_exams me ON me.id = mh.exam_id
+            WHERE mh.user_id = ? AND mh.score IS NOT NULL
+            ORDER BY mh.exam_id, mh.attempt_number ASC
+        """, (student_id,)).fetchall()
+
+        retake_map = {}
+        for rh in retake_history_rows:
+            eid = rh["exam_id"]
+            if eid not in retake_map:
+                retake_map[eid] = {"exam_title": rh["exam_title"], "attempts": []}
+            retake_map[eid]["attempts"].append({
+                "score": rh["score"],
+                "submitted_at": _serialize_ts(rh["submitted_at"]),
+                "attempt_number": rh["attempt_number"] or 1,
+            })
+
+        with_history = set(retake_map.keys())
+        for sub in subs:
+            eid = sub["exam_id"]
+            if eid in with_history or sub["score"] is None:
+                continue
+            retake_map[eid] = {
+                "exam_title": sub["exam_title"],
+                "attempts": [{
+                    "score": sub["score"],
+                    "submitted_at": _serialize_ts(sub["submitted_at"]),
+                    "attempt_number": 1,
+                }],
+            }
+
+        all_attempts_by_exam = []
+        flat_for_risk = []
+        for eid, data in sorted(retake_map.items(), key=lambda x: x[0]):
+            att = data["attempts"]
+            for a in att:
+                if a.get("score") is not None:
+                    flat_for_risk.append(float(a["score"]))
+            best_sc = max((float(a["score"]) for a in att if a.get("score") is not None), default=0.0)
+            all_attempts_by_exam.append({
+                "exam_id": eid,
+                "exam_title": data["exam_title"],
+                "attempts": att,
+                "best_score": round(best_sc, 2),
+            })
 
     finally:
         db.close()
@@ -465,10 +639,12 @@ def student_behavior(student_id):
         "summary": {
             "total_exams":  len(subs),
             "avg_score":    round(avg_score, 2),
-            "is_at_risk":   avg_score < 50 and len(scores) >= 2,
+            "best_score":   round(best_score, 2),
+            "is_at_risk":   any(s < 50 for s in flat_for_risk),
         },
-        "exam_history":      exam_history,
-        "category_analysis": category_analysis,
+        "exam_history":        exam_history,
+        "all_attempts_by_exam": all_attempts_by_exam,
+        "category_analysis":   category_analysis,
     })
 
 
@@ -653,12 +829,24 @@ def university_benchmarking():
         exam_id = request.args.get("exam_id")
 
         if exam_id:
-            subs = db.execute("""
-                SELECT ms.score, u.university
-                FROM mock_exam_submissions ms
-                JOIN users u ON u.id = ms.user_id
-                WHERE ms.exam_id=? AND ms.status IN ('submitted','auto_submitted') AND ms.score IS NOT NULL
-            """, (exam_id,)).fetchall()
+            subs = db.execute(
+                """
+                SELECT br.best_score AS score, u.university
+                FROM (
+                    SELECT t.user_id, t.exam_id, MAX(t.score) AS best_score
+                    FROM (
+                        SELECT user_id, exam_id, score FROM mock_exam_submissions
+                        WHERE exam_id=? AND status IN ('submitted','auto_submitted') AND score IS NOT NULL
+                        UNION ALL
+                        SELECT user_id, exam_id, score FROM mock_exam_history
+                        WHERE exam_id=? AND score IS NOT NULL
+                    ) t
+                    GROUP BY t.user_id, t.exam_id
+                ) br
+                JOIN users u ON u.id = br.user_id
+                """,
+                (int(exam_id), int(exam_id)),
+            ).fetchall()
             
             cat_stats = db.execute("""
                 SELECT university, category, SUM(attempts) as attempts, SUM(correct_count) as correct_count
@@ -667,12 +855,23 @@ def university_benchmarking():
                 GROUP BY university, category
             """, (exam_id,)).fetchall()
         else:
-            subs = db.execute("""
-                SELECT ms.score, u.university
-                FROM mock_exam_submissions ms
-                JOIN users u ON u.id = ms.user_id
-                WHERE ms.status IN ('submitted','auto_submitted') AND ms.score IS NOT NULL
-            """).fetchall()
+            subs = db.execute(
+                """
+                SELECT br.best_score AS score, u.university
+                FROM (
+                    SELECT t.user_id, t.exam_id, MAX(t.score) AS best_score
+                    FROM (
+                        SELECT user_id, exam_id, score FROM mock_exam_submissions
+                        WHERE status IN ('submitted','auto_submitted') AND score IS NOT NULL
+                        UNION ALL
+                        SELECT user_id, exam_id, score FROM mock_exam_history
+                        WHERE score IS NOT NULL
+                    ) t
+                    GROUP BY t.user_id, t.exam_id
+                ) br
+                JOIN users u ON u.id = br.user_id
+                """
+            ).fetchall()
             
             cat_stats = db.execute("""
                 SELECT university, category, SUM(attempts) as attempts, SUM(correct_count) as correct_count

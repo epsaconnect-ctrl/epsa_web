@@ -3,6 +3,7 @@ import json
 import math
 import random
 import secrets
+from collections import defaultdict
 from datetime import datetime, timezone, date
 
 def _serialize_row(row):
@@ -205,8 +206,34 @@ def list_mock_exams():
             """,
             (uid,)
         ).fetchall()
+
+        # Fetch all history rows for this student to build attempt timelines
+        history_rows = db.execute(
+            """
+            SELECT exam_id, score, submitted_at, attempt_number
+            FROM mock_exam_history
+            WHERE user_id=? AND score IS NOT NULL
+            ORDER BY exam_id ASC, attempt_number ASC, id ASC
+            """,
+            (uid,)
+        ).fetchall()
     finally:
         db.close()
+
+    # Index history by exam_id
+    history_map = {}
+    for h in history_rows:
+        eid = h["exam_id"]
+        if eid not in history_map:
+            history_map[eid] = []
+        st = h["submitted_at"]
+        if isinstance(st, (datetime, date)):
+            st = st.isoformat()
+        history_map[eid].append({
+            "score": h["score"],
+            "submitted_at": st,
+            "attempt_number": h["attempt_number"] or 1,
+        })
 
     result = []
     for e in exams:
@@ -232,7 +259,44 @@ def list_mock_exams():
                 _coerce_bool(row.get("results_released"), False)
             )
         )
-        row["passed"] = bool(row["is_submitted"] and row.get("my_score") is not None and float(row.get("my_score") or 0) >= 50)
+        # Full attempt timeline from history (each row = one completed attempt, raw score)
+        exam_history = list(history_map.get(e["id"], []))
+        hist_scores = [float(h["score"]) for h in exam_history if h.get("score") is not None]
+        if (
+            not exam_history
+            and row["is_submitted"]
+            and row.get("my_score") is not None
+        ):
+            st = row.get("my_submitted_at")
+            if isinstance(st, (datetime, date)):
+                st = st.isoformat()
+            exam_history = [{
+                "score": row["my_score"],
+                "submitted_at": st,
+                "attempt_number": 1,
+            }]
+            hist_scores = [float(row["my_score"])]
+        live_sc = row.get("my_score")
+        live_f = float(live_sc) if live_sc is not None else None
+        best = None
+        if hist_scores and live_f is not None:
+            best = max(max(hist_scores), live_f)
+        elif hist_scores:
+            best = max(hist_scores)
+        elif live_f is not None:
+            best = live_f
+        row["best_score"] = best
+        row["my_score"] = best
+        row["attempt_history"] = exam_history
+        ac = len(exam_history)
+        if ac == 0 and row["is_submitted"] and live_f is not None:
+            ac = 1
+        row["attempt_count"] = ac
+        row["passed"] = bool(best is not None and best >= 50)
+        row["current_attempt_number"] = (
+            len(exam_history) + 1
+        ) if row.get("my_status") == "in_progress" else None
+
         result.append(row)
 
     return jsonify({"exams": result})
@@ -285,6 +349,9 @@ def start_mock_exam(exam_id):
                         pass
                 if not exam_is_open:
                     return jsonify({"error": "You have already submitted this exam"}), 409
+
+                # Completed attempts are recorded in mock_exam_history on each submit (raw score).
+                # Retake only resets the live submission row.
 
                 # Retakes must reuse the exact locked exam that was scheduled.
                 question_ids = _get_locked_exam_question_ids(db, exam)
@@ -580,13 +647,36 @@ def submit_mock_exam(exam_id):
         auto = data.get("auto_submit", False)
         status = "auto_submitted" if auto else "submitted"
 
+        prev_max = db.execute(
+            "SELECT COALESCE(MAX(attempt_number), 0) AS mx FROM mock_exam_history WHERE exam_id=? AND user_id=?",
+            (exam_id, uid)
+        ).fetchone()
+        next_n = int(prev_max["mx"] or 0) + 1
+        db.execute(
+            """
+            INSERT INTO mock_exam_history
+                (original_submission_id, exam_id, user_id, score, total_questions,
+                 started_at, submitted_at, attempt_number, status)
+            VALUES (?, ?, ?, ?, ?, ?, DATETIME('now'), ?, ?)
+            """,
+            (
+                sub["id"], exam_id, uid, score, len(qids),
+                sub["started_at"], next_n, status,
+            )
+        )
+        best_row = db.execute(
+            "SELECT MAX(score) AS b FROM mock_exam_history WHERE exam_id=? AND user_id=? AND score IS NOT NULL",
+            (exam_id, uid)
+        ).fetchone()
+        best_score = round(float(best_row["b"]), 2) if best_row and best_row["b"] is not None else score
+
         db.execute(
             """
             UPDATE mock_exam_submissions
             SET answers=?, time_per_question=?, answer_changes=?, confidence_levels=?, score=?, status=?, submitted_at=DATETIME('now')
             WHERE id=?
             """,
-            (json.dumps(current_answers), json.dumps(current_times), json.dumps(current_changes), json.dumps(current_conf), score, status, sub["id"])
+            (json.dumps(current_answers), json.dumps(current_times), json.dumps(current_changes), json.dumps(current_conf), best_score, status, sub["id"])
         )
         db.commit()
 
@@ -596,16 +686,35 @@ def submit_mock_exam(exam_id):
         _update_university_stats_fallback(db, sub["user_id"], exam_id, qids, current_answers, current_times, opt_order)
         db.commit()
         exam = db.execute("SELECT * FROM mock_exams WHERE id=?", (exam_id,)).fetchone()
+
+        attempt_history = []
+        hist_rows = db.execute(
+            "SELECT score, submitted_at, attempt_number FROM mock_exam_history WHERE exam_id=? AND user_id=? ORDER BY attempt_number ASC, id ASC",
+            (exam_id, uid)
+        ).fetchall()
+        for h in hist_rows:
+            st = h["submitted_at"]
+            if isinstance(st, (datetime, date)):
+                st = st.isoformat()
+            attempt_history.append({
+                "score": h["score"],
+                "submitted_at": st,
+                "attempt_number": h["attempt_number"] or 1,
+            })
     finally:
         db.close()
 
     return jsonify({
-        "score": score,
+        "score": best_score,
+        "current_attempt_score": score,
+        "best_score": best_score,
         "correct": correct,
         "total": len(qids),
         "status": status,
-        "passed": score >= 50,
+        "passed": best_score >= 50,
         "pass_mark": 50,
+        "attempt_count": len(attempt_history),
+        "attempt_history": attempt_history,
         "can_view_performance": _can_view_performance(exam, {"status": status}),
         "message": "Exam submitted successfully",
     })
@@ -1031,6 +1140,7 @@ def _update_university_stats_fallback(db, user_id, exam_id, qids, answers, time_
 @jwt_required()
 def get_my_results(exam_id):
     uid = get_jwt_identity()
+    hist_rows = []
     db = get_db()
     try:
         exam = db.execute("SELECT * FROM mock_exams WHERE id=?", (exam_id,)).fetchone()
@@ -1115,21 +1225,48 @@ def get_my_results(exam_id):
             })
             
         category_performance = [{"category": k, **v} for k, v in category_stats.items()]
+
+        hist_rows = db.execute(
+            "SELECT score, submitted_at, attempt_number FROM mock_exam_history WHERE exam_id=? AND user_id=? ORDER BY attempt_number ASC, id ASC",
+            (exam_id, uid)
+        ).fetchall()
     finally:
         db.close()
 
     s_exam = _serialize_row(exam)
     s_sub = _serialize_row(sub)
 
+    attempt_history = []
+    for h in hist_rows:
+        st = h["submitted_at"]
+        if isinstance(st, (datetime, date)):
+            st = st.isoformat()
+        attempt_history.append({
+            "score": h["score"],
+            "submitted_at": st,
+            "attempt_number": h["attempt_number"] or 1,
+        })
+    latest_raw = None
+    if attempt_history:
+        latest_raw = float(attempt_history[-1]["score"]) if attempt_history[-1].get("score") is not None else None
+    elif s_sub.get("score") is not None:
+        latest_raw = float(s_sub["score"])
+
+    best_val = float(s_sub["score"]) if s_sub.get("score") is not None else None
+
     return jsonify({
         "exam_title": s_exam["title"],
         "score": s_sub["score"],
+        "best_score": best_val,
+        "latest_attempt_score": latest_raw,
         "total": s_sub["total_questions"],
         "correct": sum(1 for b in breakdown if b["correct"]),
         "status": s_sub["status"],
         "submitted_at": s_sub["submitted_at"],
         "breakdown": breakdown,
-        "category_performance": category_performance
+        "category_performance": category_performance,
+        "attempt_count": len(attempt_history) if attempt_history else (1 if s_sub.get("score") is not None else 0),
+        "attempt_history": attempt_history,
     })
 
 
@@ -1315,7 +1452,6 @@ def admin_exam_report(exam_id):
         if not exam:
             return jsonify({"error": "Not found"}), 404
 
-        # Fetch active submissions
         active_subs = db.execute(
             """
             SELECT ms.user_id, ms.score, ms.status, u.first_name||' '||u.father_name as student_name, u.university, ms.answers, ms.option_order
@@ -1326,51 +1462,33 @@ def admin_exam_report(exam_id):
             (exam_id,)
         ).fetchall()
 
-        # Fetch history submissions for the same exam
         history_subs = db.execute(
-            "SELECT user_id, score FROM mock_exam_history WHERE exam_id=? AND score IS NOT NULL",
+            """
+            SELECT user_id, score, submitted_at, attempt_number
+            FROM mock_exam_history
+            WHERE exam_id=? AND score IS NOT NULL
+            ORDER BY user_id ASC, attempt_number ASC, id ASC
+            """,
             (exam_id,)
         ).fetchall()
 
-        # Aggregate scores per user
-        user_scores = {}
-        submissions_dict = {}
-        for sub in active_subs:
-            uid = sub["user_id"]
-            if uid not in user_scores:
-                user_scores[uid] = []
-            if sub["score"] is not None:
-                user_scores[uid].append(sub["score"])
-            submissions_dict[uid] = dict(sub) # keep track of the latest active submission for other data
-
-        for hsub in history_subs:
-            uid = hsub["user_id"]
-            if uid not in user_scores:
-                user_scores[uid] = []
-            user_scores[uid].append(hsub["score"])
-
-        def _calculate_robust_average(scores):
-            if not scores: return 0.0
-            if len(scores) < 3: return sum(scores) / len(scores)
-            sorted_scores = sorted(scores)
-            n = len(sorted_scores)
-            q1 = sorted_scores[n // 4]
-            q3 = sorted_scores[(n * 3) // 4]
-            iqr = q3 - q1
-            if iqr == 0: return sum(scores) / len(scores) # if identical scores
-            lower_bound = q1 - 1.5 * iqr
-            upper_bound = q3 + 1.5 * iqr
-            valid_scores = [s for s in scores if lower_bound <= s <= upper_bound]
-            return sum(valid_scores) / len(valid_scores) if valid_scores else sum(scores) / len(scores)
+        hist_by_user = defaultdict(list)
+        for h in history_subs:
+            hist_by_user[h["user_id"]].append(h["score"])
 
         submissions = []
-        for uid, sub_data in submissions_dict.items():
-            scores = user_scores.get(uid, [])
-            sub_data["score"] = round(_calculate_robust_average(scores), 2)
-            sub_data["attempts_count"] = len(scores)
+        for sub in active_subs:
+            sid = sub["user_id"]
+            raw = [float(s) for s in hist_by_user[sid] if s is not None]
+            if sub["score"] is not None:
+                raw.append(float(sub["score"]))
+            best = round(max(raw), 2) if raw else None
+            sub_data = dict(sub)
+            sub_data["score"] = best
+            sub_data["attempts_count"] = len(hist_by_user[sid]) if hist_by_user[sid] else (1 if best is not None else 0)
+            sub_data["any_attempt_below_50"] = any(s < 50 for s in raw) if raw else False
             submissions.append(sub_data)
 
-        # Sort by robust score descending
         submissions.sort(key=lambda x: x["score"] if x["score"] is not None else 0, reverse=True)
 
         analytics = db.execute(
@@ -1463,9 +1581,20 @@ def admin_exam_report(exam_id):
                 "name": s["student_name"],
                 "university": s["university"],
                 "score": s["score"],
+                "attempts_count": s.get("attempts_count", 1),
                 "status": s["status"],
             }
             for s in submissions[:10]
+        ],
+        "at_risk_students": [
+            {
+                "name": s["student_name"],
+                "university": s["university"],
+                "score": s["score"],
+                "attempts_count": s.get("attempts_count", 1),
+                "status": s["status"],
+            }
+            for s in submissions if s.get("any_attempt_below_50")
         ],
     })
 

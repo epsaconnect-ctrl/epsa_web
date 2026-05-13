@@ -1565,14 +1565,40 @@ window.switchSection = function(sec) {
   function renderMockExamCard(e) {
     const statusColor = e.is_open ? '#22c55e' : (e.is_submitted ? '#3b82f6' : '#f59e0b');
     const statusLabel = e.is_submitted ? 'Submitted' : (e.is_open ? 'Open Now' : 'Scheduled');
-    const score = Number(e.my_score || 0);
-    const performanceSummary = e.is_submitted
-      ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;padding:14px 16px;border-radius:18px;background:${score >= 50 ? 'rgba(34,197,94,.08)' : 'rgba(248,113,113,.08)'};border:1px solid ${score >= 50 ? 'rgba(34,197,94,.2)' : 'rgba(248,113,113,.18)'}">
-          <div>
-            <div style="font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:${score >= 50 ? '#15803d' : '#b91c1c'};font-weight:800">Latest Performance</div>
-            <div style="margin-top:4px;font-size:1rem;font-weight:800;color:${score >= 50 ? '#166534' : '#fca5a5'}">${score.toFixed(1)}% • ${score >= 50 ? 'Passed' : 'Below 50% pass mark'}</div>
+    const ah = e.attempt_history || [];
+    const best = e.best_score != null ? Number(e.best_score) : (e.my_score != null ? Number(e.my_score) : null);
+    const score = best != null && !Number.isNaN(best) ? best : 0;
+    const hasAttempts = ah.length > 0;
+    const timelineParts = hasAttempts ? ah.map(function (x, i) {
+      const s = x.score != null ? Number(x.score).toFixed(0) + '%' : '—';
+      if (i === 0) return s;
+      const prev = ah[i - 1].score != null ? Number(ah[i - 1].score) : null;
+      const cur = x.score != null ? Number(x.score) : null;
+      let arrow = '→';
+      if (prev != null && cur != null && !Number.isNaN(prev) && !Number.isNaN(cur)) {
+        if (cur > prev) arrow = '↗';
+        else if (cur < prev) arrow = '↘';
+      }
+      return arrow + ' ' + s;
+    }) : [];
+    const timelineStr = timelineParts.length ? timelineParts.join(' ') : '';
+    const ac = e.attempt_count != null ? e.attempt_count : (hasAttempts ? ah.length : 0);
+    const curN = e.current_attempt_number;
+    const attemptLabel = e.my_status === 'in_progress' && curN
+      ? ('Attempt ' + curN + ' · saved scores: ' + ac)
+      : (ac > 0 ? (ac + ' attempt' + (ac !== 1 ? 's' : '') + ' recorded') : '');
+    const performanceSummary = (e.is_submitted || best != null)
+      ? `<div style="display:flex;flex-direction:column;gap:10px;margin-top:18px;padding:14px 16px;border-radius:18px;background:${score >= 50 ? 'rgba(34,197,94,.08)' : 'rgba(248,113,113,.08)'};border:1px solid ${score >= 50 ? 'rgba(34,197,94,.2)' : 'rgba(248,113,113,.18)'}">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div>
+              <div style="font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:${score >= 50 ? '#15803d' : '#b91c1c'};font-weight:800">Best score</div>
+              <div style="margin-top:4px;font-size:1.35rem;font-weight:900;color:${score >= 50 ? '#166534' : '#b91c1c'}">${best != null ? best.toFixed(1) : '—'}%</div>
+              <div style="margin-top:4px;font-size:.82rem;font-weight:700;color:${score >= 50 ? '#166534' : '#991b1b'}">${score >= 50 ? 'Passed (best ≥ 50%)' : 'Below 50% pass mark (best)'}</div>
+            </div>
+            <div style="padding:8px 12px;border-radius:999px;background:${score >= 50 ? 'rgba(34,197,94,.14)' : 'rgba(248,113,113,.14)'};color:${score >= 50 ? '#16a34a' : '#ef4444'};font-size:.75rem;font-weight:800">${score >= 50 ? 'PASS' : 'REVIEW'}</div>
           </div>
-          <div style="padding:8px 12px;border-radius:999px;background:${score >= 50 ? 'rgba(34,197,94,.14)' : 'rgba(248,113,113,.14)'};color:${score >= 50 ? '#16a34a' : '#ef4444'};font-size:.75rem;font-weight:800">${score >= 50 ? 'PASS' : 'REVIEW'}</div>
+          ${timelineStr ? `<div style="font-size:.78rem;color:#475569;line-height:1.5;padding-top:8px;border-top:1px solid rgba(15,23,42,.08)"><span style="font-weight:800;color:#0f172a">Progress:</span> ${timelineStr}</div>` : ''}
+          ${attemptLabel ? `<div style="font-size:.72rem;color:#64748b;font-weight:700">${attemptLabel}</div>` : ''}
         </div>`
       : '';
     const actionButtons = [];
@@ -1636,7 +1662,7 @@ window.switchSection = function(sec) {
             return new Date(d).toLocaleDateString([], {month:'short', day:'numeric'});
           })()}</span>
         </div>
-        ${e.my_score != null ? `<span style="margin-left:auto;padding:6px 14px;border-radius:999px;background:#dcfce7;color:#15803d;font-weight:900;font-size:0.75rem;box-shadow:0 4px 12px rgba(34,197,94,0.15)">SCORE: ${e.my_score}%</span>` : ''}
+        ${best != null ? `<span style="margin-left:auto;padding:6px 14px;border-radius:999px;background:#dcfce7;color:#15803d;font-weight:900;font-size:0.75rem;box-shadow:0 4px 12px rgba(34,197,94,0.15)">BEST: ${best.toFixed(1)}%</span>` : ''}
       </div>
       ${action}
       ${performanceSummary}

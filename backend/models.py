@@ -1261,6 +1261,9 @@ def migrate_db():
             submitted_at DATETIME,
             archived_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )""",
+        # ── BEST-SCORE RETAKE TRACKING ──────────────────────────────────────────────
+        """ALTER TABLE mock_exam_history ADD COLUMN attempt_number INTEGER DEFAULT 1""",
+        """ALTER TABLE mock_exam_history ADD COLUMN status TEXT DEFAULT 'submitted'""",
     ]
     for sql in migrations:
         try:

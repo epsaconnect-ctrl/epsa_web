@@ -35,6 +35,14 @@
     if (status === 'weakness') return badge('Weakness', '#fee2e2', '#dc2626');
     return badge('Moderate', '#fef3c7', '#d97706');
   };
+  const attemptTrendArrow = (prev, cur) => {
+    const a = Number(prev);
+    const b = Number(cur);
+    if (Number.isNaN(a) || Number.isNaN(b)) return '';
+    if (b > a) return '<span title="Improving" style="color:#16a34a;font-weight:800;margin:0 4px">↗</span>';
+    if (b < a) return '<span title="Declining" style="color:#dc2626;font-weight:800;margin:0 4px">↘</span>';
+    return '<span style="color:#94a3b8;margin:0 4px">→</span>';
+  };
 
   /* ── STATE ──────────────────────────────────────────────── */
   let _activeExamId   = '';
@@ -249,39 +257,58 @@
         container.innerHTML = `<div style="text-align:center;padding:32px;color:#16a34a;font-weight:700">✅ No at-risk students detected — great performance!</div>`;
         return;
       }
+      const esc = t => String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+      const renderAttempts = (attempts) => {
+        const arr = attempts || [];
+        if (!arr.length) return '—';
+        return arr.map((a, i) => {
+          const dt = a.submitted_at ? new Date(a.submitted_at).toLocaleString() : '—';
+          const sc = a.score != null ? Number(a.score).toFixed(1) : '—';
+          const ar = i > 0 ? attemptTrendArrow(arr[i - 1].score, a.score) : '';
+          return `${ar}<span style="white-space:nowrap"><strong>${sc}%</strong> <span style="color:var(--text-muted);font-size:0.72rem">${dt}</span></span>`;
+        }).join(' ');
+      };
       container.innerHTML = `
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
           <div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:12px;padding:10px 16px;display:flex;align-items:center;gap:8px">
             <span style="font-size:1.2rem">⚠️</span>
-            <span style="font-weight:800;color:#dc2626">${_atRiskData.length} student${_atRiskData.length > 1 ? 's' : ''} below 50% average</span>
+            <span style="font-weight:800;color:#dc2626">${_atRiskData.length} student${_atRiskData.length > 1 ? 's' : ''} with at least one mock attempt below 50%</span>
           </div>
         </div>
-        <div style="overflow-x:auto">
-          <table style="width:100%;border-collapse:collapse;font-size:0.85rem">
-            <thead><tr style="background:#fef2f2">
-              <th style="padding:10px 12px;text-align:left;font-weight:700;color:#dc2626">Student</th>
-              <th style="padding:10px 12px;text-align:left;font-weight:700;color:#dc2626">University</th>
-              <th style="padding:10px 12px;text-align:center;font-weight:700;color:#dc2626">Exams</th>
-              <th style="padding:10px 12px;text-align:center;font-weight:700;color:#dc2626">Avg</th>
-              <th style="padding:10px 12px;text-align:center;font-weight:700;color:#dc2626">Risk</th>
-              <th style="padding:10px 12px;text-align:left;font-weight:700;color:#dc2626">Last Active</th>
-            </tr></thead>
-            <tbody>
-              ${_atRiskData.map(s => `
-                <tr style="border-bottom:1px solid #fee2e2;cursor:pointer" onclick="showStudentProfile(${s.student_id},'${s.name.replace(/'/g,"\\'")}')">
-                  <td style="padding:10px 12px">
-                    <div style="font-weight:700">${s.name}</div>
-                    <div style="font-size:0.76rem;color:var(--text-muted)">${s.email}</div>
-                  </td>
-                  <td style="padding:10px 12px;color:var(--text-secondary)">${s.university || '—'}</td>
-                  <td style="padding:10px 12px;text-align:center">${s.exam_count}</td>
-                  <td style="padding:10px 12px;text-align:center;font-weight:800;color:${s.avg_score>=40?'#dc2626':'#b91c1c'}">${s.avg_score.toFixed(1)}%</td>
-                  <td style="padding:10px 12px;text-align:center">${s.risk_level === 'high' ? badge('🔴 High Risk','#fef2f2','#dc2626') : badge('🟡 Moderate','#fefce8','#d97706')}</td>
-                  <td style="padding:10px 12px;font-size:0.78rem;color:var(--text-muted)">${s.last_exam ? new Date(s.last_exam).toLocaleDateString() : '—'}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          ${_atRiskData.map(s => `
+            <details style="border:1px solid #fecaca;border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.04)">
+              <summary style="cursor:pointer;list-style:none;padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:12px;background:#fef2f2;border:none;font:inherit">
+                <div style="flex:1;min-width:200px">
+                  <div style="font-weight:800;font-size:0.95rem">${esc(s.name)}</div>
+                  <div style="font-size:0.76rem;color:var(--text-muted)">${esc(s.email)} · ${esc(s.university || '—')}</div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:0.68rem;text-transform:uppercase;color:var(--text-muted);font-weight:700">Overall best (at-risk exams)</div>
+                  <div style="font-size:1.25rem;font-weight:900;color:${(s.overall_best||0)>=40?'#dc2626':'#b91c1c'}">${(s.overall_best != null ? s.overall_best : 0).toFixed(1)}%</div>
+                </div>
+                <div>${s.risk_level === 'high' ? badge('🔴 High','#fef2f2','#dc2626') : badge('🟡 Moderate','#fefce8','#d97706')}</div>
+                <button type="button" onclick="event.preventDefault();event.stopPropagation();showStudentProfile(${s.student_id}, ${JSON.stringify(s.name)})" style="background:#1a6b3c;color:#fff;border:none;padding:8px 14px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.78rem">Profile</button>
+              </summary>
+              <div style="padding:12px 16px 16px;border-top:1px solid #fee2e2">
+                ${(s.at_risk_exams || []).map(ex => `
+                  <div style="margin-bottom:14px;padding:12px;border-radius:12px;background:#f8fafc;border:1px solid var(--light-200)">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+                      <div>
+                        <div style="font-weight:800;font-size:0.88rem">${esc(ex.exam_title)}</div>
+                        <div style="font-size:0.72rem;color:var(--text-muted)">Best on this exam: <strong>${ex.best_score != null ? Number(ex.best_score).toFixed(1) : '—'}%</strong> · ${ex.attempt_count || 0} attempt(s)</div>
+                      </div>
+                      <div style="font-size:0.72rem;color:var(--text-muted);text-align:right">
+                        First: ${ex.first_taken ? new Date(ex.first_taken).toLocaleDateString() : '—'}<br/>
+                        Last: ${ex.last_taken ? new Date(ex.last_taken).toLocaleDateString() : '—'}
+                      </div>
+                    </div>
+                    <div style="font-size:0.78rem;line-height:1.6;color:#334155">${renderAttempts(ex.all_attempts)}</div>
+                  </div>
+                `).join('') || '<div style="color:var(--text-muted)">No exam detail</div>'}
+              </div>
+            </details>
+          `).join('')}
         </div>
       `;
     } catch (e) {
@@ -364,6 +391,7 @@
       const sum  = data.summary || {};
       const cats = data.category_analysis || [];
       const hist = data.exam_history || [];
+      const byExam = data.all_attempts_by_exam || [];
 
       body.innerHTML = `
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--light-200)">
@@ -401,7 +429,7 @@
 
           <!-- Exam History -->
           <div>
-            <div style="font-weight:800;font-size:0.9rem;margin-bottom:12px">📝 Exam History</div>
+            <div style="font-weight:800;font-size:0.9rem;margin-bottom:12px">📝 Latest exam sessions</div>
             ${hist.length === 0 ? '<div style="color:var(--text-muted)">No exams taken yet</div>' :
               hist.slice(0, 5).map(e => `
                 <div style="padding:10px;background:#f8fafc;border-radius:10px;margin-bottom:8px;border:1px solid var(--light-200)">
@@ -417,6 +445,29 @@
               `).join('')
             }
           </div>
+        </div>
+
+        <div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--light-200)">
+          <div style="font-weight:800;font-size:0.9rem;margin-bottom:12px">📈 All attempts (every score)</div>
+          ${byExam.length === 0 ? '<div style="color:var(--text-muted)">No multi-attempt data yet</div>' :
+            byExam.map(block => {
+              const attempts = block.attempts || [];
+              const line = attempts.map((a, i) => {
+                const dt = a.submitted_at ? new Date(a.submitted_at).toLocaleString() : '—';
+                const sc = a.score != null ? Number(a.score).toFixed(1) : '—';
+                const ar = i > 0 ? attemptTrendArrow(attempts[i - 1].score, a.score) : '';
+                return `${ar}<span style="white-space:nowrap"><strong>${sc}%</strong> <span style="color:var(--text-muted);font-size:0.7rem">${dt}</span></span>`;
+              }).join(' ');
+              return `
+                <div style="margin-bottom:12px;padding:12px;background:#f8fafc;border-radius:12px;border:1px solid var(--light-200)">
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+                    <span style="font-weight:800;font-size:0.86rem">${block.exam_title}</span>
+                    <span style="font-size:0.78rem;font-weight:700;color:#15803d">Best: ${block.best_score != null ? Number(block.best_score).toFixed(1) : '—'}%</span>
+                  </div>
+                  <div style="font-size:0.78rem;line-height:1.65;color:#334155">${line}</div>
+                </div>`;
+            }).join('')
+          }
         </div>
       `;
     } catch (e) {
