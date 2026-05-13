@@ -222,6 +222,9 @@ def get_settings():
                 "manifestos",
                 "governance_docs",
                 "training_graphics",
+                "training_gallery",
+                "training_partner_logos",
+                "training_module_files",
             ],
         )
     )

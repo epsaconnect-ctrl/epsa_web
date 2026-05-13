@@ -1264,6 +1264,109 @@ def migrate_db():
         # ── BEST-SCORE RETAKE TRACKING ──────────────────────────────────────────────
         """ALTER TABLE mock_exam_history ADD COLUMN attempt_number INTEGER DEFAULT 1""",
         """ALTER TABLE mock_exam_history ADD COLUMN status TEXT DEFAULT 'submitted'""",
+        # ── TRAINING PLATFORM (Hub, approvals, modules, certs) ─────────────────────
+        """ALTER TABLE trainings ADD COLUMN max_participants INTEGER""",
+        """ALTER TABLE trainings ADD COLUMN waitlist_enabled INTEGER DEFAULT 1""",
+        """ALTER TABLE trainings ADD COLUMN instructor_user_id INTEGER REFERENCES users(id)""",
+        """ALTER TABLE trainings ADD COLUMN instructor_display_name TEXT""",
+        """ALTER TABLE trainings ADD COLUMN pre_exam_id INTEGER REFERENCES exams(id)""",
+        """ALTER TABLE trainings ADD COLUMN post_exam_id INTEGER REFERENCES exams(id)""",
+        """ALTER TABLE trainings ADD COLUMN cert_template_json TEXT""",
+        """ALTER TABLE trainings ADD COLUMN partner_logo_path TEXT""",
+        """ALTER TABLE training_applications ADD COLUMN rejection_reason TEXT""",
+        """ALTER TABLE training_applications ADD COLUMN reviewed_at DATETIME""",
+        """ALTER TABLE training_applications ADD COLUMN reviewed_by INTEGER REFERENCES users(id)""",
+        """ALTER TABLE training_applications ADD COLUMN waitlist_position INTEGER""",
+        """ALTER TABLE training_applications ADD COLUMN admin_notes TEXT""",
+        """CREATE TABLE IF NOT EXISTS training_modules (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            training_id INTEGER NOT NULL REFERENCES trainings(id) ON DELETE CASCADE,
+            title TEXT NOT NULL,
+            summary TEXT,
+            content_html TEXT,
+            video_url TEXT,
+            resource_paths TEXT,
+            order_num INTEGER DEFAULT 0,
+            estimated_mins INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )""",
+        """CREATE TABLE IF NOT EXISTS training_pop_quizzes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            module_id INTEGER NOT NULL REFERENCES training_modules(id) ON DELETE CASCADE,
+            title TEXT NOT NULL,
+            questions_json TEXT NOT NULL,
+            pass_percent REAL DEFAULT 70,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )""",
+        """CREATE TABLE IF NOT EXISTS training_module_progress (
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            module_id INTEGER NOT NULL REFERENCES training_modules(id) ON DELETE CASCADE,
+            completed_at DATETIME,
+            quiz_score REAL,
+            quiz_passed INTEGER DEFAULT 0,
+            PRIMARY KEY (user_id, module_id)
+        )""",
+        """CREATE TABLE IF NOT EXISTS training_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            training_id INTEGER NOT NULL REFERENCES trainings(id) ON DELETE CASCADE,
+            title TEXT NOT NULL,
+            session_type TEXT DEFAULT 'live',
+            starts_at DATETIME,
+            ends_at DATETIME,
+            meet_url TEXT,
+            recording_url TEXT,
+            notes TEXT,
+            order_num INTEGER DEFAULT 0,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )""",
+        """CREATE TABLE IF NOT EXISTS training_announcements (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            training_id INTEGER NOT NULL REFERENCES trainings(id) ON DELETE CASCADE,
+            title TEXT NOT NULL,
+            body TEXT,
+            pinned INTEGER DEFAULT 0,
+            created_by INTEGER REFERENCES users(id),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )""",
+        """CREATE TABLE IF NOT EXISTS training_gallery (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            training_id INTEGER NOT NULL REFERENCES trainings(id) ON DELETE CASCADE,
+            kind TEXT DEFAULT 'photo',
+            path TEXT NOT NULL,
+            caption TEXT,
+            description TEXT,
+            sort_order INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )""",
+        """CREATE TABLE IF NOT EXISTS training_discussions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            training_id INTEGER NOT NULL REFERENCES trainings(id) ON DELETE CASCADE,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            parent_id INTEGER REFERENCES training_discussions(id),
+            body TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )""",
+        """CREATE TABLE IF NOT EXISTS training_attendance (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER NOT NULL REFERENCES training_sessions(id) ON DELETE CASCADE,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            status TEXT DEFAULT 'present',
+            marked_by INTEGER REFERENCES users(id),
+            marked_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(session_id, user_id)
+        )""",
+        """CREATE TABLE IF NOT EXISTS training_certificates (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            training_id INTEGER NOT NULL REFERENCES trainings(id),
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            cert_code TEXT NOT NULL UNIQUE,
+            issued_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            pdf_path TEXT,
+            meta_json TEXT
+        )""",
+        """CREATE INDEX IF NOT EXISTS idx_training_modules_tid ON training_modules(training_id)""",
+        """CREATE INDEX IF NOT EXISTS idx_training_sessions_tid ON training_sessions(training_id)""",
+        """CREATE INDEX IF NOT EXISTS idx_training_disc_tid ON training_discussions(training_id)""",
     ]
     for sql in migrations:
         try:

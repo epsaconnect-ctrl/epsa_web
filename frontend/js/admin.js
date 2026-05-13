@@ -933,6 +933,7 @@ async function loadAdminTrainings() {
     allTrainingsAdmin = await API.getAdminTrainings();
     if (!allTrainingsAdmin.length) {
       tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-8);">No training programs yet</td></tr>`;
+      loadPendingTrainingApps();
       return;
     }
     tbody.innerHTML = allTrainingsAdmin.map(t => `
@@ -946,9 +947,11 @@ async function loadAdminTrainings() {
       <td><span class="badge ${t.is_active ? 'status-approved' : 'status-rejected'}">${t.is_active ? 'Active' : 'Inactive'}</span></td>
       <td><div class="table-actions">
         <button class="action-btn action-btn-view" onclick="openEditTraining(${t.id})">Edit</button>
+        <button class="action-btn action-btn-view" onclick="openTrainingStudio(${t.id})">Studio</button>
         <button class="action-btn ${t.is_active ? 'action-btn-reject' : 'action-btn-approve'}" onclick="toggleTrainingStatus(${t.id})">${t.is_active ? 'Deactivate' : '▶ Activate'}</button>
       </div></td>
     </tr>`).join('');
+    loadPendingTrainingApps();
   } catch(e) {
     tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:red;">Failed to get trainings</td></tr>`;
   }
@@ -966,6 +969,16 @@ function openEditTraining(id) {
   document.getElementById('et-format').value = t.format || 'online';
   document.getElementById('et-price').value = t.price || 0;
   document.getElementById('et-desc').value = t.description || '';
+  const mx = document.getElementById('et-maxp');
+  if (mx) mx.value = t.max_participants != null ? t.max_participants : '';
+  const ins = document.getElementById('et-instructor');
+  if (ins) ins.value = t.instructor_display_name || '';
+  const pe = document.getElementById('et-preexam');
+  if (pe) pe.value = t.pre_exam_id != null ? t.pre_exam_id : '';
+  const poe = document.getElementById('et-postexam');
+  if (poe) poe.value = t.post_exam_id != null ? t.post_exam_id : '';
+  const cj = document.getElementById('et-certjson');
+  if (cj) cj.value = t.cert_template_json ? (typeof t.cert_template_json === 'string' ? t.cert_template_json : JSON.stringify(t.cert_template_json)) : '';
   document.getElementById('editTrainingModal').classList.add('active');
 }
 window.openEditTraining = openEditTraining;
@@ -976,10 +989,22 @@ async function submitEditTraining() {
   const desc  = document.getElementById('et-desc').value.trim();
   if (!title || !desc) { showToast('Title and description required', 'error'); return; }
   try {
+    let certJson = (document.getElementById('et-certjson') && document.getElementById('et-certjson').value.trim()) || null;
+    if (certJson) {
+      try { JSON.parse(certJson); } catch (_) { showToast('Certificate template must be valid JSON', 'error'); return; }
+    }
+    const maxpRaw = document.getElementById('et-maxp') && document.getElementById('et-maxp').value;
+    const preRaw = document.getElementById('et-preexam') && document.getElementById('et-preexam').value;
+    const postRaw = document.getElementById('et-postexam') && document.getElementById('et-postexam').value;
     await API.updateTraining(id, {
       title, description: desc,
       format: document.getElementById('et-format').value,
-      price:  parseFloat(document.getElementById('et-price').value) || 0
+      price:  parseFloat(document.getElementById('et-price').value) || 0,
+      max_participants: maxpRaw === '' ? null : parseInt(maxpRaw, 10),
+      instructor_display_name: (document.getElementById('et-instructor') && document.getElementById('et-instructor').value.trim()) || null,
+      pre_exam_id: preRaw === '' ? null : parseInt(preRaw, 10),
+      post_exam_id: postRaw === '' ? null : parseInt(postRaw, 10),
+      cert_template_json: certJson,
     });
     document.getElementById('editTrainingModal').classList.remove('active');
     showToast(' Training updated!', 'success');
@@ -996,6 +1021,114 @@ async function toggleTrainingStatus(id) {
   } catch(e) { showToast('Error updating training status', 'error'); }
 }
 window.toggleTrainingStatus = toggleTrainingStatus;
+
+async function loadPendingTrainingApps() {
+  const tbody = document.getElementById('trainingPendingTbody');
+  if (!tbody) return;
+  try {
+    const list = await API.getTrainingApplications('pending');
+    if (!list.length) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">No pending enrollment requests</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = list.map(r => `
+      <tr>
+        <td><div class="table-primary">${adminEsc(r.student_name)}</div><div class="table-secondary">${adminEsc(r.email || '')}</div></td>
+        <td>${adminEsc(r.training_title)}</td>
+        <td><span class="badge badge-gold">${adminEsc(r.status)}</span></td>
+        <td style="font-size:0.78rem;color:var(--text-muted);">${formatDate(r.submitted_at)}</td>
+        <td><div class="table-actions">
+          <button class="action-btn action-btn-approve" onclick="approveTrainingApp(${r.id})">Approve</button>
+          <button class="action-btn action-btn-reject" onclick="rejectTrainingApp(${r.id})">Reject</button>
+        </div></td>
+      </tr>`).join('');
+  } catch (_) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:red;">Failed to load requests</td></tr>`;
+  }
+}
+window.loadPendingTrainingApps = loadPendingTrainingApps;
+
+async function approveTrainingApp(aid) {
+  try {
+    await API.approveTrainingApplication(aid);
+    showToast('Application approved', 'success');
+    loadPendingTrainingApps();
+    loadAdminTrainings();
+  } catch (e) { showToast(e.message || 'Approve failed', 'error'); }
+}
+window.approveTrainingApp = approveTrainingApp;
+
+async function rejectTrainingApp(aid) {
+  const reason = prompt('Reason for rejection?', 'Does not meet prerequisites');
+  if (reason === null) return;
+  try {
+    await API.rejectTrainingApplication(aid, reason);
+    showToast('Application rejected', 'gold');
+    loadPendingTrainingApps();
+  } catch (e) { showToast(e.message || 'Reject failed', 'error'); }
+}
+window.rejectTrainingApp = rejectTrainingApp;
+
+async function openTrainingStudio(tid) {
+  const modal = document.getElementById('trainingStudioModal');
+  if (!modal) return;
+  document.getElementById('ts-tid').value = tid;
+  document.getElementById('ts-mod-title').value = '';
+  document.getElementById('ts-mod-sum').value = '';
+  document.getElementById('ts-mod-html').value = '';
+  document.getElementById('ts-mod-quiz').value = '';
+  modal.classList.add('active');
+  try {
+    const [prog, an] = await Promise.all([
+      API.getTrainingProgram(tid),
+      API.getTrainingAnalytics(tid),
+    ]);
+    document.getElementById('tsSummary').innerHTML =
+      `<strong>Registered:</strong> ${an.registered} · <strong>Modules:</strong> ${an.module_count} · <strong>Certificates:</strong> ${an.certificates_issued}<br/>
+       <span style="font-size:0.78rem;">Link pre/post exams via Edit training (exam IDs).</span>`;
+    const mods = prog.modules || [];
+    document.getElementById('tsModList').innerHTML = mods.length
+      ? `<ul style="margin:0;padding-left:18px;">${mods.map(m => `<li style="margin-bottom:6px;">${adminEsc(m.title)} <button type="button" class="action-btn action-btn-reject" style="font-size:0.7rem;padding:2px 8px;" onclick="deleteTrainingModuleRow(${m.id},${tid})">Delete</button></li>`).join('')}</ul>`
+      : '<p style="color:var(--text-muted);">No modules yet — add your first lesson.</p>';
+  } catch (e) {
+    showToast(e.message || 'Failed to load studio', 'error');
+  }
+}
+window.openTrainingStudio = openTrainingStudio;
+
+async function deleteTrainingModuleRow(mid, tid) {
+  if (!confirm('Delete this module?')) return;
+  try {
+    await API.deleteTrainingModule(mid);
+    openTrainingStudio(tid);
+  } catch (e) { showToast(e.message || 'Delete failed', 'error'); }
+}
+window.deleteTrainingModuleRow = deleteTrainingModuleRow;
+
+async function submitTrainingStudioModule() {
+  const tid = parseInt(document.getElementById('ts-tid').value, 10);
+  const title = document.getElementById('ts-mod-title').value.trim();
+  if (!title) { showToast('Module title required', 'error'); return; }
+  const summary = document.getElementById('ts-mod-sum').value.trim();
+  const html = document.getElementById('ts-mod-html').value.trim();
+  let pop_quiz = null;
+  const qtxt = document.getElementById('ts-mod-quiz').value.trim();
+  if (qtxt) {
+    try {
+      const questions = JSON.parse(qtxt);
+      pop_quiz = { title: 'Knowledge check', questions, pass_percent: 70 };
+    } catch (_) {
+      showToast('Quiz JSON invalid', 'error');
+      return;
+    }
+  }
+  try {
+    await API.addTrainingModule(tid, { title, summary, content_html: html, pop_quiz });
+    showToast('Module added', 'success');
+    openTrainingStudio(tid);
+  } catch (e) { showToast(e.message || 'Save failed', 'error'); }
+}
+window.submitTrainingStudioModule = submitTrainingStudioModule;
 
 async function deactivateTraining(id) {
   if (!confirm('Are you sure you want to deactivate this training program?')) return;

@@ -430,6 +430,13 @@
         <div style="display:flex;justify-content:flex-end;margin-bottom:var(--space-5);">
           <button class="btn btn-primary" onclick="openCreateTrainingModal()">+ Create Training</button>
         </div>
+        <div class="data-table-card" style="margin-bottom:var(--space-5);">
+          <div class="table-header"><div class="table-title">Enrollment requests · pending approval</div></div>
+          <table class="data-table">
+            <thead><tr><th>Student</th><th>Training</th><th>Status</th><th>Submitted</th><th>Actions</th></tr></thead>
+            <tbody id="trainingPendingTbody"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading…</td></tr></tbody>
+          </table>
+        </div>
         <div class="data-table-card">
           <div class="table-header"><div class="table-title">Training Programs</div></div>
           <table class="data-table">
@@ -901,12 +908,35 @@
       <div class="form-group"><label class="form-label">Title *</label><input id="et-title" class="form-input"></div>
       <div class="form-group"><label class="form-label">Format *</label><select id="et-format" class="form-select"><option value="online">💻 Online</option><option value="in-person"> In-Person</option></select></div>
       <div class="form-group"><label class="form-label">Price (ETB)</label><input id="et-price" type="number" class="form-input" min="0"></div>
+      <div class="form-group"><label class="form-label">Max participants</label><input id="et-maxp" type="number" class="form-input" min="0" placeholder="Unlimited if empty"></div>
+      <div class="form-group"><label class="form-label">Instructor (display)</label><input id="et-instructor" class="form-input" placeholder="Dr. Name"></div>
+      <div class="form-group"><label class="form-label">Pre-exam ID (platform exam)</label><input id="et-preexam" type="number" class="form-input" placeholder="optional"></div>
+      <div class="form-group"><label class="form-label">Post-exam ID</label><input id="et-postexam" type="number" class="form-input" placeholder="optional"></div>
     </div>
     <div class="form-group"><label class="form-label">Description *</label><textarea id="et-desc" class="form-input" rows="3"></textarea></div>
+    <div class="form-group"><label class="form-label">Certificate template (JSON)</label><textarea id="et-certjson" class="form-input" rows="3" placeholder='{"accent":"#1a6b3c","subtitle":"Certificate of Completion"}'></textarea></div>
     <div style="display:flex;gap:var(--space-3);justify-content:flex-end;margin-top:var(--space-4);">
       <button class="btn btn-ghost" onclick="document.getElementById('editTrainingModal').classList.remove('active')">Cancel</button>
       <button class="btn btn-primary" onclick="submitEditTraining()">💾 Save Changes</button>
     </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="trainingStudioModal">
+  <div class="modal" style="max-width:720px;max-height:90vh;overflow:auto;">
+    <h3 style="font-family:var(--font-display);font-weight:800;margin-bottom:var(--space-4);">Training studio</h3>
+    <input type="hidden" id="ts-tid">
+    <div id="tsSummary" style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:var(--space-4);"></div>
+    <div class="form-group"><label class="form-label">New module title</label><input id="ts-mod-title" class="form-input" placeholder="e.g. Introduction to clinical interviewing"></div>
+    <div class="form-group"><label class="form-label">Summary</label><input id="ts-mod-sum" class="form-input" placeholder="Short learner-facing summary"></div>
+    <div class="form-group"><label class="form-label">Content (HTML)</label><textarea id="ts-mod-html" class="form-input" rows="4" placeholder="<p>Lesson content…</p>"></textarea></div>
+    <div class="form-group"><label class="form-label">Pop-quiz questions (JSON array)</label><textarea id="ts-mod-quiz" class="form-input" rows="4" placeholder='[{"question":"…","options":["A","B","C","D"],"correct":0}]'></textarea></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:var(--space-4);">
+      <button type="button" class="btn btn-primary" onclick="submitTrainingStudioModule()">Add module</button>
+      <button type="button" class="btn btn-ghost" onclick="document.getElementById('trainingStudioModal').classList.remove('active')">Close</button>
+    </div>
+    <div class="table-header"><div class="table-title">Modules</div></div>
+    <div id="tsModList" style="font-size:0.85rem;"></div>
   </div>
 </div>
 

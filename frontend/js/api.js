@@ -298,6 +298,67 @@ const API = {
     return data;
   },
   async getMyTrainings()       { return this.request('/trainings/mine'); },
+  async getTrainingLearn(id)   { return this.request(`/trainings/${id}/learn`); },
+  async getTrainingModule(tid, mid) { return this.request(`/trainings/${tid}/modules/${mid}`); },
+  async submitTrainingPopQuiz(tid, mid, answers) {
+    return this.request(`/trainings/${tid}/modules/${mid}/quiz`, { method: 'POST', body: { answers } });
+  },
+  async completeTrainingModule(tid, mid) {
+    return this.request(`/trainings/${tid}/modules/${mid}/complete`, { method: 'POST', body: {} });
+  },
+  async getTrainingDiscussions(tid) { return this.request(`/trainings/${tid}/discussions`); },
+  async postTrainingDiscussion(tid, body, parentId) {
+    return this.request(`/trainings/${tid}/discussions`, { method: 'POST', body: { body, parent_id: parentId } });
+  },
+  async verifyTrainingCertificate(code) {
+    return this.request(`/trainings/certificates/verify/${encodeURIComponent(code)}`);
+  },
+
+  // ── Admin: training program hub ──
+  async getTrainingProgram(id) { return this.request(`/admin/trainings/${id}/program`); },
+  async addTrainingModule(tid, body) { return this.request(`/admin/trainings/${tid}/modules`, { method: 'POST', body }); },
+  async updateTrainingModule(mid, body) { return this.request(`/admin/trainings/modules/${mid}`, { method: 'PUT', body }); },
+  async deleteTrainingModule(mid) { return this.request(`/admin/trainings/modules/${mid}`, { method: 'DELETE' }); },
+  async addTrainingSession(tid, body) { return this.request(`/admin/trainings/${tid}/sessions`, { method: 'POST', body }); },
+  async updateTrainingSession(sid, body) { return this.request(`/admin/training-sessions/${sid}`, { method: 'PUT', body }); },
+  async postTrainingAnnouncement(tid, body) { return this.request(`/admin/trainings/${tid}/announcements`, { method: 'POST', body }); },
+  async getTrainingAnalytics(tid) { return this.request(`/admin/trainings/${tid}/analytics`); },
+  async getTrainingApplications(status) { return this.request(`/admin/training-applications?status=${encodeURIComponent(status)}`); },
+  async approveTrainingApplication(aid) { return this.request(`/admin/training-applications/${aid}/approve`, { method: 'POST', body: {} }); },
+  async rejectTrainingApplication(aid, reason) { return this.request(`/admin/training-applications/${aid}/reject`, { method: 'POST', body: { reason } }); },
+  async uploadTrainingGallery(tid, formData) {
+    const token = this.getToken();
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const bases = this.getApiBases();
+    let resp = null;
+    for (const base of bases) {
+      try {
+        resp = await fetch(`${base}/admin/trainings/${tid}/gallery`, { method: 'POST', headers, body: formData, credentials: 'include' });
+        this._apiBase = base;
+        break;
+      } catch (_) { resp = null; }
+    }
+    if (!resp) throw new Error('Upload failed');
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) throw new Error(data.error || 'Upload failed');
+    return data;
+  },
+
+  async getTrainingCertificateBlobUrl(tid) {
+    const token = this.getToken();
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    for (const base of this.getApiBases()) {
+      const resp = await fetch(`${base}/trainings/${tid}/certificate`, { headers, credentials: 'include' });
+      if (resp.ok) {
+        const blob = await resp.blob();
+        this._apiBase = base;
+        return URL.createObjectURL(blob);
+      }
+    }
+    throw new Error('Certificate not available yet');
+  },
 
   // ── Voting ──
   async getActiveCandidates(phase) { return this.request(`/voting/candidates?phase=${phase}`); },

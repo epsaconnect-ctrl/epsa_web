@@ -380,17 +380,20 @@ function renderTrainings(trainings) {
   if (!grid) return;
   const statusMap = {
     open:       { label:'Apply Now',          btn:'btn-primary',      action:'applyTraining' },
+    pending:    { label:'⏳ Pending approval', btn:'btn-ghost',        action:'' },
+    waitlisted: { label:'📋 Waitlisted',      btn:'btn-ghost',        action:'' },
     applied:    { label:'Upload Receipt',      btn:'btn-outline-green', action:'openPaymentModal' },
     receipt:    { label:'Receipt Submitted',   btn:'btn-ghost',        action:'' },
     verified:   { label:'✅ Verified',         btn:'btn-ghost',        action:'' },
-    registered: { label:'📖 Enter Training',  btn:'btn-gold',         action:'enterTraining' },
+    registered: { label:'📖 Open learning hub',  btn:'btn-gold',         action:'enterTraining' },
+    rejected:   { label:'Not admitted',        btn:'btn-ghost',        action:'' },
   };
-  const flowSteps   = ['Apply','Pending','Verified','Registered'];
-  const flowIndexes = { open:0, applied:1, receipt:1, verified:2, registered:3 };
+  const flowSteps   = ['Apply','Review','Payment','Enrolled'];
+  const flowIndexes = { open:0, pending:1, waitlisted:1, applied:2, receipt:2, verified:3, registered:3, rejected:0 };
 
   grid.innerHTML = trainings.map(t => {
     const st = statusMap[t.status] || statusMap.open;
-    const fi = flowIndexes[t.status] || 0;
+    const fi = flowIndexes[t.status] !== undefined ? flowIndexes[t.status] : 0;
     const desc = t.description || t.desc || '';
     const gUrl = t.graphic_design ? API.resolveUploadUrl('training_graphics', t.graphic_design) : '';
     const graphicBlock = gUrl
@@ -435,13 +438,18 @@ window.filterTrainings = filterTrainings;
 async function applyTraining(id) {
   const t = allTrainings.find(t=>t.id===id);
   if (!t) return;
-  if (t.price>0) { openPaymentModal(id); return; }
   try {
     await API.applyTraining(id);
-    t.status = 'registered';
+    t.status = 'pending';
     renderTrainings(allTrainings);
-    showToast(`🎉 Enrolled in "${t.title}"!`,'success');
-  } catch(e) { showToast('Error enrolling: ' + e.message, 'error'); }
+    showToast(t.price > 0
+      ? `Application submitted. After approval you can upload your payment receipt.`
+      : `Application submitted. An administrator will confirm your free enrollment.`,
+      'success');
+    if (t.price > 0) {
+      /* optional: remind user to watch email */
+    }
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 window.applyTraining = applyTraining;
 
@@ -449,6 +457,10 @@ function openPaymentModal(id) {
   selectedTrainingId = id;
   const t = allTrainings.find(t=>t.id===id);
   if (!t) return;
+  if (t.status !== 'applied') {
+    showToast('Receipt upload opens after admin approves your paid application.', 'error');
+    return;
+  }
   const el = (i) => document.getElementById(i);
   if (el('payModalTitle')) el('payModalTitle').textContent = t.title;
   if (el('payAmount')) el('payAmount').textContent = t.price>0 ? `ETB ${t.price.toLocaleString()}` : 'Free';
@@ -485,7 +497,13 @@ async function submitReceipt() {
 }
 window.submitReceipt = submitReceipt;
 
-function enterTraining(id) { showToast('📖 Opening training materials…','gold'); }
+function enterTraining(id) {
+  if (typeof window.openTrainingHub === 'function') {
+    window.openTrainingHub(id);
+  } else {
+    showToast('Training hub loading… refresh the page if this persists.', 'gold');
+  }
+}
 window.enterTraining = enterTraining;
 
 async function loadNetworkStudents() {

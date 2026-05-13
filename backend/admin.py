@@ -812,13 +812,34 @@ def create_training():
         save_upload(file, 'training_graphics', filename=unique_filename)
         graphic_design = unique_filename
     
+    max_p = data.get('max_participants')
+    try:
+        max_p = int(max_p) if max_p is not None and str(max_p).strip() != '' else None
+    except (TypeError, ValueError):
+        max_p = None
+    pre_ex = data.get('pre_exam_id')
+    post_ex = data.get('post_exam_id')
+    try:
+        pre_ex = int(pre_ex) if pre_ex else None
+    except (TypeError, ValueError):
+        pre_ex = None
+    try:
+        post_ex = int(post_ex) if post_ex else None
+    except (TypeError, ValueError):
+        post_ex = None
+    inst_name = (data.get('instructor_display_name') or '').strip() or None
+    cert_tpl = data.get('cert_template_json')
+    if isinstance(cert_tpl, dict):
+        cert_tpl = json.dumps(cert_tpl)
     db.execute("""
-        INSERT INTO trainings (title,description,format,price,is_free,icon,cert_title,cert_desc,content_url,graphic_design,graphic_caption,created_by)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+        INSERT INTO trainings (title,description,format,price,is_free,icon,cert_title,cert_desc,content_url,graphic_design,graphic_caption,created_by,
+            max_participants, pre_exam_id, post_exam_id, instructor_display_name, cert_template_json)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, (data.get('title'), data.get('description'), data.get('format','online'),
           price, 1 if price==0 else 0,
           data.get('icon','🎓'), data.get('cert_title'), data.get('cert_desc'),
-          data.get('content_url'), graphic_design, graphic_caption, uid))
+          data.get('content_url'), graphic_design, graphic_caption, uid,
+          max_p, pre_ex, post_ex, inst_name, cert_tpl))
     db.commit(); db.close()
     return jsonify({'message': 'Training created successfully', 'graphic_design': graphic_design}), 201
 
@@ -827,12 +848,41 @@ def create_training():
 def update_training(tid):
     data = request.json or {}
     db = get_db()
+    max_p = data.get('max_participants')
+    try:
+        max_p = int(max_p) if max_p is not None and str(max_p).strip() != '' else None
+    except (TypeError, ValueError):
+        max_p = None
+    pre_ex = data.get('pre_exam_id')
+    post_ex = data.get('post_exam_id')
+    try:
+        pre_ex = int(pre_ex) if pre_ex not in (None, '') else None
+    except (TypeError, ValueError):
+        pre_ex = None
+    try:
+        post_ex = int(post_ex) if post_ex not in (None, '') else None
+    except (TypeError, ValueError):
+        post_ex = None
+    cert_tpl = data.get('cert_template_json')
+    if isinstance(cert_tpl, dict):
+        cert_tpl = json.dumps(cert_tpl)
     db.execute("""
         UPDATE trainings 
         SET title=COALESCE(?, title), description=COALESCE(?, description), 
-            price=COALESCE(?, price), format=COALESCE(?, format)
+            price=COALESCE(?, price), format=COALESCE(?, format),
+            max_participants=COALESCE(?, max_participants),
+            pre_exam_id=COALESCE(?, pre_exam_id),
+            post_exam_id=COALESCE(?, post_exam_id),
+            instructor_display_name=COALESCE(?, instructor_display_name),
+            cert_template_json=COALESCE(?, cert_template_json)
         WHERE id=?
-    """, (data.get('title'), data.get('description'), data.get('price'), data.get('format'), tid))
+    """, (
+        data.get('title'), data.get('description'), data.get('price'), data.get('format'),
+        max_p, pre_ex, post_ex,
+        (data.get('instructor_display_name') or '').strip() or None,
+        cert_tpl,
+        tid,
+    ))
     db.commit(); db.close()
     return jsonify({'message': 'Training updated'})
 
@@ -855,30 +905,400 @@ def delete_training(tid):
     db.commit(); db.close()
     return jsonify({'message': 'Training deactivated'})
 
-@admin_bp.route('/training-applications', methods=['GET'])
-@require_admin
-def training_applications():
-    status = request.args.get('status','receipt')
-    db = get_db()
-    rows = db.execute("""
-        SELECT ta.*, u.first_name||' '||u.father_name as student_name,
-               u.university, t.title as training_title
-        FROM training_applications ta
-        JOIN users u ON ta.user_id=u.id
-        JOIN trainings t ON ta.training_id=t.id
-        WHERE ta.status=? ORDER BY ta.submitted_at DESC
-    """, (status,)).fetchall()
-    db.close()
-    return jsonify([dict(r) for r in rows])
-
 @admin_bp.route('/training-applications/<int:aid>/verify', methods=['POST'])
 @require_admin
 def verify_receipt(aid):
     uid = get_jwt_identity()
     db  = get_db()
-    db.execute("UPDATE training_applications SET status='verified', verified_at=DATETIME('now'), verified_by=? WHERE id=?", (uid, aid))
+    db.execute(
+        "UPDATE training_applications SET status='registered', verified_at=DATETIME('now'), verified_by=? WHERE id=?",
+        (uid, aid),
+    )
     db.commit(); db.close()
-    return jsonify({'message': 'Receipt verified. Student can now access training.'})
+    return jsonify({'message': 'Receipt verified. Student is now fully enrolled.'})
+
+
+@admin_bp.route('/training-applications/<int:aid>/approve', methods=['POST'])
+@require_admin
+def approve_training_application(aid):
+    uid = get_jwt_identity()
+    db = get_db()
+    try:
+        app = db.execute(
+            """
+            SELECT ta.*, t.is_free, t.price, t.max_participants, t.id as tid
+            FROM training_applications ta
+            JOIN trainings t ON t.id = ta.training_id
+            WHERE ta.id=?
+            """,
+            (aid,),
+        ).fetchone()
+        if not app:
+            return jsonify({'error': 'Application not found'}), 404
+        if app['status'] not in ('pending', 'waitlisted'):
+            return jsonify({'error': 'Application is not pending approval'}), 400
+        tid = app['tid']
+        max_p = app['max_participants'] if 'max_participants' in app.keys() else None
+        reg = db.execute(
+            "SELECT COUNT(*) FROM training_applications WHERE training_id=? AND status='registered'",
+            (tid,),
+        ).fetchone()[0]
+        if max_p is not None and int(max_p) > 0 and int(reg or 0) >= int(max_p):
+            return jsonify({'error': 'Training is full. Promote from waitlist or increase capacity.'}), 409
+        is_free = int(app['is_free'] or 0) == 1 or float(app['price'] or 0) == 0
+        new_status = 'registered' if is_free else 'applied'
+        db.execute(
+            """
+            UPDATE training_applications
+            SET status=?, reviewed_at=DATETIME('now'), reviewed_by=?, rejection_reason=NULL
+            WHERE id=?
+            """,
+            (new_status, uid, aid),
+        )
+        db.commit()
+        return jsonify({'message': 'Application approved', 'status': new_status})
+    finally:
+        db.close()
+
+
+@admin_bp.route('/training-applications/<int:aid>/reject', methods=['POST'])
+@require_admin
+def reject_training_application(aid):
+    uid = get_jwt_identity()
+    data = request.json or {}
+    reason = (data.get('reason') or 'Application not approved').strip()
+    db = get_db()
+    db.execute(
+        """
+        UPDATE training_applications
+        SET status='rejected', rejection_reason=?, reviewed_at=DATETIME('now'), reviewed_by=?
+        WHERE id=? AND status IN ('pending','waitlisted','applied','receipt')
+        """,
+        (reason, uid, aid),
+    )
+    db.commit(); db.close()
+    return jsonify({'message': 'Application rejected'})
+
+
+@admin_bp.route('/training-applications', methods=['GET'])
+@require_admin
+def training_applications():
+    status = request.args.get('status', 'receipt')
+    db = get_db()
+    if status == 'all':
+        rows = db.execute("""
+            SELECT ta.*, u.first_name||' '||u.father_name as student_name,
+                   u.email, u.university, t.title as training_title
+            FROM training_applications ta
+            JOIN users u ON ta.user_id=u.id
+            JOIN trainings t ON ta.training_id=t.id
+            ORDER BY ta.submitted_at DESC
+        """).fetchall()
+    else:
+        rows = db.execute("""
+            SELECT ta.*, u.first_name||' '||u.father_name as student_name,
+                   u.email, u.university, t.title as training_title
+            FROM training_applications ta
+            JOIN users u ON ta.user_id=u.id
+            JOIN trainings t ON ta.training_id=t.id
+            WHERE ta.status=? ORDER BY ta.submitted_at DESC
+        """, (status,)).fetchall()
+    db.close()
+    return jsonify([dict(r) for r in rows])
+
+
+@admin_bp.route('/trainings/<int:tid>/program', methods=['GET'])
+@require_admin
+def admin_training_program(tid):
+    db = get_db()
+    try:
+        t = db.execute("SELECT * FROM trainings WHERE id=?", (tid,)).fetchone()
+        if not t:
+            return jsonify({'error': 'Not found'}), 404
+        mods = db.execute(
+            "SELECT * FROM training_modules WHERE training_id=? ORDER BY order_num, id",
+            (tid,),
+        ).fetchall()
+        sess = db.execute(
+            "SELECT * FROM training_sessions WHERE training_id=? ORDER BY order_num, starts_at",
+            (tid,),
+        ).fetchall()
+        ann = db.execute(
+            "SELECT * FROM training_announcements WHERE training_id=? ORDER BY created_at DESC LIMIT 50",
+            (tid,),
+        ).fetchall()
+        gal = db.execute(
+            "SELECT * FROM training_gallery WHERE training_id=? ORDER BY sort_order, id",
+            (tid,),
+        ).fetchall()
+        apps = db.execute(
+            """
+            SELECT ta.status, COUNT(*) as c FROM training_applications ta
+            WHERE ta.training_id=? GROUP BY ta.status
+            """,
+            (tid,),
+        ).fetchall()
+        return jsonify({
+            'training': dict(t),
+            'modules': [dict(m) for m in mods],
+            'sessions': [dict(s) for s in sess],
+            'announcements': [dict(a) for a in ann],
+            'gallery': [dict(g) for g in gal],
+            'enrollment_stats': {r['status']: r['c'] for r in apps},
+        })
+    finally:
+        db.close()
+
+
+@admin_bp.route('/trainings/<int:tid>/modules', methods=['POST'])
+@require_admin
+def admin_add_training_module(tid):
+    data = request.json or {}
+    db = get_db()
+    try:
+        mx = db.execute(
+            "SELECT COALESCE(MAX(order_num),-1)+1 FROM training_modules WHERE training_id=?",
+            (tid,),
+        ).fetchone()[0]
+        cur = db.execute(
+            """
+            INSERT INTO training_modules (training_id, title, summary, content_html, video_url, resource_paths, order_num, estimated_mins)
+            VALUES (?,?,?,?,?,?,?,?)
+            """,
+            (
+                tid,
+                data.get('title') or 'Module',
+                data.get('summary'),
+                data.get('content_html'),
+                data.get('video_url'),
+                json.dumps(data.get('resource_paths') or []),
+                int(data.get('order_num', mx)),
+                int(data.get('estimated_mins') or 0),
+            ),
+        )
+        db.commit()
+        mid = cur.lastrowid
+        if data.get('pop_quiz'):
+            pq = data['pop_quiz']
+            db.execute(
+                """
+                INSERT INTO training_pop_quizzes (module_id, title, questions_json, pass_percent)
+                VALUES (?,?,?,?)
+                """,
+                (mid, pq.get('title') or 'Knowledge check', json.dumps(pq.get('questions') or []), float(pq.get('pass_percent') or 70)),
+            )
+            db.commit()
+        return jsonify({'id': mid}), 201
+    finally:
+        db.close()
+
+
+@admin_bp.route('/trainings/modules/<int:mid>', methods=['PUT'])
+@require_admin
+def admin_update_training_module(mid):
+    data = request.json or {}
+    db = get_db()
+    try:
+        db.execute(
+            """
+            UPDATE training_modules SET
+              title=COALESCE(?, title),
+              summary=COALESCE(?, summary),
+              content_html=COALESCE(?, content_html),
+              video_url=COALESCE(?, video_url),
+              resource_paths=COALESCE(?, resource_paths),
+              order_num=COALESCE(?, order_num),
+              estimated_mins=COALESCE(?, estimated_mins)
+            WHERE id=?
+            """,
+            (
+                data.get('title'),
+                data.get('summary'),
+                data.get('content_html'),
+                data.get('video_url'),
+                json.dumps(data['resource_paths']) if 'resource_paths' in data else None,
+                data.get('order_num'),
+                data.get('estimated_mins'),
+                mid,
+            ),
+        )
+        if 'pop_quiz' in data and data['pop_quiz']:
+            pq = data['pop_quiz']
+            ex = db.execute("SELECT id FROM training_pop_quizzes WHERE module_id=? LIMIT 1", (mid,)).fetchone()
+            if ex:
+                db.execute(
+                    "UPDATE training_pop_quizzes SET title=?, questions_json=?, pass_percent=? WHERE id=?",
+                    (pq.get('title') or 'Knowledge check', json.dumps(pq.get('questions') or []), float(pq.get('pass_percent') or 70), ex['id']),
+                )
+            else:
+                db.execute(
+                    "INSERT INTO training_pop_quizzes (module_id, title, questions_json, pass_percent) VALUES (?,?,?,?)",
+                    (mid, pq.get('title') or 'Knowledge check', json.dumps(pq.get('questions') or []), float(pq.get('pass_percent') or 70)),
+                )
+        db.commit()
+        return jsonify({'message': 'updated'})
+    finally:
+        db.close()
+
+
+@admin_bp.route('/trainings/modules/<int:mid>', methods=['DELETE'])
+@require_admin
+def admin_delete_training_module(mid):
+    db = get_db()
+    db.execute("DELETE FROM training_modules WHERE id=?", (mid,))
+    db.commit(); db.close()
+    return jsonify({'message': 'deleted'})
+
+
+@admin_bp.route('/trainings/<int:tid>/sessions', methods=['POST'])
+@require_admin
+def admin_add_training_session(tid):
+    data = request.json or {}
+    db = get_db()
+    try:
+        mx = db.execute(
+            "SELECT COALESCE(MAX(order_num),-1)+1 FROM training_sessions WHERE training_id=?",
+            (tid,),
+        ).fetchone()[0]
+        cur = db.execute(
+            """
+            INSERT INTO training_sessions (training_id, title, session_type, starts_at, ends_at, meet_url, recording_url, notes, order_num)
+            VALUES (?,?,?,?,?,?,?,?,?)
+            """,
+            (
+                tid,
+                data.get('title') or 'Session',
+                data.get('session_type') or 'live',
+                data.get('starts_at'),
+                data.get('ends_at'),
+                data.get('meet_url'),
+                data.get('recording_url'),
+                data.get('notes'),
+                int(data.get('order_num', mx)),
+            ),
+        )
+        db.commit()
+        return jsonify({'id': cur.lastrowid}), 201
+    finally:
+        db.close()
+
+
+@admin_bp.route('/training-sessions/<int:sid>', methods=['PUT'])
+@require_admin
+def admin_update_training_session(sid):
+    data = request.json or {}
+    db = get_db()
+    db.execute(
+        """
+        UPDATE training_sessions SET
+          title=COALESCE(?, title),
+          session_type=COALESCE(?, session_type),
+          starts_at=COALESCE(?, starts_at),
+          ends_at=COALESCE(?, ends_at),
+          meet_url=COALESCE(?, meet_url),
+          recording_url=COALESCE(?, recording_url),
+          notes=COALESCE(?, notes),
+          order_num=COALESCE(?, order_num),
+          updated_at=DATETIME('now')
+        WHERE id=?
+        """,
+        (
+            data.get('title'),
+            data.get('session_type'),
+            data.get('starts_at'),
+            data.get('ends_at'),
+            data.get('meet_url'),
+            data.get('recording_url'),
+            data.get('notes'),
+            data.get('order_num'),
+            sid,
+        ),
+    )
+    db.commit(); db.close()
+    return jsonify({'message': 'updated'})
+
+
+@admin_bp.route('/trainings/<int:tid>/announcements', methods=['POST'])
+@require_admin
+def admin_training_announcement(tid):
+    uid = get_jwt_identity()
+    data = request.json or {}
+    db = get_db()
+    cur = db.execute(
+        """
+        INSERT INTO training_announcements (training_id, title, body, pinned, created_by)
+        VALUES (?,?,?,?,?)
+        """,
+        (tid, data.get('title') or 'Announcement', data.get('body'), int(data.get('pinned') or 0), uid),
+    )
+    db.commit(); db.close()
+    return jsonify({'id': cur.lastrowid}), 201
+
+
+@admin_bp.route('/trainings/<int:tid>/gallery', methods=['POST'])
+@require_admin
+def admin_training_gallery_upload(tid):
+    uid = get_jwt_identity()
+    file = request.files.get('file')
+    if not file:
+        return jsonify({'error': 'file required'}), 400
+    from werkzeug.utils import secure_filename
+    import uuid as _uuid
+    raw = secure_filename(file.filename)
+    ext = raw.rsplit('.', 1)[-1].lower() if '.' in raw else 'bin'
+    fname = f"{_uuid.uuid4().hex[:14]}.{ext}"
+    kind = (request.form.get('kind') or 'photo').strip()
+    save_upload(file, 'training_gallery', filename=fname)
+    db = get_db()
+    cap = (request.form.get('caption') or '').strip()
+    desc = (request.form.get('description') or '').strip()
+    cur = db.execute(
+        """
+        INSERT INTO training_gallery (training_id, kind, path, caption, description, sort_order)
+        VALUES (?,?,?,?,?, (SELECT COALESCE(MAX(sort_order),-1)+1 FROM training_gallery WHERE training_id=?))
+        """,
+        (tid, kind, fname, cap or None, desc or None, tid),
+    )
+    db.commit(); db.close()
+    return jsonify({'path': fname}), 201
+
+
+@admin_bp.route('/trainings/<int:tid>/analytics', methods=['GET'])
+@require_admin
+def admin_training_analytics(tid):
+    db = get_db()
+    try:
+        reg = db.execute(
+            "SELECT COUNT(*) FROM training_applications WHERE training_id=? AND status='registered'",
+            (tid,),
+        ).fetchone()[0]
+        mod_count = db.execute("SELECT COUNT(*) FROM training_modules WHERE training_id=?", (tid,)).fetchone()[0]
+        completed = db.execute(
+            """
+            SELECT COUNT(DISTINCT mp.user_id) FROM training_module_progress mp
+            JOIN training_modules m ON m.id = mp.module_id
+            WHERE m.training_id=? AND mp.completed_at IS NOT NULL
+            """,
+            (tid,),
+        ).fetchone()[0]
+        t = db.execute("SELECT pre_exam_id, post_exam_id FROM trainings WHERE id=?", (tid,)).fetchone()
+        pre_id = t['pre_exam_id'] if t and 'pre_exam_id' in t.keys() else None
+        post_id = t['post_exam_id'] if t and 'post_exam_id' in t.keys() else None
+        certs = db.execute(
+            "SELECT COUNT(*) FROM training_certificates WHERE training_id=?",
+            (tid,),
+        ).fetchone()[0]
+        return jsonify({
+            'registered': int(reg or 0),
+            'module_count': int(mod_count or 0),
+            'learners_with_progress': int(completed or 0),
+            'certificates_issued': int(certs or 0),
+            'pre_exam_id': pre_id,
+            'post_exam_id': post_id,
+        })
+    finally:
+        db.close()
+
 
 @admin_bp.route('/training-applications/<int:aid>/register', methods=['POST'])
 @require_admin
