@@ -603,7 +603,42 @@ const API = {
       window.location.href = new URL('index.html', window.location.href).href;
     }
   },
+  // ── Admin: New Training Management API ──
+  async adminListTrainings()              { return this.request('/trainings/admin/list'); },
+  async adminCreateTraining(body)         { return this.request('/trainings/admin/create', { method: 'POST', body }); },
+  async adminUpdateTraining(tid, body)    { return this.request(`/trainings/admin/${tid}`, { method: 'PUT', body }); },
+  async adminDeleteTraining(tid)          { return this.request(`/trainings/admin/${tid}`, { method: 'DELETE' }); },
+
+  // Enrollments
+  async adminGetEnrollments(tid, status='all') { return this.request(`/trainings/admin/${tid}/enrollments?status=${status}`); },
+  async adminApproveEnrollment(tid, aid)  { return this.request(`/trainings/admin/${tid}/enrollments/${aid}/approve`, { method: 'POST', body: {} }); },
+  async adminRejectEnrollment(tid, aid, reason='') { return this.request(`/trainings/admin/${tid}/enrollments/${aid}/reject`, { method: 'POST', body: { reason } }); },
+  async adminRegisterEnrollment(tid, aid) { return this.request(`/trainings/admin/${tid}/enrollments/${aid}/register`, { method: 'POST', body: {} }); },
+  async adminAllReceipts()                { return this.request('/trainings/admin/receipts'); },
+
+  // Modules
+  async adminGetModules(tid)              { return this.request(`/trainings/admin/${tid}/modules`); },
+  async adminCreateModule(tid, body)      { return this.request(`/trainings/admin/${tid}/modules`, { method: 'POST', body }); },
+  async adminUpdateModule(tid, mid, body) { return this.request(`/trainings/admin/${tid}/modules/${mid}`, { method: 'PUT', body }); },
+  async adminDeleteModule(tid, mid)       { return this.request(`/trainings/admin/${tid}/modules/${mid}`, { method: 'DELETE' }); },
+
+  // Sessions
+  async adminGetSessions(tid)             { return this.request(`/trainings/admin/${tid}/sessions`); },
+  async adminCreateSession(tid, body)     { return this.request(`/trainings/admin/${tid}/sessions`, { method: 'POST', body }); },
+  async adminUpdateSession(tid, sid, body){ return this.request(`/trainings/admin/${tid}/sessions/${sid}`, { method: 'PUT', body }); },
+  async adminDeleteSession(tid, sid)      { return this.request(`/trainings/admin/${tid}/sessions/${sid}`, { method: 'DELETE' }); },
+
+  // Announcements
+  async adminGetAnnouncements(tid)        { return this.request(`/trainings/admin/${tid}/announcements`); },
+  async adminCreateAnnouncement(tid, body){ return this.request(`/trainings/admin/${tid}/announcements`, { method: 'POST', body }); },
+  async adminDeleteAnnouncement(tid, anid){ return this.request(`/trainings/admin/${tid}/announcements/${anid}`, { method: 'DELETE' }); },
+
+  // Analytics & Certs
+  async adminTrainingAnalytics(tid)       { return this.request(`/trainings/admin/${tid}/analytics`); },
+  async adminSaveCertTemplate(tid, body)  { return this.request(`/trainings/admin/${tid}/cert-template`, { method: 'POST', body }); },
+  async adminIssueCertificate(tid, uid)   { return this.request(`/trainings/admin/${tid}/certificates/${uid}/issue`, { method: 'POST', body: {} }); },
 };
+
 
 // ── ANALYTIC ENGINE API EXTENSIONS ───────────────────────────────────────────
 Object.assign(API, {

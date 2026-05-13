@@ -758,3 +758,682 @@ def training_analytics_student(tid):
         return jsonify(_completion_state(db, training, uid, int(n_mod or 0)))
     finally:
         db.close()
+
+
+# ═══════════════════════════════════════════════════════════════
+#  ADMIN TRAINING MANAGEMENT ROUTES
+# ═══════════════════════════════════════════════════════════════
+
+def _require_admin(db, uid):
+    """Return user row if admin/instructor, else None."""
+    if uid is None:
+        return None
+    row = db.execute("SELECT id, role FROM users WHERE id=?", (uid,)).fetchone()
+    if row and row["role"] in ("admin", "super_admin", "instructor"):
+        return row
+    return None
+
+
+def _training_stats(db, tid):
+    counts = db.execute(
+        """SELECT
+            COUNT(*) as total,
+            SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) as pending,
+            SUM(CASE WHEN status='approved' THEN 1 ELSE 0 END) as approved,
+            SUM(CASE WHEN status='registered' THEN 1 ELSE 0 END) as registered,
+            SUM(CASE WHEN status='rejected' THEN 1 ELSE 0 END) as rejected,
+            SUM(CASE WHEN status='waitlisted' THEN 1 ELSE 0 END) as waitlisted,
+            SUM(CASE WHEN status='receipt' THEN 1 ELSE 0 END) as receipt
+        FROM training_applications WHERE training_id=?""",
+        (tid,),
+    ).fetchone()
+    certs = db.execute(
+        "SELECT COUNT(*) FROM training_certificates WHERE training_id=?", (tid,)
+    ).fetchone()[0]
+    return {
+        "total": counts["total"] or 0,
+        "pending": counts["pending"] or 0,
+        "approved": counts["approved"] or 0,
+        "registered": counts["registered"] or 0,
+        "rejected": counts["rejected"] or 0,
+        "waitlisted": counts["waitlisted"] or 0,
+        "receipt": counts["receipt"] or 0,
+        "certificates_issued": int(certs or 0),
+    }
+
+
+@training_bp.route("/admin/list", methods=["GET"])
+@jwt_required()
+def admin_list_trainings():
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        rows = db.execute(
+            "SELECT * FROM trainings ORDER BY created_at DESC"
+        ).fetchall()
+        result = []
+        for r in rows:
+            t = _serialize_row(r)
+            t["stats"] = _training_stats(db, r["id"])
+            t["module_count"] = db.execute(
+                "SELECT COUNT(*) FROM training_modules WHERE training_id=?", (r["id"],)
+            ).fetchone()[0]
+            result.append(t)
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@training_bp.route("/admin/create", methods=["POST"])
+@jwt_required()
+def admin_create_training():
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        data = request.json or {}
+        title = (data.get("title") or "").strip()
+        if not title:
+            return jsonify({"error": "Title required"}), 400
+        cur = db.execute(
+            """INSERT INTO trainings
+               (title, description, format, price, is_free, icon, cert_title, cert_desc,
+                max_participants, waitlist_enabled, instructor_user_id, instructor_display_name,
+                pre_exam_id, post_exam_id, cert_template_json, created_by, is_active)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1)""",
+            (
+                title,
+                data.get("description") or "",
+                data.get("format") or "online",
+                float(data.get("price") or 0),
+                1 if data.get("is_free", True) else 0,
+                data.get("icon") or "🎓",
+                data.get("cert_title") or "",
+                data.get("cert_desc") or "",
+                data.get("max_participants") or None,
+                1 if data.get("waitlist_enabled", True) else 0,
+                data.get("instructor_user_id") or None,
+                data.get("instructor_display_name") or "",
+                data.get("pre_exam_id") or None,
+                data.get("post_exam_id") or None,
+                json.dumps(data.get("cert_template") or {}),
+                uid,
+            ),
+        )
+        db.commit()
+        return jsonify({"ok": True, "id": cur.lastrowid}), 201
+    finally:
+        db.close()
+
+
+@training_bp.route("/admin/<int:tid>", methods=["PUT"])
+@jwt_required()
+def admin_update_training(tid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        data = request.json or {}
+        db.execute(
+            """UPDATE trainings SET
+               title=COALESCE(?,title),
+               description=COALESCE(?,description),
+               format=COALESCE(?,format),
+               price=COALESCE(?,price),
+               is_free=COALESCE(?,is_free),
+               icon=COALESCE(?,icon),
+               cert_title=COALESCE(?,cert_title),
+               cert_desc=COALESCE(?,cert_desc),
+               max_participants=COALESCE(?,max_participants),
+               waitlist_enabled=COALESCE(?,waitlist_enabled),
+               instructor_user_id=COALESCE(?,instructor_user_id),
+               instructor_display_name=COALESCE(?,instructor_display_name),
+               pre_exam_id=COALESCE(?,pre_exam_id),
+               post_exam_id=COALESCE(?,post_exam_id),
+               is_active=COALESCE(?,is_active)
+               WHERE id=?""",
+            (
+                data.get("title"),
+                data.get("description"),
+                data.get("format"),
+                data.get("price"),
+                data.get("is_free"),
+                data.get("icon"),
+                data.get("cert_title"),
+                data.get("cert_desc"),
+                data.get("max_participants"),
+                data.get("waitlist_enabled"),
+                data.get("instructor_user_id"),
+                data.get("instructor_display_name"),
+                data.get("pre_exam_id"),
+                data.get("post_exam_id"),
+                data.get("is_active"),
+                tid,
+            ),
+        )
+        db.commit()
+        return jsonify({"ok": True})
+    finally:
+        db.close()
+
+
+@training_bp.route("/admin/<int:tid>", methods=["DELETE"])
+@jwt_required()
+def admin_delete_training(tid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        db.execute("UPDATE trainings SET is_active=0 WHERE id=?", (tid,))
+        db.commit()
+        return jsonify({"ok": True})
+    finally:
+        db.close()
+
+
+@training_bp.route("/admin/<int:tid>/enrollments", methods=["GET"])
+@jwt_required()
+def admin_enrollments(tid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        status_filter = request.args.get("status") or "all"
+        query = """
+            SELECT ta.*, u.first_name, u.father_name, u.email, u.phone,
+                   u.university, u.academic_year, u.student_id, u.profile_photo
+            FROM training_applications ta
+            JOIN users u ON u.id = ta.user_id
+            WHERE ta.training_id=?
+        """
+        params = [tid]
+        if status_filter != "all":
+            query += " AND ta.status=?"
+            params.append(status_filter)
+        query += " ORDER BY ta.submitted_at DESC"
+        rows = db.execute(query, params).fetchall()
+        return jsonify([_serialize_row(r) for r in rows])
+    finally:
+        db.close()
+
+
+@training_bp.route("/admin/<int:tid>/enrollments/<int:aid>/approve", methods=["POST"])
+@jwt_required()
+def admin_approve_enrollment(tid, aid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        training = db.execute("SELECT * FROM trainings WHERE id=?", (tid,)).fetchone()
+        if not training:
+            return jsonify({"error": "Training not found"}), 404
+        is_paid = not bool(int(training["is_free"] or 1))
+        new_status = "approved" if is_paid else "registered"
+        db.execute(
+            "UPDATE training_applications SET status=?, reviewed_by=?, reviewed_at=DATETIME('now') WHERE id=? AND training_id=?",
+            (new_status, uid, aid, tid),
+        )
+        db.commit()
+        return jsonify({"ok": True, "status": new_status})
+    finally:
+        db.close()
+
+
+@training_bp.route("/admin/<int:tid>/enrollments/<int:aid>/reject", methods=["POST"])
+@jwt_required()
+def admin_reject_enrollment(tid, aid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        data = request.json or {}
+        reason = data.get("reason") or ""
+        db.execute(
+            "UPDATE training_applications SET status='rejected', rejection_reason=?, reviewed_by=?, reviewed_at=DATETIME('now') WHERE id=? AND training_id=?",
+            (reason, uid, aid, tid),
+        )
+        db.commit()
+        return jsonify({"ok": True})
+    finally:
+        db.close()
+
+
+@training_bp.route("/admin/<int:tid>/enrollments/<int:aid>/register", methods=["POST"])
+@jwt_required()
+def admin_register_enrollment(tid, aid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        db.execute(
+            "UPDATE training_applications SET status='registered', reviewed_by=?, reviewed_at=DATETIME('now') WHERE id=? AND training_id=?",
+            (uid, aid, tid),
+        )
+        db.commit()
+        return jsonify({"ok": True, "status": "registered"})
+    finally:
+        db.close()
+
+
+@training_bp.route("/admin/receipts", methods=["GET"])
+@jwt_required()
+def admin_all_receipts():
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        rows = db.execute(
+            """SELECT ta.*, u.first_name, u.father_name, u.email,
+                      t.title as training_title, t.price
+               FROM training_applications ta
+               JOIN users u ON u.id = ta.user_id
+               JOIN trainings t ON t.id = ta.training_id
+               WHERE ta.status IN ('receipt','approved')
+               ORDER BY ta.submitted_at DESC"""
+        ).fetchall()
+        return jsonify([_serialize_row(r) for r in rows])
+    finally:
+        db.close()
+
+
+# ── MODULE ADMIN ─────────────────────────────────────────────────────────────
+
+@training_bp.route("/admin/<int:tid>/modules", methods=["GET"])
+@jwt_required()
+def admin_get_modules(tid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        rows = db.execute(
+            "SELECT * FROM training_modules WHERE training_id=? ORDER BY order_num, id", (tid,)
+        ).fetchall()
+        return jsonify([_serialize_row(r) for r in rows])
+    finally:
+        db.close()
+
+
+@training_bp.route("/admin/<int:tid>/modules", methods=["POST"])
+@jwt_required()
+def admin_create_module(tid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        data = request.json or {}
+        title = (data.get("title") or "").strip()
+        if not title:
+            return jsonify({"error": "Title required"}), 400
+        max_ord = db.execute(
+            "SELECT COALESCE(MAX(order_num),0) FROM training_modules WHERE training_id=?", (tid,)
+        ).fetchone()[0]
+        cur = db.execute(
+            """INSERT INTO training_modules
+               (training_id, title, summary, content_html, video_url, resource_paths, order_num, estimated_mins)
+               VALUES (?,?,?,?,?,?,?,?)""",
+            (
+                tid,
+                title,
+                data.get("summary") or "",
+                data.get("content_html") or "",
+                data.get("video_url") or "",
+                json.dumps(data.get("resource_paths") or []),
+                int(data.get("order_num") or (max_ord + 1)),
+                int(data.get("estimated_mins") or 0),
+            ),
+        )
+        db.commit()
+        return jsonify({"ok": True, "id": cur.lastrowid}), 201
+    finally:
+        db.close()
+
+
+@training_bp.route("/admin/<int:tid>/modules/<int:mid>", methods=["PUT"])
+@jwt_required()
+def admin_update_module(tid, mid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        data = request.json or {}
+        db.execute(
+            """UPDATE training_modules SET
+               title=COALESCE(?,title),
+               summary=COALESCE(?,summary),
+               content_html=COALESCE(?,content_html),
+               video_url=COALESCE(?,video_url),
+               order_num=COALESCE(?,order_num),
+               estimated_mins=COALESCE(?,estimated_mins)
+               WHERE id=? AND training_id=?""",
+            (
+                data.get("title"), data.get("summary"),
+                data.get("content_html"), data.get("video_url"),
+                data.get("order_num"), data.get("estimated_mins"),
+                mid, tid,
+            ),
+        )
+        db.commit()
+        return jsonify({"ok": True})
+    finally:
+        db.close()
+
+
+@training_bp.route("/admin/<int:tid>/modules/<int:mid>", methods=["DELETE"])
+@jwt_required()
+def admin_delete_module(tid, mid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        db.execute("DELETE FROM training_modules WHERE id=? AND training_id=?", (mid, tid))
+        db.commit()
+        return jsonify({"ok": True})
+    finally:
+        db.close()
+
+
+# ── SESSION ADMIN ────────────────────────────────────────────────────────────
+
+@training_bp.route("/admin/<int:tid>/sessions", methods=["GET"])
+@jwt_required()
+def admin_get_sessions(tid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        rows = db.execute(
+            "SELECT * FROM training_sessions WHERE training_id=? ORDER BY order_num, starts_at", (tid,)
+        ).fetchall()
+        return jsonify([_serialize_row(r) for r in rows])
+    finally:
+        db.close()
+
+
+@training_bp.route("/admin/<int:tid>/sessions", methods=["POST"])
+@jwt_required()
+def admin_create_session(tid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        data = request.json or {}
+        title = (data.get("title") or "").strip()
+        if not title:
+            return jsonify({"error": "Title required"}), 400
+        max_ord = db.execute(
+            "SELECT COALESCE(MAX(order_num),0) FROM training_sessions WHERE training_id=?", (tid,)
+        ).fetchone()[0]
+        cur = db.execute(
+            """INSERT INTO training_sessions
+               (training_id, title, session_type, starts_at, ends_at, meet_url, recording_url, notes, order_num)
+               VALUES (?,?,?,?,?,?,?,?,?)""",
+            (
+                tid, title,
+                data.get("session_type") or "live",
+                data.get("starts_at") or None,
+                data.get("ends_at") or None,
+                data.get("meet_url") or "",
+                data.get("recording_url") or "",
+                data.get("notes") or "",
+                int(data.get("order_num") or (max_ord + 1)),
+            ),
+        )
+        db.commit()
+        return jsonify({"ok": True, "id": cur.lastrowid}), 201
+    finally:
+        db.close()
+
+
+@training_bp.route("/admin/<int:tid>/sessions/<int:sid>", methods=["PUT"])
+@jwt_required()
+def admin_update_session(tid, sid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        data = request.json or {}
+        db.execute(
+            """UPDATE training_sessions SET
+               title=COALESCE(?,title), session_type=COALESCE(?,session_type),
+               starts_at=COALESCE(?,starts_at), ends_at=COALESCE(?,ends_at),
+               meet_url=COALESCE(?,meet_url), recording_url=COALESCE(?,recording_url),
+               notes=COALESCE(?,notes), updated_at=DATETIME('now')
+               WHERE id=? AND training_id=?""",
+            (
+                data.get("title"), data.get("session_type"),
+                data.get("starts_at"), data.get("ends_at"),
+                data.get("meet_url"), data.get("recording_url"),
+                data.get("notes"), sid, tid,
+            ),
+        )
+        db.commit()
+        return jsonify({"ok": True})
+    finally:
+        db.close()
+
+
+@training_bp.route("/admin/<int:tid>/sessions/<int:sid>", methods=["DELETE"])
+@jwt_required()
+def admin_delete_session(tid, sid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        db.execute("DELETE FROM training_sessions WHERE id=? AND training_id=?", (sid, tid))
+        db.commit()
+        return jsonify({"ok": True})
+    finally:
+        db.close()
+
+
+# ── ANNOUNCEMENT ADMIN ───────────────────────────────────────────────────────
+
+@training_bp.route("/admin/<int:tid>/announcements", methods=["GET"])
+@jwt_required()
+def admin_get_announcements(tid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        rows = db.execute(
+            "SELECT * FROM training_announcements WHERE training_id=? ORDER BY pinned DESC, created_at DESC", (tid,)
+        ).fetchall()
+        return jsonify([_serialize_row(r) for r in rows])
+    finally:
+        db.close()
+
+
+@training_bp.route("/admin/<int:tid>/announcements", methods=["POST"])
+@jwt_required()
+def admin_create_announcement(tid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        data = request.json or {}
+        title = (data.get("title") or "").strip()
+        if not title:
+            return jsonify({"error": "Title required"}), 400
+        cur = db.execute(
+            "INSERT INTO training_announcements (training_id, title, body, pinned, created_by) VALUES (?,?,?,?,?)",
+            (tid, title, data.get("body") or "", 1 if data.get("pinned") else 0, uid),
+        )
+        db.commit()
+        return jsonify({"ok": True, "id": cur.lastrowid}), 201
+    finally:
+        db.close()
+
+
+@training_bp.route("/admin/<int:tid>/announcements/<int:anid>", methods=["DELETE"])
+@jwt_required()
+def admin_delete_announcement(tid, anid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        db.execute("DELETE FROM training_announcements WHERE id=? AND training_id=?", (anid, tid))
+        db.commit()
+        return jsonify({"ok": True})
+    finally:
+        db.close()
+
+
+# ── ANALYTICS ADMIN ──────────────────────────────────────────────────────────
+
+@training_bp.route("/admin/<int:tid>/analytics", methods=["GET"])
+@jwt_required()
+def admin_training_analytics(tid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        stats = _training_stats(db, tid)
+        modules = db.execute(
+            "SELECT id, title, estimated_mins FROM training_modules WHERE training_id=? ORDER BY order_num", (tid,)
+        ).fetchall()
+        module_progress = []
+        for m in modules:
+            completed = db.execute(
+                "SELECT COUNT(*) FROM training_module_progress WHERE module_id=? AND completed_at IS NOT NULL", (m["id"],)
+            ).fetchone()[0]
+            quiz_passed = db.execute(
+                "SELECT COUNT(*) FROM training_module_progress WHERE module_id=? AND quiz_passed=1", (m["id"],)
+            ).fetchone()[0]
+            module_progress.append({
+                "module_id": m["id"],
+                "title": m["title"],
+                "completed_count": int(completed or 0),
+                "quiz_passed_count": int(quiz_passed or 0),
+            })
+        certs = db.execute(
+            """SELECT tc.*, u.first_name, u.father_name, u.email
+               FROM training_certificates tc
+               JOIN users u ON u.id = tc.user_id
+               WHERE tc.training_id=? ORDER BY tc.issued_at DESC""",
+            (tid,),
+        ).fetchall()
+        eligible = db.execute(
+            "SELECT COUNT(*) FROM training_applications WHERE training_id=? AND status='registered'", (tid,)
+        ).fetchone()[0]
+        return jsonify({
+            "stats": stats,
+            "module_progress": module_progress,
+            "certificates": [_serialize_row(c) for c in certs],
+            "eligible_for_cert": int(eligible or 0),
+        })
+    finally:
+        db.close()
+
+
+@training_bp.route("/admin/<int:tid>/cert-template", methods=["POST"])
+@jwt_required()
+def admin_save_cert_template(tid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        data = request.json or {}
+        db.execute("UPDATE trainings SET cert_template_json=? WHERE id=?", (json.dumps(data), tid))
+        db.commit()
+        return jsonify({"ok": True})
+    finally:
+        db.close()
+
+
+@training_bp.route("/admin/<int:tid>/certificates/<int:student_uid>/issue", methods=["POST"])
+@jwt_required()
+def admin_issue_certificate(tid, student_uid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        existing = db.execute(
+            "SELECT id FROM training_certificates WHERE training_id=? AND user_id=?", (tid, student_uid)
+        ).fetchone()
+        if existing:
+            return jsonify({"ok": True, "already_issued": True, "id": existing["id"]})
+        training = db.execute("SELECT * FROM trainings WHERE id=?", (tid,)).fetchone()
+        user = db.execute("SELECT * FROM users WHERE id=?", (student_uid,)).fetchone()
+        if not training or not user:
+            return jsonify({"error": "Not found"}), 404
+        import secrets
+        cert_code = secrets.token_hex(10).upper()
+        cur = db.execute(
+            "INSERT INTO training_certificates (training_id, user_id, cert_code, meta_json) VALUES (?,?,?,?)",
+            (tid, student_uid, cert_code, json.dumps({"issued_by_admin": uid})),
+        )
+        db.commit()
+        return jsonify({"ok": True, "id": cur.lastrowid, "cert_code": cert_code})
+    finally:
+        db.close()
+
+
+@training_bp.route("/admin/<int:tid>/gallery", methods=["POST"])
+@jwt_required()
+def admin_upload_gallery(tid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        file = request.files.get("file")
+        if not file:
+            return jsonify({"error": "No file"}), 400
+        kind = request.form.get("kind") or "photo"
+        caption = request.form.get("caption") or ""
+        try:
+            from .storage import save_upload
+        except ImportError:
+            from storage import save_upload
+        filename = save_upload("training_gallery", file, prefix=f"t{tid}_")
+        max_sort = db.execute(
+            "SELECT COALESCE(MAX(sort_order),0) FROM training_gallery WHERE training_id=?", (tid,)
+        ).fetchone()[0]
+        cur = db.execute(
+            "INSERT INTO training_gallery (training_id, kind, path, caption, sort_order) VALUES (?,?,?,?,?)",
+            (tid, kind, filename, caption, int(max_sort) + 1),
+        )
+        db.commit()
+        return jsonify({"ok": True, "id": cur.lastrowid, "filename": filename}), 201
+    finally:
+        db.close()
+
+
+@training_bp.route("/admin/<int:tid>/gallery/<int:gid>", methods=["DELETE"])
+@jwt_required()
+def admin_delete_gallery(tid, gid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        db.execute("DELETE FROM training_gallery WHERE id=? AND training_id=?", (gid, tid))
+        db.commit()
+        return jsonify({"ok": True})
+    finally:
+        db.close()
+
