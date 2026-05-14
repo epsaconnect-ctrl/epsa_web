@@ -146,20 +146,27 @@ function populateUserUI(user) {
   s('profileYear', user.academic_year ? `Year ${user.academic_year}` : '—');
   s('profileEmail', user.email       || '—');
   const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239ca3af'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
-  const pUrl = user.profile_photo ? API.resolveUploadUrl('profiles', user.profile_photo) : DEFAULT_AVATAR;
+  // Prefer photo_url (backend-resolved, correct for Supabase/S3/local).
+  // Fall back to resolveUploadUrl if the profile was loaded from localStorage cache.
+  let pUrl = DEFAULT_AVATAR;
+  if (user.photo_url) {
+    pUrl = user.photo_url;
+  } else if (user.profile_photo) {
+    pUrl = API.resolveUploadUrl('profiles', user.profile_photo);
+  }
   const avatars = [document.getElementById('sidebarAvatar'), document.getElementById('profileAvatarImg')];
   avatars.forEach(img => {
     if (!img) return;
     if (img.dataset.currentSrc === pUrl) return;
     if (img.dataset.currentSrc === 'error' && img.dataset.lastAttempt === pUrl) return;
-    
+
     img.dataset.lastAttempt = pUrl;
     img.src = pUrl;
     img.dataset.currentSrc = pUrl;
-    
+
     img.onerror = () => {
       img.dataset.currentSrc = 'error';
-      img.src = DEFAULT_AVATAR; // Fallback to default
+      img.src = DEFAULT_AVATAR;
       img.onerror = null;
     };
   });

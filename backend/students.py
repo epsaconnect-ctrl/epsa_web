@@ -14,10 +14,10 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 try:
     from .models import get_db
-    from .storage import save_upload
+    from .storage import save_upload, upload_url
 except ImportError:
     from models import get_db
-    from storage import save_upload
+    from storage import save_upload, upload_url
 
 students_bp = Blueprint('students', __name__)
 
@@ -42,6 +42,14 @@ def get_profile():
     u['exam_count']       = ec
     u['cert_count']       = tc   # certs = completed trainings
     u['face_registered']  = bool(fe)
+    # Resolve the profile photo to a fully-qualified URL (works for Supabase, S3, and local)
+    if u.get('profile_photo'):
+        try:
+            u['photo_url'] = upload_url('profiles', u['profile_photo'])
+        except Exception:
+            u['photo_url'] = None
+    else:
+        u['photo_url'] = None
     return jsonify(u)
 
 @students_bp.route('/profile', methods=['PUT'])
