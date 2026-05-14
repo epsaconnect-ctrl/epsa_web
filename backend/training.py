@@ -312,57 +312,68 @@ def my_trainings():
     return jsonify(out)
 
 
-def _exam_submission_summary(db, exam_id, user_id):
-    """Look up exam in mock_exams first (pre/post tests use mock exams), then legacy exams."""
+def _exam_submission_summary(db, exam_id, user_id, exam_type_hint=None):
+    """
+    Look up exam submission for training pre/post-test.
+    exam_type_hint='exam'  => Exam Center (exams table)
+    exam_type_hint='mock'  => Mock Exam (mock_exams table)
+    If no hint, try Exam Center first, then Mock Exam as fallback.
+    """
     if not exam_id:
         return None
-    # Try mock exams first (admin links mock exams as pre/post tests)
-    me = db.execute("SELECT * FROM mock_exams WHERE id=?", (exam_id,)).fetchone()
-    if me:
-        sub = db.execute(
-            "SELECT * FROM mock_exam_submissions WHERE exam_id=? AND user_id=? ORDER BY submitted_at DESC LIMIT 1",
-            (exam_id, user_id),
-        ).fetchone()
-        released = bool(int(me["results_released"] or 0)) if "results_released" in me.keys() else True
-        if not sub:
-            return {"linked": True, "exam_id": exam_id, "exam_type": "mock", "title": me["title"], "status": "not_started"}
-        score = float(sub["score"]) if released and sub["score"] is not None else None
-        passed = None
-        if released and score is not None:
-            ps = float(me["pass_mark"] or 50) if "pass_mark" in me.keys() else 50.0
-            passed = score >= ps
-        return {
-            "linked": True, "exam_id": exam_id, "exam_type": "mock",
-            "title": me["title"],
-            "submission_status": sub["status"] if "status" in sub.keys() else "submitted",
-            "submitted_at": sub["submitted_at"],
-            "score": score, "passed": passed, "results_released": released,
-        }
-    # Fallback: legacy exams table
-    sub = db.execute(
-        """
-        SELECT es.*, e.results_released, e.passing_score, e.title
-        FROM exam_submissions es
-        JOIN exams e ON e.id = es.exam_id
-        WHERE es.exam_id=? AND es.user_id=?
-        """,
-        (exam_id, user_id),
-    ).fetchone()
-    if not sub:
-        return {"linked": True, "exam_id": exam_id, "exam_type": "legacy", "status": "not_started"}
-    released = bool(int(sub["results_released"] or 0))
-    score = float(sub["score"]) if released and sub["score"] is not None else None
-    passed = None
-    if released and score is not None:
-        ps = float(sub["passing_score"] or 60)
-        passed = score >= ps
-    return {
-        "linked": True, "exam_id": exam_id, "exam_type": "legacy",
-        "title": sub["title"],
-        "submission_status": sub["status"],
-        "submitted_at": sub["submitted_at"],
-        "score": score, "passed": passed, "results_released": released,
-    }
+
+    # ── 1. Exam Center (real exams) ─────────────────────────────────────────
+    if exam_type_hint in (None, "exam", "legacy"):
+        row = db.execute("SELECT * FROM exams WHERE id=?", (exam_id,)).fetchone()
+        if row:
+            sub = db.execute(
+                "SELECT * FROM exam_submissions WHERE exam_id=? AND user_id=?",
+                (exam_id, user_id),
+            ).fetchone()
+            released = bool(int(row["results_released"] or 0))
+            if not sub:
+                return {
+                    "linked": True, "exam_id": exam_id, "exam_type": "exam",
+                    "title": row["title"], "status": "not_started",
+                }
+            score = float(sub["score"]) if released and sub["score"] is not None else None
+            passed = None
+            if released and score is not None:
+                ps = float(row["passing_score"] or 60)
+                passed = score >= ps
+            return {
+                "linked": True, "exam_id": exam_id, "exam_type": "exam",
+                "title": row["title"],
+                "submission_status": sub["status"] if sub["status"] else "submitted",
+                "submitted_at": sub["submitted_at"],
+                "score": score, "passed": passed, "results_released": released,
+            }
+
+    # ── 2. Mock Exams ───────────────────────────────────────────────────────
+    if exam_type_hint in (None, "mock"):
+        me = db.execute("SELECT * FROM mock_exams WHERE id=?", (exam_id,)).fetchone()
+        if me:
+            sub = db.execute(
+                "SELECT * FROM mock_exam_submissions WHERE exam_id=? AND user_id=? ORDER BY submitted_at DESC LIMIT 1",
+                (exam_id, user_id),
+            ).fetchone()
+            released = bool(int(me["results_released"] or 0)) if "results_released" in me.keys() else True
+            if not sub:
+                return {"linked": True, "exam_id": exam_id, "exam_type": "mock", "title": me["title"], "status": "not_started"}
+            score = float(sub["score"]) if released and sub["score"] is not None else None
+            passed = None
+            if released and score is not None:
+                ps = float(me["pass_mark"] or 50) if "pass_mark" in me.keys() else 50.0
+                passed = score >= ps
+            return {
+                "linked": True, "exam_id": exam_id, "exam_type": "mock",
+                "title": me["title"],
+                "submission_status": sub["status"] if "status" in sub.keys() else "submitted",
+                "submitted_at": sub["submitted_at"],
+                "score": score, "passed": passed, "results_released": released,
+            }
+
+    return None
 
 
 @training_bp.route("/<int:tid>/learn", methods=["GET"])
@@ -442,6 +453,8 @@ def training_learn(tid):
 
         pre_ex = training["pre_exam_id"] if "pre_exam_id" in training.keys() else None
         post_ex = training["post_exam_id"] if "post_exam_id" in training.keys() else None
+        pre_ex_type = training["pre_exam_type"] if "pre_exam_type" in training.keys() else None
+        post_ex_type = training["post_exam_type"] if "post_exam_type" in training.keys() else None
 
         cert = db.execute(
             "SELECT * FROM training_certificates WHERE training_id=? AND user_id=?",
@@ -450,15 +463,21 @@ def training_learn(tid):
 
         completion = _completion_state(db, training, uid, len(modules))
 
+        t_out = _serialize_row(training)
+        # Resolve cover image URL for student hub
+        cip = t_out.get("cover_image_path")
+        if cip:
+            t_out["cover_image_url"] = upload_url("training_graphics", cip)
+
         return jsonify(
             {
-                "training": _serialize_row(training),
+                "training": t_out,
                 "modules": mod_out,
                 "sessions": sessions,
                 "announcements": announcements,
                 "gallery": gallery,
-                "pre_exam": _exam_submission_summary(db, pre_ex, uid),
-                "post_exam": _exam_submission_summary(db, post_ex, uid),
+                "pre_exam": _exam_submission_summary(db, pre_ex, uid, exam_type_hint=pre_ex_type),
+                "post_exam": _exam_submission_summary(db, post_ex, uid, exam_type_hint=post_ex_type),
                 "certificate": _serialize_row(cert) if cert else None,
                 "completion": completion,
             }
@@ -841,6 +860,9 @@ def admin_list_trainings():
             t["module_count"] = db.execute(
                 "SELECT COUNT(*) FROM training_modules WHERE training_id=?", (r["id"],)
             ).fetchone()[0]
+            cip = t.get("cover_image_path")
+            if cip:
+                t["cover_image_url"] = upload_url("training_graphics", cip)
             result.append(t)
         return jsonify(result)
     finally:
@@ -914,7 +936,10 @@ def admin_update_training(tid):
                instructor_user_id=COALESCE(?,instructor_user_id),
                instructor_display_name=COALESCE(?,instructor_display_name),
                pre_exam_id=COALESCE(?,pre_exam_id),
+               pre_exam_type=COALESCE(?,pre_exam_type),
                post_exam_id=COALESCE(?,post_exam_id),
+               post_exam_type=COALESCE(?,post_exam_type),
+               cover_image_path=COALESCE(?,cover_image_path),
                is_active=COALESCE(?,is_active)
                WHERE id=?""",
             (
@@ -931,7 +956,10 @@ def admin_update_training(tid):
                 data.get("instructor_user_id"),
                 data.get("instructor_display_name"),
                 data.get("pre_exam_id"),
+                data.get("pre_exam_type"),
                 data.get("post_exam_id"),
+                data.get("post_exam_type"),
+                data.get("cover_image_path"),
                 data.get("is_active"),
                 tid,
             ),
@@ -1455,6 +1483,163 @@ def admin_delete_gallery(tid, gid):
         db.execute("DELETE FROM training_gallery WHERE id=? AND training_id=?", (gid, tid))
         db.commit()
         return jsonify({"ok": True})
+    finally:
+        db.close()
+
+
+# ── EXAM CENTER LIST FOR TRAINING DROPDOWNS ──────────────────────────────────
+
+@training_bp.route("/admin/exams", methods=["GET"])
+@jwt_required()
+def admin_list_real_exams():
+    """Return Exam Center exams for use in pre/post-test dropdowns (NOT mock exams)."""
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        rows = db.execute(
+            "SELECT id, title, passing_score, duration_mins, is_active FROM exams ORDER BY created_at DESC"
+        ).fetchall()
+        return jsonify([_serialize_row(r) for r in rows])
+    finally:
+        db.close()
+
+
+# ── COVER IMAGE UPLOAD ────────────────────────────────────────────────────────
+
+@training_bp.route("/admin/<int:tid>/cover", methods=["POST"])
+@jwt_required()
+def admin_upload_cover(tid):
+    """Upload or replace training cover graphic (stored in training_graphics bucket)."""
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        file = request.files.get("cover")
+        if not file:
+            return jsonify({"error": "No file uploaded"}), 400
+        filename = save_upload(file, "training_graphics")
+        db.execute("UPDATE trainings SET cover_image_path=? WHERE id=?", (filename, tid))
+        db.commit()
+        cover_url = upload_url("training_graphics", filename)
+        return jsonify({"ok": True, "filename": filename, "url": cover_url})
+    finally:
+        db.close()
+
+
+# ── MODULE QUIZ ADMIN ─────────────────────────────────────────────────────────
+
+@training_bp.route("/admin/<int:tid>/modules/<int:mid>/quiz", methods=["GET"])
+@jwt_required()
+def admin_get_module_quiz(tid, mid):
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        qz = db.execute(
+            "SELECT * FROM training_pop_quizzes WHERE module_id=? LIMIT 1", (mid,)
+        ).fetchone()
+        if not qz:
+            return jsonify({"quiz": None})
+        q_data = _serialize_row(qz)
+        q_data["questions"] = _parse_json(qz["questions_json"], [])
+        return jsonify({"quiz": q_data})
+    finally:
+        db.close()
+
+
+@training_bp.route("/admin/<int:tid>/modules/<int:mid>/quiz", methods=["POST"])
+@jwt_required()
+def admin_save_module_quiz(tid, mid):
+    """Create or fully replace the quiz for a module."""
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        data = request.json or {}
+        title = (data.get("title") or "Knowledge Check").strip()
+        pass_percent = int(data.get("pass_percent") or 70)
+        questions = data.get("questions") or []
+        questions_json = json.dumps(questions)
+
+        existing = db.execute(
+            "SELECT id FROM training_pop_quizzes WHERE module_id=? LIMIT 1", (mid,)
+        ).fetchone()
+        if existing:
+            db.execute(
+                "UPDATE training_pop_quizzes SET title=?, pass_percent=?, questions_json=? WHERE id=?",
+                (title, pass_percent, questions_json, existing["id"]),
+            )
+        else:
+            db.execute(
+                "INSERT INTO training_pop_quizzes (module_id, title, pass_percent, questions_json) VALUES (?,?,?,?)",
+                (mid, title, pass_percent, questions_json),
+            )
+        db.commit()
+        return jsonify({"ok": True})
+    finally:
+        db.close()
+
+
+# ── ADMIN CREATE/UPDATE WITH EXAM TYPE FIELDS ─────────────────────────────────
+
+@training_bp.route("/admin/<int:tid>/set-exam-types", methods=["POST"])
+@jwt_required()
+def admin_set_exam_types(tid):
+    """Set pre/post exam ids along with their type ('exam' or 'mock')."""
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        data = request.json or {}
+        db.execute(
+            """UPDATE trainings SET
+               pre_exam_id=COALESCE(?,pre_exam_id),
+               pre_exam_type=COALESCE(?,pre_exam_type),
+               post_exam_id=COALESCE(?,post_exam_id),
+               post_exam_type=COALESCE(?,post_exam_type)
+               WHERE id=?""",
+            (
+                data.get("pre_exam_id"), data.get("pre_exam_type"),
+                data.get("post_exam_id"), data.get("post_exam_type"),
+                tid,
+            ),
+        )
+        db.commit()
+        return jsonify({"ok": True})
+    finally:
+        db.close()
+
+
+# ── LIST TRAININGS WITH COVER URL ─────────────────────────────────────────────
+# Override list endpoint to include cover_image_url
+
+@training_bp.route("/admin/list-with-covers", methods=["GET"])
+@jwt_required()
+def admin_list_trainings_with_covers():
+    uid = _uid()
+    db = get_db()
+    try:
+        if not _require_admin(db, uid):
+            return jsonify({"error": "Forbidden"}), 403
+        rows = db.execute("SELECT * FROM trainings ORDER BY created_at DESC").fetchall()
+        result = []
+        for r in rows:
+            t = _serialize_row(r)
+            t["stats"] = _training_stats(db, r["id"])
+            t["module_count"] = db.execute(
+                "SELECT COUNT(*) FROM training_modules WHERE training_id=?", (r["id"],)
+            ).fetchone()[0]
+            cip = t.get("cover_image_path")
+            if cip:
+                t["cover_image_url"] = upload_url("training_graphics", cip)
+            result.append(t)
+        return jsonify(result)
     finally:
         db.close()
 

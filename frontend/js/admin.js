@@ -925,41 +925,28 @@ async function sendAdminThreadMessage() {
 }
 window.sendAdminThreadMessage = sendAdminThreadMessage;
 
-// ── TRAININGS ─────────────────────────────────
+// ── TRAININGS (delegated to admin-training.js) ────────────────────────────────
+// The new professional training UI is handled entirely by admin-training.js.
+// This function is kept as the section-switcher entry point.
 
 async function loadAdminTrainings() {
-  const tbody = document.getElementById('trainingsTbody'); if (!tbody) return;
-  try {
-    allTrainingsAdmin = await API.getAdminTrainings();
-    if (!allTrainingsAdmin.length) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-8);">No training programs yet</td></tr>`;
-      loadPendingTrainingApps();
-      return;
+  // Delegate to the new modular admin training system
+  if (typeof initAdminTraining === 'function') {
+    initAdminTraining();
+  } else {
+    // Fallback: try the alias
+    if (typeof _loadAdminTrainingPrograms === 'function') {
+      _loadAdminTrainingPrograms();
     }
-    tbody.innerHTML = allTrainingsAdmin.map(t => `
-    <tr style="opacity:${t.is_active ? 1 : 0.6};">
-      <td><div class="table-primary">${t.title}</div>
-        ${!t.is_active ? '<div style="font-size:0.72rem;color:var(--epsa-red);">⚠ Inactive</div>' : ''}
-      </td>
-      <td><span class="badge ${t.format==='online'?'badge-blue':'badge-green'}">${t.format==='online'?'💻 Online':' In-Person'}</span></td>
-      <td style="font-weight:700;color:var(--epsa-green);">${t.price===0?' Free':'ETB '+t.price.toLocaleString()}</td>
-      <td>${t.applicant_count || 0}</td>
-      <td><span class="badge ${t.is_active ? 'status-approved' : 'status-rejected'}">${t.is_active ? 'Active' : 'Inactive'}</span></td>
-      <td><div class="table-actions">
-        <button class="action-btn action-btn-view" onclick="openEditTraining(${t.id})">Edit</button>
-        <button class="action-btn action-btn-view" onclick="openTrainingStudio(${t.id})">Studio</button>
-        <button class="action-btn ${t.is_active ? 'action-btn-reject' : 'action-btn-approve'}" onclick="toggleTrainingStatus(${t.id})">${t.is_active ? 'Deactivate' : '▶ Activate'}</button>
-      </div></td>
-    </tr>`).join('');
-    loadPendingTrainingApps();
-  } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:red;">Failed to get trainings</td></tr>`;
   }
 }
 window.loadAdminTrainings = loadAdminTrainings;
 
-function openCreateTrainingModal() { document.getElementById('createTrainingModal').classList.add('active'); }
-window.openCreateTrainingModal = openCreateTrainingModal;
+// openCreateTrainingModal is now handled by admin-training.js (new dynamic modal)
+// kept as no-op stub in case any legacy HTML still references it
+function _legacyOpenCreateTrainingModal() {
+  if (typeof openCreateTrainingModal === 'function') openCreateTrainingModal();
+}
 
 function openEditTraining(id) {
   const t = allTrainingsAdmin.find(x => x.id === id);

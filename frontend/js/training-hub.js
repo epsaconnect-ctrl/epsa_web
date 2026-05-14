@@ -99,6 +99,31 @@
     document.getElementById('thHeaderIcon').textContent = t.icon || '🎓';
     const pct = comp.module_total > 0 ? Math.round((comp.modules_completed / comp.module_total) * 100) : 0;
     document.getElementById('thProgressRing').innerHTML = progressRingSVG(pct, 22);
+
+    // Cover image banner: show on hub header if available
+    const coverUrl = t.cover_image_url || '';
+    const headerEl = document.querySelector('#trainingHubPanel .th-header');
+    if (headerEl) {
+      if (coverUrl) {
+        headerEl.style.backgroundImage = `url('${coverUrl}')`;
+        headerEl.style.backgroundSize = 'cover';
+        headerEl.style.backgroundPosition = 'center';
+        headerEl.style.position = 'relative';
+        headerEl.style.color = '#fff';
+        if (!headerEl.querySelector('.th-header-overlay')) {
+          const overlay = document.createElement('div');
+          overlay.className = 'th-header-overlay';
+          overlay.style.cssText = 'position:absolute;inset:0;background:linear-gradient(135deg,rgba(13,31,18,0.7),rgba(13,31,18,0.45));border-radius:inherit;z-index:0;';
+          headerEl.insertBefore(overlay, headerEl.firstChild);
+          headerEl.querySelectorAll(':scope > *:not(.th-header-overlay)').forEach(c => c.style.position = 'relative');
+        }
+        document.getElementById('thHeaderIcon').style.display = 'none';
+      } else {
+        headerEl.style.backgroundImage = '';
+        document.getElementById('thHeaderIcon').style.display = '';
+        document.getElementById('thHeaderIcon').textContent = t.icon || '🎓';
+      }
+    }
   }
 
   /* ─── OVERVIEW ─────────────────────────────── */
@@ -113,19 +138,24 @@
 
     const examBtn = (label, ex) => {
       if (!ex || !ex.exam_id) return '';
+      // Distinguish Exam Center vs Mock Exam
+      const isRealExam = ex.exam_type === 'exam' || ex.exam_type === 'legacy';
       const isMock = ex.exam_type === 'mock';
-      const st = ex.submission_status || 'not_started';
+      const st = ex.submission_status || ex.status || 'not_started';
       const stLabel = st === 'not_started' ? 'Not started' : st === 'submitted' ? 'Submitted' : st.replace('_',' ');
       const scoreChip = ex.score !== null && ex.score !== undefined
         ? `<span style="background:${ex.passed?'rgba(22,163,74,0.12)':'rgba(220,38,38,0.10)'};color:${ex.passed?'#16a34a':'#dc2626'};padding:3px 10px;border-radius:999px;font-size:0.72rem;font-weight:800;">${ex.passed?'✓ Passed':'✗ Below pass'} · ${ex.score.toFixed(1)}%</span>`
         : `<span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:999px;font-size:0.72rem;font-weight:800;">${stLabel}</span>`;
+      const examTypeTag = isRealExam
+        ? `<span style="font-size:0.68rem;background:rgba(37,99,235,0.1);color:#2563eb;padding:2px 8px;border-radius:99px;font-weight:700;">📝 Exam Center</span>`
+        : `<span style="font-size:0.68rem;background:rgba(245,158,11,0.12);color:#d97706;padding:2px 8px;border-radius:99px;font-weight:700;">🎯 Practice</span>`;
       return `<div class="th-exam-row">
         <div style="flex:1;">
-          <div class="th-exam-label">${label}</div>
+          <div class="th-exam-label">${label} ${examTypeTag}</div>
           <div class="th-exam-status">${esc(ex.title||'Assessment')}</div>
           <div style="margin-top:5px;">${scoreChip}</div>
         </div>
-        <button class="btn btn-primary btn-sm th-open-exam" data-eid="${ex.exam_id}" data-type="${isMock?'mock':'legacy'}" data-title="${esc(ex.title||'Exam')}" style="border-radius:10px;flex-shrink:0;">Take ${st==='not_started'?'Exam':'Retake'} →</button>
+        <button class="btn btn-primary btn-sm th-open-exam" data-eid="${ex.exam_id}" data-type="${isRealExam?'exam':'mock'}" data-title="${esc(ex.title||'Exam')}" style="border-radius:10px;flex-shrink:0;">Take ${st==='not_started'?'Exam':'Retake'} →</button>
       </div>`;
     };
 
@@ -190,17 +220,22 @@
       b.onclick = () => {
         const eid = parseInt(b.dataset.eid, 10);
         const title = b.dataset.title || 'Exam';
-        const isMock = b.dataset.type === 'mock';
+        const isRealExam = b.dataset.type === 'exam';
         window.closeTrainingHub();
-        if (isMock) {
+        if (isRealExam) {
+          // Route to Exam Center (the real exam section)
+          if (typeof switchSection === 'function') switchSection('exams');
+          setTimeout(() => {
+            if (typeof takeExam === 'function') takeExam(eid, title, 60);
+            else if (typeof showToast === 'function') showToast(`Opening exam: ${title}`, 'info');
+          }, 300);
+        } else {
+          // Route to Mock Exams section
           if (typeof switchSection === 'function') switchSection('mock-exams');
           setTimeout(() => {
             if (typeof loadMockExams === 'function') loadMockExams();
-            showToast(`Opening ${title}`, 'info');
+            if (typeof showToast === 'function') showToast(`Opening practice: ${title}`, 'info');
           }, 300);
-        } else {
-          if (typeof switchSection === 'function') switchSection('exams');
-          if (typeof takeExam === 'function') takeExam(eid, title, 60);
         }
       };
     });

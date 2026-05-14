@@ -637,6 +637,38 @@ const API = {
   async adminTrainingAnalytics(tid)       { return this.request(`/trainings/admin/${tid}/analytics`); },
   async adminSaveCertTemplate(tid, body)  { return this.request(`/trainings/admin/${tid}/cert-template`, { method: 'POST', body }); },
   async adminIssueCertificate(tid, uid)   { return this.request(`/trainings/admin/${tid}/certificates/${uid}/issue`, { method: 'POST', body: {} }); },
+
+  // New: Exam Center exams for training pre/post-test dropdowns (NOT mock exams)
+  async adminListRealExams()              { return this.request('/trainings/admin/exams'); },
+
+  // New: Module quiz management
+  async adminGetModuleQuiz(tid, mid)      { return this.request(`/trainings/admin/${tid}/modules/${mid}/quiz`); },
+  async adminSaveModuleQuiz(tid, mid, body) { return this.request(`/trainings/admin/${tid}/modules/${mid}/quiz`, { method: 'POST', body }); },
+
+  // New: Cover image upload
+  async adminUploadTrainingCover(tid, formData) {
+    const token = this.getToken();
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    let resp = null;
+    for (const base of this.getApiBases()) {
+      try {
+        resp = await fetch(`${base}/trainings/admin/${tid}/cover`, { method: 'POST', headers, body: formData, credentials: 'include' });
+        this._apiBase = base;
+        break;
+      } catch (_) { resp = null; }
+    }
+    if (!resp) throw new Error('Upload failed');
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) throw new Error(data.error || 'Cover upload failed');
+    return data;
+  },
+
+  // New: Set exam types alongside IDs
+  async adminSetExamTypes(tid, body)      { return this.request(`/trainings/admin/${tid}/set-exam-types`, { method: 'POST', body }); },
+
+  // New: Training list with cover image URLs
+  async adminListTrainingsWithCovers()    { return this.request('/trainings/admin/list-with-covers'); },
 };
 
 

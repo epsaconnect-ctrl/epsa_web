@@ -1367,6 +1367,27 @@ def migrate_db():
         """CREATE INDEX IF NOT EXISTS idx_training_modules_tid ON training_modules(training_id)""",
         """CREATE INDEX IF NOT EXISTS idx_training_sessions_tid ON training_sessions(training_id)""",
         """CREATE INDEX IF NOT EXISTS idx_training_disc_tid ON training_discussions(training_id)""",
+        # ── TRAINING SYSTEM v2 (cover images, exam types, module quizzes) ──────────
+        """ALTER TABLE trainings ADD COLUMN cover_image_path TEXT""",
+        """ALTER TABLE trainings ADD COLUMN pre_exam_type TEXT DEFAULT 'exam'""",
+        """ALTER TABLE trainings ADD COLUMN post_exam_type TEXT DEFAULT 'exam'""",
+        """ALTER TABLE trainings ADD COLUMN cert_title TEXT""",
+        """ALTER TABLE trainings ADD COLUMN cert_desc TEXT""",
+        """ALTER TABLE training_modules ADD COLUMN quiz_meta TEXT""",
+        """CREATE TABLE IF NOT EXISTS training_module_quizzes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            module_id INTEGER NOT NULL REFERENCES training_modules(id) ON DELETE CASCADE,
+            title TEXT NOT NULL,
+            pass_percent REAL DEFAULT 70,
+            questions_json TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(module_id)
+        )""",
+        """ALTER TABLE training_sessions ADD COLUMN session_date TEXT""",
+        """ALTER TABLE training_sessions ADD COLUMN start_time TEXT""",
+        """ALTER TABLE training_sessions ADD COLUMN location TEXT""",
+        """ALTER TABLE training_sessions ADD COLUMN is_online INTEGER DEFAULT 0""",
+        """ALTER TABLE training_sessions ADD COLUMN meeting_url TEXT""",
     ]
     for sql in migrations:
         try:
