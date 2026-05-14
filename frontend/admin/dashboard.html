@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="../css/globals.css?v=7">
   <link rel="stylesheet" href="../css/admin.css?v=7">
   <link rel="stylesheet" href="../css/ecosystem-enhancements.css?v=7">
+  <link rel="stylesheet" href="../css/training.css?v=1">
   <style>
     #asec-applications,
     #admin-section-question-bank,
@@ -425,36 +426,78 @@
         </div>
       </section>
 
-      <!--  TRAININGS  -->
+      <!--  TRAINING STUDIO  -->
       <section id="asec-trainings" class="admin-section" style="display:none;">
-        <div style="display:flex;justify-content:flex-end;margin-bottom:var(--space-5);">
-          <button class="btn btn-primary" onclick="openCreateTrainingModal()">+ Create Training</button>
+
+        <!-- Studio Header -->
+        <div style="background:linear-gradient(135deg,#0d3d21,#1a6b3c);border-radius:22px;padding:24px 28px;margin-bottom:22px;position:relative;overflow:hidden;">
+          <div style="position:absolute;inset:0;background:radial-gradient(circle at 80% 20%,rgba(200,163,64,0.3),transparent 55%);pointer-events:none;"></div>
+          <div style="position:relative;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+            <div>
+              <div style="font-size:0.7rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:rgba(200,163,64,0.9);margin-bottom:6px;">Training Studio</div>
+              <h2 style="font-family:var(--font-display);font-weight:900;font-size:1.4rem;color:#fff;margin-bottom:4px;">LMS Management Center</h2>
+              <p style="color:rgba(255,255,255,0.6);font-size:0.82rem;">Create, manage and track all EPSA training programs</p>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;">
+              <div style="text-align:center;background:rgba(255,255,255,0.12);border-radius:14px;padding:12px 18px;">
+                <div style="font-family:var(--font-display);font-weight:900;font-size:1.4rem;color:#fff;" id="studio-stat-total">0</div>
+                <div style="font-size:0.68rem;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.08em;">Programs</div>
+              </div>
+              <div style="text-align:center;background:rgba(255,255,255,0.12);border-radius:14px;padding:12px 18px;">
+                <div style="font-family:var(--font-display);font-weight:900;font-size:1.4rem;color:#c8a340;" id="studio-stat-pending">0</div>
+                <div style="font-size:0.68rem;color:rgba(200,163,64,0.65);text-transform:uppercase;letter-spacing:0.08em;">Pending</div>
+              </div>
+              <button class="btn" onclick="openCreateTrainingModal()" style="background:rgba(200,163,64,0.9);color:#0d3d21;border:none;font-weight:800;border-radius:14px;padding:12px 20px;white-space:nowrap;">+ New Training</button>
+            </div>
+          </div>
         </div>
-        <div class="data-table-card" style="margin-bottom:var(--space-5);">
-          <div class="table-header"><div class="table-title">Enrollment requests · pending approval</div></div>
-          <table class="data-table">
-            <thead><tr><th>Student</th><th>Training</th><th>Status</th><th>Submitted</th><th>Actions</th></tr></thead>
-            <tbody id="trainingPendingTbody"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading…</td></tr></tbody>
-          </table>
+
+        <!-- Studio Tabs -->
+        <div style="display:flex;gap:0;background:white;border-radius:999px;padding:4px;border:1px solid #e2e8f0;width:fit-content;margin-bottom:22px;">
+          <button class="admin-training-tab active" id="stab-programs" onclick="studioTab('programs',this)">📋 Programs</button>
+          <button class="admin-training-tab" id="stab-enrollments" onclick="studioTab('enrollments',this)">👥 Enrollments</button>
+          <button class="admin-training-tab" id="stab-receipts" onclick="studioTab('receipts',this)">🧾 Receipts</button>
+          <button class="admin-training-tab" id="stab-analytics" onclick="studioTab('analytics',this)">📈 Analytics</button>
         </div>
-        <div class="data-table-card">
-          <div class="table-header"><div class="table-title">Training Programs</div></div>
-          <table class="data-table">
-            <thead><tr><th>Title</th><th>Format</th><th>Price</th><th>Applicants</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="trainingsTbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading…</td></tr></tbody>
-          </table>
+
+        <!-- Programs Panel -->
+        <div id="spanel-programs">
+          <!-- Pending quick-review bar -->
+          <div id="studioPendingBar" style="margin-bottom:16px;"></div>
+          <!-- Training cards -->
+          <div id="studioTrainingCards" style="display:flex;flex-direction:column;gap:12px;">
+            <div style="text-align:center;padding:32px;color:#94a3b8;">Loading programs…</div>
+          </div>
         </div>
+
+        <!-- Enrollments Panel -->
+        <div id="spanel-enrollments" style="display:none;">
+          <div style="margin-bottom:14px;font-size:0.85rem;color:#64748b;">Select a training to manage enrollments:</div>
+          <div id="studioEnrollSelector" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
+        <!-- Receipts Panel -->
+        <div id="spanel-receipts" style="display:none;">
+          <div class="data-table-card">
+            <div class="table-header"><div class="table-title">Payment Receipts — Pending Verification</div></div>
+            <table class="data-table">
+              <thead><tr><th>Student</th><th>Training</th><th>Amount</th><th>Submitted</th><th>Receipt</th><th>Actions</th></tr></thead>
+              <tbody id="receiptsTbody"><tr><td colspan="6" style="text-align:center;padding:24px;color:#94a3b8;">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Analytics Panel -->
+        <div id="spanel-analytics" style="display:none;">
+          <div style="margin-bottom:14px;font-size:0.85rem;color:#64748b;">Select a training to view analytics:</div>
+          <div id="studioAnalyticsSelector" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
       </section>
 
-      <!--  RECEIPTS  -->
+      <!--  RECEIPTS (legacy redirect) -->
       <section id="asec-receipts" class="admin-section" style="display:none;">
-        <div class="data-table-card">
-          <div class="table-header"><div class="table-title">Payment Receipts  Pending Verification</div></div>
-          <table class="data-table">
-            <thead><tr><th>Student</th><th>Training</th><th>Amount</th><th>Submitted</th><th>Receipt</th><th>Actions</th></tr></thead>
-            <tbody id="receiptsTbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--space-6);">Loading…</td></tr></tbody>
-          </table>
-        </div>
+        <div style="padding:20px;color:#64748b;font-size:0.9rem;">Redirecting to Training Studio receipts…</div>
       </section>
 
       <!--  VOTING  -->
@@ -2769,7 +2812,110 @@ function showAdminToast(msg, type='success') {
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="../js/api.js?v=11"></script>
 <script src="../js/admin-analytics.js"></script>
+<script src="../js/admin-training.js?v=1"></script>
+<script>
+// Studio tab switcher
+function studioTab(tab, btn) {
+  ['programs','enrollments','receipts','analytics'].forEach(t => {
+    const p = document.getElementById('spanel-'+t);
+    const b = document.getElementById('stab-'+t);
+    if (p) p.style.display = t===tab ? 'block' : 'none';
+    if (b) b.classList.toggle('active', t===tab);
+  });
+  if (tab==='programs') loadAdminTrainings();
+  else if (tab==='enrollments') renderStudioEnrollSelector();
+  else if (tab==='receipts') loadAdminReceipts();
+  else if (tab==='analytics') renderStudioAnalyticsSelector();
+}
+function renderStudioEnrollSelector() {
+  const el = document.getElementById('studioEnrollSelector');
+  if (!el) return;
+  el.innerHTML = _adminTrainings.length
+    ? _adminTrainings.map(t=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:white;border:1px solid #e2e8f0;border-radius:16px;">
+        <div><strong>${esc(t.title)}</strong><span style="margin-left:10px;font-size:0.76rem;color:#94a3b8;">${((t.stats||{}).pending||0)} pending</span></div>
+        <button class="btn btn-primary btn-sm" onclick="openAdminEnrollments(${t.id},'${esc(t.title)}')">Manage</button>
+      </div>`).join('')
+    : '<div style="color:#94a3b8;padding:20px;">No training programs found.</div>';
+}
+function renderStudioAnalyticsSelector() {
+  const el = document.getElementById('studioAnalyticsSelector');
+  if (!el) return;
+  el.innerHTML = _adminTrainings.length
+    ? _adminTrainings.map(t=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:white;border:1px solid #e2e8f0;border-radius:16px;">
+        <strong>${esc(t.title)}</strong>
+        <button class="btn btn-ghost btn-sm" onclick="openAdminTrainingDetail(${t.id})">Open Analytics</button>
+      </div>`).join('')
+    : '<div style="color:#94a3b8;padding:20px;">No training programs found.</div>';
+}
+
+// Override renderAdminTrainingList to use new studio cards
+const _origRender = window.renderAdminTrainingList;
+window.renderAdminTrainingList = function(list) {
+  const el = document.getElementById('studioTrainingCards');
+  const barEl = document.getElementById('studioPendingBar');
+  const statTotal = document.getElementById('studio-stat-total');
+  const statPending = document.getElementById('studio-stat-pending');
+  if (statTotal) statTotal.textContent = list.length;
+  let totalPending = 0;
+  if (!el) { if(_origRender) _origRender(list); return; }
+  if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:48px;color:#94a3b8;">No training programs yet. Create your first one.</div>'; return; }
+
+  // pending bar
+  const pendingItems = list.filter(t=>(t.stats||{}).pending || (t.stats||{}).receipt);
+  totalPending = pendingItems.reduce((s,t)=>s+((t.stats||{}).pending||0)+((t.stats||{}).receipt||0),0);
+  if (statPending) statPending.textContent = totalPending;
+  if (barEl) {
+    barEl.innerHTML = pendingItems.length ? `<div style="padding:14px 18px;background:rgba(217,119,6,0.08);border:1px solid rgba(217,119,6,0.2);border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:1.2rem;">⏳</span><span style="font-weight:700;font-size:0.88rem;">${totalPending} enrollment${totalPending!==1?'s':''} awaiting action</span></div>
+      <button class="btn btn-sm" style="background:#d97706;color:white;border:none;border-radius:10px;" onclick="studioTab('enrollments',document.getElementById('stab-enrollments'))">Review Now →</button>
+    </div>` : '';
+  }
+
+  el.innerHTML = list.map(t => {
+    const s = t.stats || {};
+    const active = t.is_active;
+    const pct = s.total > 0 ? Math.round(((s.registered||0)/s.total)*100) : 0;
+    return `<div class="admin-training-card" style="border-left:4px solid ${active?'#1a6b3c':'#cbd5e1'};">
+      <div class="admin-training-card-icon">${esc(t.icon||'🎓')}</div>
+      <div class="admin-training-card-info">
+        <div class="admin-training-card-title">${esc(t.title)}</div>
+        <div class="admin-training-card-meta">
+          <span>${esc(t.format||'online')}</span>
+          <span>·</span>
+          <span>${t.is_free?'Free':'ETB '+(+t.price||0).toLocaleString()}</span>
+          ${t.instructor_display_name?`<span>· 👤 ${esc(t.instructor_display_name)}</span>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+          <div style="flex:1;background:#f1f5f9;border-radius:999px;height:5px;overflow:hidden;">
+            <div style="height:100%;background:#1a6b3c;border-radius:999px;width:${pct}%;"></div>
+          </div>
+          <span style="font-size:0.72rem;color:#64748b;">${s.registered||0}/${s.total||0} registered</span>
+        </div>
+      </div>
+      <div class="admin-training-stats">
+        <div class="admin-training-stat"><div class="admin-training-stat-num" style="color:#d97706;">${s.pending||0}</div><div class="admin-training-stat-label">Pending</div></div>
+        <div class="admin-training-stat"><div class="admin-training-stat-num" style="color:#7c3aed;">${s.receipt||0}</div><div class="admin-training-stat-label">Receipt</div></div>
+        <div class="admin-training-stat"><div class="admin-training-stat-num" style="color:#059669;">${s.registered||0}</div><div class="admin-training-stat-label">Active</div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+        <button class="btn btn-primary btn-sm" onclick="openAdminTrainingDetail(${t.id})" style="border-radius:10px;">Open Studio</button>
+        <button class="btn btn-ghost btn-sm" onclick="openEditTrainingModal(${t.id})" style="border-radius:10px;">Edit</button>
+        <button class="btn btn-ghost btn-sm" onclick="adminToggleTraining(${t.id},${active?0:1})" style="border-radius:10px;color:${active?'#dc2626':'#059669'};">${active?'Deactivate':'Activate'}</button>
+      </div>
+    </div>`;
+  }).join('');
+};
+
+// Hook switchAdminSection to init training studio
+const _origSwitch = window.switchAdminSection;
+window.switchAdminSection = function(sec) {
+  if (_origSwitch) _origSwitch(sec);
+  if (sec === 'trainings') { setTimeout(()=>loadAdminTrainings(), 100); }
+  if (sec === 'receipts') { switchAdminSection('trainings'); setTimeout(()=>studioTab('receipts',document.getElementById('stab-receipts')),200); }
+};
+</script>
 <!-- EXAM QUESTIONS MODAL -->
 <div id="examQuestionsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9100;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;backdrop-filter:blur(6px)">
   <div style="background:white;border-radius:22px;width:100%;max-width:1050px;position:relative;box-shadow:0 28px 70px rgba(0,0,0,.2);overflow:hidden;">

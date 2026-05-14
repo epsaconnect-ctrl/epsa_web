@@ -113,10 +113,19 @@
 
     const examBtn = (label, ex) => {
       if (!ex || !ex.exam_id) return '';
-      const st = (ex.submission_status || 'not_started').replace('_', ' ');
+      const isMock = ex.exam_type === 'mock';
+      const st = ex.submission_status || 'not_started';
+      const stLabel = st === 'not_started' ? 'Not started' : st === 'submitted' ? 'Submitted' : st.replace('_',' ');
+      const scoreChip = ex.score !== null && ex.score !== undefined
+        ? `<span style="background:${ex.passed?'rgba(22,163,74,0.12)':'rgba(220,38,38,0.10)'};color:${ex.passed?'#16a34a':'#dc2626'};padding:3px 10px;border-radius:999px;font-size:0.72rem;font-weight:800;">${ex.passed?'✓ Passed':'✗ Below pass'} · ${ex.score.toFixed(1)}%</span>`
+        : `<span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:999px;font-size:0.72rem;font-weight:800;">${stLabel}</span>`;
       return `<div class="th-exam-row">
-        <div><div class="th-exam-label">${label}</div><div class="th-exam-status">${esc(ex.title || 'Assessment')} · ${esc(st)}</div></div>
-        <button class="btn btn-primary btn-sm th-open-exam" data-eid="${ex.exam_id}" data-title="${esc(ex.title||'Exam')}">Open →</button>
+        <div style="flex:1;">
+          <div class="th-exam-label">${label}</div>
+          <div class="th-exam-status">${esc(ex.title||'Assessment')}</div>
+          <div style="margin-top:5px;">${scoreChip}</div>
+        </div>
+        <button class="btn btn-primary btn-sm th-open-exam" data-eid="${ex.exam_id}" data-type="${isMock?'mock':'legacy'}" data-title="${esc(ex.title||'Exam')}" style="border-radius:10px;flex-shrink:0;">Take ${st==='not_started'?'Exam':'Retake'} →</button>
       </div>`;
     };
 
@@ -181,9 +190,18 @@
       b.onclick = () => {
         const eid = parseInt(b.dataset.eid, 10);
         const title = b.dataset.title || 'Exam';
+        const isMock = b.dataset.type === 'mock';
         window.closeTrainingHub();
-        if (typeof switchSection === 'function') switchSection('exams');
-        if (typeof takeExam === 'function') takeExam(eid, title, 60);
+        if (isMock) {
+          if (typeof switchSection === 'function') switchSection('mock-exams');
+          setTimeout(() => {
+            if (typeof loadMockExams === 'function') loadMockExams();
+            showToast(`Opening ${title}`, 'info');
+          }, 300);
+        } else {
+          if (typeof switchSection === 'function') switchSection('exams');
+          if (typeof takeExam === 'function') takeExam(eid, title, 60);
+        }
       };
     });
     el.querySelectorAll('.th-quick-nav').forEach(b => {
@@ -429,5 +447,131 @@
     if (shell) shell.style.display = 'none';
     document.body.style.overflow = '';
     _tid = null; _data = null; _activeTab = 'overview'; _selMod = null;
+  };
+})();
+
+/* ════════════════════════════════════════════════════════
+   GLOBAL: Student Training Grid — Beautiful Card Renderer
+   ════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  function esc(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  let _allTrainings = [];
+
+  window.filterTrainings = function(mode, btn) {
+    document.querySelectorAll('.pill-tab').forEach(b => b.classList.toggle('active', b === btn));
+    _renderGrid(mode === 'mine'
+      ? _allTrainings.filter(t => t.status && t.status !== 'open')
+      : mode === 'free'
+      ? _allTrainings.filter(t => t.is_free || +t.price === 0)
+      : _allTrainings);
+  };
+
+  window.searchTrainings = function(q) {
+    const lq = (q || '').toLowerCase();
+    _renderGrid(!lq ? _allTrainings : _allTrainings.filter(t =>
+      (t.title || '').toLowerCase().includes(lq) ||
+      (t.description || '').toLowerCase().includes(lq) ||
+      (t.instructor_display_name || '').toLowerCase().includes(lq)
+    ));
+  };
+
+  function _statusChip(status) {
+    const map = {
+      open:       ['Enroll',      '#f1f5f9', '#475569'],
+      pending:    ['⏳ Pending',  'rgba(217,119,6,0.10)', '#d97706'],
+      receipt:    ['🧾 Receipt',  'rgba(124,58,237,0.10)', '#7c3aed'],
+      approved:   ['✅ Approved', 'rgba(5,150,105,0.10)', '#059669'],
+      registered: ['🎓 Enrolled', 'rgba(26,107,60,0.12)', '#1a6b3c'],
+      rejected:   ['✗ Rejected', 'rgba(220,38,38,0.08)', '#dc2626'],
+    };
+    const [label, bg, color] = map[status] || ['Unknown', '#f1f5f9', '#64748b'];
+    return { label, bg, color };
+  }
+
+  function _renderGrid(list) {
+    const grid = document.getElementById('trainingGrid');
+    if (!grid) return;
+    if (!list || !list.length) {
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:#94a3b8;">
+        <div style="font-size:2.5rem;margin-bottom:12px;">🎓</div>
+        <div style="font-size:1rem;font-weight:700;color:#475569;">No training programs found</div>
+        <div style="font-size:0.85rem;margin-top:6px;">Check back soon for new programs.</div>
+      </div>`;
+      return;
+    }
+    grid.innerHTML = list.map(t => {
+      const { label, bg, color } = _statusChip(t.status || 'open');
+      const pct = t.module_count > 0 && t.modules_completed > 0
+        ? Math.round((t.modules_completed / t.module_count) * 100) : 0;
+      const canOpen = t.status === 'registered';
+      const canApply = !t.status || t.status === 'open';
+      const needsReceipt = t.status === 'approved' && !t.is_free && +t.price > 0;
+      return `
+        <div class="training-card" style="cursor:${canOpen?'pointer':'default'};"
+          ${canOpen ? `onclick="window.openTrainingHub(${t.id})"` : ''}>
+          <div class="training-card-banner" style="position:relative;">
+            <div class="training-card-icon">${esc(t.icon || '🎓')}</div>
+            <span class="training-card-status-badge" style="background:${bg};color:${color};">${label}</span>
+          </div>
+          <div class="training-card-body">
+            <div class="training-card-title">${esc(t.title)}</div>
+            ${t.instructor_display_name ? `<div style="font-size:0.76rem;color:#64748b;">👤 ${esc(t.instructor_display_name)}</div>` : ''}
+            <p class="training-card-desc">${esc((t.description||'').slice(0,110))}${(t.description||'').length>110?'…':''}</p>
+            <div class="training-card-meta">
+              <span>${esc(t.format || 'online')}</span>
+              <span>·</span>
+              <span>${t.is_free || +t.price === 0 ? '🆓 Free' : 'ETB '+(+t.price||0).toLocaleString()}</span>
+              ${t.module_count ? `<span>·</span><span>${t.module_count} modules</span>` : ''}
+            </div>
+            ${canOpen && t.module_count > 0 ? `
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:#64748b;margin-bottom:4px;">
+                  <span>Progress</span><span>${pct}%</span>
+                </div>
+                <div class="training-progress-bar">
+                  <div class="training-progress-fill" style="width:${pct}%;"></div>
+                </div>
+              </div>` : ''}
+            <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;">
+              ${canOpen ? `<button class="btn btn-primary btn-sm" style="border-radius:10px;flex:1;" onclick="event.stopPropagation();window.openTrainingHub(${t.id})">Open Learning Hub →</button>` : ''}
+              ${canApply ? `<button class="btn btn-primary btn-sm" style="border-radius:10px;flex:1;" onclick="event.stopPropagation();applyTraining(${t.id})">Enroll Now</button>` : ''}
+              ${needsReceipt ? `<button class="btn btn-sm" style="border-radius:10px;background:#7c3aed;color:white;border:none;flex:1;" onclick="event.stopPropagation();openReceiptUpload(${t.id},${t.application_id})">Upload Receipt</button>` : ''}
+              ${t.status==='pending' ? `<span style="font-size:0.78rem;color:#d97706;align-self:center;">Under review…</span>` : ''}
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // Called by dashboard.js — override the global loadTrainings
+  const _origLoad = window.loadTrainings;
+  window.loadTrainings = async function() {
+    if (_origLoad) { await _origLoad(); return; }
+    try {
+      const list = await API.getTrainings();
+      _allTrainings = Array.isArray(list) ? list : [];
+      _renderGrid(_allTrainings);
+      // Update stats banner
+      const enrolled = _allTrainings.filter(t => t.status === 'registered').length;
+      const certs = _allTrainings.filter(t => t.has_certificate).length;
+      const se = document.getElementById('th-stat-enrolled');
+      const sc = document.getElementById('th-stat-certs');
+      if (se) se.textContent = enrolled;
+      if (sc) sc.textContent = certs;
+    } catch(e) {
+      const grid = document.getElementById('trainingGrid');
+      if (grid) grid.innerHTML = `<div style="color:#dc2626;padding:24px;">${e.message||'Failed to load trainings'}</div>`;
+    }
+  };
+
+  // Hook: when section switches to trainings, load them
+  const _prevSwitch = window.switchSection;
+  window.switchSection = function(name) {
+    if (_prevSwitch) _prevSwitch(name);
+    if (name === 'trainings') window.loadTrainings();
   };
 })();

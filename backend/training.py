@@ -313,8 +313,32 @@ def my_trainings():
 
 
 def _exam_submission_summary(db, exam_id, user_id):
+    """Look up exam in mock_exams first (pre/post tests use mock exams), then legacy exams."""
     if not exam_id:
         return None
+    # Try mock exams first (admin links mock exams as pre/post tests)
+    me = db.execute("SELECT * FROM mock_exams WHERE id=?", (exam_id,)).fetchone()
+    if me:
+        sub = db.execute(
+            "SELECT * FROM mock_exam_submissions WHERE exam_id=? AND user_id=? ORDER BY submitted_at DESC LIMIT 1",
+            (exam_id, user_id),
+        ).fetchone()
+        released = bool(int(me["results_released"] or 0)) if "results_released" in me.keys() else True
+        if not sub:
+            return {"linked": True, "exam_id": exam_id, "exam_type": "mock", "title": me["title"], "status": "not_started"}
+        score = float(sub["score"]) if released and sub["score"] is not None else None
+        passed = None
+        if released and score is not None:
+            ps = float(me["pass_mark"] or 50) if "pass_mark" in me.keys() else 50.0
+            passed = score >= ps
+        return {
+            "linked": True, "exam_id": exam_id, "exam_type": "mock",
+            "title": me["title"],
+            "submission_status": sub["status"] if "status" in sub.keys() else "submitted",
+            "submitted_at": sub["submitted_at"],
+            "score": score, "passed": passed, "results_released": released,
+        }
+    # Fallback: legacy exams table
     sub = db.execute(
         """
         SELECT es.*, e.results_released, e.passing_score, e.title
@@ -325,7 +349,7 @@ def _exam_submission_summary(db, exam_id, user_id):
         (exam_id, user_id),
     ).fetchone()
     if not sub:
-        return {"linked": True, "exam_id": exam_id, "status": "not_started"}
+        return {"linked": True, "exam_id": exam_id, "exam_type": "legacy", "status": "not_started"}
     released = bool(int(sub["results_released"] or 0))
     score = float(sub["score"]) if released and sub["score"] is not None else None
     passed = None
@@ -333,14 +357,11 @@ def _exam_submission_summary(db, exam_id, user_id):
         ps = float(sub["passing_score"] or 60)
         passed = score >= ps
     return {
-        "linked": True,
-        "exam_id": exam_id,
+        "linked": True, "exam_id": exam_id, "exam_type": "legacy",
         "title": sub["title"],
         "submission_status": sub["status"],
         "submitted_at": sub["submitted_at"],
-        "score": score,
-        "passed": passed,
-        "results_released": released,
+        "score": score, "passed": passed, "results_released": released,
     }
 
 

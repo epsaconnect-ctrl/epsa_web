@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="css/globals.css?v=7">
   <link rel="stylesheet" href="css/dashboard.css?v=11">
   <link rel="stylesheet" href="css/ecosystem-enhancements.css?v=7">
+  <link rel="stylesheet" href="css/training.css?v=1">
 </head>
 <body>
 <div class="toast-container" id="toastContainer"></div>
@@ -271,18 +272,37 @@
 
       <!--  TRAININGS  -->
       <section id="sec-trainings" class="dash-section" style="display:none;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-6);">
-          <div>
-            <h2 style="font-family:var(--font-display);font-weight:800;font-size:1.4rem;">Training Programs</h2>
-            <p style="color:var(--text-muted);font-size:0.875rem;margin-top:2px;">Enhance your skills with EPSA-curated programs</p>
-          </div>
-          <div class="pill-tabs">
-            <span class="pill-tab active" onclick="filterTrainings('all',this)">All</span>
-            <span class="pill-tab" onclick="filterTrainings('mine',this)">My Trainings</span>
-            <span class="pill-tab" onclick="filterTrainings('free',this)">Free</span>
+        <!-- Hero Banner -->
+        <div style="background:linear-gradient(135deg,#0d3d21 0%,#1a6b3c 60%,#0d3d21 100%);border-radius:24px;padding:28px 32px;margin-bottom:24px;position:relative;overflow:hidden;">
+          <div style="position:absolute;inset:0;background:radial-gradient(circle at 80% 30%,rgba(200,163,64,0.28),transparent 55%);pointer-events:none;"></div>
+          <div style="position:relative;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;">
+            <div>
+              <div style="font-size:0.72rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:rgba(200,163,64,0.9);margin-bottom:8px;">EPSA Learning Hub</div>
+              <h2 style="font-family:var(--font-display);font-weight:900;font-size:1.6rem;color:#fff;margin-bottom:6px;">Professional Training Programs</h2>
+              <p style="color:rgba(255,255,255,0.65);font-size:0.88rem;max-width:480px;">Advance your psychology career with EPSA-curated trainings, live sessions, and globally recognized certificates.</p>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <div style="text-align:center;background:rgba(255,255,255,0.1);border-radius:16px;padding:14px 20px;">
+                <div style="font-family:var(--font-display);font-weight:900;font-size:1.5rem;color:#fff;" id="th-stat-enrolled">0</div>
+                <div style="font-size:0.7rem;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.08em;">Enrolled</div>
+              </div>
+              <div style="text-align:center;background:rgba(200,163,64,0.18);border-radius:16px;padding:14px 20px;">
+                <div style="font-family:var(--font-display);font-weight:900;font-size:1.5rem;color:#c8a340;" id="th-stat-certs">0</div>
+                <div style="font-size:0.7rem;color:rgba(200,163,64,0.7);text-transform:uppercase;letter-spacing:0.08em;">Certificates</div>
+              </div>
+            </div>
           </div>
         </div>
-
+        <!-- Filter bar -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+          <div class="pill-tabs">
+            <span class="pill-tab active" onclick="filterTrainings('all',this)">All Programs</span>
+            <span class="pill-tab" onclick="filterTrainings('mine',this)">My Learning</span>
+            <span class="pill-tab" onclick="filterTrainings('free',this)">Free</span>
+          </div>
+          <input type="text" id="trainingSearch" class="form-input" placeholder="Search trainings…" style="width:220px;font-size:0.82rem;" oninput="searchTrainings(this.value)">
+        </div>
+        <!-- Grid -->
         <div class="training-grid" id="trainingGrid">
           <!-- Populated by JS -->
         </div>

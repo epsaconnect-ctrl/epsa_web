@@ -161,6 +161,24 @@ function showTrainingFormModal(t) {
         <div class="form-group"><label class="form-label">Certificate Title</label><input id="atfm_cert_title" class="form-input" value="${esc(t.cert_title||'')}" placeholder="Certificate of Completion"></div>
         <div class="form-group"><label class="form-label">Certificate Description</label><input id="atfm_cert_desc" class="form-input" value="${esc(t.cert_desc||'')}" placeholder="Issued by EPSA"></div>
       </div>
+      <div style="border-top:1px solid #f1f5f9;padding-top:14px;margin-top:4px;">
+        <div style="font-size:0.78rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#64748b;margin-bottom:10px;">🔗 Linked Assessments</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div class="form-group"><label class="form-label">Pre-Test Exam <span style="color:#94a3b8;font-weight:400;">(optional)</span></label>
+            <select id="atfm_pre_exam" class="form-input">
+              <option value="">— None —</option>
+            </select>
+            <div style="font-size:0.72rem;color:#94a3b8;margin-top:4px;">Shown before training starts</div>
+          </div>
+          <div class="form-group"><label class="form-label">Post-Test Exam <span style="color:#94a3b8;font-weight:400;">(optional)</span></label>
+            <select id="atfm_post_exam" class="form-input">
+              <option value="">— None —</option>
+            </select>
+            <div style="font-size:0.72rem;color:#94a3b8;margin-top:4px;">Required to unlock certificate</div>
+          </div>
+        </div>
+      </div>
+
       <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px;">
         <button class="btn btn-ghost" onclick="document.getElementById('adminTrainingFormModal').classList.remove('active')">Cancel</button>
         <button class="btn btn-primary" id="atfmSave">Save Training</button>
@@ -168,6 +186,21 @@ function showTrainingFormModal(t) {
     </div>`;
   modal.classList.add('active');
   document.getElementById('atfmSave').onclick = saveTrainingForm;
+  // Populate exam dropdowns async
+  _loadExamOptions(t.pre_exam_id, t.post_exam_id);
+}
+
+async function _loadExamOptions(preId, postId) {
+  try {
+    const list = await API.adminListMockExams();
+    const exams = Array.isArray(list) ? list : (list.exams || []);
+    const opts = '<option value="">— None —</option>' +
+      exams.map(e => `<option value="${e.id}">${esc(e.title)}</option>`).join('');
+    const pre = document.getElementById('atfm_pre_exam');
+    const post = document.getElementById('atfm_post_exam');
+    if (pre) { pre.innerHTML = opts; if (preId) pre.value = preId; }
+    if (post) { post.innerHTML = opts; if (postId) post.value = postId; }
+  } catch { /* exams not critical */ }
 }
 
 async function saveTrainingForm() {
@@ -183,6 +216,8 @@ async function saveTrainingForm() {
     instructor_display_name: document.getElementById('atfm_instructor').value.trim(),
     cert_title: document.getElementById('atfm_cert_title').value.trim(),
     cert_desc: document.getElementById('atfm_cert_desc').value.trim(),
+    pre_exam_id: parseInt(document.getElementById('atfm_pre_exam')?.value) || null,
+    post_exam_id: parseInt(document.getElementById('atfm_post_exam')?.value) || null,
   };
   if (!data.title) { if(typeof showToast==='function') showToast('Title required','error'); return; }
   btn.disabled = true; btn.textContent = 'Saving…';
