@@ -46,7 +46,7 @@ try:
     from .models import get_db
     from .email_service import send_email
     from .security import consume_one_time_token, enforce_rate_limit, issue_one_time_token, plus_interval, rate_limit, utcnow, verify_totp_code
-    from .storage import read_upload_bytes, save_bytes
+    from .storage import read_upload_bytes, save_bytes, upload_url
     from .tasks import run_biometric_task
 except ImportError:
     from config import get_settings
@@ -67,7 +67,7 @@ except ImportError:
     from models import get_db
     from email_service import send_email
     from security import consume_one_time_token, enforce_rate_limit, issue_one_time_token, plus_interval, rate_limit, utcnow, verify_totp_code
-    from storage import read_upload_bytes, save_bytes
+    from storage import read_upload_bytes, save_bytes, upload_url
     from tasks import run_biometric_task
 
 auth_bp = Blueprint("auth", __name__)
@@ -424,6 +424,16 @@ def _build_login_payload(row):
     for key, value in user.items():
         if isinstance(value, datetime):
             user[key] = value.isoformat()
+    # Resolve profile photo to a fully-qualified URL at login time.
+    # This ensures the dashboard shows the correct Supabase/S3/local URL
+    # from the very first render, even before /students/profile is called.
+    if user.get("profile_photo"):
+        try:
+            user["photo_url"] = upload_url("profiles", user["profile_photo"])
+        except Exception:
+            user["photo_url"] = None
+    else:
+        user["photo_url"] = None
     payload = {"user": user}
     settings = get_settings()
     if settings.expose_jwt_to_client:

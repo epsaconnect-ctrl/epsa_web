@@ -146,29 +146,54 @@ function populateUserUI(user) {
   s('profileYear', user.academic_year ? `Year ${user.academic_year}` : '—');
   s('profileEmail', user.email       || '—');
   const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239ca3af'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
-  // Prefer photo_url (backend-resolved, correct for Supabase/S3/local).
-  // Fall back to resolveUploadUrl if the profile was loaded from localStorage cache.
-  let pUrl = DEFAULT_AVATAR;
-  if (user.photo_url) {
-    pUrl = user.photo_url;
-  } else if (user.profile_photo) {
-    pUrl = API.resolveUploadUrl('profiles', user.profile_photo);
+
+  // Build a cascade of photo URLs to try, from most to least reliable:
+  // 1. photo_url — backend-resolved Supabase/S3/local URL (present after loadProfile() or after re-login)
+  // 2. /uploads/profiles/filename — backend proxy route that redirects to Supabase (always works)
+  // 3. DEFAULT_AVATAR — neutral SVG fallback
+  const photoCandidates = [];
+  if (user.photo_url && !/^data:/.test(user.photo_url)) {
+    photoCandidates.push(user.photo_url);
   }
+  if (user.profile_photo) {
+    // The /uploads/ route exists on the backend and redirects to Supabase for remote storage
+    const proxyUrl = API.toAbsoluteUrl(`/uploads/profiles/${encodeURIComponent(user.profile_photo)}`);
+    if (!photoCandidates.includes(proxyUrl)) photoCandidates.push(proxyUrl);
+  }
+  photoCandidates.push(DEFAULT_AVATAR);
+
   const avatars = [document.getElementById('sidebarAvatar'), document.getElementById('profileAvatarImg')];
   avatars.forEach(img => {
     if (!img) return;
-    if (img.dataset.currentSrc === pUrl) return;
-    if (img.dataset.currentSrc === 'error' && img.dataset.lastAttempt === pUrl) return;
+    // If the image is already showing a non-default photo from a good URL, skip
+    if (img.dataset.photoUserId === String(user.id || '') && img.dataset.photoState === 'loaded') return;
 
-    img.dataset.lastAttempt = pUrl;
-    img.src = pUrl;
-    img.dataset.currentSrc = pUrl;
+    img.dataset.photoUserId = String(user.id || '');
+    img.dataset.photoState = 'loading';
 
-    img.onerror = () => {
-      img.dataset.currentSrc = 'error';
-      img.src = DEFAULT_AVATAR;
+    const tryNext = (candidates) => {
+      if (!candidates.length) {
+        img.src = DEFAULT_AVATAR;
+        img.dataset.photoState = 'default';
+        return;
+      }
+      const [first, ...rest] = candidates;
       img.onerror = null;
+      img.src = first;
+      if (first === DEFAULT_AVATAR) {
+        img.dataset.photoState = 'default';
+        return;
+      }
+      img.onerror = () => {
+        img.onerror = null;
+        tryNext(rest);
+      };
+      img.onload = () => {
+        img.onload = null;
+        img.dataset.photoState = 'loaded';
+      };
     };
+    tryNext(photoCandidates);
   });
 }
 
