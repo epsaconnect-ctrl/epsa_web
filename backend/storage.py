@@ -136,7 +136,7 @@ class S3StorageProvider:
     def public_url(self, folder, filename):
         return self._public_url(folder, filename)
 
-    def private_url(self, folder, filename, download_name=None):
+    def private_url(self, folder, filename, download_name=None, expires_in=3600):
         return self.client.generate_presigned_url(
             "get_object",
             Params={
@@ -144,7 +144,7 @@ class S3StorageProvider:
                 "Key": self._key(folder, filename, private=True),
                 **({"ResponseContentDisposition": f'inline; filename="{download_name or filename}"'} if download_name else {}),
             },
-            ExpiresIn=300,
+            ExpiresIn=expires_in,
         )
 
 
@@ -265,9 +265,9 @@ class SupabaseStorageProvider:
     def public_url(self, folder, filename):
         return self._public_url(folder, filename)
 
-    def private_url(self, folder, filename, download_name=None):
+    def private_url(self, folder, filename, download_name=None, expires_in=3600):
         key = self._key(folder, filename)
-        return self._signed_url(key, expires_in=300)
+        return self._signed_url(key, expires_in=expires_in)
 
 
 def get_storage():
@@ -324,7 +324,7 @@ def read_upload_bytes(folder, filename):
     return storage.read_bytes(folder, filename)
 
 
-def upload_url(folder, filename, *, private=None, download_name=None):
+def upload_url(folder, filename, *, private=None, download_name=None, expires_in=3600):
     if not filename:
         return None
     storage = get_storage()
@@ -332,7 +332,7 @@ def upload_url(folder, filename, *, private=None, download_name=None):
         private = is_private_folder(folder)
     if private:
         if hasattr(storage, "private_url"):
-            return storage.private_url(folder, filename, download_name=download_name)
+            return storage.private_url(folder, filename, download_name=download_name, expires_in=expires_in)
         return f"/api/documents/{folder}/{filename}"
     if hasattr(storage, "public_url"):
         return storage.public_url(folder, filename)

@@ -45,7 +45,7 @@ def get_profile():
     # Resolve the profile photo to a fully-qualified URL (works for Supabase, S3, and local)
     if u.get('profile_photo'):
         try:
-            u['photo_url'] = upload_url('profiles', u['profile_photo'])
+            u['photo_url'] = upload_url('profiles', u['profile_photo'], private=True)
         except Exception:
             u['photo_url'] = None
     else:

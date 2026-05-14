@@ -429,7 +429,7 @@ def _build_login_payload(row):
     # from the very first render, even before /students/profile is called.
     if user.get("profile_photo"):
         try:
-            user["photo_url"] = upload_url("profiles", user["profile_photo"])
+            user["photo_url"] = upload_url("profiles", user["profile_photo"], private=True)
         except Exception:
             user["photo_url"] = None
     else:
