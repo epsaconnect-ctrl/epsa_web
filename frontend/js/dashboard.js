@@ -145,24 +145,23 @@ function populateUserUI(user) {
   s('profileUni', user.university   || '—');
   s('profileYear', user.academic_year ? `Year ${user.academic_year}` : '—');
   s('profileEmail', user.email       || '—');
-  if (user.profile_photo) {
-    const pUrl = API.resolveUploadUrl('profiles', user.profile_photo);
-    const avatars = [document.getElementById('sidebarAvatar'), document.getElementById('profileAvatarImg')];
-    avatars.forEach(img => {
-      if (!img) return;
-      // Prevent flicker by not re-assigning if already loaded or failed
-      if (img.dataset.currentSrc === pUrl || img.dataset.currentSrc === 'error') return;
-      
-      img.src = pUrl;
-      img.dataset.currentSrc = pUrl;
-      
-      img.onerror = () => {
-        img.dataset.currentSrc = 'error';
-        img.src = 'assets/president.jpg'; // Fallback to default
-        img.onerror = null;
-      };
-    });
-  }
+  const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239ca3af'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+  const pUrl = user.profile_photo ? API.resolveUploadUrl('profiles', user.profile_photo) : DEFAULT_AVATAR;
+  const avatars = [document.getElementById('sidebarAvatar'), document.getElementById('profileAvatarImg')];
+  avatars.forEach(img => {
+    if (!img) return;
+    // Prevent flicker by not re-assigning if already loaded or failed
+    if (img.dataset.currentSrc === pUrl || img.dataset.currentSrc === 'error') return;
+    
+    img.src = pUrl;
+    img.dataset.currentSrc = pUrl;
+    
+    img.onerror = () => {
+      img.dataset.currentSrc = 'error';
+      img.src = DEFAULT_AVATAR; // Fallback to default
+      img.onerror = null;
+    };
+  });
 }
 
 function switchSection(section) {
