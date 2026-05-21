@@ -1728,7 +1728,7 @@ def start_voting_phase():
         SET is_active=CASE WHEN phase_number=? THEN 1 ELSE 0 END,
             status=CASE WHEN phase_number=? THEN 'active' ELSE status END,
             starts_at=CASE
-                WHEN phase_number=? AND (starts_at IS NULL OR starts_at='') THEN DATETIME('now')
+                WHEN phase_number=? AND starts_at IS NULL THEN DATETIME('now')
                 ELSE starts_at
             END
     """, (phase_num, phase_num, phase_num))
