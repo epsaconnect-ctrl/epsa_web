@@ -239,9 +239,9 @@ class SupabaseStorageProvider:
         return self.save_bytes(folder, payload, filename, private=private)
 
     def public_response(self, folder, filename):
-        """For public folders, redirect to the direct public URL (no signing needed)."""
-        public_url = self._public_url(folder, filename)
-        return redirect(public_url, code=302)
+        """Generate a signed URL even for public folders because the bucket itself may be configured as private in Supabase."""
+        key = self._key(folder, filename)
+        return redirect(self._signed_url(key, expires_in=3600), code=302)
 
     def private_response(self, folder, filename, download_name=None):
         key = self._key(folder, filename)
@@ -263,7 +263,8 @@ class SupabaseStorageProvider:
             raise
 
     def public_url(self, folder, filename):
-        return self._public_url(folder, filename)
+        key = self._key(folder, filename)
+        return self._signed_url(key, expires_in=3600)
 
     def private_url(self, folder, filename, download_name=None, expires_in=3600):
         key = self._key(folder, filename)
