@@ -58,7 +58,7 @@ async function loadVoting() {
 
   } catch (err) {
     console.error(err);
-    showToast('Failed to load voting data', 'error');
+    showToast('Failed to load voting data: ' + err.message, 'error');
   }
 }
 window.loadVoting = loadVoting;
@@ -75,7 +75,8 @@ function renderCandidates(candidates) {
     const isMyChoice = votingState.hasVoted && votingState.myVoteId === c.user_id;
     const isMe = c.is_me === true;
     const isPending = isMe && c.is_approved !== 1;
-    const initials = c.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+    const name = c.name || 'Unknown Candidate';
+    const initials = name.split(' ').filter(Boolean).map(n=>n[0]).join('').substring(0,2).toUpperCase();
     const isCompareSelected = votingState.compareMode && votingState.compareIds.includes(c.id);
     
     return `
@@ -91,7 +92,7 @@ function renderCandidates(candidates) {
       <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--epsa-green),var(--epsa-gold));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.3rem;margin:0 auto var(--space-3); overflow:hidden; border: 3px solid white; box-shadow: var(--shadow-sm); ${isPending ? 'opacity:0.6;' : ''}">
         ${c.profile_photo ? `<img src="${API.toAbsoluteUrl(c.profile_photo.startsWith('/') ? c.profile_photo : `/${c.profile_photo}`)}" style="width:100%;height:100%;object-fit:cover;">` : initials}
       </div>
-      <div class="candidate-name" style="${isPending ? 'color:var(--text-muted);' : ''}">${c.name}</div>
+      <div class="candidate-name" style="${isPending ? 'color:var(--text-muted);' : ''}">${name}</div>
       <div class="candidate-uni" style="${isPending ? 'opacity:0.7;' : ''}">${c.university}</div>
       <div style="font-size:0.75rem;color:var(--text-primary);font-weight:600;margin-top:4px; ${isPending ? 'opacity:0.7;' : ''}">${c.position || 'Representative'}</div>
       
@@ -104,8 +105,8 @@ function renderCandidates(candidates) {
            </div>`
         : `<div style="display:flex;gap:8px;margin-top:var(--space-3);">
             ${!votingState.compareMode ? `<button class="btn btn-outline-green btn-sm" style="flex:1;" onclick="openCandidateModal(${c.id}, event)">View Profile</button>` : ''}
-            ${(!votingState.compareMode && !isPending && !isMe) ? `<button class="btn btn-primary btn-sm" style="flex:1;" onclick="selectCandidate(${c.user_id},'${c.name.replace(/'/g,"\\'")}')">Select</button>` : ''}
-            ${(!votingState.compareMode && isMe && !isPending) ? `<button class="btn btn-primary btn-sm" style="flex:1;" onclick="selectCandidate(${c.user_id},'${c.name.replace(/'/g,"\\'")}')" disabled title="You cannot vote for yourself">Select</button>` : ''}
+            ${(!votingState.compareMode && !isPending && !isMe) ? `<button class="btn btn-primary btn-sm" style="flex:1;" onclick="selectCandidate(${c.user_id},'${name.replace(/'/g,"\\'")}')">Select</button>` : ''}
+            ${(!votingState.compareMode && isMe && !isPending) ? `<button class="btn btn-primary btn-sm" style="flex:1;" onclick="selectCandidate(${c.user_id},'${name.replace(/'/g,"\\'")}')" disabled title="You cannot vote for yourself">Select</button>` : ''}
            </div>`}
     </div>`
   }).join('');
@@ -264,13 +265,15 @@ function toggleCompareCandidate(id) {
      
      const compareGrid = document.getElementById('compareGrid');
      if (compareGrid) {
-        const renderC = (c) => `
+        const renderC = (c) => {
+           const name = c.name || 'Unknown Candidate';
+           return `
           <div style="background:var(--light-100); border-radius:var(--radius-lg); padding:var(--space-6); border:1px solid var(--light-200);">
             <div style="text-align:center; margin-bottom:var(--space-5);">
                <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--epsa-green),var(--epsa-gold));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.3rem;margin:0 auto var(--space-3); overflow:hidden; border:3px solid white; box-shadow:var(--shadow-sm);">
-${c.profile_photo ? `<img src="${API.toAbsoluteUrl(c.profile_photo.startsWith('/') ? c.profile_photo : `/${c.profile_photo}`)}" style="width:100%;height:100%;object-fit:cover;">` : c.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}
+${c.profile_photo ? `<img src="${API.toAbsoluteUrl(c.profile_photo.startsWith('/') ? c.profile_photo : `/${c.profile_photo}`)}" style="width:100%;height:100%;object-fit:cover;">` : name.split(' ').filter(Boolean).map(n=>n[0]).join('').substring(0,2).toUpperCase()}
                </div>
-               <div style="font-family:var(--font-display);font-weight:800;font-size:1.2rem;color:var(--text-primary);">${c.name}</div>
+               <div style="font-family:var(--font-display);font-weight:800;font-size:1.2rem;color:var(--text-primary);">${name}</div>
                <div style="font-size:0.875rem;color:var(--text-secondary);font-weight:600;">${c.university}</div>
                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">${c.academic_year || ''} ${c.program_type || ''}</div>
             </div>
@@ -287,10 +290,11 @@ ${c.profile_photo ? `<img src="${API.toAbsoluteUrl(c.profile_photo.startsWith('/
             
             <div style="display:flex;gap:var(--space-3);margin-top:var(--space-6);padding-top:var(--space-4);border-top:1px solid var(--light-200);">
                <button class="btn btn-outline-green btn-sm" style="flex:1;" onclick="openCandidateModal(${c.id})">Full Profile</button>
-               ${!votingState.hasVoted ? `<button class="btn btn-primary btn-sm" style="flex:1;" onclick="document.getElementById('compareModal').classList.remove('active'); selectCandidate(${c.user_id}, '${c.name.replace(/'/g,"\\'")}')">Vote for ${c.name.split(' ')[0]}</button>` : ''}
+               ${!votingState.hasVoted ? `<button class="btn btn-primary btn-sm" style="flex:1;" onclick="document.getElementById('compareModal').classList.remove('active'); selectCandidate(${c.user_id}, '${name.replace(/'/g,"\\'")}')">Vote for ${name.split(' ')[0]}</button>` : ''}
             </div>
           </div>
         `;
+        };
         compareGrid.innerHTML = renderC(c1) + renderC(c2);
         document.getElementById('compareModal').classList.add('active');
      } else {
@@ -308,7 +312,7 @@ function startVotingCountdown(isoDate) {
   if (countdownInterval) clearInterval(countdownInterval);
   if (!isoDate) { el.textContent = 'NO DEADLINE'; return; }
   
-  let safeDate = isoDate.replace(' ', 'T');
+  let safeDate = String(isoDate).replace(' ', 'T');
   if (safeDate.length <= 16) safeDate += ':00';
   if (!safeDate.endsWith('Z') && !safeDate.includes('+')) safeDate += 'Z';
   const end = new Date(safeDate);
