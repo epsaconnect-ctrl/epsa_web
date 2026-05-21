@@ -187,7 +187,13 @@ def nominate():
               data.get('statement',''), data.get('vision',''), manifesto_name, data.get('video_url','')))
         db.commit()
     except Exception as e:
-        db.close(); return jsonify({'error': 'Already nominated'}), 409
+        import traceback
+        err_msg = str(e)
+        if "UNIQUE" in err_msg.upper():
+             err_msg = "Already nominated"
+        try: db.close()
+        except: pass
+        return jsonify({'error': err_msg, 'traceback': traceback.format_exc()}), 409
     db.close()
     return jsonify({'message': 'Nomination submitted. Awaiting admin approval.'})
 
