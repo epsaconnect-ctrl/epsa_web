@@ -2,10 +2,10 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 try:
-    from .models import get_db
+    from .models import get_db, ensure_voting_phases_seeded
     from .storage import save_upload
 except ImportError:
-    from models import get_db
+    from models import get_db, ensure_voting_phases_seeded
     from storage import save_upload
 
 voting_bp = Blueprint('voting', __name__)
@@ -19,6 +19,8 @@ def _vote_uid():
 
 
 def _active_phase(db, requested_phase=None, fallback_to_any=False):
+    if ensure_voting_phases_seeded(db):
+        db.commit()
     if requested_phase is not None:
         phase = db.execute("""
             SELECT * FROM voting_phases

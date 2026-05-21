@@ -594,10 +594,41 @@ SEED_DATA = """
 def get_db():
     return connect()
 
+
+def ensure_voting_phases_seeded(db):
+    existing = db.execute("SELECT COUNT(*) FROM voting_phases").fetchone()[0]
+    if existing:
+        return False
+
+    db.execute(
+        """
+        INSERT INTO voting_phases (phase_number, title, description, is_active, status)
+        VALUES (?, ?, ?, 0, 'not_started')
+        """,
+        (
+            1,
+            'University Representatives',
+            'Campus-level elections for each university representative.',
+        ),
+    )
+    db.execute(
+        """
+        INSERT INTO voting_phases (phase_number, title, description, is_active, status)
+        VALUES (?, ?, ?, 0, 'not_started')
+        """,
+        (
+            2,
+            'National Executive Board',
+            'National election for the executive leadership team.',
+        ),
+    )
+    return True
+
 def init_db():
     settings = get_settings()
     db = get_db()
     db.executescript(SCHEMA)
+    ensure_voting_phases_seeded(db)
     try:
         count = db.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         if count == 0 and settings.enable_dev_seed:
@@ -1506,6 +1537,7 @@ def migrate_db():
             WHERE status IS NULL OR status = '' OR status IN ('pending', 'closed', 'finalized', 'active')
         """)
         db.execute("UPDATE voting_phases SET is_active=0 WHERE status != 'active'")
+        ensure_voting_phases_seeded(db)
         db.commit()
     except Exception as exc:
         try: db.rollback()

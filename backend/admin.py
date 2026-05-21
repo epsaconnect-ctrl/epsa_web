@@ -8,10 +8,10 @@ from datetime import datetime, date, timedelta
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 try:
-    from .models import get_db
+    from .models import get_db, ensure_voting_phases_seeded
     from .storage import save_upload, upload_url
 except ImportError:
-    from models import get_db
+    from models import get_db, ensure_voting_phases_seeded
     from storage import save_upload, upload_url
 
 admin_bp = Blueprint('admin', __name__)
@@ -530,6 +530,8 @@ def _canonical_phase_status(raw_status, is_active):
 
 
 def _serialize_voting_phases(db):
+    if ensure_voting_phases_seeded(db):
+        db.commit()
     rows = db.execute("SELECT * FROM voting_phases ORDER BY phase_number ASC").fetchall()
     serialized = []
     phase_one_finalized = False

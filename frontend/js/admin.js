@@ -1586,6 +1586,12 @@ async function loadVotingConfig() {
     const config = await API.getVotingConfig();
     window._epsVotingConfig = config;
 
+    if (!Array.isArray(config) || !config.length) {
+      div.innerHTML = `<div style="text-align:center;color:var(--text-muted);padding:var(--space-6);background:white;border:1px dashed var(--light-300);border-radius:var(--radius-xl);">No voting phases are configured yet.</div>`;
+      renderVotingLifecycleBoard();
+      return;
+    }
+
     div.innerHTML = config.map(c => {
       const tone = c.status === 'active' ? 'var(--epsa-green)' : c.status === 'finalized' ? '#2563eb' : 'var(--epsa-gold-dark)';
       const statusLabel = c.status === 'active' ? 'Active' : c.status === 'finalized' ? 'Finalized' : 'Not started';
