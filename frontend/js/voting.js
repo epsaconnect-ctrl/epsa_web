@@ -308,7 +308,11 @@ function startVotingCountdown(isoDate) {
   if (countdownInterval) clearInterval(countdownInterval);
   if (!isoDate) { el.textContent = 'NO DEADLINE'; return; }
   
-  const end = new Date(isoDate);
+  let safeDate = isoDate.replace(' ', 'T');
+  if (safeDate.length <= 16) safeDate += ':00';
+  if (!safeDate.endsWith('Z') && !safeDate.includes('+')) safeDate += 'Z';
+  const end = new Date(safeDate);
+  
   const tick = () => {
     const now  = new Date();
     const diff = end - now;
@@ -316,7 +320,12 @@ function startVotingCountdown(isoDate) {
     const d  = Math.floor(diff / 86400000);
     const h  = Math.floor((diff % 86400000) / 3600000);
     const m  = Math.floor((diff % 3600000)  / 60000);
-    el.textContent = `${d}d ${h}h ${m}m`;
+    
+    let parts = [];
+    if (d > 0) parts.push(`${d}d`);
+    if (h > 0 || d > 0) parts.push(`${h}h`);
+    parts.push(`${m}m`);
+    el.textContent = parts.join(' ');
   };
   tick();
   countdownInterval = setInterval(tick, 60000);

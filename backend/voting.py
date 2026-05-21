@@ -51,65 +51,90 @@ def get_candidates():
         db.close()
         return jsonify({'error': 'User not found', 'active': False, 'candidates': [], 'my_nomination': None}), 404
 
-    # Try to auto-detect active phase from DB if caller wants "auto"
-    vote_phase = _active_phase(db, requested_phase=phase, fallback_to_any=True)
-    if not vote_phase: db.close(); return jsonify({'active': False, 'candidates': [], 'my_nomination': None})
-
-    actual_phase = vote_phase['phase_number']
-
-    if actual_phase == 1:
-        rows = db.execute("""
-            SELECT n.id, n.is_approved, u.id as user_id, u.first_name||' '||u.father_name as name,
-                   u.university, u.program_type, u.academic_year, u.profile_photo,
-                   n.statement, n.vision, n.manifesto_path, n.video_url, n.bio,
-                   COUNT(v.id) as vote_count
+    try:
+        vote_phase = _active_phase(db, requested_phase=phase, fallback_to_any=True)
+        if not vote_phase: db.close(); return jsonify({'active': False, 'candidates': [], 'my_nomination': None})
+    
+        actual_phase = vote_phase['phase_number']
+    
+        if actual_phase == 1:
+            rows = db.execute("""
+                SELECT n.id, n.is_approved, u.id as user_id, u.first_name||' '||u.father_name as name,
+                       u.university, u.program_type, u.academic_year, u.profile_photo,
+                       n.statement, n.vision, n.manifesto_path, n.video_url, n.bio,
+                       (
+                           SELECT COUNT(*)
+                           FROM votes v
+                           WHERE v.candidate_id = n.user_id AND v.phase_id = n.phase_id
+                       ) as vote_count
+                FROM nominations n JOIN users u ON n.user_id=u.id
+                WHERE n.phase_id=? AND n.is_approved=1 AND u.university=?
+                ORDER BY vote_count DESC, n.nominated_at ASC, u.first_name ASC
+            """, (vote_phase['id'], user['university'] if user else None)).fetchall()
+        else:
+            rows = db.execute("""
+                SELECT n.id, n.is_approved, u.id as user_id, u.first_name||' '||u.father_name as name,
+                       u.university, n.position, u.profile_photo,
+                       n.statement, n.vision, n.manifesto_path, n.video_url, n.bio,
+                       (
+                           SELECT COUNT(*)
+                           FROM votes v
+                           WHERE v.candidate_id = n.user_id AND v.phase_id = n.phase_id
+                       ) as vote_count
+                FROM nominations n JOIN users u ON n.user_id=u.id
+                WHERE n.phase_id=? AND n.is_approved=1
+                ORDER BY vote_count DESC, n.nominated_at ASC, u.first_name ASC
+            """, (vote_phase['id'],)).fetchall()
+    
+        my_vote = db.execute("SELECT candidate_id FROM votes WHERE voter_id=? AND phase_id=?", (uid, vote_phase['id'])).fetchone()
+    
+        # Check if the logged-in student has their own nomination (even if pending/rejected — so they can see their card)
+        my_nom = db.execute("""
+            SELECT n.id, n.is_approved, n.position, n.bio, n.statement, n.vision, n.manifesto_path, n.video_url,
+                   u.id as user_id, u.first_name||' '||u.father_name as name, u.university,
+                   u.program_type, u.academic_year, u.profile_photo,
+                   (
+                       SELECT COUNT(*)
+                       FROM votes v
+                       WHERE v.candidate_id = n.user_id AND v.phase_id = n.phase_id
+                   ) as vote_count
             FROM nominations n JOIN users u ON n.user_id=u.id
-            LEFT JOIN votes v ON v.candidate_id=u.id AND v.phase_id=n.phase_id
-            WHERE n.phase_id=? AND n.is_approved=1 AND u.university=?
-            GROUP BY n.id ORDER BY vote_count DESC
-        """, (vote_phase['id'], user['university'])).fetchall()
-    else:
-        rows = db.execute("""
-            SELECT n.id, n.is_approved, u.id as user_id, u.first_name||' '||u.father_name as name,
-                   u.university, n.position, u.profile_photo,
-                   n.statement, n.vision, n.manifesto_path, n.video_url, n.bio,
-                   COUNT(v.id) as vote_count
-            FROM nominations n JOIN users u ON n.user_id=u.id
-            LEFT JOIN votes v ON v.candidate_id=u.id AND v.phase_id=n.phase_id
-            WHERE n.phase_id=? AND n.is_approved=1
-            GROUP BY n.id ORDER BY vote_count DESC
-        """, (vote_phase['id'],)).fetchall()
-
-    my_vote = db.execute("SELECT candidate_id FROM votes WHERE voter_id=? AND phase_id=?", (uid, vote_phase['id'])).fetchone()
-
-    # Check if the logged-in student has their own nomination (even if pending/rejected — so they can see their card)
-    my_nom = db.execute("""
-        SELECT n.id, n.is_approved, n.position, n.bio, n.statement, n.vision, n.manifesto_path, n.video_url,
-               u.id as user_id, u.first_name||' '||u.father_name as name, u.university,
-               u.program_type, u.academic_year, u.profile_photo,
-               COUNT(v.id) as vote_count
-        FROM nominations n JOIN users u ON n.user_id=u.id
-        LEFT JOIN votes v ON v.candidate_id=u.id AND v.phase_id=n.phase_id
-        WHERE n.phase_id=? AND n.user_id=?
-        GROUP BY n.id LIMIT 1
-    """, (vote_phase['id'], uid)).fetchone()
-
-    db.close()
-
-    candidates = [dict(r) for r in rows]
-    my_nomination = dict(my_nom) if my_nom else None
-
-    # If the student is nominated but pending/rejected, inject their card at top so they can see it
-    if my_nomination and my_nomination.get('is_approved') != 1:
-        my_nomination['_is_self_pending'] = True
-
-    return jsonify({
-        'active':        True,
-        'phase':         dict(vote_phase),
-        'candidates':    candidates,
-        'my_vote_id':    my_vote['candidate_id'] if my_vote else None,
-        'my_nomination': my_nomination,
-    })
+            WHERE n.phase_id=? AND n.user_id=?
+            ORDER BY n.id DESC LIMIT 1
+        """, (vote_phase['id'], uid)).fetchone()
+    
+        db.close()
+    
+        candidates = [dict(r) for r in rows]
+        for item in candidates:
+            item['is_me'] = str(item.get('user_id') or 0) == str(uid)
+    
+        my_nomination = dict(my_nom) if my_nom else None
+        if my_nomination:
+            my_nomination['is_me'] = True
+    
+        # Always inject the student's own nomination when it is missing from the approved public list.
+        if my_nomination and not any(str(item.get('id') or 0) == str(my_nomination.get('id') or 0) for item in candidates):
+            my_nomination['_is_self_pending'] = my_nomination.get('is_approved') != 1
+            candidates.insert(0, my_nomination)
+            
+        # Ensure safely JSON serializable phase
+        safe_phase = dict(vote_phase)
+        for k, v in safe_phase.items():
+            if hasattr(v, 'isoformat'): safe_phase[k] = v.isoformat()
+    
+        return jsonify({
+            'active':        True,
+            'phase':         safe_phase,
+            'candidates':    candidates,
+            'my_vote_id':    my_vote['candidate_id'] if my_vote else None,
+            'my_nomination': my_nomination,
+        })
+    except Exception as e:
+        import traceback
+        try: db.close()
+        except: pass
+        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
 
 @voting_bp.route('/nominate', methods=['POST'])
 @jwt_required()
@@ -201,11 +226,15 @@ def results():
     db   = get_db()
     rows = db.execute("""
         SELECT u.first_name||' '||u.father_name as name, u.university,
-               n.position, COUNT(v.id) as votes
+               n.position,
+               (
+                   SELECT COUNT(*)
+                   FROM votes v
+                   WHERE v.candidate_id = n.user_id AND v.phase_id = n.phase_id
+               ) as votes
         FROM nominations n JOIN users u ON n.user_id=u.id
-        LEFT JOIN votes v ON v.candidate_id=u.id
         WHERE n.is_approved=1
-        GROUP BY n.id ORDER BY votes DESC
+        ORDER BY votes DESC, name ASC
     """).fetchall()
     db.close()
     return jsonify([dict(r) for r in rows])

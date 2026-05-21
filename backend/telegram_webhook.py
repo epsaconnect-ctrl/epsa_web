@@ -1,7 +1,7 @@
 import logging
 from flask import Blueprint, request, jsonify
-from .config import get_settings
-from .telegram_bot import send_telegram_message
+from config import get_settings
+from telegram_bot import send_telegram_message
 
 logger = logging.getLogger("epsa.telegram_webhook")
 telegram_webhook_bp = Blueprint("telegram_webhook", __name__)
