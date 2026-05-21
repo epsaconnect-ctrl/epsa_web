@@ -201,7 +201,7 @@ def list_mock_exams():
                    ms.started_at as my_started_at
             FROM mock_exams me
             LEFT JOIN mock_exam_submissions ms ON ms.exam_id=me.id AND ms.user_id=?
-            WHERE me.is_active=1 OR me.scheduled_at > DATETIME('now')
+            WHERE me.is_active=1 OR me.scheduled_at > NOW()
             ORDER BY me.scheduled_at ASC
             """,
             (uid,)
@@ -375,9 +375,9 @@ def start_mock_exam(exam_id):
                         score=NULL,
                         total_questions=?,
                         status='in_progress',
-                        started_at=DATETIME('now'),
+                        started_at=NOW(),
                         submitted_at=NULL,
-                        updated_at=DATETIME('now')
+                        updated_at=NOW()
                     WHERE id=?
                     """,
                     (
@@ -469,7 +469,7 @@ def start_mock_exam(exam_id):
             """
             INSERT INTO mock_exam_submissions
                 (exam_id, user_id, question_ids, option_order, answers, time_per_question, total_questions, status, started_at)
-            VALUES (?,?,?,?,?,?,?,?,DATETIME('now'))
+            VALUES (?,?,?,?,?,?,?,?,NOW())
             """,
             (
                 exam_id, uid,
@@ -657,7 +657,7 @@ def submit_mock_exam(exam_id):
             INSERT INTO mock_exam_history
                 (original_submission_id, exam_id, user_id, score, total_questions,
                  started_at, submitted_at, attempt_number, status)
-            VALUES (?, ?, ?, ?, ?, ?, DATETIME('now'), ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?)
             """,
             (
                 sub["id"], exam_id, uid, score, len(qids),
@@ -673,7 +673,7 @@ def submit_mock_exam(exam_id):
         db.execute(
             """
             UPDATE mock_exam_submissions
-            SET answers=?, time_per_question=?, answer_changes=?, confidence_levels=?, score=?, status=?, submitted_at=DATETIME('now')
+            SET answers=?, time_per_question=?, answer_changes=?, confidence_levels=?, score=?, status=?, submitted_at=NOW()
             WHERE id=?
             """,
             (json.dumps(current_answers), json.dumps(current_times), json.dumps(current_changes), json.dumps(current_conf), best_score, status, sub["id"])
@@ -843,7 +843,7 @@ def _refresh_question_stats(db, question_id):
             top_group_correct, bottom_group_correct,
             option_a_selections, option_b_selections, option_c_selections, option_d_selections,
             updated_at
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,DATETIME('now'))
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())
         ON CONFLICT(question_id) DO UPDATE SET
             times_presented=excluded.times_presented,
             times_correct=excluded.times_correct,
@@ -860,7 +860,7 @@ def _refresh_question_stats(db, question_id):
             option_b_selections=excluded.option_b_selections,
             option_c_selections=excluded.option_c_selections,
             option_d_selections=excluded.option_d_selections,
-            updated_at=DATETIME('now')
+            updated_at=NOW()
         """,
         (
             question_id,
@@ -978,7 +978,7 @@ def _update_question_analytics(db, exam_id, qids, answers, time_per_question, an
                     avg_time_seconds=?, avg_time_correct=?, avg_time_incorrect=?,
                     doubt_count=?, difficulty_score=?,
                     option_a_selections=?, option_b_selections=?, option_c_selections=?, option_d_selections=?,
-                    updated_at=DATETIME('now')
+                    updated_at=NOW()
                 WHERE question_id=? AND mock_exam_id=?
                 """,
                 (new_presented, new_correct, new_rate,
@@ -1016,7 +1016,7 @@ def _update_question_analytics(db, exam_id, qids, answers, time_per_question, an
                      doubt_count, difficulty_score,
                      option_a_selections, option_b_selections, option_c_selections, option_d_selections,
                      updated_at)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,DATETIME('now'))
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())
                 """,
                 (qid, exam_id, 1, was_correct, float(was_correct),
                  time_spent, avg_t_c, avg_t_i,
@@ -1713,13 +1713,13 @@ def admin_live_analytics():
             FROM mock_exam_submissions ms
             JOIN mock_exams me ON me.id=ms.exam_id
             WHERE ms.status='in_progress' 
-              AND ms.updated_at > DATETIME('now', '-30 minutes')
+              AND ms.updated_at > NOW() - INTERVAL '30 minutes'
             GROUP BY ms.exam_id
             """
         ).fetchall()
         
         total_active = db.execute(
-            "SELECT COUNT(DISTINCT user_id) FROM mock_exam_submissions WHERE status='in_progress' AND updated_at > DATETIME('now', '-30 minutes')"
+            "SELECT COUNT(DISTINCT user_id) FROM mock_exam_submissions WHERE status='in_progress' AND updated_at > NOW() - INTERVAL '30 minutes'"
         ).fetchone()[0]
 
     finally:
