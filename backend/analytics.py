@@ -700,7 +700,7 @@ def exams_overview():
             FROM mock_exams me
             LEFT JOIN mock_exam_submissions ms
                 ON ms.exam_id = me.id AND ms.status IN ('submitted','auto_submitted')
-            GROUP BY me.id
+            GROUP BY me.id, me.title, me.scheduled_at, me.is_active, me.results_released, me.created_at
             ORDER BY me.created_at DESC
         """).fetchall()
     finally:
