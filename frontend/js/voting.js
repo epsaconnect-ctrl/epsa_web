@@ -90,7 +90,7 @@ function renderCandidates(candidates) {
       ${isPending ? `<div style="position:absolute;top:10px;right:10px;background:#eab308;color:white;padding:2px 8px;border-radius:var(--radius-full);font-size:0.6rem;font-weight:700;text-transform:uppercase;">Pending Review</div>` : ''}
 
       <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--epsa-green),var(--epsa-gold));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.3rem;margin:0 auto var(--space-3); overflow:hidden; border: 3px solid white; box-shadow: var(--shadow-sm); ${isPending ? 'opacity:0.6;' : ''}">
-        ${c.profile_photo ? `<img src="${API.resolveUploadUrl('profile_photos', c.profile_photo)}" style="width:100%;height:100%;object-fit:cover;">` : initials}
+        ${c.profile_photo ? `<img src="${API.resolveUploadUrl('profiles', c.profile_photo)}" style="width:100%;height:100%;object-fit:cover;">` : initials}
       </div>
       <div class="candidate-name" style="${isPending ? 'color:var(--text-muted);' : ''}">${name}</div>
       <div class="candidate-uni" style="${isPending ? 'opacity:0.7;' : ''}">${c.university}</div>
@@ -126,7 +126,7 @@ function openCandidateModal(id, e) {
   document.getElementById('cbVotes').textContent = c.vote_count;
   
   const imgEL = document.getElementById('cbImg');
-  if (c.profile_photo) { imgEL.src = API.resolveUploadUrl('profile_photos', c.profile_photo); imgEL.style.display = 'block'; }
+  if (c.profile_photo) { imgEL.src = API.resolveUploadUrl('profiles', c.profile_photo); imgEL.style.display = 'block'; }
   else { imgEL.style.display = 'none'; } // Can add text initials fallback later
 
   document.getElementById('cbStatement').textContent = c.statement || 'No statement provided.';
@@ -271,7 +271,7 @@ function toggleCompareCandidate(id) {
           <div style="background:var(--light-100); border-radius:var(--radius-lg); padding:var(--space-6); border:1px solid var(--light-200);">
             <div style="text-align:center; margin-bottom:var(--space-5);">
                <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--epsa-green),var(--epsa-gold));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.3rem;margin:0 auto var(--space-3); overflow:hidden; border:3px solid white; box-shadow:var(--shadow-sm);">
-${c.profile_photo ? `<img src="${API.resolveUploadUrl('profile_photos', c.profile_photo)}" style="width:100%;height:100%;object-fit:cover;">` : name.split(' ').filter(Boolean).map(n=>n[0]).join('').substring(0,2).toUpperCase()}
+${c.profile_photo ? `<img src="${API.resolveUploadUrl('profiles', c.profile_photo)}" style="width:100%;height:100%;object-fit:cover;">` : name.split(' ').filter(Boolean).map(n=>n[0]).join('').substring(0,2).toUpperCase()}
                </div>
                <div style="font-family:var(--font-display);font-weight:800;font-size:1.2rem;color:var(--text-primary);">${name}</div>
                <div style="font-size:0.875rem;color:var(--text-secondary);font-weight:600;">${c.university}</div>
